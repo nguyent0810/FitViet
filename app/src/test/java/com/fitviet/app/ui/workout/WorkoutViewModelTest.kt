@@ -95,7 +95,12 @@ class WorkoutViewModelTest {
         testExercise(4, SeedExerciseNames.LATERAL_RAISE),
     )
 
-    private inner class Harness {
+    /**
+     * [startSession]: most tests want the harness to land directly on the curated demo session
+     * (block 0, `StraightLog`) exactly as it did before Gate 10 added the duration picker in front
+     * of it — pass `false` only for tests that specifically cover the picker step itself.
+     */
+    private inner class Harness(startSession: Boolean = true) {
         val clock = FakeClock()
         val workoutRepository = FakeWorkoutRepository()
         val viewModel = WorkoutViewModel(
@@ -107,6 +112,11 @@ class WorkoutViewModelTest {
 
         init {
             testDispatcher.scheduler.runCurrent()
+            if (startSession) {
+                // null == "Không giới hạn" == WorkoutPlanSeed's curated demo, unchanged from before Gate 10.
+                viewModel.selectDuration(null)
+                testDispatcher.scheduler.runCurrent()
+            }
         }
 
         /** Advances the debounce clock so the next action isn't silently dropped by the previous one. */
@@ -114,6 +124,50 @@ class WorkoutViewModelTest {
             clock.advance()
             testDispatcher.scheduler.runCurrent()
         }
+    }
+
+    // ---- Gate 10: duration picker ----
+
+    @Test
+    fun `initial state shows the duration picker before any session starts`() = runTest(testDispatcher) {
+        val h = Harness(startSession = false)
+        val state = h.viewModel.uiState.value
+
+        assertEquals(WorkoutPhase.SelectingDuration, state.phase)
+        assertTrue(state.blocks.isEmpty())
+    }
+
+    @Test
+    fun `selecting a time budget builds a session via the time-budget planner, not the curated demo`() = runTest(testDispatcher) {
+        val h = Harness(startSession = false)
+
+        // 5-minute (300s) budget: Bench Press alone is ~222s (3 sets x 8 reps x 3s + 2x60s rest +
+        // 30s transition, per the shared testExercise() fixture); Shoulder Press would push past
+        // 300s, so only Bench Press fits.
+        h.viewModel.selectDuration(5)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(1, state.blocks.size)
+        val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
+        assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
+        assertEquals(3, block.plannedSets.size)
+        assertEquals(0.0, state.editableWeightKg, 0.0) // generated blocks start at 0kg, unlike the curated demo
+        assertEquals(1L, h.workoutRepository.nextSessionId - 1) // a Room session row was started
+    }
+
+    @Test
+    fun `selecting Khong gioi han builds the original curated demo, unchanged`() = runTest(testDispatcher) {
+        val h = Harness(startSession = false)
+
+        h.viewModel.selectDuration(null)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(3, state.blocks.size) // bench, shoulder, superset(cable fly + lateral raise)
+        assertEquals(40.0, state.editableWeightKg, 0.0) // bench press's curated first-set weight, not 0
     }
 
     @Test
@@ -314,13 +368,20 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `reset starts a fresh session back at block 0`() = runTest(testDispatcher) {
+    fun `reset returns to the duration picker, and picking again starts a fresh session at block 0`() = runTest(testDispatcher) {
         val h = Harness()
         h.viewModel.completeCurrentSet()
         testDispatcher.scheduler.runCurrent()
         h.tick()
 
         h.viewModel.resetWorkout()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.SelectingDuration, h.viewModel.uiState.value.phase)
+        assertEquals(1L, h.workoutRepository.nextSessionId - 1) // no new session row yet, just back at the picker
+
+        h.tick()
+        h.viewModel.selectDuration(null)
         testDispatcher.scheduler.runCurrent()
 
         val state = h.viewModel.uiState.value

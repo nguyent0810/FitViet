@@ -46,11 +46,12 @@ fun WorkoutScreen(
             return@Column
         }
 
-        if (uiState.phase != WorkoutPhase.SessionFinished) {
+        if (uiState.phase != WorkoutPhase.SessionFinished && uiState.phase != WorkoutPhase.SelectingDuration) {
             WorkoutHeader(uiState = uiState, onReset = viewModel::resetWorkout)
         }
 
         when (uiState.phase) {
+            WorkoutPhase.SelectingDuration -> WorkoutDurationPickerContent(onSelect = viewModel::selectDuration)
             WorkoutPhase.StraightLog -> StraightLogContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.StraightRest -> {
                 val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan

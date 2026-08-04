@@ -139,6 +139,13 @@
     <string name="workout_back_to_home">Back to home</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
+    <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->
+    <string name="workout_duration_title">How much time do you have?</string>
+    <string name="workout_duration_subtitle">Pick a time budget and we\'ll pick the exercises to match.</string>
+    <string name="workout_duration_30">30 min</string>
+    <string name="workout_duration_60">60 min</string>
+    <string name="workout_duration_unlimited">No limit</string>
+
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 EXERCISES BACK-TO-BACK</string>

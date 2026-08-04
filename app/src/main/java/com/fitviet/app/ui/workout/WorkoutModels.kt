@@ -44,6 +44,8 @@ enum class SetTechnique { STRAIGHT, SUPERSET, DROP_SET, PYRAMID, REST_PAUSE }
  */
 
 sealed class WorkoutPhase {
+    /** Gate 10: pick a time budget (30/60 min, or none) before the session's blocks are built. */
+    data object SelectingDuration : WorkoutPhase()
     data object StraightLog : WorkoutPhase()
     data object StraightRest : WorkoutPhase()
     data object StraightBlockDone : WorkoutPhase()
