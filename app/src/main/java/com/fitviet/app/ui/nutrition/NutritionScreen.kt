@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -106,7 +107,7 @@ private fun SummaryCard(totals: NutritionTotals) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         KcalRing(kcal = totals.kcal, percent = totals.kcalPercent)
-        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             MacroBar(
                 label = stringResource(R.string.nutrition_macro_protein),
                 value = stringResource(R.string.nutrition_macro_value, totals.proteinG, NutritionGoals.PROTEIN_G),

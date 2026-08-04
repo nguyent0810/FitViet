@@ -1,6 +1,7 @@
 package com.fitviet.app.domain
 
 import com.fitviet.app.data.local.entity.MealEntity
+import kotlin.math.roundToInt
 
 /** Daily goals from the 1g spec (README's `NutritionDay.goals`). */
 object NutritionGoals {
@@ -22,7 +23,8 @@ data class NutritionTotals(
     val fatPercent: Int get() = percentOf(fatG, NutritionGoals.FAT_G)
 }
 
-private fun percentOf(value: Int, goal: Int): Int = ((value * 100) / goal).coerceIn(0, 100)
+// Rounds rather than truncates, matching the prototype's `Math.round(...)`.
+private fun percentOf(value: Int, goal: Int): Int = (value * 100.0 / goal).roundToInt().coerceIn(0, 100)
 
 /** Pure sum of a day's logged meals — the 1g kcal ring + macro bars. */
 object NutritionCalculator {

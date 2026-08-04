@@ -187,7 +187,7 @@ private fun MeasurementTile(value: Double?, delta: Double?, label: String, modif
                 text = "${if (positive) "+" else "−"}${formatWeight(abs(delta))}",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (positive) Accent else TextMuted,
-                fontWeight = FontWeight.Bold,
+                fontWeight = if (positive) FontWeight.Bold else FontWeight.Normal,
             )
         }
     }
