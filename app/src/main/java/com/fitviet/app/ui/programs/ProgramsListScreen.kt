@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
+import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorderAlt
@@ -49,6 +50,7 @@ import com.fitviet.app.ui.theme.TextPrimary
 fun ProgramsListScreen(
     viewModel: ProgramsViewModel,
     onProgramClick: (ProgramEntity) -> Unit,
+    onExerciseClick: (ExerciseEntity) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -68,7 +70,19 @@ fun ProgramsListScreen(
         item {
             FilterChips(selectedIndex = uiState.selectedFilterIndex, onSelect = viewModel::onFilterSelected)
         }
-        if (uiState.visiblePrograms.isEmpty()) {
+        if (uiState.matchingExercises.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.programs_exercises_section),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextMuted,
+                )
+            }
+            items(uiState.matchingExercises, key = { "exercise-${it.id}" }) { exercise ->
+                ExerciseResultRow(exercise = exercise, onClick = { onExerciseClick(exercise) })
+            }
+        }
+        if (uiState.visiblePrograms.isEmpty() && uiState.matchingExercises.isEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.programs_empty),
@@ -82,6 +96,27 @@ fun ProgramsListScreen(
                 ProgramCard(program = program, onClick = { onProgramClick(program) })
             }
         }
+    }
+}
+
+@Composable
+private fun ExerciseResultRow(exercise: ExerciseEntity, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(text = exercise.nameVi, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+            Text(text = exercise.primaryMuscle, style = MaterialTheme.typography.labelMedium, color = TextMuted)
+        }
+        Text(text = "›", style = MaterialTheme.typography.titleMedium, color = TextMuted)
     }
 }
 

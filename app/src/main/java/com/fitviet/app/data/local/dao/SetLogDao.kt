@@ -7,6 +7,8 @@ import androidx.room.Update
 import com.fitviet.app.data.local.entity.SetLogEntity
 import kotlinx.coroutines.flow.Flow
 
+data class PersonalBestRow(val exerciseId: Long, val nameVi: String, val maxWeightKg: Double)
+
 @Dao
 interface SetLogDao {
     @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId ORDER BY exerciseOrder, setIndex")
@@ -14,6 +16,20 @@ interface SetLogDao {
 
     @Query("SELECT * FROM set_logs WHERE exerciseId = :exerciseId AND isDone = 1 ORDER BY weightKg DESC LIMIT 1")
     suspend fun getPersonalBest(exerciseId: Long): SetLogEntity?
+
+    @Query(
+        """
+        SELECT e.id AS exerciseId, e.nameVi AS nameVi, MAX(s.weightKg) AS maxWeightKg
+        FROM set_logs s
+        INNER JOIN exercises e ON e.id = s.exerciseId
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.isDone = 1 AND w.completedAt IS NOT NULL
+        GROUP BY s.exerciseId
+        ORDER BY maxWeightKg DESC
+        LIMIT :limit
+        """,
+    )
+    fun observePersonalBests(limit: Int): Flow<List<PersonalBestRow>>
 
     @Insert
     suspend fun insert(setLog: SetLogEntity): Long

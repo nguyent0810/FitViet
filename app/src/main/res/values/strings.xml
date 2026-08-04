@@ -91,6 +91,7 @@
     <string name="programs_free_badge">MIỄN PHÍ</string>
     <string name="programs_card_meta">%1$d tuần · %2$d buổi/tuần · %3$s · %4$s</string>
     <string name="programs_empty">Không tìm thấy giáo án phù hợp</string>
+    <string name="programs_exercises_section">Bài tập</string>
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Lịch tuần của bạn</string>
@@ -167,6 +168,32 @@
     <string name="technique_pyramid_desc">tăng/giảm tạ qua từng hiệp</string>
     <string name="technique_restpause_name">Rest-pause</string>
     <string name="technique_restpause_desc">nghỉ 10–20s rồi thêm vài rep</string>
+
+    <!-- 1d Exercise detail -->
+    <string name="exercise_back">Bài tập</string>
+    <string name="exercise_instructions_title">Cách thực hiện</string>
+    <string name="exercise_tile_sets">Set</string>
+    <string name="exercise_tile_reps">Reps</string>
+    <string name="exercise_tile_rest">Nghỉ</string>
+    <string name="exercise_add_to_workout">Thêm vào buổi tập</string>
+    <string name="exercise_added">Đã thêm ✓ · Chạm để bỏ</string>
+    <string name="exercise_sets_range">%1$d–%2$d</string>
+    <string name="exercise_rest_seconds">%1$ds</string>
+
+    <!-- 1f Diary & stats -->
+    <string name="diary_title">Nhật ký tập luyện</string>
+    <string name="diary_hint_trained">%1$s · %2$s — đã tập · %3$s, %4$s kg</string>
+    <string name="diary_hint_rest">%1$s · Ngày nghỉ</string>
+    <string name="diary_hint_today_pending">%1$s · Hôm nay — chưa tập</string>
+    <string name="diary_hint_future">%1$s · Chưa đến</string>
+    <string name="diary_minutes">%1$d phút</string>
+    <string name="diary_weekly_volume_title">Khối lượng theo tuần</string>
+    <string name="diary_week_label">T.%1$d</string>
+    <string name="diary_pr_title">Kỷ lục cá nhân (PR)</string>
+    <string name="diary_pr_empty">Chưa có kỷ lục nào — hoàn thành buổi tập đầu tiên để bắt đầu</string>
+    <string name="diary_recent_title">Buổi gần đây</string>
+    <string name="diary_recent_empty">Chưa có buổi tập nào</string>
+    <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>

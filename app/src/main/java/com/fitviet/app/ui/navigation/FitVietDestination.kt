@@ -13,6 +13,13 @@ sealed class FitVietDestination(val route: String) {
         const val ARG_PROGRAM_ID = "programId"
         fun createRoute(programId: Long) = "programs/$programId/schedule"
     }
+
+    data object ExerciseDetail : FitVietDestination("exercises/{exerciseId}") {
+        const val ARG_EXERCISE_ID = "exerciseId"
+        fun createRoute(exerciseId: Long) = "exercises/$exerciseId"
+    }
+
+    data object Diary : FitVietDestination("diary")
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).

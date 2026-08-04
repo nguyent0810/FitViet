@@ -1,0 +1,377 @@
+package com.fitviet.app.ui.workout
+
+import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.local.seed.SeedExerciseNames
+import com.fitviet.app.data.repository.ExerciseRepository
+import com.fitviet.app.data.repository.WorkoutRepository
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+/**
+ * Covers the workout flow state machine built in Gate 4 — the "unit test cho workout state
+ * machine" requirement from the brief. Uses fake repositories (no Room) and an injectable clock
+ * (see [WorkoutViewModel]'s `elapsedRealtimeMillis` param — `android.os.SystemClock` is stubbed to
+ * a constant 0 in plain JVM unit tests, which would make the debounce block every action forever).
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class WorkoutViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    // Starts well past the debounce window so the very first debounced call in a test isn't
+    // rejected by comparing against WorkoutViewModel's own zero-initialized lastActionAtMillis.
+    private class FakeClock(private var millis: Long = 10_000L) {
+        fun now(): Long = millis
+        fun advance(by: Long = 1_000L) {
+            millis += by
+        }
+    }
+
+    private class FakeExerciseRepository(private val exercises: List<ExerciseEntity>) : ExerciseRepository {
+        override suspend fun getAll(): List<ExerciseEntity> = exercises
+        override suspend fun getById(id: Long): ExerciseEntity? = exercises.firstOrNull { it.id == id }
+    }
+
+    private class FakeWorkoutRepository : WorkoutRepository {
+        var nextSessionId = 1L
+        val loggedSets = mutableListOf<LoggedSet>()
+        var completedSessionId: Long? = null
+        var completedVolumeKg: Double? = null
+        var completedDurationSeconds: Int? = null
+
+        override suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long = nextSessionId++
+
+        override suspend fun logSet(sessionId: Long, set: LoggedSet) {
+            loggedSets += set
+        }
+
+        override suspend fun completeSession(sessionId: Long, completedAtMillis: Long, totalVolumeKg: Double, durationSeconds: Int) {
+            completedSessionId = sessionId
+            completedVolumeKg = totalVolumeKg
+            completedDurationSeconds = durationSeconds
+        }
+    }
+
+    private fun testExercise(id: Long, nameVi: String) = ExerciseEntity(
+        id = id,
+        nameVi = nameVi,
+        nameEn = nameVi,
+        gifAsset = "test.gif",
+        primaryMuscle = "Test",
+        secondaryMuscles = emptyList(),
+        equipment = "Test",
+        instructions = emptyList(),
+        suggestedSetsMin = 3,
+        suggestedSetsMax = 3,
+        suggestedRepsMin = 8,
+        suggestedRepsMax = 8,
+        suggestedRestSeconds = 60,
+    )
+
+    private val testExercises = listOf(
+        testExercise(1, SeedExerciseNames.BENCH_PRESS),
+        testExercise(2, SeedExerciseNames.SHOULDER_PRESS),
+        testExercise(3, SeedExerciseNames.CABLE_FLY),
+        testExercise(4, SeedExerciseNames.LATERAL_RAISE),
+    )
+
+    private inner class Harness {
+        val clock = FakeClock()
+        val workoutRepository = FakeWorkoutRepository()
+        val viewModel = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = workoutRepository,
+            databaseReady = CompletableDeferred(Unit),
+            elapsedRealtimeMillis = clock::now,
+        )
+
+        init {
+            testDispatcher.scheduler.runCurrent()
+        }
+
+        /** Advances the debounce clock so the next action isn't silently dropped by the previous one. */
+        fun tick() {
+            clock.advance()
+            testDispatcher.scheduler.runCurrent()
+        }
+    }
+
+    @Test
+    fun `initial state starts on block 0 with the first planned set`() = runTest(testDispatcher) {
+        val vm = Harness().viewModel
+        val state = vm.uiState.value
+
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(0, state.currentBlockIndex)
+        assertEquals(0, state.currentSetIndex)
+        assertEquals(40.0, state.editableWeightKg, 0.0)
+        assertEquals(8, state.editableReps)
+    }
+
+    @Test
+    fun `completing a non-final set starts rest with the next set's planned values`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightRest, state.phase)
+        assertEquals(1, state.currentSetIndex)
+        assertEquals(60, state.restSecondsRemaining)
+        assertEquals(40.0, state.editableWeightKg, 0.0) // bench press set 2 is also 40kg×8 in the plan
+        assertEquals(1, h.workoutRepository.loggedSets.size)
+    }
+
+    @Test
+    fun `rest timer auto-returns to log when it reaches zero`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        testDispatcher.scheduler.advanceTimeBy(60_000)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.StraightLog, h.viewModel.uiState.value.phase)
+    }
+
+    @Test
+    fun `rest is still counting down before 60 seconds pass`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        testDispatcher.scheduler.advanceTimeBy(30_000)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightRest, state.phase)
+        assertEquals(30, state.restSecondsRemaining)
+    }
+
+    @Test
+    fun `skip rest returns to log immediately`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+
+        h.viewModel.skipRest()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(0, state.restSecondsRemaining)
+    }
+
+    @Test
+    fun `add rest extends the countdown by 15 seconds without changing phase`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        h.viewModel.addRest()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(75, h.viewModel.uiState.value.restSecondsRemaining)
+        assertEquals(WorkoutPhase.StraightRest, h.viewModel.uiState.value.phase)
+    }
+
+    @Test
+    fun `completing the final set of a block transitions to StraightBlockDone`() = runTest(testDispatcher) {
+        val h = Harness()
+        // Bench press has 4 planned sets: complete all, skipping rest between each.
+        repeat(3) {
+            h.viewModel.completeCurrentSet()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+            h.viewModel.skipRest()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+        }
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightBlockDone, state.phase)
+        assertEquals(4, state.loggedSetsThisExercise.size)
+        assertEquals(4, h.workoutRepository.loggedSets.size)
+    }
+
+    @Test
+    fun `advancing past the last block finishes the session`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SessionFinished, state.phase)
+        assertEquals(1L, h.workoutRepository.completedSessionId)
+        assertTrue(h.workoutRepository.completedVolumeKg!! > 0.0)
+    }
+
+    @Test
+    fun `superset completing A moves to B with B's planned values, no rest between them`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceToSupersetBlock(h)
+
+        val before = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SupersetWork, before.phase)
+        assertEquals(0, before.supersetSub)
+        assertEquals(15.0, before.editableWeightKg, 0.0) // cable fly plan
+
+        h.viewModel.supersetNext()
+        testDispatcher.scheduler.runCurrent()
+
+        val after = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SupersetWork, after.phase) // no rest between A and B
+        assertEquals(1, after.supersetSub)
+        assertEquals(8.0, after.editableWeightKg, 0.0) // lateral raise plan
+    }
+
+    @Test
+    fun `superset completing B before the last round starts superset rest`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceToSupersetBlock(h)
+
+        h.viewModel.supersetNext() // A -> B
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+        h.viewModel.supersetNext() // B -> rest (round 1 of 3)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SupersetRest, state.phase)
+        assertEquals(60, state.supersetRestSecondsRemaining)
+    }
+
+    @Test
+    fun `superset rest auto-advances to the next round`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceToSupersetBlock(h)
+
+        h.viewModel.supersetNext()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+        h.viewModel.supersetNext()
+        testDispatcher.scheduler.runCurrent()
+
+        testDispatcher.scheduler.advanceTimeBy(60_000)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SupersetWork, state.phase)
+        assertEquals(2, state.supersetRound)
+        assertEquals(0, state.supersetSub)
+        assertEquals(15.0, state.editableWeightKg, 0.0) // back to A's planned values for the new round
+    }
+
+    @Test
+    fun `superset finishing the last round's B goes to SupersetBlockDone`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceToSupersetBlock(h)
+        repeat(2) { completeSupersetRound(h) } // rounds 1 and 2
+
+        // Round 3 (last): A then B, no rest expected after.
+        h.viewModel.supersetNext()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+        h.viewModel.supersetNext()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.SupersetBlockDone, state.phase)
+        assertEquals(4, state.supersetRound) // totalRounds + 1
+    }
+
+    @Test
+    fun `a duplicate action within the debounce window is ignored`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        h.viewModel.completeCurrentSet() // fired immediately after, clock hasn't advanced
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, h.workoutRepository.loggedSets.size)
+        assertEquals(1, h.viewModel.uiState.value.currentSetIndex)
+    }
+
+    @Test
+    fun `reset starts a fresh session back at block 0`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+
+        h.viewModel.resetWorkout()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(0, state.currentBlockIndex)
+        assertEquals(0, state.currentSetIndex)
+        assertEquals(2L, h.workoutRepository.nextSessionId - 1) // a second session was started
+    }
+
+    /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block. */
+    private fun advanceToSupersetBlock(h: Harness) {
+        completeStraightBlock(h, setCount = 4)
+        h.viewModel.advanceToNextBlock()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+
+        completeStraightBlock(h, setCount = 3)
+        h.viewModel.advanceToNextBlock()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+    }
+
+    private fun completeStraightBlock(h: Harness, setCount: Int) {
+        repeat(setCount - 1) {
+            h.viewModel.completeCurrentSet()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+            h.viewModel.skipRest()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+        }
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+    }
+
+    private fun completeSupersetRound(h: Harness) {
+        h.viewModel.supersetNext() // A -> B
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+        h.viewModel.supersetNext() // B -> rest
+        testDispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.advanceTimeBy(60_000) // rest -> next round
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+    }
+
+    private fun advanceThroughEntireSession(h: Harness) {
+        advanceToSupersetBlock(h)
+        repeat(3) { completeSupersetRound(h) }
+        h.viewModel.advanceToNextBlock()
+        testDispatcher.scheduler.runCurrent()
+    }
+}

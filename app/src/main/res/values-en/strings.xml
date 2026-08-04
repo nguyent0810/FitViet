@@ -91,6 +91,7 @@
     <string name="programs_free_badge">FREE</string>
     <string name="programs_card_meta">%1$d weeks · %2$d sessions/week · %3$s · %4$s</string>
     <string name="programs_empty">No matching programs found</string>
+    <string name="programs_exercises_section">Exercises</string>
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Your weekly schedule</string>
@@ -167,6 +168,32 @@
     <string name="technique_pyramid_desc">increase/decrease weight each set</string>
     <string name="technique_restpause_name">Rest-pause</string>
     <string name="technique_restpause_desc">rest 10–20s then squeeze out more reps</string>
+
+    <!-- 1d Exercise detail -->
+    <string name="exercise_back">Exercise</string>
+    <string name="exercise_instructions_title">How to perform</string>
+    <string name="exercise_tile_sets">Sets</string>
+    <string name="exercise_tile_reps">Reps</string>
+    <string name="exercise_tile_rest">Rest</string>
+    <string name="exercise_add_to_workout">Add to workout</string>
+    <string name="exercise_added">Added ✓ · Tap to remove</string>
+    <string name="exercise_sets_range">%1$d–%2$d</string>
+    <string name="exercise_rest_seconds">%1$ds</string>
+
+    <!-- 1f Diary & stats -->
+    <string name="diary_title">Training diary</string>
+    <string name="diary_hint_trained">%1$s · %2$s — trained · %3$s, %4$s kg</string>
+    <string name="diary_hint_rest">%1$s · Rest day</string>
+    <string name="diary_hint_today_pending">%1$s · Today — not trained yet</string>
+    <string name="diary_hint_future">%1$s · Not yet</string>
+    <string name="diary_minutes">%1$d min</string>
+    <string name="diary_weekly_volume_title">Weekly volume</string>
+    <string name="diary_week_label">W%1$d</string>
+    <string name="diary_pr_title">Personal records (PR)</string>
+    <string name="diary_pr_empty">No records yet — finish your first workout to start</string>
+    <string name="diary_recent_title">Recent sessions</string>
+    <string name="diary_recent_empty">No sessions yet</string>
+    <string name="diary_recent_meta">%1$s min · %2$s kg</string>
 
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Coming in the next gate</string>

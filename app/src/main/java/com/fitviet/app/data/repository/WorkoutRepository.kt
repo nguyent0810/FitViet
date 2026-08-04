@@ -6,15 +6,23 @@ import com.fitviet.app.data.local.entity.SetLogEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.ui.workout.LoggedSet
 
-class WorkoutRepository(
-    private val workoutSessionDao: WorkoutSessionDao,
-    private val setLogDao: SetLogDao,
-) {
-    suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long =
-        workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis))
+interface WorkoutRepository {
+    suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long
 
     /** Persisted as each set completes rather than batched at the end, so a killed process doesn't lose logged sets. */
-    suspend fun logSet(sessionId: Long, set: LoggedSet) {
+    suspend fun logSet(sessionId: Long, set: LoggedSet)
+
+    suspend fun completeSession(sessionId: Long, completedAtMillis: Long, totalVolumeKg: Double, durationSeconds: Int)
+}
+
+class RoomWorkoutRepository(
+    private val workoutSessionDao: WorkoutSessionDao,
+    private val setLogDao: SetLogDao,
+) : WorkoutRepository {
+    override suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long =
+        workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis))
+
+    override suspend fun logSet(sessionId: Long, set: LoggedSet) {
         setLogDao.insert(
             SetLogEntity(
                 sessionId = sessionId,
@@ -28,7 +36,7 @@ class WorkoutRepository(
         )
     }
 
-    suspend fun completeSession(sessionId: Long, completedAtMillis: Long, totalVolumeKg: Double, durationSeconds: Int) {
+    override suspend fun completeSession(sessionId: Long, completedAtMillis: Long, totalVolumeKg: Double, durationSeconds: Int) {
         val session = workoutSessionDao.getById(sessionId) ?: return
         workoutSessionDao.update(
             session.copy(completedAt = completedAtMillis, totalVolumeKg = totalVolumeKg, durationSeconds = durationSeconds),

@@ -138,5 +138,43 @@ Approved by codex, pushed to `origin/master` (`b419417`).
 
 **Pass 4 fix + confirmation:** added the two missing phase guards, switched the debounce clock to `elapsedRealtime()`. Confirmed clean, with one accepted low-severity note: the debounce is a single global timestamp, so two *different* legitimate actions fired within 350ms of each other would have the second one dropped — accepted given screen-transition/perception time between distinct actions in practice makes this edge case very unlikely, and per-action keyed debouncing wasn't judged worth the added complexity here.
 
+### Push
+Approved by codex, pushed to `origin/master` (`3089758`).
+
+## Gate 5 — Exercise detail (1d) + Diary & stats (1f)
+
+### Testability refactor (not a new feature — closes a gap from Gate 4)
+The brief asked for unit tests on the workout state machine specifically. Gate 4 built it but `WorkoutViewModel` wasn't actually testable: it depended on concrete Room-backed repository classes and hardcoded `android.os.SystemClock`. Fixed before writing tests:
+- `ExerciseRepository`/`WorkoutRepository` split into interface + `Room*` impl (`data/repository/`), so tests can supply fakes.
+- `WorkoutViewModel` gained an injectable `elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime` — `SystemClock` is stubbed to a constant `0` in plain JVM unit tests, which would make the Gate 4 debounce silently block every action forever if left hardcoded.
+- `WorkoutViewModelTest.kt` (14 tests): set completion/rest/skip/add-rest, block-done transitions, full straight-block completion, superset A→B/round/rest/block-done, session finish, debounce rejection, reset. Uses `StandardTestDispatcher` + fakes + a `FakeClock`.
+- `DiaryStatsCalculatorTest.kt`: the 4-week bucketing pure function, same pattern as Gate 3's `DashboardStatsCalculatorTest`.
+
+### What was built
+- `ui/exercise/{ExerciseDetailScreen,ExerciseDetailViewModel}.kt` (1d): media placeholder, muscle/equipment chips, numbered instructions, suggested set/rep/rest tiles, "Thêm vào buổi tập" toggle.
+- `ui/diary/{DiaryScreen,DiaryViewModel}.kt` (1f): 7-day strip (done/rest/selected, tap for a hint card with real matched-session data), 4-week volume chart, personal-bests list, recent-sessions list.
+- `data/repository/DiaryRepository.kt`, `domain/DiaryStatsCalculator.kt`, `SetLogDao.observePersonalBests()` (joins `set_logs`→`exercises`→`workout_sessions`, requiring `completedAt IS NOT NULL` so PRs only count completed workouts).
+- `data/repository/DayTicker.kt` — extracted the midnight-rollover `Flow<LocalDate>` ticker out of Gate 3's `DashboardRepository` into a shared internal function; `DiaryRepository` now uses the same one instead of a second copy.
+- **Entry points**: 1c's search (placeholder already said "Tìm giáo án, bài tập…") now also surfaces matching `ExerciseEntity` rows, tapping one opens 1d. The dashboard's weekly-volume card is now tappable to open 1f (1f isn't one of the 5 bottom-nav tabs, so it needed a launch point).
+
+### Scope decisions (documented, not defects)
+- **"Thêm vào buổi tập" is a local-only visual toggle.** There's no custom session-builder feature (the workout flow uses a fixed demo plan — Gate 4) for it to actually add anything to, so it matches the prototype's visual affordance without being wired to real behavior. Revisit if a real session builder gets built.
+- **English locale still shows Vietnamese exercise/session content** on 1d and 1f — same documented decision as Gates 3–4 (Vietnamese-first content vs. UI chrome), extended here rather than fixed.
+
+### Codex review — 3 passes
+**Pass 1 findings and fixes:**
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `ExerciseDetailScreen`'s `FlowRow` imported `ExperimentalLayoutApi` from `material3` instead of `foundation.layout` — wouldn't compile | Fixed the import |
+| 2 (High) | `WorkoutViewModelTest`'s `FakeClock` started at `0`, matching `WorkoutViewModel`'s zero-initialized `lastActionAtMillis` — the very first debounced action in every test was silently rejected, so most assertions were testing a no-op | `FakeClock` now starts at `10_000L` |
+| 3 (Medium) | `ProgramsViewModel`'s new exercise-search flow did a one-shot `getAll()` without awaiting `databaseReady` — if collected before seeding finished, it would emit an empty list once and never refresh (unlike the Room-observed programs flow) | Added the same `databaseReady.await()` pattern `WorkoutViewModel` already uses |
+| 5 (Medium) | `DiaryScreen`'s day-hint used `firstOrNull` for the selected day's session — wrong totals if a day has more than one completed session | Aggregates all matching sessions (sum duration/volume, join day labels) |
+| 6 (Low) | `observePersonalBests` didn't check `completedAt IS NOT NULL` — sets logged during an abandoned/reset session (Gate 4's "Làm lại" leaves orphaned rows by design) could count toward a PR | Joined `workout_sessions`, added the `completedAt IS NOT NULL` filter |
+| 7 (Low) | Diary inherited the same day-rollover staleness Gate 3 fixed for the dashboard, but as a fresh copy | Extracted the fix into shared `DayTicker.kt`, used by both repositories instead of duplicating |
+
+**Pass 2** confirmed all six fixes, but re-flagged the UI layer: `DiaryScreen`'s `DayStrip`/`DayHintCard` and `DashboardScreen`'s greeting still cached `LocalDate.now()` in `remember {}`, so even though the *repositories* now correctly re-derive "today" at midnight, these composables wouldn't pick up the new date until torn down and recreated. (Gate 3 had left an equivalent residual as accepted-low-severity for the dashboard alone; here it affects real branching logic — rest/pending/future classification — not just display text, so worth fixing rather than re-deferring.) Fix: dropped `remember` on all three — recomputed every recomposition, which already happens whenever the ticking repository emits.
+
+**Pass 3** confirmed clean.
+
 ### Next
-Gate 5: Exercise detail (1d) + Diary & stats (1f).
+Gate 6: Nutrition (1g) with a local VN food DB + Profile/settings/donate (1i).

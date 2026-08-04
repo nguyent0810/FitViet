@@ -49,6 +49,9 @@ class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
     private val databaseReady: Deferred<Unit>,
+    // Injectable so tests can supply a controllable fake — android.os.SystemClock is stubbed to a
+    // constant 0 in plain JVM unit tests, which would make every debounced action a permanent no-op.
+    private val elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WorkoutUiState())
     val uiState: StateFlow<WorkoutUiState> = _uiState.asStateFlow()
@@ -70,7 +73,7 @@ class WorkoutViewModel(
      * superset A only flips `supersetSub`), so a phase check alone doesn't catch every case.
      */
     private inline fun debounced(action: () -> Unit) {
-        val now = SystemClock.elapsedRealtime()
+        val now = elapsedRealtimeMillis()
         if (now - lastActionAtMillis < ACTION_DEBOUNCE_MILLIS) return
         lastActionAtMillis = now
         action()

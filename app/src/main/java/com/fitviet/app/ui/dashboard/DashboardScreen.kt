@@ -20,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,9 +58,12 @@ fun DashboardScreen(
     viewModel: DashboardViewModel,
     onStartWorkout: () -> Unit,
     onBrowsePrograms: () -> Unit,
+    onOpenDiary: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val today = remember { LocalDate.now() }
+    // Not `remember`ed: recomputed each recomposition (including the ones the repository's
+    // midnight tick triggers) so the greeting date doesn't freeze at whatever day this opened on.
+    val today = LocalDate.now()
 
     Column(
         modifier = Modifier
@@ -85,6 +87,7 @@ fun DashboardScreen(
             last7Days = uiState.stats.last7Days,
             selectedIndex = uiState.selectedDayIndex,
             onSelectDay = viewModel::selectDay,
+            onOpenDiary = onOpenDiary,
         )
         NutritionCard(kcalToday = uiState.kcalToday, kcalGoal = uiState.kcalGoal)
     }
@@ -216,6 +219,7 @@ private fun WeeklyVolumeCard(
     last7Days: List<DayVolume>,
     selectedIndex: Int,
     onSelectDay: (Int) -> Unit,
+    onOpenDiary: () -> Unit,
 ) {
     val selected = last7Days.getOrNull(selectedIndex)
     val maxVolume = last7Days.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 1.0
@@ -228,7 +232,11 @@ private fun WeeklyVolumeCard(
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDiary),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(text = stringResource(R.string.dashboard_weekly_volume_title), style = MaterialTheme.typography.titleSmall)
             if (selected != null) {
                 val dayLabel = stringResource(selected.date.dayOfWeek.shortLabelRes())

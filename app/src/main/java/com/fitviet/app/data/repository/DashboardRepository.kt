@@ -7,17 +7,12 @@ import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
-import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 
 data class DashboardData(
     val stats: DashboardStats,
@@ -55,15 +50,6 @@ class DashboardRepository(
                     featuredProgram = programs.firstOrNull(),
                 )
             }
-        }
-    }
-
-    private fun dayTicker(zone: ZoneId): Flow<LocalDate> = flow {
-        while (true) {
-            val now = ZonedDateTime.now(zone)
-            emit(now.toLocalDate())
-            val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(zone)
-            delay(Duration.between(now, nextMidnight).toMillis().coerceAtLeast(1_000))
         }
     }
 }

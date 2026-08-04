@@ -24,6 +24,10 @@ import com.fitviet.app.data.AppContainer
 import com.fitviet.app.ui.common.PlaceholderScreen
 import com.fitviet.app.ui.dashboard.DashboardScreen
 import com.fitviet.app.ui.dashboard.DashboardViewModel
+import com.fitviet.app.ui.diary.DiaryScreen
+import com.fitviet.app.ui.diary.DiaryViewModel
+import com.fitviet.app.ui.exercise.ExerciseDetailScreen
+import com.fitviet.app.ui.exercise.ExerciseDetailViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
 import com.fitviet.app.ui.onboarding.SplitScreen
@@ -125,16 +129,36 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             restoreState = true
                         }
                     },
+                    onOpenDiary = { navController.navigate(FitVietDestination.Diary.route) },
                 )
             }
             composable(FitVietDestination.Programs.route) {
-                val viewModel: ProgramsViewModel = viewModel(factory = ProgramsViewModel.Factory(container.programRepository))
+                val viewModel: ProgramsViewModel = viewModel(
+                    factory = ProgramsViewModel.Factory(container.programRepository, container.exerciseRepository, container.databaseReady),
+                )
                 ProgramsListScreen(
                     viewModel = viewModel,
                     onProgramClick = { program ->
                         navController.navigate(FitVietDestination.ProgramSchedule.createRoute(program.id))
                     },
+                    onExerciseClick = { exercise ->
+                        navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
+                    },
                 )
+            }
+            composable(FitVietDestination.Diary.route) {
+                val viewModel: DiaryViewModel = viewModel(factory = DiaryViewModel.Factory(container.diaryRepository))
+                DiaryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(
+                route = FitVietDestination.ExerciseDetail.route,
+                arguments = listOf(navArgument(FitVietDestination.ExerciseDetail.ARG_EXERCISE_ID) { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val exerciseId = backStackEntry.arguments?.getLong(FitVietDestination.ExerciseDetail.ARG_EXERCISE_ID) ?: 0L
+                val viewModel: ExerciseDetailViewModel = viewModel(
+                    factory = ExerciseDetailViewModel.Factory(exerciseId, container.exerciseRepository),
+                )
+                ExerciseDetailScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
                 route = FitVietDestination.ProgramSchedule.route,
