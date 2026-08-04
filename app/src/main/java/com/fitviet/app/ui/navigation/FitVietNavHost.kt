@@ -21,7 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitviet.app.data.AppContainer
-import com.fitviet.app.ui.common.PlaceholderScreen
+import com.fitviet.app.ui.community.CommunityScreen
+import com.fitviet.app.ui.community.CommunityViewModel
 import com.fitviet.app.ui.dashboard.DashboardScreen
 import com.fitviet.app.ui.dashboard.DashboardViewModel
 import com.fitviet.app.ui.diary.DiaryScreen
@@ -202,7 +203,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: NutritionViewModel = viewModel(factory = NutritionViewModel.Factory(container.nutritionRepository))
                 NutritionScreen(viewModel = viewModel)
             }
-            composable(FitVietDestination.Community.route) { PlaceholderScreen(title = "Cộng đồng") }
+            composable(FitVietDestination.Community.route) {
+                val viewModel: CommunityViewModel = viewModel(factory = CommunityViewModel.Factory(container.communityRepository))
+                CommunityScreen(viewModel = viewModel)
+            }
         }
     }
 }

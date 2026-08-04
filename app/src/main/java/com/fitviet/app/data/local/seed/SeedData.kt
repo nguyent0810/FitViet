@@ -1,5 +1,7 @@
 package com.fitviet.app.data.local.seed
 
+import com.fitviet.app.data.local.entity.CommunityPostEntity
+import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
@@ -151,6 +153,39 @@ object SeedData {
         MealPreset(nameVi = "Sữa tươi không đường 200ml", kcal = 130, proteinG = 7, carbG = 10, fatG = 7),
         MealPreset(nameVi = "Cơm tấm sườn", kcal = 680, proteinG = 32, carbG = 82, fatG = 24),
         MealPreset(nameVi = "Chuối", kcal = 105, proteinG = 1, carbG = 27, fatG = 0),
+    )
+
+    /** The 3 demo posts from 1h — content, like counts, and comment counts verbatim from the prototype. */
+    val communityPosts = listOf(
+        CommunityPostEntity(
+            authorInitial = "H",
+            authorName = "Hùng Trần",
+            timeLabel = "2 giờ trước · Tiến bộ",
+            postType = CommunityPostType.PROGRESS,
+            bodyText = "Sau 8 tuần theo giáo án 5×5, deadlift từ 80kg lên 110kg. Kiên trì là có kết quả anh em ơi!",
+            badgeText = "PR MỚI · DEADLIFT 110KG",
+            baseLikeCount = 48,
+            commentCount = 12,
+        ),
+        CommunityPostEntity(
+            authorInitial = "L",
+            authorName = "Lan Phạm",
+            timeLabel = "5 giờ trước · Hỏi đáp",
+            postType = CommunityPostType.QA,
+            bodyText = "Mới tập được 2 tuần, đau nhức cơ sau buổi chân thì có nên nghỉ hẳn không hay tập nhẹ?",
+            hasBestAnswerMarker = true,
+            baseLikeCount = 15,
+            commentCount = 23,
+        ),
+        CommunityPostEntity(
+            authorInitial = "T",
+            authorName = "Tuấn Vũ",
+            timeLabel = "Hôm qua · Chia sẻ",
+            postType = CommunityPostType.SHARE,
+            bodyText = "Chia sẻ thực đơn 2.400 kcal toàn món Việt dễ nấu cho anh em tăng cơ, ai cần mình gửi chi tiết.",
+            baseLikeCount = 96,
+            commentCount = 41,
+        ),
     )
 
     /**

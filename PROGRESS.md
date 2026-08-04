@@ -218,3 +218,32 @@ Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62
 
 ### Next
 Gate 7 candidates from the README's remaining screens: 1h Community (the one screen documented as intentionally online/best-effort-offline), and/or wiring the Ngôn ngữ/Đơn vị settings from Gate 6 to actually take effect app-wide if the user wants that scope.
+
+## Gate 7 — Community (1h)
+
+The last of the 12 spec screens.
+
+### What was built
+- `data/local/entity/CommunityPostEntity.kt` + `CommunityPostType` (SHARE/QA/PROGRESS, matching the prototype's `type` field) — `data/local/dao/CommunityPostDao.kt` (`observeAll`, `insertAll`, `setLiked`). Registered in `FitVietDatabase`'s entity list; schema stays version 1 (same "pre-release, no migration needed" call Gate 2 made for its own additions).
+- `SeedData.communityPosts` — the 3 demo posts verbatim from the prototype (Hùng Trần/Tiến bộ/PR badge, Lan Phạm/Hỏi đáp/best-answer marker, Tuấn Vũ/Chia sẻ), seeded once in `DatabaseSeeder` alongside the other first-launch content.
+- `domain/CommunityFilter.kt` — pure tab filter (`tab == 0` shows everything including "Chia sẻ" posts that have no dedicated tab; tabs 1/2 match that exact `postType`), with `CommunityFilterTest.kt` (3 tests: all-posts, Q&A-only, progress-only).
+- `data/repository/CommunityRepository.kt` — thin `observe()`/`toggleLike()` wrapper, no `dayTicker` needed here (nothing in this feed is date-relative).
+- `ui/community/{CommunityScreen,CommunityViewModel}.kt` (1h) — title + static "+ Đăng bài" (no `onClick` in the prototype either — no real post-composer built), 3 filter tabs (reusing the same `PillShape` chip styling as `ProgramsListScreen`'s `FilterChips`), post cards with avatar-initial circle, optional PR badge, ♡/♥ like toggle (displayed count = seed `baseLikeCount` + 1 if liked-by-user, matching the prototype's `likes[i] + (liked[i] ? 1 : 0)`), comment count (Q&A posts say "trả lời", others "bình luận"), and the "1 trả lời hay nhất" marker only on the one post with `hasBestAnswerMarker`.
+- Wired `AppContainer.communityRepository` and swapped the Community bottom-nav route from `PlaceholderScreen` to the real screen.
+- **Deleted `ui/common/PlaceholderScreen.kt`** and its now-orphaned `placeholder_coming_soon` string resource — with Community built, nothing references either anymore (all 12 screens are now implemented).
+
+### Scope decisions (documented, not defects)
+- **Likes/comments are local-only, no real backend.** The README calls Community "the only online feature" and says it "must degrade gracefully offline" — this app has no server at all (by design, per the README's own "fully offline operation" differentiator), so the honest reading is: posts are seeded once (as if last synced before going offline) and the like toggle persists locally in Room, which trivially satisfies "degrades gracefully offline" since it never depends on a network call in the first place. Building a real backend/sync layer is out of scope for a native client gate.
+- **"+ Đăng bài" is a static label, matching the prototype** — it's the one header element in the 1h markup without an `onClick`, same category as 1i's "Sao lưu dữ liệu" row from Gate 6.
+
+### On `codex` availability (correction from Gate 6)
+Gate 6 said no `codex` CLI was available. That was checked with a bare `which codex` and was misleading: `npx @openai/codex` *does* fetch and run (this environment's proxy allows npm registry access) — but `codex exec` fails immediately because the proxy returns 403 for `api.openai.com` (not on this environment's host allowlist, same class of block as `dl.google.com`), and there's no `OPENAI_API_KEY`/`~/.codex/auth.json` configured either. So `codex` is reachable-but-non-functional here, not literally absent — worth re-checking in an environment with OpenAI API egress.
+
+### Verification
+Same environment constraints as Gate 6 (no real Gradle build possible). Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/repository layer including the new `CommunityPostEntity`/`CommunityPostDao`/`CommunityFilter`/`CommunityRepository` — clean, no errors — and the new `CommunityFilterTest`: **3/3 pass**. Compose UI layer (`CommunityScreen`, `CommunityViewModel`, nav wiring) verified by manual read-through against the same proven-compiling precedents as Gate 6, plus grepped the full source tree to confirm no other file still references the deleted `PlaceholderScreen`/`placeholder_coming_soon`. An independent review pass (same general-purpose-agent stand-in used for Gate 6) was still in flight at commit time; findings, if any, land as a follow-up commit.
+
+### Push
+Pushed to `origin/claude/routines-code-session-n62xmx` with the independent review in flight; will follow up if it finds anything.
+
+### Next
+All 12 spec screens are now built. Remaining candidates, not yet scoped into a gate: wiring Ngôn ngữ/Đơn vị (Gate 6) to actually take effect app-wide; a real create-post flow for 1h's "+ Đăng bài"; exercise media (the README's placeholder-asset gap — free-exercise-db/wger licensing to check first); and getting a real Gradle/Android SDK build running (blocked purely by this environment's network policy, not by anything in the code).

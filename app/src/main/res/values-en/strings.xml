@@ -236,6 +236,13 @@
     <string name="profile_update_sheet_title">Update measurements</string>
     <string name="profile_update_save">Save</string>
 
-    <!-- Placeholder screens (built in later gates) -->
-    <string name="placeholder_coming_soon">Coming in the next gate</string>
+    <!-- 1h Community -->
+    <string name="community_title">Community</string>
+    <string name="community_add_post">+ New post</string>
+    <string name="community_tab_latest">Latest</string>
+    <string name="community_tab_qa">Q&amp;A</string>
+    <string name="community_tab_progress">Progress</string>
+    <string name="community_comments">💬 %1$d comments</string>
+    <string name="community_replies">💬 %1$d replies</string>
+    <string name="community_best_answer">1 best answer</string>
 </resources>

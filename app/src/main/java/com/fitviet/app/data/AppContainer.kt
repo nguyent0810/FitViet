@@ -3,6 +3,7 @@ package com.fitviet.app.data
 import android.content.Context
 import com.fitviet.app.data.local.FitVietDatabase
 import com.fitviet.app.data.local.seed.DatabaseSeeder
+import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
 import com.fitviet.app.data.repository.NutritionRepository
@@ -40,6 +41,7 @@ class AppContainer(context: Context) {
         settingsDao = database.settingsDao(),
         measurementDao = database.measurementDao(),
     )
+    val communityRepository = CommunityRepository(database.communityPostDao())
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's
      * exercise catalog) must await this first so they don't race an empty, not-yet-seeded table. */

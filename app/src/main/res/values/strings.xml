@@ -236,6 +236,13 @@
     <string name="profile_update_sheet_title">Cập nhật số đo</string>
     <string name="profile_update_save">Lưu</string>
 
-    <!-- Placeholder screens (built in later gates) -->
-    <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
+    <!-- 1h Community -->
+    <string name="community_title">Cộng đồng</string>
+    <string name="community_add_post">+ Đăng bài</string>
+    <string name="community_tab_latest">Mới nhất</string>
+    <string name="community_tab_qa">Hỏi đáp</string>
+    <string name="community_tab_progress">Tiến bộ</string>
+    <string name="community_comments">💬 %1$d bình luận</string>
+    <string name="community_replies">💬 %1$d trả lời</string>
+    <string name="community_best_answer">1 trả lời hay nhất</string>
 </resources>
