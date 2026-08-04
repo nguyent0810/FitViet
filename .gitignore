@@ -1,0 +1,27 @@
+# Secrets
+.git-credentials.local
+*.local
+
+# Gradle
+.gradle/
+build/
+app/build/
+*/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local config
+local.properties
+
+# Keystores
+*.jks
+*.keystore
+
+# Logs
+*.log

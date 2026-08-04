@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Used by the XML theme/launcher icon only; Compose UI reads colors from ui/theme/Color.kt -->
+    <color name="app_canvas">#0A0C0B</color>
+    <color name="accent">#52E077</color>
+    <color name="on_accent">#06170B</color>
+</resources>

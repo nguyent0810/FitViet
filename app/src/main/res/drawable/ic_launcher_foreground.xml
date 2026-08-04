@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Placeholder mark: weight-plate ring. Replace with final brand icon later. -->
+    <path
+        android:fillColor="#52E077"
+        android:fillType="evenOdd"
+        android:pathData="M54,20 a34,34 0 1,1 -0.01,0 z M54,38 a16,16 0 1,0 0.01,0 z" />
+</vector>

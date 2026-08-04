@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitViet</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Trang chủ</string>
+    <string name="nav_programs">Giáo án</string>
+    <string name="nav_workout_fab">TẬP</string>
+    <string name="nav_nutrition">Dinh dưỡng</string>
+    <string name="nav_community">Cộng đồng</string>
+
+    <!-- 1a Onboarding — goal & level -->
+    <string name="onboarding_goal_title">Mục tiêu của bạn là gì?</string>
+    <string name="onboarding_goal_subtitle">Giáo án sẽ được gợi ý theo mục tiêu này. Bạn có thể đổi bất cứ lúc nào.</string>
+    <string name="goal_muscle_gain_title">Tăng cơ</string>
+    <string name="goal_muscle_gain_sub">Xây dựng khối cơ, tăng cân sạch</string>
+    <string name="goal_fat_loss_title">Giảm mỡ</string>
+    <string name="goal_fat_loss_sub">Đốt calo, giữ cơ khi siết</string>
+    <string name="goal_strength_title">Tăng sức mạnh</string>
+    <string name="goal_strength_sub">Tập trung các bài compound nặng</string>
+    <string name="goal_health_title">Giữ dáng, khỏe mạnh</string>
+    <string name="goal_health_sub">Duy trì vận động đều đặn</string>
+    <string name="onboarding_level_label">Trình độ hiện tại</string>
+    <string name="level_beginner">Mới bắt đầu</string>
+    <string name="level_intermediate">Trung cấp</string>
+    <string name="level_advanced">Nâng cao</string>
+    <string name="onboarding_continue">Tiếp tục</string>
+    <string name="onboarding_footer">Miễn phí 100%\u0020·\u0020Không cần tài khoản</string>
+
+    <!-- 2a Onboarding — training split -->
+    <string name="split_title">Bạn muốn chia lịch tập thế nào?</string>
+    <string name="split_subtitle_prefix">Gợi ý theo số buổi/tuần bạn đã chọn:\u0020</string>
+    <string name="split_subtitle_days">%1$d buổi</string>
+    <string name="split_recommended_badge">GỢI Ý</string>
+    <string name="split_ppl_title">Push – Pull – Legs</string>
+    <string name="split_ppl_sub">Đẩy · Kéo · Chân — cân bằng, hợp 3 hoặc 6 buổi/tuần</string>
+    <string name="split_upper_lower_title">Upper – Lower</string>
+    <string name="split_upper_lower_sub">Thân trên · thân dưới — mỗi nhóm cơ 2 lần/tuần với 4 buổi</string>
+    <string name="split_chest_back_title">Ngực + tay sau / Xô + tay trước</string>
+    <string name="split_chest_back_sub">Ghép nhóm cơ hỗ trợ — tiết kiệm thời gian, cơ phụ đã nóng</string>
+    <string name="split_bro_title">Bro split</string>
+    <string name="split_bro_sub">Mỗi ngày 1–2 nhóm cơ — tập sâu, pump tốt</string>
+    <string name="split_fullbody_title">Full body</string>
+    <string name="split_fullbody_sub">Toàn thân mỗi buổi — hợp người mới, 2–3 buổi/tuần</string>
+    <string name="split_info_prefix">Ưu tiên riêng:\u0020</string>
+    <string name="split_info_body">thêm 2 ngày ngực, 2 ngày tay… — tùy chỉnh ở bước sau.</string>
+    <string name="split_continue">Tiếp tục</string>
+
+    <!-- Placeholder screens (built in later gates) -->
+    <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
+</resources>

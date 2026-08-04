@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitViet</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_programs">Programs</string>
+    <string name="nav_workout_fab">TRAIN</string>
+    <string name="nav_nutrition">Nutrition</string>
+    <string name="nav_community">Community</string>
+
+    <!-- 1a Onboarding — goal & level -->
+    <string name="onboarding_goal_title">What\'s your goal?</string>
+    <string name="onboarding_goal_subtitle">Your program will be suggested based on this goal. You can change it anytime.</string>
+    <string name="goal_muscle_gain_title">Build muscle</string>
+    <string name="goal_muscle_gain_sub">Build lean mass, clean bulk</string>
+    <string name="goal_fat_loss_title">Lose fat</string>
+    <string name="goal_fat_loss_sub">Burn calories, keep muscle while cutting</string>
+    <string name="goal_strength_title">Get stronger</string>
+    <string name="goal_strength_sub">Focus on heavy compound lifts</string>
+    <string name="goal_health_title">Stay fit &amp; healthy</string>
+    <string name="goal_health_sub">Keep moving consistently</string>
+    <string name="onboarding_level_label">Current level</string>
+    <string name="level_beginner">Beginner</string>
+    <string name="level_intermediate">Intermediate</string>
+    <string name="level_advanced">Advanced</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_footer">100% free · No account needed</string>
+
+    <!-- 2a Onboarding — training split -->
+    <string name="split_title">How do you want to split your training?</string>
+    <string name="split_subtitle_prefix">Suggested for the sessions/week you picked: </string>
+    <string name="split_subtitle_days">%1$d sessions</string>
+    <string name="split_recommended_badge">SUGGESTED</string>
+    <string name="split_ppl_title">Push – Pull – Legs</string>
+    <string name="split_ppl_sub">Push · Pull · Legs — balanced, fits 3 or 6 sessions/week</string>
+    <string name="split_upper_lower_title">Upper – Lower</string>
+    <string name="split_upper_lower_sub">Upper · lower body — each muscle group twice/week over 4 sessions</string>
+    <string name="split_chest_back_title">Chest + triceps / Back + biceps</string>
+    <string name="split_chest_back_sub">Pairs supporting muscle groups — saves time, secondary muscles pre-warmed</string>
+    <string name="split_bro_title">Bro split</string>
+    <string name="split_bro_sub">1–2 muscle groups per day — deep work, great pump</string>
+    <string name="split_fullbody_title">Full body</string>
+    <string name="split_fullbody_sub">Whole body each session — great for beginners, 2–3 sessions/week</string>
+    <string name="split_info_prefix">Custom priorities: </string>
+    <string name="split_info_body">add 2 chest days, 2 arm days… — customize in a later step.</string>
+    <string name="split_continue">Continue</string>
+
+    <!-- Placeholder screens (built in later gates) -->
+    <string name="placeholder_coming_soon">Coming in the next gate</string>
+</resources>

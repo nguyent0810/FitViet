@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Anton&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0C0B}
+a{color:#52E077;text-decoration:none}
+a:hover{color:#7CEB9E}
+</style>
+</helmet>
+<section style="display:flex;flex-wrap:wrap;gap:44px;padding:48px 48px 0;align-items:flex-start;font-family:'Be Vietnam Pro',sans-serif">
+
+<!-- 2a Split picker -->
+<div id="2a" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">2a</span>Chọn kiểu chia buổi · tương tác</div>
+<div data-screen-label="Chọn kiểu chia buổi" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:20px 24px 0;display:flex;flex-direction:column;gap:16px;flex:1;overflow:hidden">
+<div style="display:flex;gap:6px"><div style="height:4px;flex:1;border-radius:2px;background:#52E077"></div><div style="height:4px;flex:1;border-radius:2px;background:#52E077"></div><div style="height:4px;flex:1;border-radius:2px;background:#232A25"></div></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:26px;font-weight:800;line-height:1.2">Bạn muốn chia lịch tập thế nào?</h1>
+<p style="margin:0;font-size:13px;color:#93A097">Gợi ý theo số buổi/tuần bạn đã chọn: <span style="color:#52E077;font-weight:700">6 buổi</span></p>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ splitRows }}" as="s" hint-placeholder-count="5">
+<div onClick="{{ s.select }}" style="padding:14px 16px;border-radius:14px;background:{{ s.bg }};border:1.5px solid {{ s.border }};display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+<div style="flex:1"><div style="display:flex;gap:8px;align-items:center"><span style="font-weight:700;font-size:14px">{{ s.title }}</span><sc-if value="{{ s.rec }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;font-weight:800;color:#06170B;background:#52E077;border-radius:5px;padding:2px 6px">GỢI Ý</span></sc-if></div><div style="font-size:11px;color:#93A097;margin-top:3px">{{ s.sub }}</div></div>
+<div style="width:18px;height:18px;border-radius:50%;background:{{ s.dotBg }};border:1.5px solid {{ s.dotBorder }};flex-shrink:0;margin-left:10px"></div>
+</div>
+</sc-for>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px 14px;font-size:12px;color:#93A097;line-height:1.5"><span style="color:#52E077;font-weight:700">Ưu tiên riêng:</span> thêm 2 ngày ngực, 2 ngày tay… — tùy chỉnh ở bước sau.</div>
+</div>
+<div style="padding:14px 24px 26px"><div onClick="{{ saveSplit }}" style="background:#52E077;color:#06170B;text-align:center;padding:15px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#6BEA8E">{{ splitBtnLabel }}</div></div>
+</div>
+</div>
+
+<!-- 2b Weekly schedule -->
+<div id="2b" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">2b</span>Lịch tuần PPL — chạm để chọn ngày</div>
+<div data-screen-label="Lịch tuần" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="font-size:22px;font-weight:800">Lịch tuần của bạn</div>
+<div style="font-size:13px;color:#93A097">Push–Pull–Legs biến thể · ưu tiên ngực &amp; tay · 6 buổi/tuần</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ schedRows }}" as="d" hint-placeholder-count="7">
+<div onClick="{{ d.select }}" style="background:{{ d.bg }};border:1.5px solid {{ d.border }};border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:14px;cursor:pointer">
+<span style="font-family:Anton;font-size:15px;color:{{ d.dayColor }};width:26px">{{ d.day }}</span>
+<div style="flex:1"><div style="display:flex;gap:8px;align-items:center"><span style="font-size:14px;font-weight:700;color:{{ d.titleColor }}">{{ d.title }}</span><sc-if value="{{ d.today }}" hint-placeholder-val="{{ false }}"><span style="font-size:9px;font-weight:800;color:#06170B;background:#52E077;border-radius:5px;padding:2px 6px">HÔM NAY</span></sc-if></div><div style="font-size:11px;color:#93A097">{{ d.sub }}</div></div>
+<span style="font-size:11px;color:{{ d.rightColor }};font-weight:{{ d.rightWeight }}">{{ d.right }}</span>
+</div>
+</sc-for>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px 14px;font-size:12px;color:#93A097;line-height:1.5">{{ schedHint }}</div>
+</div>
+</div>
+</div>
+
+<!-- 2c Superset (interactive) -->
+<div id="2c" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">2c</span>Superset — flow tương tác + chọn kỹ thuật</div>
+<div data-screen-label="Superset" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<sc-if value="{{ ssPhaseWork }}" hint-placeholder-val="{{ true }}">
+<div style="padding:12px 24px 0;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:13px;color:#93A097">Push 2 · Bài 4–5/6</div><div style="display:flex;gap:8px;align-items:center"><span style="font-size:19px;font-weight:800">Superset A</span><span style="font-size:9px;font-weight:800;color:#06170B;background:#52E077;border-radius:5px;padding:2px 6px">2 BÀI LIÊN TIẾP</span></div></div><div onClick="{{ ssReset }}" style="font-size:11px;color:#7d8a80;border:1px solid #232A25;border-radius:8px;padding:6px 10px;cursor:pointer">Làm lại</div></div>
+<div style="background:{{ ssA1bg }};border:1.5px solid {{ ssA1border }};border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><span style="width:26px;height:26px;border-radius:8px;background:{{ ssA1badgeBg }};color:{{ ssA1badgeColor }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">A1</span><div style="flex:1"><div style="font-size:14px;font-weight:700">Cable fly</div><div style="font-size:11px;color:#93A097">15 kg × 12 reps · Ngực</div></div><span style="font-size:11px;color:{{ ssA1tagColor }};font-weight:700">{{ ssA1tag }}</span></div>
+<div style="display:flex;justify-content:center"><span style="font-size:11px;color:#7d8a80">↓ không nghỉ ↓</span></div>
+<div style="background:{{ ssA2bg }};border:1.5px solid {{ ssA2border }};border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><span style="width:26px;height:26px;border-radius:8px;background:{{ ssA2badgeBg }};color:{{ ssA2badgeColor }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">A2</span><div style="flex:1"><div style="font-size:14px;font-weight:700">Lateral raise</div><div style="font-size:11px;color:#93A097">8 kg × 15 reps · Vai giữa</div></div><span style="font-size:11px;color:{{ ssA2tagColor }};font-weight:700">{{ ssA2tag }}</span></div>
+<div style="display:flex;gap:10px;font-size:12px;color:#93A097;justify-content:center"><span>Vòng <span style="color:#EDF2EE;font-weight:700">{{ ssRoundLabel }}</span></span><span>·</span><span>Nghỉ sau vòng: <span style="color:#EDF2EE;font-weight:700">{{ ssRestSecs }}s</span></span></div>
+<div onClick="{{ ssNext }}" style="background:#52E077;color:#06170B;text-align:center;padding:14px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#6BEA8E">{{ ssBtnLabel }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ ssPhaseRest }}" hint-placeholder-val="{{ false }}">
+<div style="height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px">
+<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:#93A097;text-transform:uppercase">Nghỉ sau vòng {{ ssDoneRound }}</div>
+<div style="font-family:Anton;font-size:80px;color:#52E077;line-height:1">{{ ssRestLabel }}</div>
+<div style="font-size:13px;color:#93A097">Tiếp theo: Vòng {{ ssRoundLabel }} · Cable fly</div>
+<div style="display:flex;gap:10px"><div onClick="{{ ssAddRest }}" style="padding:11px 20px;border-radius:12px;border:1px solid #2E5A3C;color:#52E077;font-weight:700;font-size:14px;cursor:pointer">+15 giây</div><div onClick="{{ ssSkipRest }}" style="padding:11px 20px;border-radius:12px;background:#52E077;color:#06170B;font-weight:800;font-size:14px;cursor:pointer">Bỏ qua</div></div>
+</div>
+</sc-if>
+<sc-if value="{{ ssPhaseDone }}" hint-placeholder-val="{{ false }}">
+<div style="height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px">
+<div style="width:60px;height:60px;border-radius:50%;background:#132217;border:2px solid #52E077;display:flex;align-items:center;justify-content:center;font-size:26px;color:#52E077">✓</div>
+<div style="font-size:20px;font-weight:800">Superset hoàn thành!</div>
+<div style="font-size:13px;color:#93A097">3 vòng · 6 set · Cable fly + Lateral raise</div>
+<div onClick="{{ ssReset }}" style="padding:12px 24px;border-radius:12px;border:1.5px solid #52E077;color:#52E077;font-weight:800;font-size:14px;cursor:pointer">Làm lại</div>
+</div>
+</sc-if>
+<div style="margin-top:auto;background:#121613;border-top:1px solid #262D28;border-radius:24px 24px 0 0;padding:18px 24px 26px;display:flex;flex-direction:column;gap:10px;box-shadow:0 -12px 30px rgba(0,0,0,.45)">
+<div style="width:36px;height:4px;border-radius:2px;background:#2C342E;margin:0 auto"></div>
+<div style="font-size:14px;font-weight:800">Kỹ thuật set cho bài này</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ ssTechRows }}" as="t" hint-placeholder-count="5">
+<div onClick="{{ t.select }}" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:{{ t.bg }};border:1.5px solid {{ t.border }};cursor:pointer"><div><span style="font-size:13px;font-weight:700">{{ t.name }}</span><span style="font-size:11px;color:#7d8a80"> · {{ t.desc }}</span></div><div style="width:15px;height:15px;border-radius:50%;background:{{ t.dotBg }};border:1.5px solid {{ t.dotBorder }}"></div></div>
+</sc-for>
+</div>
+<div style="font-size:11px;color:#7d8a80;text-align:center">Khác: antagonist superset · compound set · giant set · circuit</div>
+</div>
+</div>
+</div>
+
+</section>
+<section style="display:flex;flex-wrap:wrap;gap:44px;padding:48px;align-items:flex-start;font-family:'Be Vietnam Pro',sans-serif">
+
+<!-- 1a Onboarding -->
+<div id="1a" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1a</span>Onboarding — chạm để chọn mục tiêu &amp; trình độ</div>
+<div data-screen-label="Onboarding" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:20px 24px 0;display:flex;flex-direction:column;gap:22px;flex:1">
+<div style="display:flex;gap:6px"><div style="height:4px;flex:1;border-radius:2px;background:#52E077"></div><div style="height:4px;flex:1;border-radius:2px;background:{{ obStep2Bg }}"></div><div style="height:4px;flex:1;border-radius:2px;background:#232A25"></div></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:28px;font-weight:800;line-height:1.2">Mục tiêu của bạn là gì?</h1>
+<p style="margin:0;font-size:14px;color:#93A097">Giáo án sẽ được gợi ý theo mục tiêu này. Bạn có thể đổi bất cứ lúc nào.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ goalRows }}" as="g" hint-placeholder-count="4">
+<div onClick="{{ g.select }}" style="padding:16px 18px;border-radius:14px;background:{{ g.bg }};border:1.5px solid {{ g.border }};display:flex;justify-content:space-between;align-items:center;cursor:pointer"><div><div style="font-weight:700;font-size:15px">{{ g.title }}</div><div style="font-size:12px;color:#93A097">{{ g.sub }}</div></div><div style="width:18px;height:18px;border-radius:50%;background:{{ g.dotBg }};border:1.5px solid {{ g.dotBorder }}"></div></div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:13px;font-weight:600;color:#93A097">Trình độ hiện tại</div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ levelRows }}" as="l" hint-placeholder-count="3">
+<div onClick="{{ l.select }}" style="flex:1;text-align:center;padding:10px 0;border-radius:10px;background:{{ l.bg }};border:1.5px solid {{ l.border }};font-size:13px;font-weight:600;color:{{ l.color }};cursor:pointer">{{ l.name }}</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="padding:16px 24px 28px"><div onClick="{{ saveOnboard }}" style="background:#52E077;color:#06170B;text-align:center;padding:16px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#6BEA8E">{{ obBtnLabel }}</div><div style="text-align:center;margin-top:12px;font-size:12px;color:#7d8a80">Miễn phí 100% · Không cần tài khoản</div></div>
+</div>
+</div>
+
+<!-- 1b Dashboard -->
+<div id="1b" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1b</span>Trang chủ — bấm Bắt đầu tập, chạm cột biểu đồ</div>
+<div data-screen-label="Trang chủ" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:18px;flex:1;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-size:13px;color:#93A097">Thứ Ba, 4/8</div><div style="font-size:22px;font-weight:800">Chào Minh</div></div>
+<div style="width:42px;height:42px;border-radius:50%;background:#1E2822;border:1px solid #2C362F;display:flex;align-items:center;justify-content:center;font-weight:700;color:#52E077">M</div>
+</div>
+<div style="background:linear-gradient(135deg,#14291B,#101B14);border:1px solid #234D31;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div><div style="font-size:11px;font-weight:700;letter-spacing:1px;color:#52E077;text-transform:uppercase">Buổi tập hôm nay</div><div style="font-size:20px;font-weight:800;margin-top:4px">Ngày 12 · Thân trên</div><div style="font-size:13px;color:#93A097;margin-top:2px">6 bài tập · ~45 phút · Phòng gym</div></div>
+<div onClick="{{ dashStart }}" style="background:{{ dashBtnBg }};color:{{ dashBtnColor }};border:1.5px solid #52E077;text-align:center;padding:14px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer">{{ dashBtnLabel }}</div>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:14px 12px"><div style="font-family:Anton;font-size:26px;color:#52E077">8</div><div style="font-size:11px;color:#93A097;margin-top:2px">Chuỗi ngày</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:14px 12px"><div style="font-family:Anton;font-size:26px">3/4</div><div style="font-size:11px;color:#93A097;margin-top:2px">Buổi tuần này</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:14px 12px"><div style="font-family:Anton;font-size:26px">12.4k</div><div style="font-size:11px;color:#93A097;margin-top:2px">Tổng kg tuần</div></div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700">Khối lượng 7 ngày</span><span style="color:#52E077;font-weight:700">{{ dashBarLabel }}</span></div>
+<div style="display:flex;align-items:flex-end;gap:8px;height:64px">
+<sc-for list="{{ dashBars }}" as="b" hint-placeholder-count="7">
+<div onClick="{{ b.select }}" style="flex:1;height:{{ b.h }}%;background:{{ b.bg }};border-radius:4px;cursor:pointer"></div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;font-size:10px;color:#7d8a80"><span style="flex:1;text-align:center">T4</span><span style="flex:1;text-align:center">T5</span><span style="flex:1;text-align:center">T6</span><span style="flex:1;text-align:center">T7</span><span style="flex:1;text-align:center">CN</span><span style="flex:1;text-align:center">T2</span><span style="flex:1;text-align:center">T3</span></div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700">Dinh dưỡng hôm nay</span><span style="color:#52E077;font-weight:600">{{ kcalTotal }} / 2.200 kcal</span></div>
+<div style="height:8px;border-radius:4px;background:#1B211D;overflow:hidden"><div style="width:{{ kcalPct }}%;height:100%;background:#52E077;border-radius:4px"></div></div>
+</div>
+</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #1E2420;padding:10px 8px 18px;background:#0F1310">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:#52E077"></div><span style="font-size:11px;color:#52E077;font-weight:700">Trang chủ</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Giáo án</span></div>
+<div style="width:46px;height:46px;border-radius:50%;background:#52E077;color:#06170B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:-16px;box-shadow:0 6px 16px rgba(82,224,119,.3)">TẬP</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Dinh dưỡng</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Cộng đồng</span></div>
+</div>
+</div>
+</div>
+
+<!-- 1c Programs -->
+<div id="1c" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1c</span>Giáo án — bộ lọc hoạt động</div>
+<div data-screen-label="Giáo án" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:13px;flex:1;overflow:hidden">
+<div style="font-size:22px;font-weight:800">Giáo án tập luyện</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px 16px;font-size:14px;color:#7d8a80">Tìm giáo án, bài tập…</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{ progChips }}" as="c" hint-placeholder-count="5">
+<span onClick="{{ c.select }}" style="padding:7px 14px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.border }};font-size:12px;color:{{ c.color }};font-weight:{{ c.weight }};cursor:pointer">{{ c.label }}</span>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ progCards }}" as="p" hint-placeholder-count="3">
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;overflow:hidden">
+<div style="height:84px;background:repeating-linear-gradient(45deg,#161B18,#161B18 10px,#131714 10px,#131714 20px);display:flex;align-items:center;justify-content:center"><span style="font-family:monospace;font-size:11px;color:#7d8a80">ảnh: {{ p.img }}</span></div>
+<div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:800;font-size:15px">{{ p.title }}</span><span style="font-size:10px;font-weight:800;color:#52E077;border:1px solid #2E5A3C;border-radius:6px;padding:2px 7px">MIỄN PHÍ</span></div>
+<div style="font-size:12px;color:#93A097">{{ p.meta }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #1E2420;padding:10px 8px 18px;background:#0F1310">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Trang chủ</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:#52E077"></div><span style="font-size:11px;color:#52E077;font-weight:700">Giáo án</span></div>
+<div style="width:46px;height:46px;border-radius:50%;background:#52E077;color:#06170B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:-16px;box-shadow:0 6px 16px rgba(82,224,119,.3)">TẬP</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Dinh dưỡng</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Cộng đồng</span></div>
+</div>
+</div>
+</div>
+
+<!-- 1d Exercise detail -->
+<div id="1d" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1d</span>Chi tiết bài tập — nút thêm/bỏ</div>
+<div data-screen-label="Chi tiết bài tập" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:12px 24px 0;display:flex;flex-direction:column;gap:16px;flex:1;overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;border-radius:10px;background:#151A17;border:1px solid #232A25;display:flex;align-items:center;justify-content:center;color:#93A097">‹</span><span style="font-size:13px;color:#93A097">Bài tập</span></div>
+<div style="height:200px;border-radius:16px;background:repeating-linear-gradient(45deg,#161B18,#161B18 10px,#131714 10px,#131714 20px);border:1px dashed #2C342E;display:flex;align-items:center;justify-content:center"><span style="font-family:monospace;font-size:11px;color:#7d8a80">gif: barbell-bench-press.gif</span></div>
+<div>
+<div style="font-size:22px;font-weight:800">Đẩy ngực tạ đòn</div>
+<div style="font-size:13px;color:#7d8a80">Barbell Bench Press</div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<span style="padding:6px 12px;border-radius:999px;background:#132217;border:1px solid #2E5A3C;font-size:12px;color:#52E077;font-weight:600">Ngực · chính</span>
+<span style="padding:6px 12px;border-radius:999px;background:#151A17;border:1px solid #232A25;font-size:12px;color:#93A097">Vai trước</span>
+<span style="padding:6px 12px;border-radius:999px;background:#151A17;border:1px solid #232A25;font-size:12px;color:#93A097">Tay sau</span>
+<span style="padding:6px 12px;border-radius:999px;background:#151A17;border:1px solid #232A25;font-size:12px;color:#93A097">Tạ đòn + ghế</span>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:13px;font-weight:700">Cách thực hiện</div>
+<div style="display:flex;gap:12px;font-size:13px;color:#C4CEC7"><span style="color:#52E077;font-weight:800;font-family:Anton">1</span><span>Nằm trên ghế, mắt dưới thanh đòn, chân đặt chắc xuống sàn.</span></div>
+<div style="display:flex;gap:12px;font-size:13px;color:#C4CEC7"><span style="color:#52E077;font-weight:800;font-family:Anton">2</span><span>Nắm đòn rộng hơn vai, siết bả vai, hạ đòn chạm giữa ngực.</span></div>
+<div style="display:flex;gap:12px;font-size:13px;color:#C4CEC7"><span style="color:#52E077;font-weight:800;font-family:Anton">3</span><span>Đẩy đòn lên theo đường thẳng, thở ra khi đẩy.</span></div>
+<div style="display:flex;gap:12px;font-size:13px;color:#C4CEC7"><span style="color:#52E077;font-weight:800;font-family:Anton">4</span><span>Không nảy đòn trên ngực, giữ cổ tay thẳng.</span></div>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">3–4</div><div style="font-size:11px;color:#93A097">Set</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">8–12</div><div style="font-size:11px;color:#93A097">Reps</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">90s</div><div style="font-size:11px;color:#93A097">Nghỉ</div></div>
+</div>
+</div>
+<div style="padding:16px 24px 28px"><div onClick="{{ toggleAdded }}" style="background:{{ addBg }};color:{{ addColor }};border:1.5px solid #52E077;text-align:center;padding:15px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer">{{ addLabel }}</div></div>
+</div>
+</div>
+
+<!-- 1e Workout (interactive) -->
+<div id="1e" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1e</span>Tập luyện — flow đầy đủ 2 bài (bấm thử)</div>
+<div data-screen-label="Tập luyện" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:12px 24px 0;display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-size:13px;color:#93A097">Thân trên · Bài {{ exNum }}/6</div><div style="font-size:19px;font-weight:800">{{ exName }}</div></div>
+<div onClick="{{ resetWorkout }}" style="font-size:11px;color:#7d8a80;border:1px solid #232A25;border-radius:8px;padding:6px 10px;cursor:pointer">Làm lại</div>
+</div>
+<sc-if value="{{ phaseLog }}" hint-placeholder-val="{{ true }}">
+<div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:14px;flex:1">
+<div style="height:140px;border-radius:14px;background:repeating-linear-gradient(45deg,#161B18,#161B18 10px,#131714 10px,#131714 20px);border:1px dashed #2C342E;display:flex;align-items:center;justify-content:center"><span style="font-family:monospace;font-size:11px;color:#7d8a80">gif: {{ exGif }}</span></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ setRows }}" as="row" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:{{ row.bg }};border:1px solid {{ row.border }}">
+<span style="width:26px;height:26px;border-radius:50%;background:{{ row.badgeBg }};color:{{ row.badgeColor }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">{{ row.badge }}</span>
+<span style="flex:1;font-size:14px;font-weight:600;color:{{ row.textColor }}">{{ row.weight }} kg × {{ row.reps }} reps</span>
+<span style="font-size:11px;color:#7d8a80">{{ row.tag }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="padding:16px 24px 28px;margin-top:auto"><div onClick="{{ completeSet }}" style="background:#52E077;color:#06170B;text-align:center;padding:16px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#6BEA8E">Hoàn thành set {{ currentSetNum }}</div></div>
+</sc-if>
+<sc-if value="{{ phaseRest }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:0 24px">
+<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:#93A097;text-transform:uppercase">Nghỉ giữa set</div>
+<div style="font-family:Anton;font-size:96px;color:#52E077;line-height:1">{{ restLabel }}</div>
+<div style="font-size:13px;color:#93A097">Tiếp theo: Set {{ currentSetNum }} · {{ nextSetLabel }}</div>
+<div style="display:flex;gap:10px;margin-top:8px">
+<div onClick="{{ addRest }}" style="padding:12px 22px;border-radius:12px;border:1px solid #2E5A3C;color:#52E077;font-weight:700;font-size:14px;cursor:pointer">+15 giây</div>
+<div onClick="{{ skipRest }}" style="padding:12px 22px;border-radius:12px;background:#52E077;color:#06170B;font-weight:800;font-size:14px;cursor:pointer">Bỏ qua</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ phaseDone }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:0 24px">
+<div style="width:72px;height:72px;border-radius:50%;background:#132217;border:2px solid #52E077;display:flex;align-items:center;justify-content:center;font-size:30px;color:#52E077">✓</div>
+<div style="font-size:24px;font-weight:800">Hoàn thành bài tập!</div>
+<div style="display:flex;gap:10px;width:100%">
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px;color:#52E077">{{ doneSets }}</div><div style="font-size:11px;color:#93A097;margin-top:2px">Set</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px">{{ doneVol }}</div><div style="font-size:11px;color:#93A097;margin-top:2px">Tổng kg</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px">7:42</div><div style="font-size:11px;color:#93A097;margin-top:2px">Thời gian</div></div>
+</div>
+<div onClick="{{ nextExercise }}" style="width:100%;background:#52E077;color:#06170B;text-align:center;padding:16px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer">{{ nextExLabel }}</div>
+</div>
+</sc-if>
+<sc-if value="{{ phaseFinished }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:0 24px">
+<div style="font-family:Anton;font-size:52px;color:#52E077;line-height:1.1;text-align:center">BUỔI TẬP<br>HOÀN THÀNH</div>
+<div style="display:flex;gap:10px;width:100%">
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px;color:#52E077">{{ finSets }}</div><div style="font-size:11px;color:#93A097;margin-top:2px">Set</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px">{{ finVol }}</div><div style="font-size:11px;color:#93A097;margin-top:2px">Tổng kg</div></div>
+<div style="flex:1;background:#151A17;border:1px solid #232A25;border-radius:14px;padding:16px 12px;text-align:center"><div style="font-family:Anton;font-size:24px">16:05</div><div style="font-size:11px;color:#93A097;margin-top:2px">Thời gian</div></div>
+</div>
+<div style="font-size:13px;color:#93A097;text-align:center">Chuỗi ngày tăng lên 9 · PR mới sẽ được lưu vào nhật ký</div>
+<div onClick="{{ resetWorkout }}" style="padding:12px 24px;border-radius:12px;border:1.5px solid #52E077;color:#52E077;font-weight:800;font-size:14px;cursor:pointer">Làm lại demo</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- 1f Diary & stats -->
+<div id="1f" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1f</span>Nhật ký — chạm ngày &amp; cột tuần</div>
+<div data-screen-label="Nhật ký" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:hidden">
+<div style="font-size:22px;font-weight:800">Nhật ký tập luyện</div>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ diaryDays }}" as="d" hint-placeholder-count="7">
+<div onClick="{{ d.select }}" style="flex:1;text-align:center;display:flex;flex-direction:column;gap:6px;cursor:pointer"><span style="font-size:10px;color:{{ d.labelColor }};font-weight:{{ d.labelWeight }}">{{ d.day }}</span><div style="width:34px;height:34px;margin:0 auto;border-radius:50%;background:{{ d.bg }};border:1.5px solid {{ d.border }};display:flex;align-items:center;justify-content:center;font-size:12px;color:{{ d.color }};font-weight:700">{{ d.mark }}</div></div>
+</sc-for>
+</div>
+<div style="background:#132217;border:1px solid #2E5A3C;border-radius:12px;padding:11px 14px;font-size:12px;color:#C4CEC7">{{ diaryDayInfo }}</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700">Khối lượng theo tuần</span><span style="color:#52E077;font-weight:700">{{ weekSelLabel }}</span></div>
+<div style="display:flex;align-items:flex-end;gap:14px;height:90px;padding:0 8px">
+<sc-for list="{{ weekBars }}" as="w" hint-placeholder-count="4">
+<div onClick="{{ w.select }}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%;cursor:pointer"><div style="height:{{ w.h }}%;background:{{ w.bg }};border-radius:5px"></div><span style="font-size:10px;color:{{ w.labelColor }};text-align:center;font-weight:{{ w.labelWeight }}">{{ w.label }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:13px;font-weight:700">Kỷ lục cá nhân (PR)</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Đẩy ngực tạ đòn</span><span style="font-family:Anton;font-size:18px;color:#52E077">60 kg</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Squat</span><span style="font-family:Anton;font-size:18px;color:#52E077">90 kg</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px">Deadlift</span><span style="font-family:Anton;font-size:18px;color:#52E077">110 kg</span></div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:13px;font-weight:700">Buổi gần đây</div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#C4CEC7"><span>T3 · Thân trên</span><span style="color:#7d8a80">52 phút · 4.120 kg</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#C4CEC7"><span>T2 · Chân</span><span style="color:#7d8a80">48 phút · 5.360 kg</span></div>
+<div style="display:flex;justify-content:space-between;font-size:13px;color:#C4CEC7"><span>CN · Kéo lưng</span><span style="color:#7d8a80">45 phút · 3.980 kg</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 1g Nutrition -->
+<div id="1g" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1g</span>Dinh dưỡng — thêm/xóa món, kcal cập nhật</div>
+<div data-screen-label="Dinh dưỡng" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px;flex:1;overflow:hidden">
+<div style="font-size:22px;font-weight:800">Dinh dưỡng</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:18px;display:flex;gap:18px;align-items:center">
+<div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(#52E077 0 {{ kcalPct }}%,#232A25 {{ kcalPct }}% 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:74px;height:74px;border-radius:50%;background:#151A17;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:Anton;font-size:19px">{{ kcalTotal }}</span><span style="font-size:9px;color:#93A097">/ 2.200 kcal</span></div></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px">
+<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#93A097">Đạm</span><span>{{ pLabel }}</span></div><div style="height:5px;border-radius:3px;background:#1B211D"><div style="width:{{ pPct }}%;height:100%;background:#52E077;border-radius:3px"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#93A097">Tinh bột</span><span>{{ cLabel }}</span></div><div style="height:5px;border-radius:3px;background:#1B211D"><div style="width:{{ cPct }}%;height:100%;background:#8FD9A3;border-radius:3px"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#93A097">Chất béo</span><span>{{ fLabel }}</span></div><div style="height:5px;border-radius:3px;background:#1B211D"><div style="width:{{ fPct }}%;height:100%;background:#C9EDD3;border-radius:3px"></div></div></div>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:700">Bữa ăn hôm nay</span><span onClick="{{ addMeal }}" style="font-size:12px;color:#52E077;font-weight:700;cursor:pointer;border:1px solid #2E5A3C;border-radius:8px;padding:6px 10px">{{ addMealLabel }}</span></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ mealRows }}" as="m" hint-placeholder-count="4">
+<div style="background:#151A17;border:1px solid #232A25;border-radius:14px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="flex:1"><div style="font-size:11px;color:#7d8a80">{{ m.slot }}</div><div style="font-size:14px;font-weight:600">{{ m.name }}</div></div><span style="font-family:Anton;font-size:16px;color:#93A097">{{ m.kcal }} kcal</span><span onClick="{{ m.remove }}" style="width:24px;height:24px;border-radius:8px;border:1px solid #232A25;color:#7d8a80;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer">×</span></div>
+</sc-for>
+</div>
+<div style="font-size:12px;color:#7d8a80;text-align:center;margin-top:auto">Cơ sở dữ liệu món ăn Việt · hoạt động offline</div>
+</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #1E2420;padding:10px 8px 18px;background:#0F1310">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Trang chủ</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Giáo án</span></div>
+<div style="width:46px;height:46px;border-radius:50%;background:#52E077;color:#06170B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:-16px;box-shadow:0 6px 16px rgba(82,224,119,.3)">TẬP</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:#52E077"></div><span style="font-size:11px;color:#52E077;font-weight:700">Dinh dưỡng</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Cộng đồng</span></div>
+</div>
+</div>
+</div>
+
+<!-- 1h Community -->
+<div id="1h" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1h</span>Cộng đồng — tab lọc + thả tim</div>
+<div data-screen-label="Cộng đồng" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 0;display:flex;flex-direction:column;gap:14px;flex:1;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:22px;font-weight:800">Cộng đồng</span><span style="font-size:12px;color:#52E077;font-weight:700">+ Đăng bài</span></div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ commTabs }}" as="tb" hint-placeholder-count="3">
+<span onClick="{{ tb.select }}" style="padding:7px 14px;border-radius:999px;background:{{ tb.bg }};border:1px solid {{ tb.border }};font-size:12px;color:{{ tb.color }};font-weight:{{ tb.weight }};cursor:pointer">{{ tb.label }}</span>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ postRows }}" as="p" hint-placeholder-count="3">
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:10px;align-items:center"><div style="width:36px;height:36px;border-radius:50%;background:#1E2822;display:flex;align-items:center;justify-content:center;font-weight:700;color:#52E077;font-size:13px">{{ p.init }}</div><div><div style="font-size:13px;font-weight:700">{{ p.name }}</div><div style="font-size:11px;color:#7d8a80">{{ p.time }}</div></div></div>
+<div style="font-size:14px;line-height:1.5;color:#C4CEC7">{{ p.text }}</div>
+<sc-if value="{{ p.badge }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px"><span style="font-size:11px;font-weight:800;color:#52E077;border:1px solid #2E5A3C;border-radius:6px;padding:3px 8px">{{ p.badge }}</span></div></sc-if>
+<div style="display:flex;gap:16px;font-size:12px;color:#7d8a80;align-items:center"><span onClick="{{ p.like }}" style="cursor:pointer;color:{{ p.likeColor }};font-weight:{{ p.likeWeight }}">{{ p.likeIcon }} {{ p.likes }}</span><span>{{ p.comments }}</span><sc-if value="{{ p.best }}" hint-placeholder-val="{{ false }}"><span style="color:#52E077;font-weight:700">1 trả lời hay nhất</span></sc-if></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #1E2420;padding:10px 8px 18px;background:#0F1310">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Trang chủ</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Giáo án</span></div>
+<div style="width:46px;height:46px;border-radius:50%;background:#52E077;color:#06170B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:-16px;box-shadow:0 6px 16px rgba(82,224,119,.3)">TẬP</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:transparent"></div><span style="font-size:11px;color:#93A097">Dinh dưỡng</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:#52E077"></div><span style="font-size:11px;color:#52E077;font-weight:700">Cộng đồng</span></div>
+</div>
+</div>
+</div>
+
+<!-- 1i Profile -->
+<div id="1i" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;gap:8px;align-items:center;font-family:monospace;font-size:12px;color:#7d8a80"><span style="background:#1c221e;border:1px solid #2a322c;border-radius:6px;padding:2px 7px;color:#52E077">1i</span>Hồ sơ — cài đặt bấm được, nút ủng hộ</div>
+<div data-screen-label="Hồ sơ" style="width:384px;height:832px;background:#0D100E;border:1px solid #262D28;border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:#EDF2EE">
+<div style="display:flex;justify-content:space-between;padding:14px 20px 8px;font-size:12px;color:#93A097"><span>9:41</span><span>LTE · 87%</span></div>
+<div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:16px;flex:1;overflow:hidden">
+<div style="display:flex;gap:14px;align-items:center">
+<div style="width:60px;height:60px;border-radius:50%;background:#1E2822;border:2px solid #52E077;display:flex;align-items:center;justify-content:center;font-weight:800;color:#52E077;font-size:22px">M</div>
+<div><div style="font-size:19px;font-weight:800">Minh Nguyễn</div><div style="font-size:12px;color:#93A097">Trung cấp · Mục tiêu: Tăng cơ · 8 tuần đồng hành</div></div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:700">Số đo cơ thể</span><span style="font-size:12px;color:#52E077;font-weight:700">+ Cập nhật</span></div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#0F1310;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">72,0</div><div style="font-size:10px;color:#93A097">Cân nặng (kg)</div><div style="font-size:10px;color:#52E077;font-weight:700">+1,2</div></div>
+<div style="flex:1;background:#0F1310;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">98</div><div style="font-size:10px;color:#93A097">Ngực (cm)</div><div style="font-size:10px;color:#52E077;font-weight:700">+2</div></div>
+<div style="flex:1;background:#0F1310;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">80</div><div style="font-size:10px;color:#93A097">Eo (cm)</div><div style="font-size:10px;color:#93A097">−1</div></div>
+<div style="flex:1;background:#0F1310;border-radius:12px;padding:12px;text-align:center"><div style="font-family:Anton;font-size:20px">36</div><div style="font-size:10px;color:#93A097">Tay (cm)</div><div style="font-size:10px;color:#52E077;font-weight:700">+0,5</div></div>
+</div>
+</div>
+<div style="background:#151A17;border:1px solid #232A25;border-radius:16px;overflow:hidden">
+<div onClick="{{ cycleLang }}" style="padding:14px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #1E2420;font-size:14px;cursor:pointer"><span>Ngôn ngữ</span><span style="color:#93A097">{{ langLabel }} ›</span></div>
+<div onClick="{{ toggleOffline }}" style="padding:14px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #1E2420;font-size:14px;cursor:pointer"><span>Chế độ offline</span><span style="color:{{ offlineColor }};font-weight:700">{{ offlineLabel }}</span></div>
+<div style="padding:14px 16px;display:flex;justify-content:space-between;border-bottom:1px solid #1E2420;font-size:14px"><span>Sao lưu dữ liệu</span><span style="color:#93A097">Xuất file ›</span></div>
+<div onClick="{{ cycleUnit }}" style="padding:14px 16px;display:flex;justify-content:space-between;font-size:14px;cursor:pointer"><span>Đơn vị</span><span style="color:#93A097">{{ unitLabel }} ›</span></div>
+</div>
+<sc-if value="{{ showDonate }}" hint-placeholder-val="{{ true }}">
+<div style="background:linear-gradient(135deg,#14291B,#101B14);border:1px solid #234D31;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{ notDonated }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:15px;font-weight:800">Ứng dụng miễn phí 100%</div>
+<div style="font-size:13px;color:#93A097;line-height:1.5">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</div>
+<div onClick="{{ doDonate }}" style="border:1.5px solid #52E077;color:#52E077;text-align:center;padding:12px;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer" style-hover="background:#132217">Ủng hộ dự án</div>
+</sc-if>
+<sc-if value="{{ donated }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:15px;font-weight:800;color:#52E077">Cảm ơn bạn đã ủng hộ!</div>
+<div style="font-size:13px;color:#93A097;line-height:1.5">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</div>
+<div onClick="{{ doDonate }}" style="border:1px solid #234D31;color:#7d8a80;text-align:center;padding:10px;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer">Hoàn tác (demo)</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;restSeconds&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:60,&quot;min&quot;:15,&quot;max&quot;:180,&quot;step&quot;:15,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Flow tập luyện&quot;},&quot;showDonate&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hồ sơ&quot;}}">
+class Component extends DCLogic {
+  state = {
+    goal: 0, level: 0, obSaved: false,
+    split: 0, splitSaved: false,
+    schedSel: 3,
+    progFilter: 0,
+    added: false,
+    exIdx: 0, phase: 'log', setIdx: 0, restLeft: 0,
+    ssRound: 1, ssSub: 0, ssPhase: 'work', ssRest: 0, ssTech: 1,
+    diarySel: 3, weekSel: 3,
+    meals: [
+      { slot: 'Bữa sáng', name: 'Phở bò tái', kcal: 452, p: 30, c: 55, f: 12 },
+      { slot: 'Bữa trưa', name: 'Cơm gà xé + rau luộc', kcal: 618, p: 42, c: 78, f: 14 },
+      { slot: 'Bữa phụ', name: 'Sữa chua không đường + chuối', kcal: 185, p: 8, c: 30, f: 4 },
+      { slot: 'Bữa phụ', name: 'Trứng luộc ×2', kcal: 155, p: 13, c: 1, f: 11 },
+    ],
+    presetIdx: 0,
+    commTab: 0, likes: [48, 15, 96], liked: [false, false, false],
+    barSel: 4,
+    offline: true, lang: 0, unit: 0, donated: false,
+  };
+  exercises = [
+    { name: 'Đẩy ngực tạ đòn', gif: 'barbell-bench-press.gif', sets: [{w:40,r:8},{w:40,r:8},{w:45,r:6},{w:45,r:6}] },
+    { name: 'Đẩy vai tạ đơn', gif: 'db-shoulder-press.gif', sets: [{w:16,r:10},{w:16,r:10},{w:18,r:8}] },
+  ];
+  presets = [
+    { name: 'Ức gà áp chảo 150g', kcal: 240, p: 45, c: 0, f: 6 },
+    { name: 'Bánh mì thịt', kcal: 420, p: 20, c: 48, f: 16 },
+    { name: 'Sữa tươi không đường 200ml', kcal: 130, p: 7, c: 10, f: 7 },
+    { name: 'Cơm tấm sườn', kcal: 680, p: 32, c: 82, f: 24 },
+    { name: 'Chuối', kcal: 105, p: 1, c: 27, f: 0 },
+  ];
+  componentWillUnmount() { clearInterval(this._t); clearInterval(this._ts); clearInterval(this._td); }
+  sel(on) { return on
+    ? { bg: '#132217', border: '#52E077', dotBg: '#52E077', dotBorder: 'transparent' }
+    : { bg: '#151A17', border: '#232A25', dotBg: 'transparent', dotBorder: '#3A443C' }; }
+  startRest() {
+    const secs = this.props.restSeconds ?? 60;
+    this.setState({ phase: 'rest', restLeft: secs });
+    clearInterval(this._t);
+    this._t = setInterval(() => this.setState(s => {
+      if (s.restLeft <= 1) { clearInterval(this._t); return { phase: 'log', restLeft: 0 }; }
+      return { restLeft: s.restLeft - 1 };
+    }), 1000);
+  }
+  ssStartRest() {
+    const secs = this.props.restSeconds ?? 60;
+    this.setState({ ssPhase: 'rest', ssRest: secs });
+    clearInterval(this._ts);
+    this._ts = setInterval(() => this.setState(s => {
+      if (s.ssRest <= 1) { clearInterval(this._ts); return { ssPhase: 'work', ssSub: 0, ssRound: s.ssRound + 1, ssRest: 0 }; }
+      return { ssRest: s.ssRest - 1 };
+    }), 1000);
+  }
+  renderVals() {
+    const st = this.state;
+    const fmt = n => n.toLocaleString('vi-VN');
+    const mmss = t => Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    // 1a
+    const goals = [
+      { title: 'Tăng cơ', sub: 'Xây dựng khối cơ, tăng cân sạch' },
+      { title: 'Giảm mỡ', sub: 'Đốt calo, giữ cơ khi siết' },
+      { title: 'Tăng sức mạnh', sub: 'Tập trung các bài compound nặng' },
+      { title: 'Giữ dáng, khỏe mạnh', sub: 'Duy trì vận động đều đặn' },
+    ];
+    const goalRows = goals.map((g, i) => ({ ...g, ...this.sel(i === st.goal), select: () => this.setState({ goal: i, obSaved: false }) }));
+    const levelRows = ['Mới bắt đầu', 'Trung cấp', 'Nâng cao'].map((n, i) => {
+      const on = i === st.level;
+      return { name: n, bg: on ? '#132217' : '#151A17', border: on ? '#52E077' : '#232A25', color: on ? '#EDF2EE' : '#93A097', select: () => this.setState({ level: i, obSaved: false }) };
+    });
+    // 2a
+    const splits = [
+      { title: 'Push – Pull – Legs', sub: 'Đẩy · Kéo · Chân — cân bằng, hợp 3 hoặc 6 buổi/tuần', rec: true },
+      { title: 'Upper – Lower', sub: 'Thân trên · thân dưới — mỗi nhóm cơ 2 lần/tuần với 4 buổi', rec: false },
+      { title: 'Ngực + tay sau / Xô + tay trước', sub: 'Ghép nhóm cơ hỗ trợ — tiết kiệm thời gian, cơ phụ đã nóng', rec: false },
+      { title: 'Bro split', sub: 'Mỗi ngày 1–2 nhóm cơ — tập sâu, pump tốt', rec: false },
+      { title: 'Full body', sub: 'Toàn thân mỗi buổi — hợp người mới, 2–3 buổi/tuần', rec: false },
+    ];
+    const splitRows = splits.map((s, i) => ({ ...s, ...this.sel(i === st.split), select: () => this.setState({ split: i, splitSaved: false }) }));
+    // 2b
+    const days = [
+      { day: 'T2', title: 'Push 1', sub: 'Ngực ưu tiên + vai + tay sau', n: '6 bài' },
+      { day: 'T3', title: 'Pull 1', sub: 'Xô ưu tiên + tay trước', n: '6 bài' },
+      { day: 'T4', title: 'Legs 1', sub: 'Đùi trước, đùi sau, mông, bắp chân', n: '5 bài' },
+      { day: 'T5', title: 'Push 2', sub: 'Vai / ngực trên + tay sau', n: '6 bài' },
+      { day: 'T6', title: 'Pull 2', sub: 'Lưng dày + tay trước', n: '6 bài' },
+      { day: 'T7', title: 'Legs 2', sub: 'Mông ưu tiên + core', n: '5 bài' },
+      { day: 'CN', title: 'Nghỉ phục hồi', sub: 'Đi bộ nhẹ, giãn cơ', n: '', rest: true },
+    ];
+    const schedRows = days.map((d, i) => {
+      const on = i === st.schedSel;
+      return {
+        day: d.day, title: d.title, sub: d.sub, today: on && !d.rest,
+        bg: on ? '#132217' : d.rest ? '#0F1310' : '#151A17',
+        border: on ? '#52E077' : d.rest ? '#232A25' : '#232A25',
+        dayColor: d.rest ? '#5C685F' : '#52E077',
+        titleColor: d.rest ? '#7d8a80' : '#EDF2EE',
+        right: on && !d.rest ? 'Bắt đầu ›' : d.n,
+        rightColor: on && !d.rest ? '#52E077' : '#7d8a80',
+        rightWeight: on && !d.rest ? 700 : 400,
+        select: () => this.setState({ schedSel: i }),
+      };
+    });
+    const selDay = days[st.schedSel];
+    // 1c
+    const allCards = [
+      { title: 'Tăng cơ toàn thân 8 tuần', img: 'fullbody-8-tuan.jpg', meta: '8 tuần · 4 buổi/tuần · Trung cấp · Phòng gym', tags: ['Tăng cơ', 'Phòng gym'] },
+      { title: 'Giảm mỡ 30 ngày tại nhà', img: 'giam-mo-30-ngay.jpg', meta: '4 tuần · 5 buổi/tuần · Mới bắt đầu · Không thiết bị', tags: ['Giảm mỡ', 'Tại nhà'] },
+      { title: 'Sức mạnh cơ bản 5×5', img: 'suc-manh-5x5.jpg', meta: '12 tuần · 3 buổi/tuần · Mọi trình độ · Tạ đòn', tags: ['Tăng cơ', 'Phòng gym'] },
+    ];
+    const filters = ['Tất cả', 'Tăng cơ', 'Giảm mỡ', 'Tại nhà', 'Phòng gym'];
+    const progChips = filters.map((f, i) => {
+      const on = i === st.progFilter;
+      return { label: f, bg: on ? '#52E077' : '#151A17', border: on ? '#52E077' : '#232A25', color: on ? '#06170B' : '#93A097', weight: on ? 700 : 400, select: () => this.setState({ progFilter: i }) };
+    });
+    const progCards = st.progFilter === 0 ? allCards : allCards.filter(c => c.tags.includes(filters[st.progFilter]));
+    // 1e workout
+    const ex = this.exercises[st.exIdx];
+    const setRows = ex.sets.map((s, i) => {
+      const done = i < st.setIdx;
+      const current = i === st.setIdx && st.phase === 'log';
+      return {
+        weight: s.w, reps: s.r,
+        badge: done ? '✓' : String(i + 1),
+        badgeBg: done ? '#52E077' : current ? '#132217' : '#1B211D',
+        badgeColor: done ? '#06170B' : current ? '#52E077' : '#5C685F',
+        bg: current ? '#132217' : '#151A17',
+        border: current ? '#52E077' : '#232A25',
+        textColor: done || current ? '#EDF2EE' : '#7d8a80',
+        tag: done ? 'Xong' : current ? 'Đang tập' : 'Chờ',
+      };
+    });
+    const nextSet = ex.sets[Math.min(st.setIdx, ex.sets.length - 1)];
+    const vol = e => e.sets.reduce((a, s) => a + s.w * s.r, 0);
+    // 2c superset
+    const ssActive = { bg: '#132217', border: '#52E077', badgeBg: '#52E077', badgeColor: '#06170B', tagColor: '#52E077', tag: 'Đang tập' };
+    const ssIdle = { bg: '#151A17', border: '#232A25', badgeBg: '#1B211D', badgeColor: '#93A097', tagColor: '#7d8a80', tag: 'Tiếp theo' };
+    const ssDoneS = { bg: '#151A17', border: '#232A25', badgeBg: '#52E077', badgeColor: '#06170B', tagColor: '#7d8a80', tag: 'Xong' };
+    const a1 = st.ssSub === 0 ? ssActive : ssDoneS;
+    const a2 = st.ssSub === 0 ? ssIdle : ssActive;
+    const techs = [
+      { name: 'Straight set', desc: 'nghỉ đủ giữa hiệp — cho bài compound' },
+      { name: 'Superset', desc: '2 bài liên tiếp — cho bài isolation' },
+      { name: 'Drop set', desc: 'giảm tạ liên tục khi gần thất bại' },
+      { name: 'Pyramid', desc: 'tăng/giảm tạ qua từng hiệp' },
+      { name: 'Rest-pause', desc: 'nghỉ 10–20s rồi thêm vài rep' },
+    ];
+    const ssTechRows = techs.map((t, i) => {
+      const on = i === st.ssTech;
+      return { ...t, bg: on ? '#132217' : '#151A17', border: on ? '#52E077' : '#232A25', dotBg: on ? '#52E077' : 'transparent', dotBorder: on ? 'transparent' : '#3A443C', select: () => this.setState({ ssTech: i }) };
+    });
+    // 1f diary
+    const dInfo = ['T2 · Chân · đã tập · 48 phút, 5.360 kg', 'T3 · Thân trên · đã tập · 52 phút, 4.120 kg', 'T4 · Ngày nghỉ', 'T5 · Push 2 · hôm nay — 6 bài, ~45 phút', 'T6 · Pull 2 · dự kiến', 'T7 · Legs 2 · dự kiến', 'CN · Ngày nghỉ'];
+    const diaryDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d, i) => {
+      const on = i === st.diarySel;
+      const doneD = i < 2;
+      const restD = i === 2 || i === 6;
+      return {
+        day: d,
+        labelColor: on ? '#52E077' : '#7d8a80', labelWeight: on ? 700 : 400,
+        bg: on ? '#52E077' : doneD ? '#132217' : '#151A17',
+        border: on ? '#52E077' : doneD ? '#2E5A3C' : '#232A25',
+        color: on ? '#06170B' : doneD ? '#52E077' : restD ? '#4A544C' : '#93A097',
+        mark: doneD ? '✓' : restD ? '·' : String(i + 2 > 7 ? 'CN' : i + 2),
+        select: () => this.setState({ diarySel: i }),
+      };
+    });
+    const weekVals = [12100, 14900, 18100, 23200];
+    const weekBars = weekVals.map((v, i) => {
+      const on = i === st.weekSel;
+      return { h: Math.round(v / 232), bg: on ? '#52E077' : '#243B2C', label: 'T.' + (28 + i), labelColor: on ? '#52E077' : '#7d8a80', labelWeight: on ? 700 : 400, select: () => this.setState({ weekSel: i }) };
+    });
+    // 1g nutrition
+    const tot = st.meals.reduce((a, m) => ({ k: a.k + m.kcal, p: a.p + m.p, c: a.c + m.c, f: a.f + m.f }), { k: 0, p: 0, c: 0, f: 0 });
+    const mealRows = st.meals.map((m, i) => ({ ...m, remove: () => this.setState(s => ({ meals: s.meals.filter((_, j) => j !== i) })) }));
+    const nextPreset = this.presets[st.presetIdx % this.presets.length];
+    // 1h community
+    const posts = [
+      { init: 'H', name: 'Hùng Trần', time: '2 giờ trước · Tiến bộ', type: 2, text: 'Sau 8 tuần theo giáo án 5×5, deadlift từ 80kg lên 110kg. Kiên trì là có kết quả anh em ơi!', badge: 'PR MỚI · DEADLIFT 110KG', comments: '💬 12 bình luận', best: false },
+      { init: 'L', name: 'Lan Phạm', time: '5 giờ trước · Hỏi đáp', type: 1, text: 'Mới tập được 2 tuần, đau nhức cơ sau buổi chân thì có nên nghỉ hẳn không hay tập nhẹ?', badge: '', comments: '💬 23 trả lời', best: true },
+      { init: 'T', name: 'Tuấn Vũ', time: 'Hôm qua · Chia sẻ', type: 0, text: 'Chia sẻ thực đơn 2.400 kcal toàn món Việt dễ nấu cho anh em tăng cơ, ai cần mình gửi chi tiết.', badge: '', comments: '💬 41 bình luận', best: false },
+    ];
+    const tabs = ['Mới nhất', 'Hỏi đáp', 'Tiến bộ'];
+    const commTabs = tabs.map((t, i) => {
+      const on = i === st.commTab;
+      return { label: t, bg: on ? '#52E077' : '#151A17', border: on ? '#52E077' : '#232A25', color: on ? '#06170B' : '#93A097', weight: on ? 700 : 400, select: () => this.setState({ commTab: i }) };
+    });
+    const postRows = posts.map((p, i) => ({ ...p, i })).filter(p => st.commTab === 0 || p.type === st.commTab).map(p => ({
+      ...p,
+      likes: st.likes[p.i] + (st.liked[p.i] ? 1 : 0),
+      likeIcon: st.liked[p.i] ? '♥' : '♡',
+      likeColor: st.liked[p.i] ? '#52E077' : '#7d8a80',
+      likeWeight: st.liked[p.i] ? 700 : 400,
+      like: () => this.setState(s => { const liked = [...s.liked]; liked[p.i] = !liked[p.i]; return { liked }; }),
+    }));
+    // 1b dashboard
+    const dashVals = [1650, 2400, 0, 1950, 3000, 0, 1350];
+    const dashLabels = ['T4', 'T5', 'T6', 'T7', 'CN', 'T2', 'T3'];
+    const dashBars = dashVals.map((v, i) => {
+      const on = i === st.barSel;
+      return { h: v === 0 ? 20 : Math.round(v / 30), bg: on ? '#52E077' : v === 0 ? '#1B211D' : '#243B2C', select: () => this.setState({ barSel: i }) };
+    });
+    const running = this._td != null;
+    return {
+      // 1a
+      goalRows, levelRows,
+      obStep2Bg: st.obSaved ? '#52E077' : '#232A25',
+      obBtnLabel: st.obSaved ? 'Đã lưu ✓ · ' + goals[st.goal].title + ' · ' + ['Mới bắt đầu', 'Trung cấp', 'Nâng cao'][st.level] : 'Tiếp tục',
+      saveOnboard: () => this.setState({ obSaved: true }),
+      // 2a
+      splitRows,
+      splitBtnLabel: st.splitSaved ? 'Đã chọn ✓ · ' + splits[st.split].title : 'Tiếp tục',
+      saveSplit: () => this.setState({ splitSaved: true }),
+      // 2b
+      schedRows,
+      schedHint: selDay.rest ? 'CN · Nghỉ phục hồi — đi bộ nhẹ, giãn cơ 15 phút' : selDay.day + ' · ' + selDay.title + ' — ' + selDay.sub + ' · ' + selDay.n,
+      // 1c
+      progChips, progCards,
+      // 1d
+      addLabel: st.added ? 'Đã thêm ✓ · Chạm để bỏ' : 'Thêm vào buổi tập',
+      addBg: st.added ? 'transparent' : '#52E077',
+      addColor: st.added ? '#52E077' : '#06170B',
+      toggleAdded: () => this.setState(s => ({ added: !s.added })),
+      // 1e
+      exName: ex.name, exGif: ex.gif, exNum: st.exIdx + 2,
+      setRows,
+      phaseLog: st.phase === 'log', phaseRest: st.phase === 'rest', phaseDone: st.phase === 'done', phaseFinished: st.phase === 'finished',
+      currentSetNum: Math.min(st.setIdx + 1, ex.sets.length),
+      restLabel: mmss(st.restLeft),
+      nextSetLabel: nextSet.w + ' kg × ' + nextSet.r + ' reps',
+      doneSets: ex.sets.length, doneVol: fmt(vol(ex)),
+      finSets: this.exercises.reduce((a, e) => a + e.sets.length, 0),
+      finVol: fmt(this.exercises.reduce((a, e) => a + vol(e), 0)),
+      nextExLabel: st.exIdx < this.exercises.length - 1 ? 'Bài tiếp theo: ' + this.exercises[st.exIdx + 1].name + ' →' : 'Hoàn tất buổi tập',
+      completeSet: () => {
+        if (this.state.setIdx >= ex.sets.length - 1) { clearInterval(this._t); this.setState({ phase: 'done' }); }
+        else { this.setState(s => ({ setIdx: s.setIdx + 1 })); this.startRest(); }
+      },
+      skipRest: () => { clearInterval(this._t); this.setState({ phase: 'log', restLeft: 0 }); },
+      addRest: () => this.setState(s => ({ restLeft: s.restLeft + 15 })),
+      nextExercise: () => {
+        if (st.exIdx < this.exercises.length - 1) this.setState({ exIdx: st.exIdx + 1, phase: 'log', setIdx: 0, restLeft: 0 });
+        else this.setState({ phase: 'finished' });
+      },
+      resetWorkout: () => { clearInterval(this._t); this.setState({ exIdx: 0, phase: 'log', setIdx: 0, restLeft: 0 }); },
+      // 2c
+      ssPhaseWork: st.ssPhase === 'work' && st.ssRound <= 3, ssPhaseRest: st.ssPhase === 'rest', ssPhaseDone: st.ssPhase === 'work' && st.ssRound > 3,
+      ssA1bg: a1.bg, ssA1border: a1.border, ssA1badgeBg: a1.badgeBg, ssA1badgeColor: a1.badgeColor, ssA1tagColor: a1.tagColor, ssA1tag: a1.tag,
+      ssA2bg: a2.bg, ssA2border: a2.border, ssA2badgeBg: a2.badgeBg, ssA2badgeColor: a2.badgeColor, ssA2tagColor: a2.tagColor, ssA2tag: a2.tag,
+      ssRoundLabel: Math.min(st.ssRound, 3) + '/3',
+      ssDoneRound: Math.min(st.ssRound, 3),
+      ssRestSecs: this.props.restSeconds ?? 60,
+      ssRestLabel: mmss(st.ssRest),
+      ssBtnLabel: st.ssSub === 0 ? 'Xong A1 → chuyển A2' : st.ssRound < 3 ? 'Xong A2 → nghỉ' : 'Xong A2 → hoàn thành',
+      ssNext: () => {
+        if (this.state.ssSub === 0) this.setState({ ssSub: 1 });
+        else if (this.state.ssRound < 3) this.ssStartRest();
+        else this.setState({ ssRound: 4, ssSub: 0, ssPhase: 'work' });
+      },
+      ssSkipRest: () => { clearInterval(this._ts); this.setState(s => ({ ssPhase: 'work', ssSub: 0, ssRound: s.ssRound + 1, ssRest: 0 })); },
+      ssAddRest: () => this.setState(s => ({ ssRest: s.ssRest + 15 })),
+      ssReset: () => { clearInterval(this._ts); this.setState({ ssRound: 1, ssSub: 0, ssPhase: 'work', ssRest: 0 }); },
+      ssTechRows,
+      // 1f
+      diaryDays, diaryDayInfo: dInfo[st.diarySel],
+      weekBars, weekSelLabel: 'Tuần ' + (28 + st.weekSel) + ' · ' + fmt(weekVals[st.weekSel]) + ' kg',
+      // 1g
+      kcalTotal: fmt(tot.k), kcalPct: Math.min(Math.round(tot.k / 22), 100),
+      pLabel: tot.p + '/140g', cLabel: tot.c + '/250g', fLabel: tot.f + '/70g',
+      pPct: Math.min(Math.round(tot.p / 1.4), 100), cPct: Math.min(Math.round(tot.c / 2.5), 100), fPct: Math.min(Math.round(tot.f / 0.7), 100),
+      mealRows,
+      addMealLabel: '+ ' + nextPreset.name,
+      addMeal: () => this.setState(s => ({ meals: [...s.meals, { slot: 'Bữa phụ', ...this.presets[s.presetIdx % this.presets.length] }], presetIdx: s.presetIdx + 1 })),
+      // 1h
+      commTabs, postRows,
+      // 1b
+      dashBars,
+      dashBarLabel: dashLabels[st.barSel] + ' · ' + (dashVals[st.barSel] === 0 ? 'Nghỉ' : fmt(dashVals[st.barSel]) + ' kg'),
+      dashBtnLabel: st.dashSec == null ? 'Bắt đầu tập' : 'Đang tập · ' + mmss(st.dashSec) + ' — chạm để kết thúc',
+      dashBtnBg: st.dashSec == null ? '#52E077' : 'transparent',
+      dashBtnColor: st.dashSec == null ? '#06170B' : '#52E077',
+      dashStart: () => {
+        if (this.state.dashSec == null) {
+          this.setState({ dashSec: 0 });
+          this._td = setInterval(() => this.setState(s => ({ dashSec: s.dashSec + 1 })), 1000);
+        } else { clearInterval(this._td); this._td = null; this.setState({ dashSec: null }); }
+      },
+      // 1i
+      langLabel: ['Tiếng Việt', 'English'][st.lang],
+      cycleLang: () => this.setState(s => ({ lang: (s.lang + 1) % 2 })),
+      offlineLabel: st.offline ? 'Bật' : 'Tắt',
+      offlineColor: st.offline ? '#52E077' : '#7d8a80',
+      toggleOffline: () => this.setState(s => ({ offline: !s.offline })),
+      unitLabel: ['kg / cm', 'lb / in'][st.unit],
+      cycleUnit: () => this.setState(s => ({ unit: (s.unit + 1) % 2 })),
+      showDonate: this.props.showDonate ?? true,
+      donated: st.donated, notDonated: !st.donated,
+      doDonate: () => this.setState(s => ({ donated: !s.donated })),
+    };
+  }
+}
+</script>
+</body>
+</html>

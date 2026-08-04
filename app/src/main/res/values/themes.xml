@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- v1 is dark-theme only per design tokens; base on the Dark parent regardless of system setting. -->
+    <style name="Theme.FitViet" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowBackground">@color/app_canvas</item>
+        <item name="android:statusBarColor">@color/app_canvas</item>
+        <item name="android:navigationBarColor">@color/app_canvas</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
