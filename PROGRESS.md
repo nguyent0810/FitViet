@@ -295,3 +295,29 @@ Also independently re-verified (hand-recomputed, not just re-read) by the review
 
 ### Push
 Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 9 — Expand the exercise & Việt food library
+
+User asked to focus specifically on growing the two content libraries (exercises, food) rather than new screens/behavior.
+
+### What was built
+
+**10 new exercises** (14 total, up from 4), covering muscle groups the original 4 left completely untouched — legs, back, arms, core:
+- Squat tạ đòn (Barbell Squat), Deadlift tạ đòn (Barbell Deadlift), Đạp đùi máy (Leg Press), Lunge tạ đơn (Dumbbell Lunges) — legs
+- Kéo xô cáp tay rộng (Wide-Grip Lat Pulldown), Row tạ đòn cúi người (Bent Over Barbell Row) — back
+- Cuốn tay trước tạ đòn (Barbell Curl), Đẩy cáp tay sau (Triceps Pushdown) — arms
+- Gập bụng (Crunches), Hít đất (Pushups) — core/bodyweight (the last two need no equipment, useful for the "Giảm mỡ 30 ngày tại nhà" no-equipment program)
+
+Each has real start/end photos (same free-exercise-db source and `res/drawable-nodpi/` approach as Gate 8 — 20 new JPGs, ~1.4MB, attribution appended to the existing `licenses/exercise-photos/UNLICENSE-free-exercise-db.txt`), Vietnamese instructions (concise technique summaries in this app's established style, not literal translations of the source's verbose English), and suggested sets/reps/rest picked per exercise type (heavy compounds like squat/deadlift get lower reps/longer rest; isolation/bodyweight work gets higher reps/shorter rest).
+
+**Not wired into the fixed Gate 4 workout demo plan** (`WorkoutPlanSeed.kt` — untouched, still only references the original 4 by name) — these are reachable via 1c's search → 1d detail, same as the original 4 were before Gate 4 built the workout flow around a subset of them. `DatabaseSeeder.seedMissingExercises()` (built in Gate 4 for exactly this "add exercises later" case) picks these up automatically on any existing install, no seeder changes needed.
+
+**Considered and dropped**: Plank, for the core slot — the app's `ExerciseEntity` schema models `suggestedRepsMin/Max` as a rep count, and Plank is a timed hold, not rep-based. Forcing a "30–60" range into the reps tile would read as "30–60 reps," which is wrong. Used Crunches (rep-based, same equipment/muscle group) instead rather than stretch the schema for one exercise.
+
+**15 new Vietnamese food items** (20 meal presets total, up from 5) addable via 1g's "+ Thêm món": Bún chả Hà Nội, Gỏi cuốn tôm thịt, Canh chua cá lóc, Bánh cuốn chả lụa, Xôi xéo, Cá kho tộ, Rau muống xào tỏi, Sữa đậu nành, Bánh flan, Hủ tiếu Nam Vang, Bò lúc lắc, Trái cây thập cẩm, Đậu hũ sốt cà chua, Yến mạch trộn sữa chua & hạt, Chè đậu xanh — spanning savory mains, sides, drinks, and light desserts rather than just protein-heavy mains. Macros are estimated (kcal ≈ 4×protein + 4×carb + 9×fat, within ~10%, same basis the original 5 already used) since there's no nutrition-database API in this offline-first app.
+
+### Verification
+Same environment constraints as prior gates. Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/`NutritionRepository` layer (stubbed Room annotations + real kotlinx-coroutines) — clean. Verified programmatically (not just by eye): all 14 exercise entries reference a `SeedExerciseNames` constant, all 20 meal presets present, and — critically, since resource files aren't touched by the kotlinc check at all — every `R.drawable.*` reference in `ExerciseMedia.kt` diffed 1:1 against the actual filenames in `res/drawable-nodpi/` (28 photos total now, exact match, no missing/extra). Confirmed `WorkoutPlanSeed.kt` is untouched and still resolves only the original 4 exercise names. Independent review pass in flight; findings, if any, land as a follow-up commit before this gate is reported done (per this session's standing instruction).
+
+### Push
+Pending independent review.
