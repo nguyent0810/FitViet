@@ -21,6 +21,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Required for AppCompat's per-app language back-compat path (API 26-32; API 33+ uses the
+             framework LocaleManager directly) since MainActivity is a plain ComponentActivity, not
+             an AppCompatActivity — without this, AppCompatDelegate.setApplicationLocales() (see
+             util/LocaleController.kt) can't persist or re-apply the chosen locale on those OS versions. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>
