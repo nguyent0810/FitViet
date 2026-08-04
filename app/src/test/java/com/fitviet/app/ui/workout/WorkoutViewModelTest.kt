@@ -116,6 +116,12 @@ class WorkoutViewModelTest {
                 // null == "Không giới hạn" == WorkoutPlanSeed's curated demo, unchanged from before Gate 10.
                 viewModel.selectDuration(null)
                 testDispatcher.scheduler.runCurrent()
+                // selectDuration() is itself debounced, so it stamps lastActionAtMillis at the
+                // clock's starting value (10_000). Without advancing past that here, every test's
+                // very first action right after `Harness()` would land at the same instant and get
+                // silently dropped by the 350ms debounce window — the exact bug FakeClock's 10_000
+                // starting offset exists to avoid, reintroduced one level up by this setup call.
+                clock.advance()
             }
         }
 
