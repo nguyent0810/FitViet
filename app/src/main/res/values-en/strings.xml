@@ -115,6 +115,59 @@
     <string name="schedule_day_rest_sub">Light walk, stretching</string>
     <string name="schedule_exercise_count">%1$d exercises</string>
 
+    <!-- 1e Workout flow -->
+    <string name="workout_reset">Restart</string>
+    <string name="workout_exercise_progress">%1$s · Exercise %2$d/%3$d</string>
+    <string name="workout_complete_set">Complete set %1$d</string>
+    <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
+    <string name="workout_tag_done">Done</string>
+    <string name="workout_tag_current">In progress</string>
+    <string name="workout_tag_pending">Waiting</string>
+    <string name="workout_rest_title">Rest between sets</string>
+    <string name="workout_rest_next">Next: Set %1$d · %2$s kg × %3$d reps</string>
+    <string name="workout_add_rest">+15 sec</string>
+    <string name="workout_skip_rest">Skip</string>
+    <string name="workout_exercise_done_title">Exercise complete!</string>
+    <string name="workout_stat_sets">Sets</string>
+    <string name="workout_stat_volume">Total kg</string>
+    <string name="workout_stat_time">Time</string>
+    <string name="workout_next_exercise">Next: %1$s →</string>
+    <string name="workout_finish_session">Finish workout</string>
+    <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
+    <string name="workout_session_finished_note">New PRs will be saved to your diary</string>
+    <string name="workout_back_to_home">Back to home</string>
+    <string name="workout_weight_kg">%1$s kg</string>
+
+    <!-- 2c Superset flow + technique picker -->
+    <string name="superset_title">Superset A</string>
+    <string name="superset_badge">2 EXERCISES BACK-TO-BACK</string>
+    <string name="superset_badge_a1">A1</string>
+    <string name="superset_badge_a2">A2</string>
+    <string name="superset_no_rest_note">↓ no rest ↓</string>
+    <string name="superset_round_label">Round %1$s</string>
+    <string name="superset_round_fraction">%1$d/%2$d</string>
+    <string name="superset_rest_after">Rest after round: %1$ds</string>
+    <string name="superset_next_a1_to_a2">Done A1 → switch to A2</string>
+    <string name="superset_next_rest">Done A2 → rest</string>
+    <string name="superset_next_done">Done A2 → finish</string>
+    <string name="superset_rest_title">Rest after round %1$d</string>
+    <string name="superset_rest_next_round">Next: Round %1$s · %2$s</string>
+    <string name="superset_done_title">Superset complete!</string>
+    <string name="superset_done_summary">%1$d rounds · %2$d sets · %3$s + %4$s</string>
+    <string name="superset_technique_label">Set technique for this exercise</string>
+    <string name="superset_technique_open">Set technique</string>
+    <string name="superset_technique_other">Other: antagonist superset · compound set · giant set · circuit</string>
+    <string name="technique_straight_name">Straight set</string>
+    <string name="technique_straight_desc">full rest between sets — for compound lifts</string>
+    <string name="technique_superset_name">Superset</string>
+    <string name="technique_superset_desc">2 exercises back-to-back — for isolation work</string>
+    <string name="technique_dropset_name">Drop set</string>
+    <string name="technique_dropset_desc">reduce weight continuously near failure</string>
+    <string name="technique_pyramid_name">Pyramid</string>
+    <string name="technique_pyramid_desc">increase/decrease weight each set</string>
+    <string name="technique_restpause_name">Rest-pause</string>
+    <string name="technique_restpause_desc">rest 10–20s then squeeze out more reps</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Coming in the next gate</string>
 </resources>

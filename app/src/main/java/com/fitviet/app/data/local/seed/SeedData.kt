@@ -6,7 +6,15 @@ import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 
-/** Seed content sourced from `UI Handoff/FitViet Prototype v2.dc.html` (screens 1c, 1d, 1e, 1g, 1i). */
+/** Stable lookup keys for exercises the workout flow (Gate 4) references by name — see WorkoutPlanSeed. */
+object SeedExerciseNames {
+    const val BENCH_PRESS = "Đẩy ngực tạ đòn"
+    const val SHOULDER_PRESS = "Đẩy vai tạ đơn"
+    const val CABLE_FLY = "Cable fly"
+    const val LATERAL_RAISE = "Lateral raise"
+}
+
+/** Seed content sourced from `UI Handoff/FitViet Prototype v2.dc.html` (screens 1c, 1d, 1e, 1g, 1i, 2c). */
 object SeedData {
 
     val programs = listOf(
@@ -41,7 +49,7 @@ object SeedData {
 
     val exercises = listOf(
         ExerciseEntity(
-            nameVi = "Đẩy ngực tạ đòn",
+            nameVi = SeedExerciseNames.BENCH_PRESS,
             nameEn = "Barbell Bench Press",
             gifAsset = "barbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
@@ -60,7 +68,7 @@ object SeedData {
             suggestedRestSeconds = 90,
         ),
         ExerciseEntity(
-            nameVi = "Đẩy vai tạ đơn",
+            nameVi = SeedExerciseNames.SHOULDER_PRESS,
             nameEn = "Dumbbell Shoulder Press",
             gifAsset = "db-shoulder-press.gif",
             primaryMuscle = "Vai trước · chính",
@@ -76,6 +84,46 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
+        ),
+        // Superset pair (2c demo): "↓ không nghỉ ↓" between A1/A2, matching the prototype's
+        // Cable fly (15kg×12, Ngực) + Lateral raise (8kg×15, Vai giữa). The prototype's 2c canvas
+        // only shows the exercise name/weight/reps for these, not a detail screen (1d) like bench
+        // press gets — instructions below are written to match its style, not verbatim from spec.
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.CABLE_FLY,
+            nameEn = "Cable Fly",
+            gifAsset = "cable-fly.gif",
+            primaryMuscle = "Ngực · chính",
+            secondaryMuscles = listOf("Vai trước"),
+            equipment = "Máy cáp",
+            instructions = listOf(
+                "Đứng giữa hai cột cáp, tay cầm ngang vai, khuỷu tay hơi gập.",
+                "Kéo hai tay vào giữa trước ngực theo đường vòng cung, siết cơ ngực ở điểm cuối.",
+                "Trở về từ từ, giữ lực căng ở cáp suốt hiệp.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 12,
+            suggestedRepsMax = 15,
+            suggestedRestSeconds = 60,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.LATERAL_RAISE,
+            nameEn = "Lateral Raise",
+            gifAsset = "lateral-raise.gif",
+            primaryMuscle = "Vai giữa · chính",
+            secondaryMuscles = emptyList(),
+            equipment = "Tạ đơn",
+            instructions = listOf(
+                "Đứng thẳng, tạ đơn hai bên hông, khuỷu tay hơi gập.",
+                "Nâng tạ sang ngang tới độ cao vai, giữ 1 giây ở đỉnh.",
+                "Hạ tạ có kiểm soát, không dùng lực đà.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 12,
+            suggestedRepsMax = 15,
+            suggestedRestSeconds = 60,
         ),
     )
 

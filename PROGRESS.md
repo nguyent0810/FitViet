@@ -101,5 +101,42 @@ Second pass: clean, plus one extra polish — `dayTicker()`'s original midnight 
 
 **Not addressed (documented above under Scope decisions):** finding #3 (Medium) — English locale still shows Vietnamese program/exercise content. Deliberately deferred to Gate 6 rather than fixed now; see above.
 
+### Push
+Approved by codex, pushed to `origin/master` (`b419417`).
+
+## Gate 4 — Workout flow (1e) + Superset/technique picker (2c) — CORE FEATURE
+
+### What was built
+- `ui/workout/{WorkoutModels,WorkoutPlanSeed,WorkoutViewModel,WorkoutScreen,WorkoutStraightScreens,SupersetScreens,RestContent,SessionFinishedContent,TechniquePickerSheet}.kt` — the full workout state machine, ported field-for-field from the prototype's JS: `exIdx/phase/setIdx/restLeft` → `currentBlockIndex/phase/currentSetIndex/restSecondsRemaining` for straight blocks; `ssRound/ssSub/ssPhase/ssRest` → `supersetRound/supersetSub/phase/supersetRestSecondsRemaining` for the superset block. Rest-timer auto-transition-at-zero, +15s, skip, and the superset's exact 3-way button branch (`Xong A1→A2` / `Xong A2→nghỉ` / `Xong A2→hoàn thành`) all match the prototype's `startRest`/`ssNext` logic.
+- `data/repository/{ExerciseRepository,WorkoutRepository}.kt` — `WorkoutRepository` persists a `WorkoutSessionEntity` on start, one `SetLogEntity` per completed set (not batched — a killed process doesn't lose logged sets), and completes the session (`completedAt`/`totalVolumeKg`/`durationSeconds`) on finish.
+- `AppContainer.databaseReady: Deferred<Unit>` — seeding now runs on an awaitable `Deferred` instead of a fire-and-forget `launch`; `WorkoutViewModel` awaits it before building the plan, closing a real race where the workout screen could load an empty exercise catalog if opened before the async seed transaction committed.
+- Extended `SeedData` with Cable fly + Lateral raise (the prototype's 2c superset pair) and `DatabaseSeeder.seedMissingExercises()` — backfills exercises by name independently of the "is this a fresh DB" gate, so a database already seeded by an earlier gate still picks up new exercises.
+- `FitVietNavHost` wires the Workout route (FAB "TẬP") to the real screen.
+
+### Deliberate adaptations from the frozen prototype demo (documented, not defects)
+- **One merged session instead of two separate demo canvases.** The prototype shows 1e (2-exercise straight-set demo) and 2c (superset demo) as independent canvases in the design tool. Here they're sequenced into ONE real session — 3 blocks: bench press (straight), shoulder press (straight), cable fly + lateral raise (superset) — each block driven by its own state machine exactly as above. This matches the README's own framing ("Technique is per-exercise-block in a session") better than two disconnected demos would.
+- **Sets are actually editable, not frozen.** The prototype's `sets:[{w:40,r:8},...]` are hardcoded per-tap-through values with no input. A real tracker needs real input: every current set (straight or superset) shows +/- steppers for weight/reps, defaulting to the prototype's exact values, and the edited values — not the defaults — are what get persisted to Room and summed into volume.
+- **"Làm lại demo" (infinite replay) became "Về trang chủ" (navigate home) on session finish.** The prototype's terminal state loops back to a fresh demo forever; a real session gets persisted once and the user goes back to the dashboard, which now shows the completed session. "Làm lại" (restart) is still available mid-workout via the header button, matching the prototype.
+- **English locale still shows Vietnamese exercise/muscle content and a hardcoded "Thân trên" day label** — same documented decision as Gate 3 (Vietnamese-first content vs. UI chrome), extended to cover the workout screens; not fixed here.
+- **Superset done-summary volume uses the block's planned values, not what was actually logged that round** — the persisted Room data is correct (via the editable steppers), only this one summary display doesn't thread through per-round edits. Minor, accepted given gate scope.
+- **Technique selection is a single ViewModel-level field, not stored per block** — harmless today since there's only one superset block in the demo session; Drop set/Pyramid/Rest-pause are selectable in the picker (matching the design) but have no distinct implemented mechanics, since the spec doesn't define set-by-set behavior for them beyond the picker itself.
+
+### Codex review — 4 passes (this gate's complexity warranted extra rounds)
+**Pass 1 findings and fixes:**
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | New superset exercises (Cable fly/Lateral raise) would never reach a database already seeded by an earlier gate — `seedIfEmpty()` only checked the programs table | `DatabaseSeeder.seedMissingExercises()`: backfills by `nameVi`, runs unconditionally inside the same transaction |
+| 2 (High) | "Làm lại" didn't complete/abandon the old session and repeated taps could race multiple `startNewSession()` coroutines, leaving `sessionId` pointing at whichever insert finished last | Added a retained, cancel-and-replace `sessionInitJob` |
+| 3 (Medium) | Superset sets were logged with fixed planned values, not editable, contradicting the stated "real input" design goal | Superset rows now reuse the same `editableWeightKg`/`editableReps` fields the straight-block flow uses, with steppers shown on the active exercise |
+| 4 (Medium) | `completeCurrentSet()`/`supersetNext()` had no phase guard — a stale/duplicate call after the transition could double-log a set | Added phase checks at the top of both |
+
+**Pass 2** confirmed the state-machine fidelity and the above fixes, but found the phase guards from #4 didn't cover every gap: completing superset A doesn't change `phase` (only `supersetSub`), so a fast double-tap there could still double-persist; `skipSupersetRest()` and `advanceToNextBlock()` had no guard at all.
+
+**Pass 3 fix:** rather than patch each callback individually, added one centralized `debounced()` wrapper (350ms window) around every state-mutating action (`resetWorkout`, `completeCurrentSet`, `skipRest`, `supersetNext`, `skipSupersetRest`, `advanceToNextBlock` — the last also gained an explicit done-phase guard). Left un-debounced on purpose: `addRest`/`addSupersetRest`/the weight-reps steppers (meant for rapid repeated taps, no duplicate-persistence risk) and the technique picker.
+
+**Pass 3 review** confirmed the debounce closed both gaps, but caught two smaller misses: `skipRest()`/`skipSupersetRest()` still lacked phase guards (only debounce was protecting them), and the debounce clock used `System.currentTimeMillis()` (wall-clock, vulnerable to being changed underneath the app) instead of `SystemClock.elapsedRealtime()`.
+
+**Pass 4 fix + confirmation:** added the two missing phase guards, switched the debounce clock to `elapsedRealtime()`. Confirmed clean, with one accepted low-severity note: the debounce is a single global timestamp, so two *different* legitimate actions fired within 350ms of each other would have the second one dropped — accepted given screen-transition/perception time between distinct actions in practice makes this edge case very unlikely, and per-action keyed debouncing wasn't judged worth the added complexity here.
+
 ### Next
-Gate 4 (core): Workout flow (1e) — log set → rest countdown → exercise summary → next exercise → session summary, plus superset flow + set-technique picker (2c). Must match the prototype's state machine exactly.
+Gate 5: Exercise detail (1d) + Diary & stats (1f).

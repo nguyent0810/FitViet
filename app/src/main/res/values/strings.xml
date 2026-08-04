@@ -115,6 +115,59 @@
     <string name="schedule_day_rest_sub">Đi bộ nhẹ, giãn cơ</string>
     <string name="schedule_exercise_count">%1$d bài</string>
 
+    <!-- 1e Workout flow -->
+    <string name="workout_reset">Làm lại</string>
+    <string name="workout_exercise_progress">%1$s · Bài %2$d/%3$d</string>
+    <string name="workout_complete_set">Hoàn thành set %1$d</string>
+    <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
+    <string name="workout_tag_done">Xong</string>
+    <string name="workout_tag_current">Đang tập</string>
+    <string name="workout_tag_pending">Chờ</string>
+    <string name="workout_rest_title">Nghỉ giữa set</string>
+    <string name="workout_rest_next">Tiếp theo: Set %1$d · %2$s kg × %3$d reps</string>
+    <string name="workout_add_rest">+15 giây</string>
+    <string name="workout_skip_rest">Bỏ qua</string>
+    <string name="workout_exercise_done_title">Hoàn thành bài tập!</string>
+    <string name="workout_stat_sets">Set</string>
+    <string name="workout_stat_volume">Tổng kg</string>
+    <string name="workout_stat_time">Thời gian</string>
+    <string name="workout_next_exercise">Bài tiếp theo: %1$s →</string>
+    <string name="workout_finish_session">Hoàn tất buổi tập</string>
+    <string name="workout_session_finished_title">BUỔI TẬP\nHOÀN THÀNH</string>
+    <string name="workout_session_finished_note">PR mới sẽ được lưu vào nhật ký của bạn</string>
+    <string name="workout_back_to_home">Về trang chủ</string>
+    <string name="workout_weight_kg">%1$s kg</string>
+
+    <!-- 2c Superset flow + technique picker -->
+    <string name="superset_title">Superset A</string>
+    <string name="superset_badge">2 BÀI LIÊN TIẾP</string>
+    <string name="superset_badge_a1">A1</string>
+    <string name="superset_badge_a2">A2</string>
+    <string name="superset_no_rest_note">↓ không nghỉ ↓</string>
+    <string name="superset_round_label">Vòng %1$s</string>
+    <string name="superset_round_fraction">%1$d/%2$d</string>
+    <string name="superset_rest_after">Nghỉ sau vòng: %1$ds</string>
+    <string name="superset_next_a1_to_a2">Xong A1 → chuyển A2</string>
+    <string name="superset_next_rest">Xong A2 → nghỉ</string>
+    <string name="superset_next_done">Xong A2 → hoàn thành</string>
+    <string name="superset_rest_title">Nghỉ sau vòng %1$d</string>
+    <string name="superset_rest_next_round">Tiếp theo: Vòng %1$s · %2$s</string>
+    <string name="superset_done_title">Superset hoàn thành!</string>
+    <string name="superset_done_summary">%1$d vòng · %2$d set · %3$s + %4$s</string>
+    <string name="superset_technique_label">Kỹ thuật set cho bài này</string>
+    <string name="superset_technique_open">Kỹ thuật set</string>
+    <string name="superset_technique_other">Khác: antagonist superset · compound set · giant set · circuit</string>
+    <string name="technique_straight_name">Straight set</string>
+    <string name="technique_straight_desc">nghỉ đủ giữa hiệp — cho bài compound</string>
+    <string name="technique_superset_name">Superset</string>
+    <string name="technique_superset_desc">2 bài liên tiếp — cho bài isolation</string>
+    <string name="technique_dropset_name">Drop set</string>
+    <string name="technique_dropset_desc">giảm tạ liên tục khi gần thất bại</string>
+    <string name="technique_pyramid_name">Pyramid</string>
+    <string name="technique_pyramid_desc">tăng/giảm tạ qua từng hiệp</string>
+    <string name="technique_restpause_name">Rest-pause</string>
+    <string name="technique_restpause_desc">nghỉ 10–20s rồi thêm vài rep</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
 </resources>

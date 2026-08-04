@@ -32,6 +32,8 @@ import com.fitviet.app.ui.programs.ProgramsViewModel
 import com.fitviet.app.ui.programs.WeeklyScheduleScreen
 import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
+import com.fitviet.app.ui.workout.WorkoutScreen
+import com.fitviet.app.ui.workout.WorkoutViewModel
 import kotlinx.coroutines.launch
 
 private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
@@ -148,7 +150,21 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     onStartToday = { navController.navigate(FitVietDestination.Workout.route) },
                 )
             }
-            composable(FitVietDestination.Workout.route) { PlaceholderScreen(title = "Tập") }
+            composable(FitVietDestination.Workout.route) {
+                val viewModel: WorkoutViewModel = viewModel(
+                    factory = WorkoutViewModel.Factory(container.exerciseRepository, container.workoutRepository, container.databaseReady),
+                )
+                WorkoutScreen(
+                    viewModel = viewModel,
+                    onFinishToHome = {
+                        navController.navigate(FitVietDestination.Home.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
             composable(FitVietDestination.Nutrition.route) { PlaceholderScreen(title = "Dinh dưỡng") }
             composable(FitVietDestination.Community.route) { PlaceholderScreen(title = "Cộng đồng") }
         }
