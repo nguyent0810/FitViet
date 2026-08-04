@@ -240,10 +240,18 @@ The last of the 12 spec screens.
 Gate 6 said no `codex` CLI was available. That was checked with a bare `which codex` and was misleading: `npx @openai/codex` *does* fetch and run (this environment's proxy allows npm registry access) — but `codex exec` fails immediately because the proxy returns 403 for `api.openai.com` (not on this environment's host allowlist, same class of block as `dl.google.com`), and there's no `OPENAI_API_KEY`/`~/.codex/auth.json` configured either. So `codex` is reachable-but-non-functional here, not literally absent — worth re-checking in an environment with OpenAI API egress.
 
 ### Verification
-Same environment constraints as Gate 6 (no real Gradle build possible). Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/repository layer including the new `CommunityPostEntity`/`CommunityPostDao`/`CommunityFilter`/`CommunityRepository` — clean, no errors — and the new `CommunityFilterTest`: **3/3 pass**. Compose UI layer (`CommunityScreen`, `CommunityViewModel`, nav wiring) verified by manual read-through against the same proven-compiling precedents as Gate 6, plus grepped the full source tree to confirm no other file still references the deleted `PlaceholderScreen`/`placeholder_coming_soon`. An independent review pass (same general-purpose-agent stand-in used for Gate 6) was still in flight at commit time; findings, if any, land as a follow-up commit.
+Same environment constraints as Gate 6 (no real Gradle build possible). Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/repository layer including the new `CommunityPostEntity`/`CommunityPostDao`/`CommunityFilter`/`CommunityRepository` — clean, no errors — and the new `CommunityFilterTest`: **3/3 pass**. Compose UI layer (`CommunityScreen`, `CommunityViewModel`, nav wiring) verified by manual read-through against the same proven-compiling precedents as Gate 6, plus grepped the full source tree to confirm no other file still references the deleted `PlaceholderScreen`/`placeholder_coming_soon`.
+
+**Independent review pass** (same general-purpose-agent stand-in as Gate 6). One finding, fixed as a follow-up commit:
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `DatabaseSeeder.communityPostDao().insertAll(...)` was called *after* the `programDao().count() > 0` early-return guard — so it only ran on a genuinely empty (first-ever-launch) database. Any DB already seeded by a pre-Gate-7 build (Gates 2–6 — exactly what a reviewer's or the user's existing install would be) would silently show an empty Community feed forever, with no error. This is the identical bug class Gate 4 already hit and fixed for exercises. | Added `seedMissingCommunityPosts()` (mirrors `seedMissingExercises()`'s pattern: its own `count() == 0` check, called unconditionally before the programs-count gate) |
+
+Also tried `codex exec review` for a real second opinion this gate, since `codex` turns out to be installable via `npx @openai/codex` (npm registry access works here) — but it can't actually run: the container's network proxy returns a 403 on the CONNECT to `api.openai.com` before any auth check even happens, and there's no `OPENAI_API_KEY`/`~/.codex/auth.json` configured either. Corrects Gate 6's "no codex CLI available" note — it's reachable-but-blocked, not absent.
 
 ### Push
-Pushed to `origin/claude/routines-code-session-n62xmx` with the independent review in flight; will follow up if it finds anything.
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
 
 ### Next
 All 12 spec screens are now built. Remaining candidates, not yet scoped into a gate: wiring Ngôn ngữ/Đơn vị (Gate 6) to actually take effect app-wide; a real create-post flow for 1h's "+ Đăng bài"; exercise media (the README's placeholder-asset gap — free-exercise-db/wger licensing to check first); and getting a real Gradle/Android SDK build running (blocked purely by this environment's network policy, not by anything in the code).
