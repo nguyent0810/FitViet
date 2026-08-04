@@ -69,5 +69,37 @@ Second pass confirmed all four fixes correct with no new issues. (Noted caveat: 
 
 **Not addressed (scope/documentation, not a defect):** the README's suggested `OnboardingState` includes `daysPerWeek`, but no screen in the 12-screen spec actually collects it (same gap noted in Gate 1 re: the hardcoded "6 buổi" text on 2a) — `SettingsEntity` doesn't have a column for it since there's nothing to write there yet.
 
+### Push
+Approved by codex, pushed to `origin/master` (`9f1966c`).
+
+## Gate 3 — Dashboard (1b) + Programs list (1c) + Weekly schedule (2b)
+
+### What was built
+- `domain/{DashboardStats,DashboardStatsCalculator}.kt` — pure, framework-free streak/weekly-volume/7-day-series math, with a JUnit test suite (`DashboardStatsCalculatorTest`) covering week-boundary volume, same-day accumulation, streak-from-today vs. streak-from-yesterday, zero-streak, and streak crossing the Monday boundary. This is the "tính tổng volume" unit-test requirement from the brief, done now rather than deferred, since the logic already existed for the dashboard.
+- `data/repository/{DashboardRepository,ProgramRepository}.kt` — `DashboardRepository.observe()` combines completed sessions, today's meals, and all programs into one reactive `DashboardData`, re-subscribing across midnight via a `dayTicker()` flow (`flatMapLatest`) instead of freezing at whatever date the screen first loaded.
+- `ui/dashboard/{DashboardScreen,DashboardViewModel}.kt` (1b): greeting header, hero card, 3 stat tiles, tap-to-inspect 7-day volume chart, nutrition progress bar.
+- `ui/programs/{ProgramsListScreen,ProgramsViewModel}.kt` (1c): search field + 5 filter chips (client-side filter over Room's `Flow<List<ProgramEntity>>` — trivial at 3 seeded programs, no query-level filtering needed), program cards.
+- `ui/programs/{WeeklyScheduleScreen,WeeklyScheduleViewModel,WeeklyScheduleData}.kt` (2b): tapping a program card on 1c opens its weekly schedule.
+- `util/{Formatting,VietnameseDate}.kt` — `vi-VN` number formatting (`4.120`, `12,4k`) matching the prototype's `toLocaleString`, and `DayOfWeek → string resource` mapping for both the short (T2..CN) and long (Thứ Hai..Chủ Nhật) day labels.
+- Extended `SeedData`/`DatabaseSeeder` with 8 historical `WorkoutSessionEntity` rows (ending yesterday, with a gap 5 days ago) so the dashboard has real numbers on a fresh install instead of all zeros.
+- `MainActivity`/`FitVietNavHost` now thread the whole `AppContainer` through instead of just `OnboardingRepository`, and gained a `programs/{programId}/schedule` route.
+
+### Scope decisions (documented, not defects)
+- **2b is reached from 1c, not from onboarding.** README lists 2a/2b/2c together, which initially read as "part of onboarding," but the user's own gate plan puts 2b in Gate 3 alongside the Programs list and Gate 1 already completed onboarding at 2a. The prototype's 2b markup also has no forward/continue button — it's a browsable schedule, not a linear step — so tapping into a program's schedule from 1c fits better than inserting it into the onboarding flow.
+- **Hero card and 2b show real/static data instead of a fabricated day plan.** Neither `ProgramEntity` nor any seed data assigns specific exercises to specific calendar days (there's no such screen in the 12-screen spec to source it from — same gap as the "6 buổi" / `daysPerWeek` note from Gates 1–2). So: the hero card shows the program's actual `sessionsPerWeek`/`level`/`equipment` instead of inventing "Ngày 12 · 6 bài tập · 45 phút", and 2b shows the same static PPL reference week for every program rather than pretending it's program-specific. Revisit if/when a real program→day→exercise assignment model gets built.
+- **English locale shows Vietnamese program/exercise content by design.** `ProgramEntity.titleVi`/`level`/`equipment` and `ExerciseEntity.nameVi` etc. are Vietnamese-first content per the README ("Vietnamese-first content" is a stated differentiator), not UI chrome — only chrome (buttons, labels, nav) is in `values-en`. `level`/`equipment` are arguably closer to categorical UI vocabulary than proper nouns, though, so this is worth revisiting as a real localization key/lookup when the Gate 6 language toggle is built, rather than now.
+
+### Codex review — findings and resolution
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `FlowRow` used in `ProgramsListScreen`'s `FilterChips` without the experimental opt-in — would fail to compile | Added `@OptIn(ExperimentalLayoutApi::class)` |
+| 2 (Medium) | `DashboardRepository.observe()` captured `LocalDate.now()` once at Flow-construction time — a long-lived screen open across midnight would keep computing "today's" meals/stats against yesterday | Rewrote as a `dayTicker()` flow (`ZonedDateTime`-based, DST-safe delay-until-midnight) composed via `flatMapLatest`, so the meal query and stats re-derive on day rollover |
+| 4 (Low) | Program title + "FREE" badge were unweighted siblings in a `Row` — a long title could push the badge off-screen | Added `Modifier.weight(1f)`, `maxLines = 1`, `TextOverflow.Ellipsis` to the title |
+| 5 (Low) | Streak test coverage didn't include a case crossing the Monday week boundary | Added `streak keeps counting across the Monday week boundary` test |
+
+Second pass: clean, plus one extra polish — `dayTicker()`'s original midnight math used naive `LocalDateTime`, which isn't DST-safe in zones that observe it; switched to `ZonedDateTime` + `Duration.between` (Vietnam has no DST, so this was cosmetic here, but it's the correct primitive regardless).
+
+**Not addressed (documented above under Scope decisions):** finding #3 (Medium) — English locale still shows Vietnamese program/exercise content. Deliberately deferred to Gate 6 rather than fixed now; see above.
+
 ### Next
-Gate 3: Dashboard (1b) + Programs list with filters (1c) + weekly schedule (2b), wired to the Room data layer built here.
+Gate 4 (core): Workout flow (1e) — log set → rest countdown → exercise summary → next exercise → session summary, plus superset flow + set-technique picker (2c). Must match the prototype's state machine exactly.

@@ -4,6 +4,7 @@ import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
+import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 
 /** Seed content sourced from `UI Handoff/FitViet Prototype v2.dc.html` (screens 1c, 1d, 1e, 1g, 1i). */
 object SeedData {
@@ -91,4 +92,35 @@ object SeedData {
         MeasurementEntity(epochDay = latestEpochDay - 14, weightKg = 70.8, chestCm = 96.0, waistCm = 81.0, armCm = 35.5),
         MeasurementEntity(epochDay = latestEpochDay, weightKg = 72.0, chestCm = 98.0, waistCm = 80.0, armCm = 36.0),
     )
+
+    /**
+     * A short training history ending yesterday (today is left open so the dashboard's "start
+     * workout" CTA has something to do) — gives the 1b stat tiles and 7-day chart real numbers
+     * to compute from a fresh install. Day labels follow the vocabulary used on 1f's session list.
+     * There's a gap at 5 days ago so streak calculation isn't trivially "every day".
+     */
+    fun workoutSessions(nowMillis: Long): List<WorkoutSessionEntity> {
+        val oneDayMillis = 24L * 60 * 60 * 1000
+        data class Session(val daysAgo: Long, val dayLabel: String, val volumeKg: Double, val durationSeconds: Int)
+        val sessions = listOf(
+            Session(1, "Thân trên", 4120.0, 52 * 60),
+            Session(2, "Chân", 5360.0, 48 * 60),
+            Session(3, "Kéo lưng", 3980.0, 45 * 60),
+            Session(4, "Thân trên", 3600.0, 40 * 60),
+            Session(6, "Chân", 4890.0, 50 * 60),
+            Session(7, "Thân trên", 3200.0, 38 * 60),
+            Session(8, "Kéo lưng", 4450.0, 47 * 60),
+            Session(9, "Chân", 5100.0, 49 * 60),
+        )
+        return sessions.map { s ->
+            val completedAt = nowMillis - s.daysAgo * oneDayMillis
+            WorkoutSessionEntity(
+                dayLabel = s.dayLabel,
+                startedAt = completedAt - s.durationSeconds * 1000L,
+                completedAt = completedAt,
+                totalVolumeKg = s.volumeKg,
+                durationSeconds = s.durationSeconds,
+            )
+        }
+    }
 }

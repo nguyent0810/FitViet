@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         val container = (application as FitVietApp).container
         setContent {
             FitVietTheme {
-                FitVietNavHost(onboardingRepository = container.onboardingRepository)
+                FitVietNavHost(container = container)
             }
         }
     }

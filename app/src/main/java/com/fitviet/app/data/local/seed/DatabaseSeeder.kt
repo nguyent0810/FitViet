@@ -16,6 +16,7 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
             database.exerciseDao().insertAll(SeedData.exercises)
             SeedData.meals(today).forEach { database.mealDao().insert(it) }
             SeedData.measurements(today).forEach { database.measurementDao().insert(it) }
+            SeedData.workoutSessions(System.currentTimeMillis()).forEach { database.workoutSessionDao().insert(it) }
         }
     }
 }

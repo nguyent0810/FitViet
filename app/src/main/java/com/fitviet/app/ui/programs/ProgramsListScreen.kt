@@ -1,0 +1,213 @@
+package com.fitviet.app.ui.programs
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fitviet.app.R
+import com.fitviet.app.data.local.entity.ProgramEntity
+import com.fitviet.app.ui.theme.Accent
+import com.fitviet.app.ui.theme.AccentBorderAlt
+import com.fitviet.app.ui.theme.CardBorder
+import com.fitviet.app.ui.theme.DeepSurface1
+import com.fitviet.app.ui.theme.Dimens
+import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.PillShape
+import com.fitviet.app.ui.theme.SurfaceCard
+import com.fitviet.app.ui.theme.TextFaint
+import com.fitviet.app.ui.theme.TextMuted
+import com.fitviet.app.ui.theme.TextPrimary
+
+@Composable
+fun ProgramsListScreen(
+    viewModel: ProgramsViewModel,
+    onProgramClick: (ProgramEntity) -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        item {
+            Text(text = stringResource(R.string.programs_title), style = MaterialTheme.typography.headlineMedium)
+        }
+        item {
+            SearchField(query = uiState.searchQuery, onQueryChange = viewModel::onSearchQueryChange)
+        }
+        item {
+            FilterChips(selectedIndex = uiState.selectedFilterIndex, onSelect = viewModel::onFilterSelected)
+        }
+        if (uiState.visiblePrograms.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.programs_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMuted,
+                    modifier = Modifier.padding(top = 24.dp),
+                )
+            }
+        } else {
+            items(uiState.visiblePrograms, key = { it.id }) { program ->
+                ProgramCard(program = program, onClick = { onProgramClick(program) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        if (query.isEmpty()) {
+            Text(
+                text = stringResource(R.string.programs_search_placeholder),
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextFaint,
+            )
+        }
+        BasicTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            textStyle = TextStyle(
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                color = TextPrimary,
+            ),
+            cursorBrush = SolidColor(Accent),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FilterChips(selectedIndex: Int, onSelect: (Int) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PROGRAM_FILTERS.forEachIndexed { index, filter ->
+            val selected = index == selectedIndex
+            Box(
+                modifier = Modifier
+                    .clip(PillShape)
+                    .background(if (selected) Accent else SurfaceCard)
+                    .border(1.dp, if (selected) Accent else CardBorder, PillShape)
+                    .clickable { onSelect(index) }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+            ) {
+                Text(
+                    text = stringResource(filter.labelRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selected) OnAccent else TextMuted,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clickable(onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(84.dp)
+                .background(DeepSurface1),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "ảnh: ${program.imageAsset}",
+                style = MaterialTheme.typography.labelMedium,
+                color = TextFaint,
+            )
+        }
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            ProgramTitleRow(program = program)
+            Text(
+                text = stringResource(
+                    R.string.programs_card_meta,
+                    program.durationWeeks,
+                    program.sessionsPerWeek,
+                    program.level,
+                    program.equipment,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProgramTitleRow(program: ProgramEntity) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = program.titleVi,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(end = 8.dp),
+        )
+        Box(
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.extraSmall)
+                .border(1.dp, AccentBorderAlt, MaterialTheme.shapes.extraSmall)
+                .padding(horizontal = 7.dp, vertical = 2.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.programs_free_badge),
+                style = MaterialTheme.typography.labelSmall,
+                color = Accent,
+            )
+        }
+    }
+}

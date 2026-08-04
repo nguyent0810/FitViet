@@ -46,6 +46,75 @@
     <string name="split_info_body">thêm 2 ngày ngực, 2 ngày tay… — tùy chỉnh ở bước sau.</string>
     <string name="split_continue">Tiếp tục</string>
 
+    <!-- Day-of-week short labels (used on 1b's 7-day chart and 2b's schedule rows) -->
+    <string name="day_mon">T2</string>
+    <string name="day_tue">T3</string>
+    <string name="day_wed">T4</string>
+    <string name="day_thu">T5</string>
+    <string name="day_fri">T6</string>
+    <string name="day_sat">T7</string>
+    <string name="day_sun">CN</string>
+    <string name="day_long_mon">Thứ Hai</string>
+    <string name="day_long_tue">Thứ Ba</string>
+    <string name="day_long_wed">Thứ Tư</string>
+    <string name="day_long_thu">Thứ Năm</string>
+    <string name="day_long_fri">Thứ Sáu</string>
+    <string name="day_long_sat">Thứ Bảy</string>
+    <string name="day_long_sun">Chủ Nhật</string>
+    <string name="dashboard_date_line">%1$s, %2$d/%3$d</string>
+
+    <!-- 1b Dashboard -->
+    <string name="dashboard_greeting">Chào %1$s</string>
+    <string name="dashboard_hero_label">Buổi tập hôm nay</string>
+    <string name="dashboard_hero_meta">%1$d buổi/tuần · %2$s · %3$s</string>
+    <string name="dashboard_start_workout">Bắt đầu tập</string>
+    <string name="dashboard_workout_in_progress">Đang tập · %1$s — chạm để kết thúc</string>
+    <string name="dashboard_stat_streak">Chuỗi ngày</string>
+    <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>
+    <string name="dashboard_stat_volume_this_week">Tổng kg tuần</string>
+    <string name="dashboard_weekly_volume_title">Khối lượng 7 ngày</string>
+    <string name="dashboard_bar_rest">Nghỉ</string>
+    <string name="dashboard_nutrition_title">Dinh dưỡng hôm nay</string>
+    <string name="dashboard_nutrition_progress">%1$s / %2$s kcal</string>
+    <string name="dashboard_no_program_title">Chưa có giáo án</string>
+    <string name="dashboard_no_program_meta">Chọn một giáo án để bắt đầu buổi tập đầu tiên</string>
+    <string name="dashboard_browse_programs">Xem giáo án</string>
+
+    <!-- 1c Programs list -->
+    <string name="programs_title">Giáo án tập luyện</string>
+    <string name="programs_search_placeholder">Tìm giáo án, bài tập…</string>
+    <string name="programs_filter_all">Tất cả</string>
+    <string name="programs_filter_muscle_gain">Tăng cơ</string>
+    <string name="programs_filter_fat_loss">Giảm mỡ</string>
+    <string name="programs_filter_home">Tại nhà</string>
+    <string name="programs_filter_gym">Phòng gym</string>
+    <string name="programs_free_badge">MIỄN PHÍ</string>
+    <string name="programs_card_meta">%1$d tuần · %2$d buổi/tuần · %3$s · %4$s</string>
+    <string name="programs_empty">Không tìm thấy giáo án phù hợp</string>
+
+    <!-- 2b Weekly schedule -->
+    <string name="schedule_title">Lịch tuần của bạn</string>
+    <string name="schedule_subtitle">Push–Pull–Legs biến thể · ưu tiên ngực &amp; tay · 6 buổi/tuần</string>
+    <string name="schedule_today_badge">HÔM NAY</string>
+    <string name="schedule_start_today">Bắt đầu ›</string>
+    <string name="schedule_hint_rest">CN · Nghỉ phục hồi — đi bộ nhẹ, giãn cơ 15 phút</string>
+    <string name="schedule_hint_day">%1$s · %2$s — %3$s · %4$s</string>
+    <string name="schedule_day_push1_title">Push 1</string>
+    <string name="schedule_day_push1_sub">Ngực ưu tiên + vai + tay sau</string>
+    <string name="schedule_day_pull1_title">Pull 1</string>
+    <string name="schedule_day_pull1_sub">Xô ưu tiên + tay trước</string>
+    <string name="schedule_day_legs1_title">Legs 1</string>
+    <string name="schedule_day_legs1_sub">Đùi trước, đùi sau, mông, bắp chân</string>
+    <string name="schedule_day_push2_title">Push 2</string>
+    <string name="schedule_day_push2_sub">Vai / ngực trên + tay sau</string>
+    <string name="schedule_day_pull2_title">Pull 2</string>
+    <string name="schedule_day_pull2_sub">Lưng dày + tay trước</string>
+    <string name="schedule_day_legs2_title">Legs 2</string>
+    <string name="schedule_day_legs2_sub">Mông ưu tiên + core</string>
+    <string name="schedule_day_rest_title">Nghỉ phục hồi</string>
+    <string name="schedule_day_rest_sub">Đi bộ nhẹ, giãn cơ</string>
+    <string name="schedule_exercise_count">%1$d bài</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
 </resources>

@@ -46,6 +46,75 @@
     <string name="split_info_body">add 2 chest days, 2 arm days… — customize in a later step.</string>
     <string name="split_continue">Continue</string>
 
+    <!-- Day-of-week short labels (used on 1b's 7-day chart and 2b's schedule rows) -->
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
+    <string name="day_long_mon">Monday</string>
+    <string name="day_long_tue">Tuesday</string>
+    <string name="day_long_wed">Wednesday</string>
+    <string name="day_long_thu">Thursday</string>
+    <string name="day_long_fri">Friday</string>
+    <string name="day_long_sat">Saturday</string>
+    <string name="day_long_sun">Sunday</string>
+    <string name="dashboard_date_line">%1$s, %2$d/%3$d</string>
+
+    <!-- 1b Dashboard -->
+    <string name="dashboard_greeting">Hi %1$s</string>
+    <string name="dashboard_hero_label">Today\'s workout</string>
+    <string name="dashboard_hero_meta">%1$d sessions/week · %2$s · %3$s</string>
+    <string name="dashboard_start_workout">Start workout</string>
+    <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
+    <string name="dashboard_stat_streak">Day streak</string>
+    <string name="dashboard_stat_sessions_this_week">Sessions this week</string>
+    <string name="dashboard_stat_volume_this_week">Total kg this week</string>
+    <string name="dashboard_weekly_volume_title">7-day volume</string>
+    <string name="dashboard_bar_rest">Rest</string>
+    <string name="dashboard_nutrition_title">Nutrition today</string>
+    <string name="dashboard_nutrition_progress">%1$s / %2$s kcal</string>
+    <string name="dashboard_no_program_title">No program yet</string>
+    <string name="dashboard_no_program_meta">Pick a program to start your first workout</string>
+    <string name="dashboard_browse_programs">Browse programs</string>
+
+    <!-- 1c Programs list -->
+    <string name="programs_title">Training programs</string>
+    <string name="programs_search_placeholder">Search programs, exercises…</string>
+    <string name="programs_filter_all">All</string>
+    <string name="programs_filter_muscle_gain">Muscle gain</string>
+    <string name="programs_filter_fat_loss">Fat loss</string>
+    <string name="programs_filter_home">At home</string>
+    <string name="programs_filter_gym">Gym</string>
+    <string name="programs_free_badge">FREE</string>
+    <string name="programs_card_meta">%1$d weeks · %2$d sessions/week · %3$s · %4$s</string>
+    <string name="programs_empty">No matching programs found</string>
+
+    <!-- 2b Weekly schedule -->
+    <string name="schedule_title">Your weekly schedule</string>
+    <string name="schedule_subtitle">Push–Pull–Legs variant · chest &amp; arm priority · 6 sessions/week</string>
+    <string name="schedule_today_badge">TODAY</string>
+    <string name="schedule_start_today">Start ›</string>
+    <string name="schedule_hint_rest">Sun · Recovery day — light walk, stretching, 15 min</string>
+    <string name="schedule_hint_day">%1$s · %2$s — %3$s · %4$s</string>
+    <string name="schedule_day_push1_title">Push 1</string>
+    <string name="schedule_day_push1_sub">Chest priority + shoulders + triceps</string>
+    <string name="schedule_day_pull1_title">Pull 1</string>
+    <string name="schedule_day_pull1_sub">Back priority + biceps</string>
+    <string name="schedule_day_legs1_title">Legs 1</string>
+    <string name="schedule_day_legs1_sub">Quads, hamstrings, glutes, calves</string>
+    <string name="schedule_day_push2_title">Push 2</string>
+    <string name="schedule_day_push2_sub">Shoulders / upper chest + triceps</string>
+    <string name="schedule_day_pull2_title">Pull 2</string>
+    <string name="schedule_day_pull2_sub">Back thickness + biceps</string>
+    <string name="schedule_day_legs2_title">Legs 2</string>
+    <string name="schedule_day_legs2_sub">Glute priority + core</string>
+    <string name="schedule_day_rest_title">Recovery day</string>
+    <string name="schedule_day_rest_sub">Light walk, stretching</string>
+    <string name="schedule_exercise_count">%1$d exercises</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Coming in the next gate</string>
 </resources>

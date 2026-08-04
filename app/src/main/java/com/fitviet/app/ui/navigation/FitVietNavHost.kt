@@ -13,36 +13,44 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.fitviet.app.data.repository.OnboardingRepository
+import androidx.navigation.navArgument
+import com.fitviet.app.data.AppContainer
 import com.fitviet.app.ui.common.PlaceholderScreen
+import com.fitviet.app.ui.dashboard.DashboardScreen
+import com.fitviet.app.ui.dashboard.DashboardViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
 import com.fitviet.app.ui.onboarding.SplitScreen
+import com.fitviet.app.ui.programs.ProgramsListScreen
+import com.fitviet.app.ui.programs.ProgramsViewModel
+import com.fitviet.app.ui.programs.WeeklyScheduleScreen
+import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
 import kotlinx.coroutines.launch
 
 private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
 
 @Composable
-fun FitVietNavHost(onboardingRepository: OnboardingRepository) {
+fun FitVietNavHost(container: AppContainer) {
     // Onboarding completion decides the start destination, so hold off composing the graph
     // until the first read of settings resolves (null = unknown yet, not "not completed").
-    val onboardingCompleted by onboardingRepository.isOnboardingCompleted()
+    val onboardingCompleted by container.onboardingRepository.isOnboardingCompleted()
         .collectAsStateWithLifecycle(initialValue = null)
 
     when (val completed = onboardingCompleted) {
         null -> Box(modifier = Modifier.fillMaxSize().background(BackgroundPage))
-        else -> FitVietNavGraph(startAtOnboarding = !completed, onboardingRepository = onboardingRepository)
+        else -> FitVietNavGraph(startAtOnboarding = !completed, container = container)
     }
 }
 
 @Composable
-private fun FitVietNavGraph(startAtOnboarding: Boolean, onboardingRepository: OnboardingRepository) {
+private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val startDestination = if (startAtOnboarding) ONBOARDING_GRAPH_ROUTE else FitVietDestination.Home.route
@@ -74,7 +82,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, onboardingRepository: On
                     val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(ONBOARDING_GRAPH_ROUTE) }
                     val viewModel: OnboardingViewModel = viewModel(
                         parentEntry,
-                        factory = OnboardingViewModel.Factory(onboardingRepository),
+                        factory = OnboardingViewModel.Factory(container.onboardingRepository),
                     )
                     GoalLevelScreen(
                         viewModel = viewModel,
@@ -85,7 +93,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, onboardingRepository: On
                     val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(ONBOARDING_GRAPH_ROUTE) }
                     val viewModel: OnboardingViewModel = viewModel(
                         parentEntry,
-                        factory = OnboardingViewModel.Factory(onboardingRepository),
+                        factory = OnboardingViewModel.Factory(container.onboardingRepository),
                     )
                     val coroutineScope = rememberCoroutineScope()
                     SplitScreen(
@@ -103,8 +111,43 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, onboardingRepository: On
                     )
                 }
             }
-            composable(FitVietDestination.Home.route) { PlaceholderScreen(title = "Trang chủ") }
-            composable(FitVietDestination.Programs.route) { PlaceholderScreen(title = "Giáo án") }
+            composable(FitVietDestination.Home.route) {
+                val viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(container.dashboardRepository))
+                DashboardScreen(
+                    viewModel = viewModel,
+                    onStartWorkout = { navController.navigate(FitVietDestination.Workout.route) },
+                    onBrowsePrograms = {
+                        navController.navigate(FitVietDestination.Programs.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
+            composable(FitVietDestination.Programs.route) {
+                val viewModel: ProgramsViewModel = viewModel(factory = ProgramsViewModel.Factory(container.programRepository))
+                ProgramsListScreen(
+                    viewModel = viewModel,
+                    onProgramClick = { program ->
+                        navController.navigate(FitVietDestination.ProgramSchedule.createRoute(program.id))
+                    },
+                )
+            }
+            composable(
+                route = FitVietDestination.ProgramSchedule.route,
+                arguments = listOf(navArgument(FitVietDestination.ProgramSchedule.ARG_PROGRAM_ID) { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val programId = backStackEntry.arguments?.getLong(FitVietDestination.ProgramSchedule.ARG_PROGRAM_ID) ?: 0L
+                val viewModel: WeeklyScheduleViewModel = viewModel(
+                    factory = WeeklyScheduleViewModel.Factory(programId, container.programRepository),
+                )
+                WeeklyScheduleScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onStartToday = { navController.navigate(FitVietDestination.Workout.route) },
+                )
+            }
             composable(FitVietDestination.Workout.route) { PlaceholderScreen(title = "Tập") }
             composable(FitVietDestination.Nutrition.route) { PlaceholderScreen(title = "Dinh dưỡng") }
             composable(FitVietDestination.Community.route) { PlaceholderScreen(title = "Cộng đồng") }
