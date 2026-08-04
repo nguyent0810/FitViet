@@ -216,6 +216,10 @@
     <string name="profile_tile_chest">Chest (cm)</string>
     <string name="profile_tile_waist">Waist (cm)</string>
     <string name="profile_tile_arm">Arm (cm)</string>
+    <string name="profile_tile_weight_short">Weight</string>
+    <string name="profile_tile_chest_short">Chest</string>
+    <string name="profile_tile_waist_short">Waist</string>
+    <string name="profile_tile_arm_short">Arm</string>
     <string name="profile_settings_language">Language</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>

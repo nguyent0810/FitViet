@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Declares the app's supported per-app languages (1i "Ngôn ngữ" setting) for Android 13+'s
+     framework LocaleManager; androidx.appcompat provides the equivalent back-compat path for
+     older versions. See util/LocaleController.kt. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="vi" />
+    <locale android:name="en" />
+</locale-config>

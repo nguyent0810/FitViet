@@ -47,7 +47,8 @@ import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
-import com.fitviet.app.util.formatWeight
+import com.fitviet.app.util.formatLengthUnit
+import com.fitviet.app.util.formatWeightUnit
 import kotlin.math.abs
 
 // No profile-editing screen exists in the 12-screen spec (same identity gap noted for the
@@ -88,6 +89,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             chestCm = uiState.latestMeasurement?.chestCm,
             waistCm = uiState.latestMeasurement?.waistCm,
             armCm = uiState.latestMeasurement?.armCm,
+            useImperial = uiState.settings.useImperialUnits,
             onUpdateClick = viewModel::openUpdateSheet,
         )
         SettingsCard(settings = uiState.settings, viewModel = viewModel)
@@ -136,6 +138,7 @@ private fun MeasurementsCard(
     chestCm: Double?,
     waistCm: Double?,
     armCm: Double?,
+    useImperial: Boolean,
     onUpdateClick: () -> Unit,
 ) {
     Column(
@@ -158,16 +161,53 @@ private fun MeasurementsCard(
             )
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MeasurementTile(value = weightKg, delta = deltas.weightKg, label = stringResource(R.string.profile_tile_weight), modifier = Modifier.weight(1f))
-            MeasurementTile(value = chestCm, delta = deltas.chestCm, label = stringResource(R.string.profile_tile_chest), modifier = Modifier.weight(1f))
-            MeasurementTile(value = waistCm, delta = deltas.waistCm, label = stringResource(R.string.profile_tile_waist), modifier = Modifier.weight(1f))
-            MeasurementTile(value = armCm, delta = deltas.armCm, label = stringResource(R.string.profile_tile_arm), modifier = Modifier.weight(1f))
+            MeasurementTile(
+                value = weightKg,
+                delta = deltas.weightKg,
+                label = stringResource(R.string.profile_tile_weight_short),
+                useImperial = useImperial,
+                isWeight = true,
+                modifier = Modifier.weight(1f),
+            )
+            MeasurementTile(
+                value = chestCm,
+                delta = deltas.chestCm,
+                label = stringResource(R.string.profile_tile_chest_short),
+                useImperial = useImperial,
+                isWeight = false,
+                modifier = Modifier.weight(1f),
+            )
+            MeasurementTile(
+                value = waistCm,
+                delta = deltas.waistCm,
+                label = stringResource(R.string.profile_tile_waist_short),
+                useImperial = useImperial,
+                isWeight = false,
+                modifier = Modifier.weight(1f),
+            )
+            MeasurementTile(
+                value = armCm,
+                delta = deltas.armCm,
+                label = stringResource(R.string.profile_tile_arm_short),
+                useImperial = useImperial,
+                isWeight = false,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
 
 @Composable
-private fun MeasurementTile(value: Double?, delta: Double?, label: String, modifier: Modifier = Modifier) {
+private fun MeasurementTile(
+    value: Double?,
+    delta: Double?,
+    label: String,
+    useImperial: Boolean,
+    isWeight: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    fun format(v: Double) = if (isWeight) formatWeightUnit(v, useImperial) else formatLengthUnit(v, useImperial)
+
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
@@ -176,7 +216,7 @@ private fun MeasurementTile(value: Double?, delta: Double?, label: String, modif
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = value?.let(::formatWeight) ?: "–",
+            text = value?.let(::format) ?: "–",
             style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
             color = TextPrimary,
         )
@@ -184,7 +224,7 @@ private fun MeasurementTile(value: Double?, delta: Double?, label: String, modif
         if (delta != null && delta != 0.0) {
             val positive = delta > 0
             Text(
-                text = "${if (positive) "+" else "−"}${formatWeight(abs(delta))}",
+                text = "${if (positive) "+" else "−"}${format(abs(delta))}",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (positive) Accent else TextMuted,
                 fontWeight = if (positive) FontWeight.Bold else FontWeight.Normal,

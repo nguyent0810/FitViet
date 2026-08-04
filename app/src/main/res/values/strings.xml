@@ -216,6 +216,13 @@
     <string name="profile_tile_chest">Ngực (cm)</string>
     <string name="profile_tile_waist">Eo (cm)</string>
     <string name="profile_tile_arm">Tay (cm)</string>
+    <!-- Unit-less tile labels — the tile's value text carries the unit itself so it stays correct
+         when Đơn vị is set to lb/in (see profile_tile_weight etc. above, still kg/cm-labeled, used
+         for the "+ Cập nhật" input fields, which always collect metric values). -->
+    <string name="profile_tile_weight_short">Cân nặng</string>
+    <string name="profile_tile_chest_short">Ngực</string>
+    <string name="profile_tile_waist_short">Eo</string>
+    <string name="profile_tile_arm_short">Tay</string>
     <string name="profile_settings_language">Ngôn ngữ</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>

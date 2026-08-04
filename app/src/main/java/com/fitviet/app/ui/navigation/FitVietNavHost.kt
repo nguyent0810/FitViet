@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,12 +44,19 @@ import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.workout.WorkoutScreen
 import com.fitviet.app.ui.workout.WorkoutViewModel
+import com.fitviet.app.util.LocaleController
 import kotlinx.coroutines.launch
 
 private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
 
 @Composable
 fun FitVietNavHost(container: AppContainer) {
+    // Keeps the real per-app locale (see LocaleController) in sync with the persisted 1i language
+    // setting on every launch and every toggle. Idempotent, so re-firing after the locale-change
+    // recreation this triggers is harmless.
+    val isEnglish by container.languageIsEnglish.collectAsStateWithLifecycle(initialValue = false)
+    LaunchedEffect(isEnglish) { LocaleController.apply(isEnglish) }
+
     // Onboarding completion decides the start destination, so hold off composing the graph
     // until the first read of settings resolves (null = unknown yet, not "not completed").
     val onboardingCompleted by container.onboardingRepository.isOnboardingCompleted()

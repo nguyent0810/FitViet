@@ -17,6 +17,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** Simple manual DI container — no framework is used, this app has few enough dependencies to wire by hand. */
 class AppContainer(context: Context) {
@@ -42,6 +44,11 @@ class AppContainer(context: Context) {
         measurementDao = database.measurementDao(),
     )
     val communityRepository = CommunityRepository(database.communityPostDao())
+
+    /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a
+     * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather
+     * than on [ProfileRepository]. */
+    val languageIsEnglish: Flow<Boolean> = database.settingsDao().observe().map { it?.languageIsEnglish ?: false }
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's
      * exercise catalog) must await this first so they don't race an empty, not-yet-seeded table. */
