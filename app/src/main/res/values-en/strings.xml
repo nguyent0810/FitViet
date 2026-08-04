@@ -195,6 +195,55 @@
     <string name="diary_recent_empty">No sessions yet</string>
     <string name="diary_recent_meta">%1$s min · %2$s kg</string>
 
+    <!-- 1g Nutrition -->
+    <string name="nutrition_title">Nutrition</string>
+    <string name="nutrition_kcal_goal">/ %1$s kcal</string>
+    <string name="nutrition_macro_protein">Protein</string>
+    <string name="nutrition_macro_carb">Carbs</string>
+    <string name="nutrition_macro_fat">Fat</string>
+    <string name="nutrition_macro_label">%1$d/%2$dg</string>
+    <string name="nutrition_meals_title">Today\'s meals</string>
+    <string name="nutrition_add_meal">+ Add food</string>
+    <string name="nutrition_kcal_unit">%1$d kcal</string>
+    <string name="nutrition_footer">Vietnamese food database · works offline</string>
+    <string name="nutrition_picker_title">Choose a food</string>
+    <string name="nutrition_meals_empty">No meals logged today</string>
+    <string name="nutrition_slot_extra">Extra</string>
+
+    <!-- 1i Profile & settings -->
+    <string name="profile_summary">%1$s · Goal: %2$s · %3$d weeks with FitViet</string>
+    <string name="profile_measurements_title">Body measurements</string>
+    <string name="profile_update">+ Update</string>
+    <string name="profile_weight_label">Weight (kg)</string>
+    <string name="profile_chest_label">Chest (cm)</string>
+    <string name="profile_waist_label">Waist (cm)</string>
+    <string name="profile_arm_label">Arm (cm)</string>
+    <string name="profile_weight_label_imperial">Weight (lb)</string>
+    <string name="profile_chest_label_imperial">Chest (in)</string>
+    <string name="profile_waist_label_imperial">Waist (in)</string>
+    <string name="profile_arm_label_imperial">Arm (in)</string>
+    <string name="profile_measurements_empty">No measurements yet — tap "+ Update" to start</string>
+    <string name="profile_setting_language">Language</string>
+    <string name="profile_setting_offline">Offline mode</string>
+    <string name="profile_setting_backup">Back up data</string>
+    <string name="profile_setting_backup_value">Export file ›</string>
+    <string name="profile_setting_unit">Units</string>
+    <string name="profile_lang_vi">Tiếng Việt</string>
+    <string name="profile_lang_en">English</string>
+    <string name="profile_offline_on">On</string>
+    <string name="profile_offline_off">Off</string>
+    <string name="profile_unit_metric">kg / cm</string>
+    <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_donate_free_title">100% free app</string>
+    <string name="profile_donate_free_body">No ads, no fees. If the app is useful to you, you can chip in to help keep the servers running and fund new features.</string>
+    <string name="profile_donate_cta">Support the project</string>
+    <string name="profile_donate_thanks_title">Thanks for your support!</string>
+    <string name="profile_donate_thanks_body">Your contribution helps keep the servers running and the app free for the community.</string>
+    <string name="profile_donate_undo">Undo (demo)</string>
+    <string name="profile_update_measurement_title">Update measurements</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_back">Profile</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Coming in the next gate</string>
 </resources>

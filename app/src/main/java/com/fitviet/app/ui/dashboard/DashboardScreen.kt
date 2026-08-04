@@ -59,6 +59,7 @@ fun DashboardScreen(
     onStartWorkout: () -> Unit,
     onBrowsePrograms: () -> Unit,
     onOpenDiary: () -> Unit,
+    onOpenProfile: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Not `remember`ed: recomputed each recomposition (including the ones the repository's
@@ -73,7 +74,7 @@ fun DashboardScreen(
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
-        GreetingHeader(today = today)
+        GreetingHeader(today = today, onOpenProfile = onOpenProfile)
         HeroCard(
             program = uiState.featuredProgram,
             onStart = if (uiState.featuredProgram != null) onStartWorkout else onBrowsePrograms,
@@ -94,7 +95,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun GreetingHeader(today: LocalDate) {
+private fun GreetingHeader(today: LocalDate, onOpenProfile: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -118,15 +119,23 @@ private fun GreetingHeader(today: LocalDate) {
         }
         Box(
             modifier = Modifier
-                .size(42.dp)
-                .background(color = DeepSurface2, shape = CircleShape),
+                .size(44.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onOpenProfile),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = PLACEHOLDER_USER_NAME.take(1),
-                style = MaterialTheme.typography.titleMedium,
-                color = Accent,
-            )
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(color = DeepSurface2, shape = CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = PLACEHOLDER_USER_NAME.take(1),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Accent,
+                )
+            }
         }
     }
 }

@@ -5,10 +5,13 @@ import com.fitviet.app.data.local.FitVietDatabase
 import com.fitviet.app.data.local.seed.DatabaseSeeder
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
+import com.fitviet.app.data.repository.MeasurementRepository
+import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.RoomExerciseRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
+import com.fitviet.app.data.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +36,9 @@ class AppContainer(context: Context) {
         workoutSessionDao = database.workoutSessionDao(),
         setLogDao = database.setLogDao(),
     )
+    val nutritionRepository = NutritionRepository(database.mealDao())
+    val settingsRepository = SettingsRepository(database.settingsDao())
+    val measurementRepository = MeasurementRepository(database.measurementDao())
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's
      * exercise catalog) must await this first so they don't race an empty, not-yet-seeded table. */

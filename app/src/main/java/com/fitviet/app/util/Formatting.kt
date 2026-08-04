@@ -5,11 +5,21 @@ import java.util.Locale
 
 private val viLocale = Locale.forLanguageTag("vi-VN")
 private val integerFormatter: NumberFormat = NumberFormat.getIntegerInstance(viLocale)
+private val oneDecimalFormatter: NumberFormat = NumberFormat.getNumberInstance(viLocale).apply {
+    minimumFractionDigits = 1
+    maximumFractionDigits = 1
+}
 
 /** Matches the prototype's `n.toLocaleString('vi-VN')` — e.g. 4120 -> "4.120". */
 fun formatVi(value: Int): String = integerFormatter.format(value)
 
 fun formatVi(value: Double): String = integerFormatter.format(Math.round(value))
+
+/** One-decimal vi-VN display — e.g. 72.0 -> "72,0" — matches the prototype's measurement tiles. */
+fun formatOneDecimalVi(value: Double): String = oneDecimalFormatter.format(value)
+
+/** Parses free-typed numeric input, accepting either "72.5" or the vi-VN "72,5". */
+fun parseDecimalInput(input: String): Double? = input.replace(',', '.').toDoubleOrNull()
 
 /** Compact "12,4k" style used for large stat-tile numbers; falls back to the plain integer under 1000. */
 fun formatCompactKg(value: Double): String {

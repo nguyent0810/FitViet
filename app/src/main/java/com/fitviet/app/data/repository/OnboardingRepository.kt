@@ -2,6 +2,7 @@ package com.fitviet.app.data.repository
 
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.entity.SettingsEntity
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,7 +23,14 @@ class OnboardingRepository(private val settingsDao: SettingsDao) {
     suspend fun completeOnboarding(goal: Int, level: Int, split: Int) {
         val current = settingsDao.get() ?: SettingsEntity()
         settingsDao.upsert(
-            current.copy(selectedGoal = goal, selectedLevel = level, selectedSplit = split, onboardingCompleted = true),
+            current.copy(
+                selectedGoal = goal,
+                selectedLevel = level,
+                selectedSplit = split,
+                onboardingCompleted = true,
+                // Don't overwrite on a later re-completion (e.g. redoing onboarding) if already set.
+                onboardingCompletedAtEpochDay = current.onboardingCompletedAtEpochDay ?: LocalDate.now().toEpochDay(),
+            ),
         )
     }
 }

@@ -19,6 +19,9 @@ captures/
 # Local config
 local.properties
 
+# Session-local agent tooling
+.claude/
+
 # Keystores
 *.jks
 *.keystore

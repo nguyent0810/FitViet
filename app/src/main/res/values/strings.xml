@@ -195,6 +195,55 @@
     <string name="diary_recent_empty">Chưa có buổi tập nào</string>
     <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
+    <!-- 1g Nutrition -->
+    <string name="nutrition_title">Dinh dưỡng</string>
+    <string name="nutrition_kcal_goal">/ %1$s kcal</string>
+    <string name="nutrition_macro_protein">Đạm</string>
+    <string name="nutrition_macro_carb">Tinh bột</string>
+    <string name="nutrition_macro_fat">Chất béo</string>
+    <string name="nutrition_macro_label">%1$d/%2$dg</string>
+    <string name="nutrition_meals_title">Bữa ăn hôm nay</string>
+    <string name="nutrition_add_meal">+ Thêm món</string>
+    <string name="nutrition_kcal_unit">%1$d kcal</string>
+    <string name="nutrition_footer">Cơ sở dữ liệu món ăn Việt · hoạt động offline</string>
+    <string name="nutrition_picker_title">Chọn món ăn</string>
+    <string name="nutrition_meals_empty">Chưa có bữa ăn nào hôm nay</string>
+    <string name="nutrition_slot_extra">Bữa phụ</string>
+
+    <!-- 1i Profile & settings -->
+    <string name="profile_summary">%1$s · Mục tiêu: %2$s · %3$d tuần đồng hành</string>
+    <string name="profile_measurements_title">Số đo cơ thể</string>
+    <string name="profile_update">+ Cập nhật</string>
+    <string name="profile_weight_label">Cân nặng (kg)</string>
+    <string name="profile_chest_label">Ngực (cm)</string>
+    <string name="profile_waist_label">Eo (cm)</string>
+    <string name="profile_arm_label">Tay (cm)</string>
+    <string name="profile_weight_label_imperial">Cân nặng (lb)</string>
+    <string name="profile_chest_label_imperial">Ngực (in)</string>
+    <string name="profile_waist_label_imperial">Eo (in)</string>
+    <string name="profile_arm_label_imperial">Tay (in)</string>
+    <string name="profile_measurements_empty">Chưa có số đo nào — chạm "+ Cập nhật" để bắt đầu</string>
+    <string name="profile_setting_language">Ngôn ngữ</string>
+    <string name="profile_setting_offline">Chế độ offline</string>
+    <string name="profile_setting_backup">Sao lưu dữ liệu</string>
+    <string name="profile_setting_backup_value">Xuất file ›</string>
+    <string name="profile_setting_unit">Đơn vị</string>
+    <string name="profile_lang_vi">Tiếng Việt</string>
+    <string name="profile_lang_en">English</string>
+    <string name="profile_offline_on">Bật</string>
+    <string name="profile_offline_off">Tắt</string>
+    <string name="profile_unit_metric">kg / cm</string>
+    <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_donate_free_title">Ứng dụng miễn phí 100%</string>
+    <string name="profile_donate_free_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
+    <string name="profile_donate_cta">Ủng hộ dự án</string>
+    <string name="profile_donate_thanks_title">Cảm ơn bạn đã ủng hộ!</string>
+    <string name="profile_donate_thanks_body">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</string>
+    <string name="profile_donate_undo">Hoàn tác (demo)</string>
+    <string name="profile_update_measurement_title">Cập nhật số đo</string>
+    <string name="profile_save">Lưu</string>
+    <string name="profile_back">Hồ sơ</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
 </resources>

@@ -15,6 +15,8 @@ data class SettingsEntity(
     val selectedGoal: Int = 0,
     val selectedLevel: Int = 0,
     val selectedSplit: Int = 0,
+    /** Set once, when onboarding completes — powers 1i's "N tuần đồng hành" (weeks with the app). */
+    val onboardingCompletedAtEpochDay: Long? = null,
 ) {
     companion object {
         const val SINGLETON_ID = 0

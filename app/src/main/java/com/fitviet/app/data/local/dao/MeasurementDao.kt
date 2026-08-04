@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MeasurementDao {
-    @Query("SELECT * FROM measurements ORDER BY epochDay DESC")
+    @Query("SELECT * FROM measurements ORDER BY epochDay DESC, id DESC")
     fun observeAll(): Flow<List<MeasurementEntity>>
 
-    @Query("SELECT * FROM measurements ORDER BY epochDay DESC LIMIT 2")
+    @Query("SELECT * FROM measurements ORDER BY epochDay DESC, id DESC LIMIT 2")
     suspend fun getLatestTwo(): List<MeasurementEntity>
 
     @Insert

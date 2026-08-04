@@ -178,3 +178,44 @@ The brief asked for unit tests on the workout state machine specifically. Gate 4
 
 ### Next
 Gate 6: Nutrition (1g) with a local VN food DB + Profile/settings/donate (1i).
+
+## Gate 6 — Nutrition (1g) + Profile/settings/donate (1i)
+
+### What was built
+- `ui/nutrition/{NutritionScreen,NutritionViewModel}.kt` (1g): kcal ring (custom `Canvas`/`drawArc`, no native conic-gradient brush in Compose), 3 macro bars (protein/carb/fat), meal list with remove, "+ Thêm món" food picker bottom sheet.
+- `domain/NutritionCalculator.kt` — pure, unit-tested totals/percent calculator (kcal 2200, protein 140g, carb 250g, fat 70g goals per README defaults). `NutritionCalculatorTest.kt` (3 tests).
+- `data/repository/NutritionRepository.kt` — wraps `MealDao`, reuses the shared `dayTicker()` (same midnight-rollover pattern as Dashboard/Diary) so "today" doesn't go stale in a long-lived screen.
+- `ui/nutrition/FoodPresets.kt` — 9 hardcoded VN dishes (the prototype's exact "+ Thêm món" preset list).
+- `ui/profile/{ProfileScreen,ProfileViewModel}.kt` (1i): avatar/summary header, body-measurement tiles with delta-vs-previous, settings list (language/offline/backup/units), donate card. Opens from the dashboard avatar (now clickable).
+- `data/repository/{SettingsRepository,MeasurementRepository}.kt` — settings cycling (language/offline/units/donated) and latest-two-measurements-with-delta.
+- `SettingsEntity.onboardingCompletedAtEpochDay` — stamped once by `OnboardingRepository.completeOnboarding()`, powers 1i's "N tuần đồng hành" (weeks with the app).
+- Real per-app language switching: `androidx.appcompat` dependency added, `MainActivity` changed from `ComponentActivity` to `AppCompatActivity` (required for `AppCompatDelegate` to reliably relocalize pre-API-33), and a `LaunchedEffect` in `FitVietNavHost` calls `AppCompatDelegate.setApplicationLocales()` whenever `settings.languageIsEnglish` changes — the "Ngôn ngữ" toggle now actually changes the app's language instead of being cosmetic-only.
+- `domain/UnitConversions.kt` (kg↔lb, cm↔in) — the "Đơn vị" toggle now actually converts displayed/entered measurement values, not just the settings-row label.
+- `formatOneDecimalVi()` / `parseDecimalInput()` added to `util/Formatting.kt` — measurement tiles now show one decimal (matches the prototype's "72,0" / "+1,2" style) and the update-measurement sheet accepts both "72.5" and vi-VN "72,5" input.
+
+### Scope decisions (documented, not defects — confirmed against source in codex review)
+- **Room schema still version 1, no migration** for the new `onboardingCompletedAtEpochDay` column. Standing pre-release policy from Gate 2 (see that section) — nothing has shipped, so no installed base to migrate.
+- **`FoodPresets.kt` is a static 9-item list, not a Room-backed searchable catalog.** `UI Handoff/README.md` (1g) explicitly frames a full searchable VN food DB as a "production" (post-handoff) feature; the static list matches the prototype's own "+ Thêm món" preset behavior exactly.
+- **Backup/"Sao lưu dữ liệu" settings row is non-interactive (`onClick = null`).** Verified against `FitViet Prototype v2.dc.html`: that row has no `onClick` handler in the prototype source either, unlike language/offline/units which do — matches reference fidelity, not a missed feature.
+- **English locale still shows Vietnamese food/meal names** — same documented decision as Gates 3–5 (Vietnamese-first content vs. UI chrome). The meal *slot* label ("Bữa phụ"/"Extra") is chrome and is bilingual; the dish name itself is not.
+
+### Codex review — 2 passes
+**Pass 1 findings and fixes:**
+| # | Issue | Fix |
+|---|---|---|
+| 1 | `MainActivity` was a plain `ComponentActivity` — `AppCompatDelegate.setApplicationLocales()` doesn't reliably relocalize non-AppCompat activities | Changed to `AppCompatActivity` |
+| 2 | `MeasurementDao` ordered only by `epochDay DESC` — two check-ins on the same day had nondeterministic latest/previous ordering | Added `id DESC` as a tiebreaker |
+| 3 | Added-meal slot persisted the hardcoded Vietnamese literal `"Bữa phụ"` — switching to English still showed Vietnamese chrome | Store a locale-neutral key (`"extra"`) instead; `NutritionScreen` maps it to a localized string resource |
+| 4 | Several new touch targets were under the 44dp minimum: Nutrition's "add food" chip (~32dp), meal-row remove `×` (24dp), Profile's back button (34dp) and "Cập nhật" text link (no minimum), Dashboard's newly-clickable avatar (42dp) | All bumped to a 44dp touch zone (visual size preserved by wrapping a smaller decorative element inside a 44dp clickable `Box` where shrinking the visual would look wrong) |
+| 5 | "Đơn vị" (unit) toggle only changed the settings-row label; measurement values/labels stayed kg/cm | Added `domain/UnitConversions.kt`; Profile's tiles and the update-measurement sheet now convert for display and on save, with canonical storage staying metric |
+| — (self-caught while fixing #5) | Measurement tiles used `formatVi()` (rounds to integer), losing the prototype's one-decimal precision (e.g. "72,0", "+1,2" would round to "72", "+1") | Added `formatOneDecimalVi()`, switched measurement tile/delta display to it |
+
+Also re-raised three items already covered by earlier-gate/design-doc decisions (Room version, FoodPresets scope, backup row) — checked each against source (PROGRESS.md, README, prototype HTML) and confirmed no change needed; see Scope decisions above.
+
+**Pass 2** confirmed all 6 fixes correct, agreed with all 3 documented non-fixes, and flagged one remaining edge case: the update-measurement sheet's `toDoubleOrNull()` would silently reject comma-decimal input (e.g. "72,5") from a vi-VN-locale decimal keyboard, saving that field as `null`. Fixed with `parseDecimalInput()` (normalizes `,`→`.` before parsing).
+
+### Push
+Approved by codex, pushed to `origin/master`.
+
+### Next
+Gate 7: Community (1h, mock data first) + polish + release APK.
