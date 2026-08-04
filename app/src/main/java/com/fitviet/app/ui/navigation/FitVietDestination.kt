@@ -20,6 +20,8 @@ sealed class FitVietDestination(val route: String) {
     }
 
     data object Diary : FitVietDestination("diary")
+
+    data object Profile : FitVietDestination("profile")
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).

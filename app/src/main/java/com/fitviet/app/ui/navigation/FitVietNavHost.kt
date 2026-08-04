@@ -28,9 +28,13 @@ import com.fitviet.app.ui.diary.DiaryScreen
 import com.fitviet.app.ui.diary.DiaryViewModel
 import com.fitviet.app.ui.exercise.ExerciseDetailScreen
 import com.fitviet.app.ui.exercise.ExerciseDetailViewModel
+import com.fitviet.app.ui.nutrition.NutritionScreen
+import com.fitviet.app.ui.nutrition.NutritionViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
 import com.fitviet.app.ui.onboarding.SplitScreen
+import com.fitviet.app.ui.profile.ProfileScreen
+import com.fitviet.app.ui.profile.ProfileViewModel
 import com.fitviet.app.ui.programs.ProgramsListScreen
 import com.fitviet.app.ui.programs.ProgramsViewModel
 import com.fitviet.app.ui.programs.WeeklyScheduleScreen
@@ -130,6 +134,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         }
                     },
                     onOpenDiary = { navController.navigate(FitVietDestination.Diary.route) },
+                    onOpenProfile = { navController.navigate(FitVietDestination.Profile.route) },
                 )
             }
             composable(FitVietDestination.Programs.route) {
@@ -149,6 +154,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             composable(FitVietDestination.Diary.route) {
                 val viewModel: DiaryViewModel = viewModel(factory = DiaryViewModel.Factory(container.diaryRepository))
                 DiaryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(FitVietDestination.Profile.route) {
+                val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(container.profileRepository))
+                ProfileScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
                 route = FitVietDestination.ExerciseDetail.route,
@@ -189,7 +198,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     },
                 )
             }
-            composable(FitVietDestination.Nutrition.route) { PlaceholderScreen(title = "Dinh dưỡng") }
+            composable(FitVietDestination.Nutrition.route) {
+                val viewModel: NutritionViewModel = viewModel(factory = NutritionViewModel.Factory(container.nutritionRepository))
+                NutritionScreen(viewModel = viewModel)
+            }
             composable(FitVietDestination.Community.route) { PlaceholderScreen(title = "Cộng đồng") }
         }
     }

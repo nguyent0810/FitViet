@@ -195,6 +195,47 @@
     <string name="diary_recent_empty">Chưa có buổi tập nào</string>
     <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
+    <!-- 1g Nutrition -->
+    <string name="nutrition_title">Dinh dưỡng</string>
+    <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>
+    <string name="nutrition_macro_protein">Đạm</string>
+    <string name="nutrition_macro_carb">Tinh bột</string>
+    <string name="nutrition_macro_fat">Chất béo</string>
+    <string name="nutrition_macro_value">%1$d/%2$dg</string>
+    <string name="nutrition_meals_title">Bữa ăn hôm nay</string>
+    <string name="nutrition_add_meal">+ %1$s</string>
+    <string name="nutrition_meal_kcal">%1$s kcal</string>
+    <string name="nutrition_footer">Cơ sở dữ liệu món ăn Việt · hoạt động offline</string>
+
+    <!-- 1i Profile & settings -->
+    <string name="profile_back">Hồ sơ</string>
+    <string name="profile_meta">%1$s · Mục tiêu: %2$s · 8 tuần đồng hành</string>
+    <string name="profile_measurements_title">Số đo cơ thể</string>
+    <string name="profile_update_cta">+ Cập nhật</string>
+    <string name="profile_tile_weight">Cân nặng (kg)</string>
+    <string name="profile_tile_chest">Ngực (cm)</string>
+    <string name="profile_tile_waist">Eo (cm)</string>
+    <string name="profile_tile_arm">Tay (cm)</string>
+    <string name="profile_settings_language">Ngôn ngữ</string>
+    <string name="profile_lang_vi">Tiếng Việt</string>
+    <string name="profile_lang_en">English</string>
+    <string name="profile_settings_offline">Chế độ offline</string>
+    <string name="profile_offline_on">Bật</string>
+    <string name="profile_offline_off">Tắt</string>
+    <string name="profile_settings_backup">Sao lưu dữ liệu</string>
+    <string name="profile_settings_backup_value">Xuất file ›</string>
+    <string name="profile_settings_units">Đơn vị</string>
+    <string name="profile_unit_metric">kg / cm</string>
+    <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_donate_title">Ứng dụng miễn phí 100%</string>
+    <string name="profile_donate_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
+    <string name="profile_donate_cta">Ủng hộ dự án</string>
+    <string name="profile_donated_title">Cảm ơn bạn đã ủng hộ!</string>
+    <string name="profile_donated_body">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</string>
+    <string name="profile_donated_undo">Hoàn tác (demo)</string>
+    <string name="profile_update_sheet_title">Cập nhật số đo</string>
+    <string name="profile_update_save">Lưu</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
 </resources>

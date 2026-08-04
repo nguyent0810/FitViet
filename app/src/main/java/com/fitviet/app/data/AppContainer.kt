@@ -5,7 +5,9 @@ import com.fitviet.app.data.local.FitVietDatabase
 import com.fitviet.app.data.local.seed.DatabaseSeeder
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
+import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
+import com.fitviet.app.data.repository.ProfileRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.RoomExerciseRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
@@ -32,6 +34,11 @@ class AppContainer(context: Context) {
     val diaryRepository = DiaryRepository(
         workoutSessionDao = database.workoutSessionDao(),
         setLogDao = database.setLogDao(),
+    )
+    val nutritionRepository = NutritionRepository(database.mealDao())
+    val profileRepository = ProfileRepository(
+        settingsDao = database.settingsDao(),
+        measurementDao = database.measurementDao(),
     )
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's

@@ -195,6 +195,47 @@
     <string name="diary_recent_empty">No sessions yet</string>
     <string name="diary_recent_meta">%1$s min · %2$s kg</string>
 
+    <!-- 1g Nutrition -->
+    <string name="nutrition_title">Nutrition</string>
+    <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>
+    <string name="nutrition_macro_protein">Protein</string>
+    <string name="nutrition_macro_carb">Carbs</string>
+    <string name="nutrition_macro_fat">Fat</string>
+    <string name="nutrition_macro_value">%1$d/%2$dg</string>
+    <string name="nutrition_meals_title">Today\'s meals</string>
+    <string name="nutrition_add_meal">+ %1$s</string>
+    <string name="nutrition_meal_kcal">%1$s kcal</string>
+    <string name="nutrition_footer">Vietnamese food database · works offline</string>
+
+    <!-- 1i Profile & settings -->
+    <string name="profile_back">Profile</string>
+    <string name="profile_meta">%1$s · Goal: %2$s · 8-week journey</string>
+    <string name="profile_measurements_title">Body measurements</string>
+    <string name="profile_update_cta">+ Update</string>
+    <string name="profile_tile_weight">Weight (kg)</string>
+    <string name="profile_tile_chest">Chest (cm)</string>
+    <string name="profile_tile_waist">Waist (cm)</string>
+    <string name="profile_tile_arm">Arm (cm)</string>
+    <string name="profile_settings_language">Language</string>
+    <string name="profile_lang_vi">Tiếng Việt</string>
+    <string name="profile_lang_en">English</string>
+    <string name="profile_settings_offline">Offline mode</string>
+    <string name="profile_offline_on">On</string>
+    <string name="profile_offline_off">Off</string>
+    <string name="profile_settings_backup">Back up data</string>
+    <string name="profile_settings_backup_value">Export file ›</string>
+    <string name="profile_settings_units">Units</string>
+    <string name="profile_unit_metric">kg / cm</string>
+    <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_donate_title">100% free app</string>
+    <string name="profile_donate_body">No ads, no fees. If the app has been useful, you can chip in to help keep the servers running and fund new features.</string>
+    <string name="profile_donate_cta">Support the project</string>
+    <string name="profile_donated_title">Thanks for your support!</string>
+    <string name="profile_donated_body">Your contribution helps keep the servers running and the app free for the community.</string>
+    <string name="profile_donated_undo">Undo (demo)</string>
+    <string name="profile_update_sheet_title">Update measurements</string>
+    <string name="profile_update_save">Save</string>
+
     <!-- Placeholder screens (built in later gates) -->
     <string name="placeholder_coming_soon">Coming in the next gate</string>
 </resources>

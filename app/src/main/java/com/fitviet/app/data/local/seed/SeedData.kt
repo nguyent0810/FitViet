@@ -141,6 +141,18 @@ object SeedData {
         MeasurementEntity(epochDay = latestEpochDay, weightKg = 72.0, chestCm = 98.0, waistCm = 80.0, armCm = 36.0),
     )
 
+    /** A meal the "+ Thêm món" button on 1g can add — not Room-seeded, [NutritionRepository] reads this list directly. */
+    data class MealPreset(val nameVi: String, val kcal: Int, val proteinG: Int, val carbG: Int, val fatG: Int)
+
+    /** Cycled through in order by "+ Thêm món" (1g), same rotation as the prototype's `presets` array. */
+    val mealPresets = listOf(
+        MealPreset(nameVi = "Ức gà áp chảo 150g", kcal = 240, proteinG = 45, carbG = 0, fatG = 6),
+        MealPreset(nameVi = "Bánh mì thịt", kcal = 420, proteinG = 20, carbG = 48, fatG = 16),
+        MealPreset(nameVi = "Sữa tươi không đường 200ml", kcal = 130, proteinG = 7, carbG = 10, fatG = 7),
+        MealPreset(nameVi = "Cơm tấm sườn", kcal = 680, proteinG = 32, carbG = 82, fatG = 24),
+        MealPreset(nameVi = "Chuối", kcal = 105, proteinG = 1, carbG = 27, fatG = 0),
+    )
+
     /**
      * A short training history ending yesterday (today is left open so the dashboard's "start
      * workout" CTA has something to do) — gives the 1b stat tiles and 7-day chart real numbers
