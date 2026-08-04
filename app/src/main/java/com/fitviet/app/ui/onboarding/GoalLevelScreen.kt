@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitviet.app.R
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.Dimens
@@ -32,7 +31,7 @@ private val GOAL_CARD_GAP = 10.dp
 
 @Composable
 fun GoalLevelScreen(
-    viewModel: OnboardingViewModel = viewModel(),
+    viewModel: OnboardingViewModel,
     onContinue: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

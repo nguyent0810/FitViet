@@ -23,7 +23,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitviet.app.R
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.BackgroundPage
@@ -40,7 +39,7 @@ private val SPLIT_CARD_GAP = 9.dp
 
 @Composable
 fun SplitScreen(
-    viewModel: OnboardingViewModel = viewModel(),
+    viewModel: OnboardingViewModel,
     onContinue: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
