@@ -579,6 +579,53 @@ Reviewed and fixed per above, pushed to `origin/master` (`48e2754`).
 Feature #11: measurement history/polish (edit/delete, a per-measurement history view), continuing
 the same gate-by-gate workflow.
 
+## Gate 14 — Measurement edit/delete + history view (Profile)
+
+Feature #11 from the roadmap discussion above.
+
+### What was built
+- `data/local/dao/MeasurementDao.kt` — added `update()` and `deleteById(id)`, alongside the
+  existing insert/observeAll/observeLatest.
+- `data/repository/ProfileRepository.kt` — `updateMeasurement(id, epochDay, ...)` (keeps the
+  original `epochDay` — editing corrects a mistaken value, not when it was taken; changing a
+  historical entry's date is explicitly out of scope) and `deleteMeasurement(id)`.
+- `ui/profile/ProfileViewModel.kt` — `ProfileUiState` gained `measurementHistory` (the full list
+  already computed in `ProfileData` since Gate 11 for the weight chart, now also exposed directly),
+  `editingMeasurement` (non-null = the update sheet is correcting an existing entry, not adding a
+  new one), and `showHistorySheet`. `saveMeasurement()` now branches to update-vs-insert based on
+  whether `editingMeasurement` is set.
+- `ui/profile/UpdateMeasurementSheet.kt` — its `latest` param renamed `prefill` (same purpose, now
+  used for either "latest measurement" in add-mode or "the entry being edited" in edit-mode) plus
+  a new `isEditing` flag switching the sheet's title.
+- `ui/profile/MeasurementHistorySheet.kt` (new) — lists every check-in (date + a unit-aware
+  summary of its non-null fields) with "Sửa"/"Edit" and "Xóa"/"Delete" row actions. Delete requires
+  confirming in a Material3 `AlertDialog` — this app's first use of `AlertDialog` anywhere.
+- `ui/profile/ProfileScreen.kt` — a new "Lịch sử"/"History" button next to "+ Cập nhật" opens the
+  history sheet; edit routes back into the (now dual-purpose) update sheet.
+
+### Codex review — 2 passes
+**Pass 1** found 2 medium-severity layout issues in the new history rows, both fixed:
+| # | Issue | Fix |
+|---|---|---|
+| 1 | The date+summary column was an unweighted `Row` child next to the edit/delete buttons — a summary with all 4 fields present could crowd the buttons out, compressed or off-screen | Added `Modifier.weight(1f)` (valid — it's a direct `Row` child) plus `maxLines = 1`/`TextOverflow.Ellipsis` on the summary text |
+| 2 | The edit/delete buttons only enforced `heightIn(min = 44dp)`, not width — short "Sửa"/"Xóa" labels with small padding could fall under the 44dp touch-target minimum | Switched to `Modifier.sizeIn(minWidth = Dimens.MinTouchTarget, minHeight = Dimens.MinTouchTarget)` |
+
+**Pass 2** confirmed both fixes correct, including re-verifying the `weight()` call is a valid
+direct-Row-child usage (the same bug class this project has hit twice before, in Gate 12 and
+implicitly guarded against since). Also independently self-verified (before and after the fixes)
+that the new/changed string resources compile cleanly with a direct `aapt2 compile` — Gate 13
+caught a real apostrophe-escaping bug this same way, so this is now a standing check for any gate
+touching `strings.xml`.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/master` (`5844f15`).
+
+### Next
+Feature #2: fix "current program" — Dashboard currently just shows `programs.firstOrNull()`, no
+persisted active-program/enrollment concept exists yet. This is the last item in the "cheap and
+high-value" group before the roadmap moves into the larger shared "program template" data-model
+investment.
+
 ## Roadmap status
 
 All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
@@ -596,7 +643,8 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
 1. ~~#7 Weight history chart~~ — done, Gate 11 above.
 2. ~~#4 Monthly workout calendar (history-only)~~ — done, Gate 12 above.
 3. ~~#6 Motivational recommendation cards (rule-based/transparent)~~ — done, Gate 13 above.
-4. #11 Measurement history/polish (edit/delete, per-measurement history view).
+4. ~~#11 Measurement history/polish (edit/delete, per-measurement history view)~~ — done, Gate 14
+   above.
 5. #2 Fix "current program" (needs a small persisted program-enrollment concept — Dashboard
    currently just shows `programs.firstOrNull()`).
 6. The shared "program template" data-model investment (active program/enrollment,
