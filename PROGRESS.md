@@ -976,3 +976,18 @@ file) are still valid direct-`Row`/`Column`-child usage, no stray
 `androidx.compose.foundation.layout.weight` import, and every new string resource referenced from
 Kotlin exists in both `values/strings.xml` and `values-en/strings.xml` (checked by grep, given
 Gate 17's review just caught exactly this class of miss).
+
+**Independent review pass.** It independently re-derived the window math (`thisMonday.minusWeeks(3)`
+against `DiaryStatsCalculator.lastNWeeks`'s own boundary) and the `volumeKg = weightKg * reps`
+formula (cross-checked against `WorkoutViewModel`'s canonical `sessionTotalVolumeKg` accumulation).
+Two findings:
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (Low/Medium) | `MuscleGroup.labelRes()` lived in `domain/ExerciseCategory.kt`, pulling `androidx.annotation.StringRes` + `com.fitviet.app.R` into the project's stated "pure, Room/Compose-free domain layer" package — the existing "enum → StringRes" precedent (`shortLabelRes`, `Month.labelRes`) lives in `util/`, not `domain/`. | Moved to a new `util/ExerciseLabels.kt`; `domain/ExerciseCategory.kt` is back to zero non-Kotlin-stdlib imports. Re-verified the domain layer still standalone-`kotlinc`-compiles with **no** `androidx`/`R` stub needed at all now (previously needed hand-written stubs for exactly this reason). |
+| 2 (Medium, process) | Gate 18's actual code changes landed inside the `daa5120` commit ("Gate 17 review fixes: transactional import, missing EN strings, empty share subject"), not in the `3598b1b` commit titled "Gate 18: ..." (which turned out to contain only the PROGRESS.md prose) — a `git add -A` after finishing Gate 17's fixes swept up Gate 18 work that was already in progress in the same working tree. Breaks `git bisect`/blame for this feature and diverges from every other gate's one-commit-per-gate discipline. | **Not rewritten** — this branch hasn't been pushed anywhere yet in this session, so a history rewrite was possible, but splitting the now-three-gates-deep interleaved `strings.xml`/`PROGRESS.md` edits into clean per-gate commits risked more (a botched rewrite losing work) than the purely cosmetic bisect-ability cost of leaving it. Disclosed here plainly instead, per this project's own "document the judgment call rather than silently skip it" convention — flagging as a known, accepted deviation for this session only. |
+
+Re-ran the standalone compile after the `labelRes()` move: still clean, `WorkoutCompositionCalculatorTest.kt` still 7/7.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.

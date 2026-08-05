@@ -37,7 +37,6 @@ import com.fitviet.app.domain.DayVolume
 import com.fitviet.app.domain.MovementTypeDistribution
 import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.WeekVolume
-import com.fitviet.app.domain.labelRes
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -52,6 +51,7 @@ import com.fitviet.app.ui.theme.TextFaintAlt
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatVi
+import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.shortLabelRes
 import java.time.Instant
 import java.time.LocalDate
