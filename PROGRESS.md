@@ -392,19 +392,119 @@ Two more small gaps surfaced by a second codex pass over the fixes themselves: t
 ### Push
 Fixes reviewed and pushed to `origin/claude/routines-code-session-n62xmx` (`6dc635b`, `c6265da`), then merged into `master`.
 
+## First real build, on the user's own machine
+
+After the Gates 6–10 merge, the user installed Android Studio locally and opened the project
+there — the first environment in this project's history with a working JDK + Android SDK +
+Gradle all at once. Two real build blockers surfaced (a duplicate key in
+`gradle/libs.versions.toml` and `themes.xml` extending a nonexistent Material3 parent), fixed and
+pushed (`0a974f8`). The user then reported a 14-file Kotlin compile error,
+`Cannot access 'val RowColumnParentData?.weight: Float': it is internal` — root-caused (after
+manually auditing all 44 `.weight()` call sites first, rather than trusting the error text's
+"Row/Column scoping" implication) to a bogus `import androidx.compose.foundation.layout.weight`
+line present in exactly those 14 files, an IDE auto-import artifact that resolves to the wrong
+(internal) `weight`. Fixed by deleting the one bad import line per file, no other changes
+(`58bc0f0`). Both confirmed by the user's own subsequent successful builds and on-device
+smoke-testing via `adb`.
+
+## Exercise media: crossfade between the existing photos
+
+User asked whether animated GIFs were feasible for exercise illustrations. Checked the currently
+bundled source (free-exercise-db, Gate 8/9) and the user's own suggestion of `wger-project` —
+both are static-image-only (wger's REST API confirmed live, 360 CC-BY-SA-licensed PNGs, no
+video/GIF endpoint; free-exercise-db confirmed zero `.gif`/`.mp4`/`.webm` references). User chose
+to auto-alternate the two existing start/end photos instead of sourcing new media. Extracted a
+shared `ExerciseMediaBox` composable (`ui/exercise/ExerciseMedia.kt`) using `Crossfade` to loop
+between an exercise's photos, and wired the in-workout logging screen
+(`WorkoutStraightScreens.kt`) to use it too — previously that screen only showed a text
+placeholder even though real photos were already bundled and already used on the 1d detail
+screen. New `androidx.compose.animation` dependency (`6cbfdbd`).
+
+## Feature roadmap discussion
+
+User shared a 13-feature list from a competitor app's paid tier and asked which were buildable
+for FitViet's free/offline model. Sent for `codex exec` analysis grounded in the real codebase,
+combined with manual analysis identifying the actual limiting factor as the *absence of a
+persisted "active program" / program-day-template data model* (not the offline/no-backend
+constraint). User chose to build item #7 (weight history chart) first, then #4 (monthly workout
+calendar), continuing through the rest of the prioritized list gate-by-gate with a codex review
+per gate — same workflow as Gates 1–10.
+
+## Gate 11 — Weight history chart (Profile / 1i extension)
+
+Feature #7 from the roadmap discussion above.
+
+### What was built
+- `domain/WeightHistory.kt` — `WeightPoint`/`WeightHistoryRange` (30 days / 3 months / all time) +
+  `WeightHistoryCalculator.points()`, a pure function turning raw (newest-first)
+  `MeasurementEntity` rows into ascending, one-point-per-day chart points: drops rows with no
+  weight reading, keeps only the newest-inserted check-in per day, filters by range.
+- `data/repository/ProfileRepository.kt` — `ProfileData` gained `measurementHistory` (full list,
+  not just latest/previous) and `today` (from the existing `dayTicker()` pattern already used by
+  Dashboard/Diary/Nutrition, now combined into `observe()`'s 3-way `combine()`).
+- `ui/profile/{ProfileViewModel,ProfileScreen}.kt` — a `weightHistoryRange` state
+  (default 30 days) drives `WeightHistoryCalculator.points()`; `WeightHistoryCard` (new, between
+  the measurements and settings cards) shows 3 range-select pill chips and a hand-drawn
+  `WeightLineChart` (`Canvas`/`Path`, no chart library — same approach as the kcal ring/bar
+  charts elsewhere), or an empty-state message under 2 check-ins. Respects the existing
+  Đơn vị (unit) setting via `kgToLb`.
+- `WeightHistoryCalculatorTest.kt` — 8 tests (empty input, null-weight dropped, sort-independent
+  of input order, same-day dedup, 30-day/3-month/all-time range filtering, including two boundary
+  tests added during the codex fix-up below).
+
+### Codex review — 2 passes
+**Pass 1** found 3 issues, all fixed:
+| # | Issue | Fix |
+|---|---|---|
+| 1 | `THIRTY_DAYS` used `today.minusDays(30)` — 31 calendar dates, not 30; `THREE_MONTHS` was a fixed 90-day approximation instead of a real calendar-month subtraction | `minusDays(29)` (inclusive 30-date window); `THREE_MONTHS` now uses `today.minusMonths(3)` directly |
+| 2 | Flat/near-flat weight series (all values within 0.01) rendered at the bottom of the chart instead of mid-height, due to a `?: 1.0` fallback span used directly in the y-coordinate division | Added an explicit `isFlat` boolean; y-coordinate function branches to `fraction = 0.5f` instead of dividing by the fallback |
+| 3 | The chart's date-range cutoff was derived from `LocalDate.now()` evaluated only when a flow emitted — a long-lived Profile screen open across midnight wouldn't advance the 30-day/3-month window | Wired the existing `dayTicker()` pattern into `ProfileRepository.observe()`, exposing `today: LocalDate` on `ProfileData`, threaded through to `WeightHistoryCalculator.points()` instead of its default `LocalDate.now()` parameter |
+
+**Pass 2** (after applying the fixes) hand-verified the two new boundary tests against both the
+old and new code (confirming they'd have failed pre-fix), confirmed the flat-series fix has no
+remaining division-by-zero path, confirmed the 3-flow `combine()`/`dayTicker()` integration
+compiles and behaves correctly (including `dayTicker`'s `internal` visibility from the same
+package/module), and found no unused imports or other issues. Clean.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/master` (`4f7d60d`).
+
+### Next
+Feature #4: monthly workout calendar (history-only version — reuses `completedAt` timestamps,
+defers future/scheduled-day markers since those need the not-yet-built active-program data
+model), per the same gate-by-gate workflow.
+
 ## Roadmap status
 
-All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus three gates beyond
-the original plan: real per-app language/unit switching, real exercise photos, an expanded
-exercise/food library, and a workout time-budget picker.
+All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
+language/unit switching, real exercise photos (now crossfade-animated), an expanded
+exercise/food library, a workout time-budget picker, and a real Android Studio build/install
+verified on-device. Now extending beyond the original 12-screen spec per the user's chosen
+feature-roadmap priority order (Gate 11 above is the first of that sequence).
 
 **Remaining from the original plan:**
 - General polish pass.
-- A real release APK build — every gate so far has been verified by standalone `kotlinc` compiles
-  and manual read-through, never an actual `./gradlew assembleDebug`/`assembleRelease`, since no
-  environment in this project's history has had a working JDK + Android SDK + network access to
-  `dl.google.com` at the same time. Needs a machine (e.g. Android Studio) that actually has all
-  three before a real build/install can be verified for the first time.
+- A signed release APK build — debug builds are now built/installed/tested routinely via Android
+  Studio + `adb`; a formal release/signed build hasn't been discussed yet.
+
+**Feature-roadmap priority order** (user-approved, continuing gate-by-gate):
+1. ~~#7 Weight history chart~~ — done, Gate 11 above.
+2. #4 Monthly workout calendar (history-only).
+3. #6 Motivational recommendation cards (rule-based/transparent).
+4. #11 Measurement history/polish (edit/delete, per-measurement history view).
+5. #2 Fix "current program" (needs a small persisted program-enrollment concept — Dashboard
+   currently just shows `programs.firstOrNull()`).
+6. The shared "program template" data-model investment (active program/enrollment,
+   program-day/template entities, program-exercise targets, stable muscle/exercise-category
+   codes) — unlocks #3 (next-training list + completion %), #1 (program export/import via the
+   Android share sheet), #8 (muscle-group workload chart), #9 (exercise-type distribution).
+7. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
+   progress-bar list — explicitly not a silhouette illustration), #10 (calories burned — only
+   ever an estimate).
+
+**Needs the user's own decision before any work** (codex recommended against it, conflicts with
+the deliberately-designed FAB-centered nav from Gate 1): #13, restructuring the bottom nav to 5
+flat tabs.
 
 **Not yet scoped into a gate** (raised as candidates along the way, not requested yet):
 - A real create-post flow for Community's "+ Đăng bài" (currently static, matching the prototype).
