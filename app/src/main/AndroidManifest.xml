@@ -22,10 +22,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Required for AppCompat's per-app language back-compat path (API 26-32; API 33+ uses the
-             framework LocaleManager directly) since MainActivity is a plain ComponentActivity, not
-             an AppCompatActivity — without this, AppCompatDelegate.setApplicationLocales() (see
-             util/LocaleController.kt) can't persist or re-apply the chosen locale on those OS versions. -->
+        <!-- Belt-and-suspenders for AppCompat's per-app language back-compat path (API 26-32; API 33+
+             uses the framework LocaleManager directly). MainActivity is now an AppCompatActivity (see
+             MainActivity.kt), which applies the locale to itself directly via attachBaseContext() —
+             this service's auto-store mechanism is redundant with that but harmless to keep declared,
+             and would matter again if a future activity in this app isn't AppCompat-based. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
