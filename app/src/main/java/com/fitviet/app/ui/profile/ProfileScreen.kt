@@ -1,5 +1,6 @@
 package com.fitviet.app.ui.profile
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,8 +25,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.domain.MeasurementDeltas
+import com.fitviet.app.domain.WeightHistoryRange
+import com.fitviet.app.domain.WeightPoint
 import com.fitviet.app.ui.onboarding.GOAL_OPTIONS
 import com.fitviet.app.ui.onboarding.LEVEL_OPTIONS
 import com.fitviet.app.ui.theme.Accent
@@ -44,11 +53,16 @@ import com.fitviet.app.ui.theme.DeepSurface2
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
+import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatLengthUnit
+import com.fitviet.app.util.formatOneDecimal
 import com.fitviet.app.util.formatWeightUnit
+import com.fitviet.app.util.kgToLb
+import java.time.LocalDate
 import kotlin.math.abs
 
 // No profile-editing screen exists in the 12-screen spec (same identity gap noted for the
@@ -97,6 +111,12 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             armCm = uiState.latestMeasurement?.armCm,
             useImperial = uiState.settings.useImperialUnits,
             onUpdateClick = viewModel::openUpdateSheet,
+        )
+        WeightHistoryCard(
+            points = uiState.weightHistoryPoints,
+            range = uiState.weightHistoryRange,
+            useImperial = uiState.settings.useImperialUnits,
+            onRangeSelect = viewModel::selectWeightHistoryRange,
         )
         SettingsCard(settings = uiState.settings, viewModel = viewModel)
         DonateCard(donated = uiState.settings.hasDonated, onDonateClick = viewModel::toggleDonated)
@@ -245,6 +265,112 @@ private fun MeasurementTile(
         }
     }
 }
+
+private val WEIGHT_HISTORY_RANGES = listOf(
+    WeightHistoryRange.THIRTY_DAYS to R.string.profile_weight_range_30d,
+    WeightHistoryRange.THREE_MONTHS to R.string.profile_weight_range_3m,
+    WeightHistoryRange.ALL_TIME to R.string.profile_weight_range_all,
+)
+
+@Composable
+private fun WeightHistoryCard(
+    points: List<WeightPoint>,
+    range: WeightHistoryRange,
+    useImperial: Boolean,
+    onRangeSelect: (WeightHistoryRange) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(Dimens.CardPaddingLarge),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = stringResource(R.string.profile_weight_history_title), style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WEIGHT_HISTORY_RANGES.forEach { (candidate, labelRes) ->
+                val selected = candidate == range
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 44.dp)
+                        .clip(PillShape)
+                        .background(if (selected) Accent else SurfaceCard)
+                        .border(1.dp, if (selected) Accent else CardBorder, PillShape)
+                        .clickable { onRangeSelect(candidate) }
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (selected) OnAccent else TextMuted,
+                    )
+                }
+            }
+        }
+        if (points.size < 2) {
+            Text(
+                text = stringResource(R.string.profile_weight_history_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+            )
+        } else {
+            WeightLineChart(points = points, useImperial = useImperial)
+        }
+    }
+}
+
+@Composable
+private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
+    val displayValues = points.map { if (useImperial) kgToLb(it.weightKg) else it.weightKg }
+    val minValue = displayValues.min()
+    val maxValue = displayValues.max()
+    // A flat/near-flat series (e.g. two check-ins with the same weight) has no real span to map
+    // onto — draw it as a flat line at mid-height rather than dividing by a fallback span, which
+    // would silently place it at the bottom instead.
+    val isFlat = maxValue - minValue <= 0.01
+
+    Column {
+        Row(modifier = Modifier.fillMaxWidth().height(120.dp)) {
+            Column(
+                modifier = Modifier.fillMaxHeight().padding(end = 8.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(text = formatOneDecimal(maxValue), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Text(text = formatOneDecimal(minValue), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+            }
+            Canvas(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                val pointGapPx = 5.dp.toPx()
+                val stepX = if (points.size > 1) (size.width - pointGapPx * 2) / (points.size - 1) else 0f
+                val usableHeight = size.height - pointGapPx * 2
+                fun yFor(value: Double): Float {
+                    val fraction = if (isFlat) 0.5f else ((value - minValue) / (maxValue - minValue)).toFloat()
+                    return usableHeight - (fraction * usableHeight) + pointGapPx
+                }
+                val path = Path()
+                displayValues.forEachIndexed { index, value ->
+                    val x = pointGapPx + index * stepX
+                    val y = yFor(value)
+                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+                drawPath(path = path, color = Accent, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+                displayValues.forEachIndexed { index, value ->
+                    drawCircle(color = Accent, radius = 4.dp.toPx(), center = Offset(pointGapPx + index * stepX, yFor(value)))
+                }
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = shortDateLabel(points.first().date), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+            if (points.size > 1) {
+                Text(text = shortDateLabel(points.last().date), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+            }
+        }
+    }
+}
+
+private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthValue}"
 
 @Composable
 private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel) {

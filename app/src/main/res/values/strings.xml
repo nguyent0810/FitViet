@@ -249,6 +249,11 @@
     <string name="profile_donated_undo">Hoàn tác (demo)</string>
     <string name="profile_update_sheet_title">Cập nhật số đo</string>
     <string name="profile_update_save">Lưu</string>
+    <string name="profile_weight_history_title">Lịch sử cân nặng</string>
+    <string name="profile_weight_range_30d">30 ngày</string>
+    <string name="profile_weight_range_3m">3 tháng</string>
+    <string name="profile_weight_range_all">Tất cả</string>
+    <string name="profile_weight_history_empty">Cần ít nhất 2 lần đo để vẽ biểu đồ</string>
 
     <!-- 1h Community -->
     <string name="community_title">Cộng đồng</string>

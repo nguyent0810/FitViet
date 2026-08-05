@@ -246,6 +246,11 @@
     <string name="profile_donated_undo">Undo (demo)</string>
     <string name="profile_update_sheet_title">Update measurements</string>
     <string name="profile_update_save">Save</string>
+    <string name="profile_weight_history_title">Weight history</string>
+    <string name="profile_weight_range_30d">30 days</string>
+    <string name="profile_weight_range_3m">3 months</string>
+    <string name="profile_weight_range_all">All time</string>
+    <string name="profile_weight_history_empty">Need at least 2 check-ins to draw a chart</string>
 
     <!-- 1h Community -->
     <string name="community_title">Community</string>
