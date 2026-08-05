@@ -809,10 +809,16 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
    export/import via the Android share sheet), #8 (muscle-group workload chart), #9 (exercise-type
    distribution) — none of those 4 are built yet, only the foundation they need.
 6. ~~#3 Next-training list + completion %~~ — done, Gate 16 above (session-count-based completion,
-   not per-scheduled-day — see that gate's scope-boundary note). #1/#8/#9 remain unbuilt.
-7. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
-   progress-bar list — explicitly not a silhouette illustration), #10 (calories burned — only
-   ever an estimate).
+   not per-scheduled-day — see that gate's scope-boundary note).
+7. ~~#1 Program export/import via the Android share sheet~~ — done, Gate 17 above.
+8. ~~#8 Muscle-group workload chart~~ + ~~#9 exercise-type distribution chart~~ — done, Gate 18
+   above (Diary screen, trailing 4-week window).
+9. ~~#12 Dashboard widget visibility toggles~~ + ~~#5 muscle-group progress-bar list~~ (this week,
+   Dashboard — distinct metric/window from #8's Diary chart) + ~~#10 calories burned (estimate)~~ —
+   done, Gate 19 above.
+
+Every item in the user-approved feature-roadmap priority order is now built. Remaining candidates
+are the two groups below, neither of which has been requested yet.
 
 **Needs the user's own decision before any work** (codex recommended against it, conflicts with
 the deliberately-designed FAB-centered nav from Gate 1): #13, restructuring the bottom nav to 5
@@ -1087,3 +1093,70 @@ exist in both locale files with matching placeholder types.
 
 ### Push
 Reviewed, no further fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Session handoff — 2026-08-05
+
+Closing out this session: the full user-approved feature-roadmap priority list (Gates 11–19) is
+now built, reviewed, and tested. This section is a continuity note for whoever (human or agent)
+picks this project up next.
+
+### What this session did
+Gates 17, 18, 19 (feature #1, #8+#9, #12+#5+#10 respectively) — see each gate's own section above
+for full detail. Every gate followed the same process every prior gate in this log used:
+implement → standalone-`kotlinc`-compile the domain/data layer + run its JUnit tests → manual
+read-through of the Compose/ViewModel layer (no real Android SDK reachable in this environment) →
+an independent `general-purpose`-agent review (adversarial, told to re-derive/re-verify rather than
+trust this session's own claims) → fix whatever it found → re-verify → commit. All three gates'
+reviews found real, fixable issues on the first pass (Gate 17: a non-transactional import that
+could crash and orphan data, plus a missing English string pair, plus an empty-share-subject race;
+Gate 18: a domain-layer architecture-boundary violation; Gate 19: a maintainability smell in some
+overly-clever `Flow.combine()` chaining, already fixed proactively before the review even ran) —
+consistent with this repo's own history that almost every gate has had at least one real finding.
+
+**Final state:** all 19 gates' work is committed on `claude/routines-code-session-n62xmx`. Ran
+every domain-layer JUnit test in the project together in one final consolidated pass as a
+last sanity check before this handoff: **78/78 pass**, no cross-gate regressions.
+
+### Known deviation from this session's own standards (disclosed, not hidden)
+Gate 18's actual code changes landed inside the commit titled "Gate 17 review fixes" instead of its
+own "Gate 18: ..." commit (a `git add -A` swept up in-progress Gate 18 work while committing Gate
+17's fixes) — see Gate 18's own Verification section for the full note. Not rewritten: this branch
+hadn't been pushed anywhere yet when it was caught, so a history rewrite was possible, but the
+interleaved `strings.xml`/`PROGRESS.md` edits across three gates made a clean split risky enough
+that leaving it (with this disclosure) was judged the safer choice than a botched rewrite. No
+functional impact — every gate's actual code changes are all present and correctly reviewed,
+just not perfectly bisectable by commit boundary for this one spot.
+
+### What's NOT done (candidates for a future session, none requested yet)
+- **#13 — restructuring the bottom nav to 5 flat tabs.** Explicitly flagged since early in this
+  project as needing the user's own decision before any work — an earlier `codex` review
+  recommended against it, since it conflicts with the deliberately-designed FAB-centered nav from
+  Gate 1. Do not start this without asking first.
+- A real create-post flow for Community's "+ Đăng bài" (currently static, matching the prototype).
+- Extending Đơn vị (unit) conversion beyond the profile measurement tiles to the workout/dashboard/
+  diary kg figures (Gate 8 scoped this deliberately narrow; see that gate's own note).
+- General polish pass, and a signed/release APK build (only debug builds have been exercised on a
+  real device, per earlier gates' notes about a separate environment that had Android Studio).
+
+### Environment notes for whoever continues this
+- **No Android SDK/Gradle build is reachable from this specific environment** — `dl.google.com`/
+  `maven.google.com` are blocked by network policy, so `./gradlew` can't resolve AGP/AndroidX/Room/
+  Compose. `repo1.maven.org` (Maven Central) *is* reachable, which is how this session fetched
+  `org.json:json` and `org.jetbrains.annotations` to standalone-compile the domain/data layers with
+  the bundled `kotlin-compiler-embeddable` jar inside the local Gradle 8.14.3 install (see e.g. Gate
+  17's Verification section for the exact recipe) — reuse that approach rather than re-discovering
+  it from scratch. `codex exec` is also reachable-but-non-functional here (npm install works,
+  `api.openai.com` itself is blocked) — same as every gate since Gate 6 noted.
+- A **different** environment (referenced in this log around Gate 15) has had real Android Studio +
+  `adb`/device access — if that's available again, a real Gradle build + on-device install would be
+  a stronger verification pass than this session could do, especially for the newer
+  `ActivityResultContracts`/document-picker code from Gate 17 and the Room schema bump (v2→v3) from
+  Gate 19, neither of which could be runtime-exercised here.
+- Every schema change in this project follows one policy (established at Gate 15, reused at Gate
+  19): bump `@Database(version = N)`, rely on `.fallbackToDestructiveMigration()`. This is
+  deliberate pre-release behavior — there's no shipped install to preserve data for yet — but it
+  does mean anyone's local test device gets wiped/reseeded on next launch after pulling this branch.
+
+### Where to pick up
+Read this file top-to-bottom (or at minimum this handoff + the last few gates) before starting new
+work — it's the single source of truth for what's built, what's deliberately deferred, and why.
