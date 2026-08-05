@@ -761,11 +761,27 @@ manually reviewed. `DashboardViewModel.kt`/`DashboardScreen.kt` (real `androidx.
 same limitation as every prior gate's UI layer) verified by manual read-through — confirmed the
 sole `HeroCard(...)` call site was updated, no stale 2-arg signature left anywhere, no other
 `DashboardData`/`DashboardUiState` construction site needed updating (both new fields have safe
-defaults/are only ever constructed at their one real call site). Independent review pass in flight;
-findings, if any, land as a follow-up commit before this gate is reported done.
+defaults/are only ever constructed at their one real call site).
+
+**Independent review pass** (same general-purpose-agent stand-in as prior gates) — **no correctness
+bugs found**, the second gate (after Gate 9) to come back clean on the first pass. It independently
+re-verified rather than trusted: compiled and ran `NextTrainingTest.kt` itself (confirmed 10/10 pass
+on its own build, not just re-reading the assertions), hand-recomputed the `DayOfWeek.plus()`
+wraparound and "nearest upcoming day" cases before running them, confirmed `ProgramSchedule.kt` has
+a genuinely empty diff this gate (`git show` — only Gate 15 touched it), confirmed
+`DashboardStatsCalculator`'s Monday-start week (`today.with(DayOfWeek.MONDAY)`) actually matches
+`ProgramDayEntity.dayOfWeek`'s ISO Monday-start convention (no off-by-one between the progress bar's
+numerator and denominator), confirmed the two-stage `flatMapLatest` correctly re-subscribes to the
+schedule DAOs when the active program changes and doesn't get stuck on a stale program, and
+specifically grepped for the Gate-8-class `androidx.compose.foundation.layout.weight` import bug
+(absent). One non-blocking note: the second `flatMapLatest` stage has no `distinctUntilChanged`, so
+any upstream emission (e.g. logging a meal) re-subscribes the schedule queries even when the active
+program hasn't changed — wasteful (small queries: one program's days/exercises + the exercise
+catalog) but not incorrect; left as-is rather than adding speculative optimization for a cost this
+small.
 
 ### Push
-Pending independent review.
+Reviewed, no fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
 
 ## Roadmap status
 
