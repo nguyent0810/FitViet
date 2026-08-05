@@ -38,3 +38,16 @@ fun formatMinutesSeconds(totalSeconds: Int): String {
 /** Drops a trailing ".0" so integer-valued weights read as "40" not "40.0", matching the prototype. */
 fun formatWeight(kg: Double): String =
     if (kg == kg.toLong().toDouble()) kg.toLong().toString() else formatVi(kg)
+
+/**
+ * One-decimal formatting for values that don't tend to land on round numbers — e.g. unit-converted
+ * kg->lb / cm->in (see [com.fitviet.app.util.formatWeightUnit]/[formatLengthUnit]). [formatWeight]
+ * rounds fractional input to the nearest whole number via [formatVi], which is fine for native kg/cm
+ * values (already close to whole numbers in this app's data) but would round small deltas straight to
+ * "0" once converted. Still drops the decimal when it rounds to a whole number, same idea as
+ * [formatWeight] just at one-decimal granularity.
+ */
+fun formatOneDecimal(value: Double): String {
+    val rounded = Math.round(value * 10) / 10.0
+    return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else String.format(viLocale, "%.1f", rounded)
+}

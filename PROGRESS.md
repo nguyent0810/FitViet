@@ -179,43 +179,233 @@ The brief asked for unit tests on the workout state machine specifically. Gate 4
 ### Next
 Gate 6: Nutrition (1g) with a local VN food DB + Profile/settings/donate (1i).
 
-## Gate 6 — Nutrition (1g) + Profile/settings/donate (1i)
+## Note on Gate 6 — two independent implementations, reconciled at merge time
+
+Gate 6 was built twice, independently, by two separate agent sessions working from this same
+point in history: one on `master` directly (commit `a8f7c4f`, environment had `codex exec`
+available), one on the `claude/routines-code-session-n62xmx` branch below (no `codex`/network
+access, used an independent-agent review stand-in instead, and kept going through Gates 7–10).
+At merge time, the branch's version was kept — it covers the identical Gate 6 scope plus four
+more gates on top, so keeping both would have meant two competing, differently-named
+implementations of the same screens (`ProfileRepository` vs. `SettingsRepository`, `UnitConverter`
+vs. `UnitConversions`, etc.) permanently coexisting in the tree. `master`'s `a8f7c4f` Gate 6 log
+is preserved in git history for reference but its code is superseded below.
+
+## Gate 6 — Nutrition (1g) + Profile & settings/donate (1i)
 
 ### What was built
-- `ui/nutrition/{NutritionScreen,NutritionViewModel}.kt` (1g): kcal ring (custom `Canvas`/`drawArc`, no native conic-gradient brush in Compose), 3 macro bars (protein/carb/fat), meal list with remove, "+ Thêm món" food picker bottom sheet.
-- `domain/NutritionCalculator.kt` — pure, unit-tested totals/percent calculator (kcal 2200, protein 140g, carb 250g, fat 70g goals per README defaults). `NutritionCalculatorTest.kt` (3 tests).
-- `data/repository/NutritionRepository.kt` — wraps `MealDao`, reuses the shared `dayTicker()` (same midnight-rollover pattern as Dashboard/Diary) so "today" doesn't go stale in a long-lived screen.
-- `ui/nutrition/FoodPresets.kt` — 9 hardcoded VN dishes (the prototype's exact "+ Thêm món" preset list).
-- `ui/profile/{ProfileScreen,ProfileViewModel}.kt` (1i): avatar/summary header, body-measurement tiles with delta-vs-previous, settings list (language/offline/backup/units), donate card. Opens from the dashboard avatar (now clickable).
-- `data/repository/{SettingsRepository,MeasurementRepository}.kt` — settings cycling (language/offline/units/donated) and latest-two-measurements-with-delta.
-- `SettingsEntity.onboardingCompletedAtEpochDay` — stamped once by `OnboardingRepository.completeOnboarding()`, powers 1i's "N tuần đồng hành" (weeks with the app).
-- Real per-app language switching: `androidx.appcompat` dependency added, `MainActivity` changed from `ComponentActivity` to `AppCompatActivity` (required for `AppCompatDelegate` to reliably relocalize pre-API-33), and a `LaunchedEffect` in `FitVietNavHost` calls `AppCompatDelegate.setApplicationLocales()` whenever `settings.languageIsEnglish` changes — the "Ngôn ngữ" toggle now actually changes the app's language instead of being cosmetic-only.
-- `domain/UnitConversions.kt` (kg↔lb, cm↔in) — the "Đơn vị" toggle now actually converts displayed/entered measurement values, not just the settings-row label.
-- `formatOneDecimalVi()` / `parseDecimalInput()` added to `util/Formatting.kt` — measurement tiles now show one decimal (matches the prototype's "72,0" / "+1,2" style) and the update-measurement sheet accepts both "72.5" and vi-VN "72,5" input.
+- `domain/NutritionCalculator.kt` — pure sum of a day's meals into kcal/protein/carb/fat totals + percent-of-goal (goals: 2.200 kcal / 140g protein / 250g carb / 70g fat, from the README's `NutritionDay.goals`), with `NutritionCalculatorTest.kt` (empty state, summing, percent-of-goal, percent capped at 100).
+- `domain/MeasurementDeltaCalculator.kt` — pure latest-vs-previous diff per metric (null-safe per field), with `MeasurementDeltaCalculatorTest.kt`, including a case reproducing the exact Gate 2 seed deltas (+1,2kg / +2cm / −1cm / +0,5cm).
+- `data/repository/NutritionRepository.kt` — `observe()` re-derives "today" across midnight via the Gate 5 `dayTicker()` (same pattern as `DashboardRepository`/`DiaryRepository`), `addMeal()`/`removeMeal()` write through `MealDao` (already built in Gate 2, unused until now).
+- `data/repository/ProfileRepository.kt` — combines `SettingsDao.observe()` + `MeasurementDao.observeAll()` (newest-first, so index 0/1 are latest/previous); `cycleLanguage()`/`toggleOffline()`/`cycleUnits()`/`toggleDonated()` each read-modify-write the singleton `SettingsEntity` row; `addMeasurement()` inserts a new dated check-in.
+- `SeedData.mealPresets` — the 5 "+ Thêm món" presets from the prototype's `presets` array (Ức gà áp chảo, Bánh mì thịt, Sữa tươi không đường, Cơm tấm sườn, Chuối), not Room-seeded — `NutritionRepository`/`NutritionViewModel` read the list directly and cycle through it by index, matching the prototype's `presetIdx % presets.length` behavior.
+- `ui/nutrition/{NutritionScreen,NutritionViewModel}.kt` (1g) — kcal ring drawn with `Canvas`/`drawArc` (two arcs: track + progress, since Compose has no CSS conic-gradient equivalent), 3 macro bars, today's meal list with remove, "+ Thêm món" cycling presets.
+- `ui/profile/{ProfileScreen,ProfileViewModel,UpdateMeasurementSheet}.kt` (1i) — header (avatar/name + level·goal·"8 tuần đồng hành" built from the real onboarding `selectedLevel`/`selectedGoal`), body-measurement tiles with signed/colored deltas, settings list (language/offline/units cycle + persist; backup row is static — matches the prototype, which has no `onClick` on that row either), donate card with a persisted `hasDonated` toggle. "+ Cập nhật" opens a `ModalBottomSheet` (same component `TechniquePickerSheet` established in Gate 4) with 4 numeric fields, defaulting to the latest check-in, that inserts a real new `MeasurementEntity` row on save.
+- Wired `AppContainer.nutritionRepository`/`profileRepository`, `FitVietDestination.Profile`, and the Nutrition bottom-nav tab + a new Profile route reachable by tapping the dashboard avatar (per the README: "Profile opens from avatar on Trang chủ").
 
-### Scope decisions (documented, not defects — confirmed against source in codex review)
-- **Room schema still version 1, no migration** for the new `onboardingCompletedAtEpochDay` column. Standing pre-release policy from Gate 2 (see that section) — nothing has shipped, so no installed base to migrate.
-- **`FoodPresets.kt` is a static 9-item list, not a Room-backed searchable catalog.** `UI Handoff/README.md` (1g) explicitly frames a full searchable VN food DB as a "production" (post-handoff) feature; the static list matches the prototype's own "+ Thêm món" preset behavior exactly.
-- **Backup/"Sao lưu dữ liệu" settings row is non-interactive (`onClick = null`).** Verified against `FitViet Prototype v2.dc.html`: that row has no `onClick` handler in the prototype source either, unlike language/offline/units which do — matches reference fidelity, not a missed feature.
-- **English locale still shows Vietnamese food/meal names** — same documented decision as Gates 3–5 (Vietnamese-first content vs. UI chrome). The meal *slot* label ("Bữa phụ"/"Extra") is chrome and is bilingual; the dish name itself is not.
+### Scope decisions (documented, not defects)
+- **Ngôn ngữ and Đơn vị are label-only cycles, not a real i18n/unit-conversion switch.** Checked the prototype's own JS: `cycleLang`/`cycleUnit` only update the displayed label (`langLabel`/`unitLabel`), they don't reformat any other content in the demo either — so persisting the choice and showing the current label is faithful to the spec, not a shortcut. A real per-app-locale switch (`AppCompatDelegate.setApplicationLocales`) and an app-wide kg↔lb/cm↔in conversion (touching the workout, dashboard, diary, and profile screens built in Gates 3–5) are both real features beyond what any of the 12 screens actually specify — flagging as follow-up if the user wants them to actually take effect.
+- **"Sao lưu dữ liệu" (backup/export) row is static, matching the prototype** — it's the only settings row in the markup without an `onClick`. No file-export feature was built.
+- **8 tuần đồng hành is a static tail string**, same as the prototype's hardcoded copy — there's no elapsed-program-tracking feature in the 12-screen spec to compute a real week count from.
+- **Profile name is a shared placeholder** ("Minh Nguyễn" / avatar "M"), same identity gap already noted for the dashboard's greeting since Gate 3 — no profile-editing screen exists in the spec.
 
-### Codex review — 2 passes
-**Pass 1 findings and fixes:**
+### Verification
+No JDK/Android SDK were available in prior gates' dev environment; this one *does* have a JDK 21 + Gradle 8.14.3 install — but the network policy blocks `dl.google.com` (and its `maven.google.com` alias, which redirects there), which is the exclusive host for the Android Gradle Plugin, the Android SDK, and every AndroidX/Room/Compose artifact. `gradle tasks` fails immediately at plugin resolution (`Plugin [id: 'com.android.application'...] was not found`), before configuration even starts — so no Gradle task, including the JVM unit tests, can run here either. This is a harder blocker than earlier gates', not a smaller one.
+
+Given that, verification was:
+1. **Standalone compiler check of the new domain + data layers.** Using the `kotlinc`/`kotlin-compiler-embeddable` jars bundled inside the local Gradle 8.14.3 install (plus its bundled `kotlinx-coroutines-core-jvm` and `junit`), with minimal hand-written stubs for the `androidx.room` annotations (`@Entity`, `@PrimaryKey`, `@Dao`, `@Query`, `@Insert`, `@Delete`, `@Upsert`, `@Update`, `@ForeignKey`, `@Index` — annotation shapes only, no Room codegen) — compiled every entity, every DAO, `SeedData`, `DayTicker`, `NutritionCalculator`, `MeasurementDeltaCalculator`, `NutritionRepository`, and `ProfileRepository` together, clean, no errors. Then ran the two new JUnit test classes standalone: **8/8 pass**.
+2. **No standalone check was possible for the Compose UI layer** (ViewModels, `NutritionScreen`, `ProfileScreen`, `UpdateMeasurementSheet`, nav/dashboard wiring) — Compose's API surface is too large to stub credibly without the real artifacts, which are unreachable. Verified this layer by careful manual read-through instead, cross-checking every Compose call, theme/string-resource reference, and prototype-copied value against the exact APIs and patterns already proven to compile in Gates 1–5's screens (`DiaryScreen`, `DashboardScreen`, `ExerciseDetailScreen`, `TechniquePickerSheet`). One real bug was caught and fixed this way: a `replace_all` edit meant to fix one inline fully-qualified reference in `ProfileScreen.kt` also corrupted its `AccentBorderAlt` **import line** down to `import AccentBorderAlt` (no package) — fixed back to `import com.fitviet.app.ui.theme.AccentBorderAlt`.
+3. **Independent review pass** (general-purpose agent doing a fresh read-through of every changed file against the prototype and existing conventions, since no `codex` CLI is available in this environment either — same role Gates 1–5's `codex exec` review played). Findings and fixes, applied as a follow-up commit:
+
 | # | Issue | Fix |
 |---|---|---|
-| 1 | `MainActivity` was a plain `ComponentActivity` — `AppCompatDelegate.setApplicationLocales()` doesn't reliably relocalize non-AppCompat activities | Changed to `AppCompatActivity` |
-| 2 | `MeasurementDao` ordered only by `epochDay DESC` — two check-ins on the same day had nondeterministic latest/previous ordering | Added `id DESC` as a tiebreaker |
-| 3 | Added-meal slot persisted the hardcoded Vietnamese literal `"Bữa phụ"` — switching to English still showed Vietnamese chrome | Store a locale-neutral key (`"extra"`) instead; `NutritionScreen` maps it to a localized string resource |
-| 4 | Several new touch targets were under the 44dp minimum: Nutrition's "add food" chip (~32dp), meal-row remove `×` (24dp), Profile's back button (34dp) and "Cập nhật" text link (no minimum), Dashboard's newly-clickable avatar (42dp) | All bumped to a 44dp touch zone (visual size preserved by wrapping a smaller decorative element inside a 44dp clickable `Box` where shrinking the visual would look wrong) |
-| 5 | "Đơn vị" (unit) toggle only changed the settings-row label; measurement values/labels stayed kg/cm | Added `domain/UnitConversions.kt`; Profile's tiles and the update-measurement sheet now convert for display and on save, with canonical storage staying metric |
-| — (self-caught while fixing #5) | Measurement tiles used `formatVi()` (rounds to integer), losing the prototype's one-decimal precision (e.g. "72,0", "+1,2" would round to "72", "+1") | Added `formatOneDecimalVi()`, switched measurement tile/delta display to it |
+| 1 (High) | `NutritionScreen.kt`'s `SummaryCard`: the macro-bar `Column` next to the kcal ring used `Modifier.fillMaxWidth()` inside a `Row`, not `Modifier.weight(1f)` — exactly the "Row-scope weight" bug class. An unweighted `fillMaxWidth()` child in a `Row` sizes to the *whole* row's width instead of the space left after the ring, and since the Row is clipped, the protein/carb/fat labels and bars would render pushed off/clipped past the card edge — the core content of the new nutrition summary card. | Changed to `Modifier.weight(1f)` (added the missing `layout.weight` import) |
+| 2 (Low) | `NutritionCalculator.percentOf` used `Int` division (truncates) where the prototype uses `Math.round(...)` — off-by-one on values whose true percentage has a ≥0.5 fractional part (e.g. 1116/2200 shows 50% instead of the prototype's 51%) | Switched to `(value * 100.0 / goal).roundToInt()` |
+| 3 (Low) | `ProfileScreen.kt`'s `MeasurementTile` delta text was unconditionally bold; the prototype only bolds positive (accent-colored) deltas, leaving negative ones normal weight | `fontWeight` now follows the same `positive` branch as the color |
 
-Also re-raised three items already covered by earlier-gate/design-doc decisions (Room version, FoodPresets scope, backup row) — checked each against source (PROGRESS.md, README, prototype HTML) and confirmed no change needed; see Scope decisions above.
-
-**Pass 2** confirmed all 6 fixes correct, agreed with all 3 documented non-fixes, and flagged one remaining edge case: the update-measurement sheet's `toDoubleOrNull()` would silently reject comma-decimal input (e.g. "72,5") from a vi-VN-locale decimal keyboard, saving that field as `null`. Fixed with `parseDecimalInput()` (normalizes `,`→`.` before parsing).
+Re-ran the standalone domain-layer compile + the two new JUnit test classes after the fixes: still compiles clean, still 8/8 pass (the rounding fix doesn't change any existing test's expected value — all the test fixtures happen to land on exact percentages).
 
 ### Push
-Approved by codex, pushed to `origin/master`.
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
 
 ### Next
-Gate 7: Community (1h, mock data first) + polish + release APK.
+Gate 7 candidates from the README's remaining screens: 1h Community (the one screen documented as intentionally online/best-effort-offline), and/or wiring the Ngôn ngữ/Đơn vị settings from Gate 6 to actually take effect app-wide if the user wants that scope.
+
+## Gate 7 — Community (1h)
+
+The last of the 12 spec screens.
+
+### What was built
+- `data/local/entity/CommunityPostEntity.kt` + `CommunityPostType` (SHARE/QA/PROGRESS, matching the prototype's `type` field) — `data/local/dao/CommunityPostDao.kt` (`observeAll`, `insertAll`, `setLiked`). Registered in `FitVietDatabase`'s entity list; schema stays version 1 (same "pre-release, no migration needed" call Gate 2 made for its own additions).
+- `SeedData.communityPosts` — the 3 demo posts verbatim from the prototype (Hùng Trần/Tiến bộ/PR badge, Lan Phạm/Hỏi đáp/best-answer marker, Tuấn Vũ/Chia sẻ), seeded once in `DatabaseSeeder` alongside the other first-launch content.
+- `domain/CommunityFilter.kt` — pure tab filter (`tab == 0` shows everything including "Chia sẻ" posts that have no dedicated tab; tabs 1/2 match that exact `postType`), with `CommunityFilterTest.kt` (3 tests: all-posts, Q&A-only, progress-only).
+- `data/repository/CommunityRepository.kt` — thin `observe()`/`toggleLike()` wrapper, no `dayTicker` needed here (nothing in this feed is date-relative).
+- `ui/community/{CommunityScreen,CommunityViewModel}.kt` (1h) — title + static "+ Đăng bài" (no `onClick` in the prototype either — no real post-composer built), 3 filter tabs (reusing the same `PillShape` chip styling as `ProgramsListScreen`'s `FilterChips`), post cards with avatar-initial circle, optional PR badge, ♡/♥ like toggle (displayed count = seed `baseLikeCount` + 1 if liked-by-user, matching the prototype's `likes[i] + (liked[i] ? 1 : 0)`), comment count (Q&A posts say "trả lời", others "bình luận"), and the "1 trả lời hay nhất" marker only on the one post with `hasBestAnswerMarker`.
+- Wired `AppContainer.communityRepository` and swapped the Community bottom-nav route from `PlaceholderScreen` to the real screen.
+- **Deleted `ui/common/PlaceholderScreen.kt`** and its now-orphaned `placeholder_coming_soon` string resource — with Community built, nothing references either anymore (all 12 screens are now implemented).
+
+### Scope decisions (documented, not defects)
+- **Likes/comments are local-only, no real backend.** The README calls Community "the only online feature" and says it "must degrade gracefully offline" — this app has no server at all (by design, per the README's own "fully offline operation" differentiator), so the honest reading is: posts are seeded once (as if last synced before going offline) and the like toggle persists locally in Room, which trivially satisfies "degrades gracefully offline" since it never depends on a network call in the first place. Building a real backend/sync layer is out of scope for a native client gate.
+- **"+ Đăng bài" is a static label, matching the prototype** — it's the one header element in the 1h markup without an `onClick`, same category as 1i's "Sao lưu dữ liệu" row from Gate 6.
+
+### On `codex` availability (correction from Gate 6)
+Gate 6 said no `codex` CLI was available. That was checked with a bare `which codex` and was misleading: `npx @openai/codex` *does* fetch and run (this environment's proxy allows npm registry access) — but `codex exec` fails immediately because the proxy returns 403 for `api.openai.com` (not on this environment's host allowlist, same class of block as `dl.google.com`), and there's no `OPENAI_API_KEY`/`~/.codex/auth.json` configured either. So `codex` is reachable-but-non-functional here, not literally absent — worth re-checking in an environment with OpenAI API egress.
+
+### Verification
+Same environment constraints as Gate 6 (no real Gradle build possible). Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/repository layer including the new `CommunityPostEntity`/`CommunityPostDao`/`CommunityFilter`/`CommunityRepository` — clean, no errors — and the new `CommunityFilterTest`: **3/3 pass**. Compose UI layer (`CommunityScreen`, `CommunityViewModel`, nav wiring) verified by manual read-through against the same proven-compiling precedents as Gate 6, plus grepped the full source tree to confirm no other file still references the deleted `PlaceholderScreen`/`placeholder_coming_soon`.
+
+**Independent review pass** (same general-purpose-agent stand-in as Gate 6). One finding, fixed as a follow-up commit:
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `DatabaseSeeder.communityPostDao().insertAll(...)` was called *after* the `programDao().count() > 0` early-return guard — so it only ran on a genuinely empty (first-ever-launch) database. Any DB already seeded by a pre-Gate-7 build (Gates 2–6 — exactly what a reviewer's or the user's existing install would be) would silently show an empty Community feed forever, with no error. This is the identical bug class Gate 4 already hit and fixed for exercises. | Added `seedMissingCommunityPosts()` (mirrors `seedMissingExercises()`'s pattern: its own `count() == 0` check, called unconditionally before the programs-count gate) |
+
+Also tried `codex exec review` for a real second opinion this gate, since `codex` turns out to be installable via `npx @openai/codex` (npm registry access works here) — but it can't actually run: the container's network proxy returns a 403 on the CONNECT to `api.openai.com` before any auth check even happens, and there's no `OPENAI_API_KEY`/`~/.codex/auth.json` configured either. Corrects Gate 6's "no codex CLI available" note — it's reachable-but-blocked, not absent.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+### Next
+All 12 spec screens are now built. Remaining candidates, not yet scoped into a gate: wiring Ngôn ngữ/Đơn vị (Gate 6) to actually take effect app-wide; a real create-post flow for 1h's "+ Đăng bài"; exercise media (the README's placeholder-asset gap — free-exercise-db/wger licensing to check first); and getting a real Gradle/Android SDK build running (blocked purely by this environment's network policy, not by anything in the code).
+
+## Gate 8 — Real Ngôn ngữ/Đơn vị + real exercise photos
+
+User picked two of the three post-Gate-7 follow-up candidates: making language/units actually take effect, and swapping in real exercise media.
+
+### What was built
+
+**Ngôn ngữ (real, app-wide):**
+- Added `androidx.appcompat:appcompat` (needed for `AppCompatDelegate.setApplicationLocales` — `androidx.core`, already a dependency, only has the `LocaleListCompat` half of the API). Added `res/xml/locales_config.xml` (declares `vi`/`en`) and `android:localeConfig` on `<application>` — Android 13+ uses the framework `LocaleManager` directly; AppCompat provides the equivalent back-compat path for API 26–32, wired in automatically once the dependency + manifest entry are present, no extra plumbing needed.
+- `util/LocaleController.kt` — one function, `apply(isEnglish: Boolean)`, calling `setApplicationLocales`. Idempotent (safe to call redundantly).
+- `AppContainer.languageIsEnglish: Flow<Boolean>` — a direct read of the persisted setting. Deliberately placed on `AppContainer`, not `ProfileRepository`: locale is a cross-cutting app-level concern, not Profile-feature business logic.
+- `FitVietNavHost` now collects that flow and re-applies it via `LaunchedEffect(isEnglish)` on every launch and every toggle. Our own `SettingsEntity.languageIsEnglish` stays the single source of truth (not AppCompat's own persisted-locale storage) — consistent with how every other setting in this app is modeled.
+- **This changes cold-start behavior**: the app now actively forces the persisted choice (Vietnamese by default) as a real per-app locale override from the first launch, rather than following the device's system language until the user opens Settings. Given the README's own "Vietnamese-first content" framing, a device with an English system locale showing English chrome by default (ordinary Android resource resolution) before ever being touched would have been a real inconsistency with our own `SettingsEntity` default — this makes the two agree from launch 1.
+
+**Đơn vị (real, scoped to the profile measurement tiles):**
+- `util/UnitConverter.kt` — `kgToLb`/`cmToIn` (standard factors) + `formatWeightUnit`/`formatLengthUnit`, which append the actual unit suffix into the value text itself (`"72 kg"` / `"158,7 lb"`) rather than relying on a separate label — matches the existing `PersonalBestsCard` precedent from Gate 5 of embedding the unit directly in the Anton-styled value text.
+- Caught while writing tests: `formatWeight` (existing, Gate 1) rounds any non-whole input to the nearest *whole* number via `formatVi`'s `Math.round`. Fine for this app's existing kg/cm data (already near-whole), but converted lb/in values are essentially never whole, and rounding a value like a 0.5cm/1.2kg delta straight to the nearest imperial integer would often show `"+0"` for a real nonzero change. Added `formatOneDecimal` to `Formatting.kt` for exactly this case (converted-unit values) — same "no trailing .0 on whole results" idea as `formatWeight`, just at one-decimal granularity. `UnitConverterTest.kt` covers both the conversion factors and this rounding behavior (6 tests).
+- `ProfileScreen`'s `MeasurementTile` now takes `useImperial`/`isWeight` and formats both the value and its delta through the unit-aware helpers; added unit-less short tile labels (`profile_tile_weight_short` etc.) since the value text now carries the unit — the existing `(kg)`/`(cm)`-suffixed labels stay as-is for the "+ Cập nhật" input field labels.
+- **Scope boundary, deliberate**: "kg" figures on Dashboard (weekly volume stat), Diary (weekly volume chart, personal bests), and the whole Workout flow (editable weight steppers) stay in kg regardless of the Đơn vị setting. Converting those too would mean either (a) making the workout flow's live weight-editing steppers operate in a different unit than they're stored in — a real UX design question about step granularity that isn't specified anywhere and isn't mine to invent — or (b) leaving the editable flow in kg while its own summary/history displays flip to lb, which is a more confusing inconsistency than not converting at all. Training-volume "kg" is also arguably a different unit convention (load moved) than body-measurement kg/cm, so scoping the real conversion to exactly where the Đơn vị toggle lives (the profile measurement tiles) is the most honest, non-half-finished version of this feature to ship in one gate.
+
+**Real exercise photos (1d):**
+- Sourced from **free-exercise-db** (github.com/yuhonas/free-exercise-db) — confirmed public domain (its `LICENSE.md` is the Unlicense; verified by fetching it directly, not just trusting the README's claim). `github.com`/`api.github.com` are blocked by this environment's network policy (same as `dl.google.com`), but `raw.githubusercontent.com` is reachable, so fetched `dist/exercises.json` + the actual images through that.
+- Matched the app's 4 seeded exercises to the DB's closest named entries by movement (not just string similarity — checked each candidate's instructions against ours): `Barbell Bench Press - Medium Grip`, `Dumbbell Shoulder Press` (exact name match), `Cable Crossover` (matches our "đứng giữa hai cột cáp" standing-cable description better than the DB's bench-lying "Cable Flyes" entries), `Side Lateral Raise`. Two photos each (start/end position — the DB ships JPGs, not GIFs; the design spec's `gifAsset` field name was just the prototype's placeholder-filename convention, not a hard requirement for animated media), 850×567, ~530KB total for all 8. Bundled under `res/drawable-nodpi/` (no density-bucket scaling — these are fixed photo content, not density-scaled UI assets).
+- `ui/exercise/ExerciseMedia.kt` — a static `nameVi -> [drawable ids]` map keyed by the same `SeedExerciseNames` constants the workout flow already uses, not a Room/entity change (matches how other spec-sourced static content, e.g. `OnboardingOptions.kt`, is modeled in this codebase). `ExerciseDetailScreen`'s media box shows the two real photos side-by-side when present, falling back to the original filename-placeholder box for any exercise without an entry (defensive default, not currently reachable since all 4 seeded exercises now have photos).
+- Attribution recorded at `licenses/exercise-photos/UNLICENSE-free-exercise-db.txt` (full license text + exact source paths for each of the 8 files), same pattern as `licenses/fonts/`.
+- **Not done**: `wger.de` (the README's other suggested source) is unreachable from this environment (proxy blocks it) — free-exercise-db alone was sufficient for the 4 exercises this app currently seeds.
+
+### Verification
+Same environment constraints as Gates 6–7. Standalone `kotlinc` compile of `Formatting.kt` + `UnitConverter.kt` + `UnitConverterTest.kt` (pure JDK, no Android stubs needed) — clean, and **6/6 tests pass**, confirming the conversion factors and the whole-number-rounding fix are correct. `LocaleController.kt` couldn't be compile-checked standalone (needs real `androidx.appcompat`/`androidx.core.os` classes, not worth hand-stubbing for a 3-line function) — verified by manual review against the documented `AppCompatDelegate.setApplicationLocales` API contract instead. The Compose changes (`ProfileScreen`, `ExerciseDetailScreen`, `ExerciseMedia.kt`, `FitVietNavHost`) verified by manual read-through, same as prior gates. `res/drawable-nodpi/*.jpg` file names and R.drawable references cross-checked character-by-character (all 8 match between the downloaded files and `ExerciseMedia.kt`'s map).
+
+**Independent review pass** (same general-purpose-agent stand-in as Gates 6–7). One finding, fixed as a follow-up commit:
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `AndroidManifest.xml` added `android:localeConfig` but was missing the `androidx.appcompat.app.AppLocalesMetadataHolderService` declaration that AppCompat's per-app-language back-compat path requires on API 26–32 (API 33+ uses the framework `LocaleManager` directly and doesn't need it). `MainActivity` is a plain `ComponentActivity` (not `AppCompatActivity`, and `Theme.FitViet` doesn't inherit from any `Theme.AppCompat.*`), so without this service declaration, `AppCompatDelegate.setApplicationLocales()` has no mechanism to persist or re-apply the chosen locale on API 26–32 devices — the toggle would silently do nothing on a real fraction of this app's own `minSdk=26` device range, with no error to indicate why. | Added the `<service android:name="androidx.appcompat.app.AppLocalesMetadataHolderService" ...><meta-data android:name="autoStoreLocales" android:value="true" /></service>` block to the manifest, per AppCompat's documented requirement for non-`AppCompatActivity` apps |
+
+Also independently re-verified (hand-recomputed, not just re-read) by the reviewer: the kg↔lb/cm↔in conversion factors and directions, both `UnitConverterTest.kt` expected values, that `formatWeight`/`formatVi(Double)` really do round fractional input to the nearest whole number (confirming `formatOneDecimal`'s rationale), that the measurement-tile delta math is still correct once unit-converted, and that all 8 JPEGs are valid/non-corrupt (via PIL `.verify()`, not just `file`) with `ExerciseMedia.kt`'s drawable references matching the actual files and `SeedExerciseNames` constants character-for-character.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 9 — Expand the exercise & Việt food library
+
+User asked to focus specifically on growing the two content libraries (exercises, food) rather than new screens/behavior.
+
+### What was built
+
+**10 new exercises** (14 total, up from 4), covering muscle groups the original 4 left completely untouched — legs, back, arms, core:
+- Squat tạ đòn (Barbell Squat), Deadlift tạ đòn (Barbell Deadlift), Đạp đùi máy (Leg Press), Lunge tạ đơn (Dumbbell Lunges) — legs
+- Kéo xô cáp tay rộng (Wide-Grip Lat Pulldown), Row tạ đòn cúi người (Bent Over Barbell Row) — back
+- Cuốn tay trước tạ đòn (Barbell Curl), Đẩy cáp tay sau (Triceps Pushdown) — arms
+- Gập bụng (Crunches), Hít đất (Pushups) — core/bodyweight (the last two need no equipment, useful for the "Giảm mỡ 30 ngày tại nhà" no-equipment program)
+
+Each has real start/end photos (same free-exercise-db source and `res/drawable-nodpi/` approach as Gate 8 — 20 new JPGs, ~1.4MB, attribution appended to the existing `licenses/exercise-photos/UNLICENSE-free-exercise-db.txt`), Vietnamese instructions (concise technique summaries in this app's established style, not literal translations of the source's verbose English), and suggested sets/reps/rest picked per exercise type (heavy compounds like squat/deadlift get lower reps/longer rest; isolation/bodyweight work gets higher reps/shorter rest).
+
+**Not wired into the fixed Gate 4 workout demo plan** (`WorkoutPlanSeed.kt` — untouched, still only references the original 4 by name) — these are reachable via 1c's search → 1d detail, same as the original 4 were before Gate 4 built the workout flow around a subset of them. `DatabaseSeeder.seedMissingExercises()` (built in Gate 4 for exactly this "add exercises later" case) picks these up automatically on any existing install, no seeder changes needed.
+
+**Considered and dropped**: Plank, for the core slot — the app's `ExerciseEntity` schema models `suggestedRepsMin/Max` as a rep count, and Plank is a timed hold, not rep-based. Forcing a "30–60" range into the reps tile would read as "30–60 reps," which is wrong. Used Crunches (rep-based, same equipment/muscle group) instead rather than stretch the schema for one exercise.
+
+**15 new Vietnamese food items** (20 meal presets total, up from 5) addable via 1g's "+ Thêm món": Bún chả Hà Nội, Gỏi cuốn tôm thịt, Canh chua cá lóc, Bánh cuốn chả lụa, Xôi xéo, Cá kho tộ, Rau muống xào tỏi, Sữa đậu nành, Bánh flan, Hủ tiếu Nam Vang, Bò lúc lắc, Trái cây thập cẩm, Đậu hũ sốt cà chua, Yến mạch trộn sữa chua & hạt, Chè đậu xanh — spanning savory mains, sides, drinks, and light desserts rather than just protein-heavy mains. Macros are estimated (kcal ≈ 4×protein + 4×carb + 9×fat, within ~10%, same basis the original 5 already used) since there's no nutrition-database API in this offline-first app.
+
+### Verification
+Same environment constraints as prior gates. Standalone `kotlinc` compile of the full entity/DAO/`SeedData`/`NutritionRepository` layer (stubbed Room annotations + real kotlinx-coroutines) — clean. Verified programmatically (not just by eye): all 14 exercise entries reference a `SeedExerciseNames` constant, all 20 meal presets present, and — critically, since resource files aren't touched by the kotlinc check at all — every `R.drawable.*` reference in `ExerciseMedia.kt` diffed 1:1 against the actual filenames in `res/drawable-nodpi/` (28 photos total now, exact match, no missing/extra). Confirmed `WorkoutPlanSeed.kt` is untouched and still resolves only the original 4 exercise names.
+
+**Independent review pass** (same general-purpose-agent stand-in as Gates 6–8) — **no defects found**, the first gate to come back clean on the first pass. It independently re-verified rather than trusted: `file` + `PIL.Image.verify()` on all 28 photos (20 new + 8 existing, none corrupt/truncated), a programmatic diff of every `R.drawable.*` reference against actual filenames (28/28 match), that all 14 `nameVi` fields use their `SeedExerciseNames` constant with no duplicates/collisions, real-world anatomical plausibility of each new exercise's muscle/equipment data, kcal ≈ 4P+4C+9F recomputed independently for all 20 meal presets (largest deviation 8.9%, still inside the claimed ~10% band), that `WorkoutPlanSeed.kt` and `DatabaseSeeder.kt` are genuinely untouched (via `git show --stat`) and that the existing `seedMissingExercises()` backfill mechanism does correctly pick up the 10 new entries, and the Plank-vs-Crunches reasoning by reading `ExerciseEntity.kt`'s field types directly. It also independently re-ran its own standalone `kotlinc` compile of `SeedData.kt` + `ExerciseMedia.kt` + entities against fresh stubs, separate from this session's own compile check.
+
+### Push
+Reviewed, no fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 10 — Choose exercises by available time (30/60/không giới hạn)
+
+Not part of the original 12-screen spec — user explicitly requested this after discussing the design tradeoff (a real algorithm feeding the existing workout engine vs. a lighter time filter on 1c; chose the real algorithm since it directly answers "I have 30 minutes, give me a workout" rather than making the user assemble one themselves). Explicit ask: keep the UI visually consistent with the rest of the app, not invented from scratch.
+
+### What was built
+- **`WorkoutTimeBudgetPlanner.kt`** (new, `ui/workout/`) — pure function, greedily fills a fixed compound-lifts-first curriculum order (14 exercises, all of Gate 9's library) from the front until the next exercise wouldn't fit the time budget (always includes at least one). Time estimate per exercise: `sets × reps × 3s/rep` (assumed lifting tempo) `+ (sets−1) × restSeconds + 30s` (transition overhead) — transparent and approximate, not a promise; documented as such in both the code and the picker's copy. Straight blocks only (no supersets — pairing arbitrary exercises into a superset isn't specified anywhere) and generated sets start at 0kg (no known safe starting weight for an arbitrary exercise; the user fills it in via the editable steppers Gate 4 already built for exactly this).
+- **`WorkoutViewModel`**: restructured session bootstrapping into two steps — `init` now only loads the exercise catalog and lands on a new `WorkoutPhase.SelectingDuration` phase; building the actual session (and starting its Room row) is deferred to a new `selectDuration(minutes: Int?)` action. `minutes = null` ("Không giới hạn") calls the **unchanged** `WorkoutPlanSeed.buildBlocks(...)` — the original curated 3-block demo (bench/shoulder/superset) with its prototype-accurate fixed weights — so that one hand-tuned, pixel/data-verified flow is fully preserved as an explicit user choice rather than replaced. `minutes = 30/60` calls the new planner instead. `resetWorkout()` ("Làm lại") now returns to the picker rather than immediately restarting the same demo, letting the user re-pick their time budget on reset too.
+- **`WorkoutDurationPickerContent.kt`** (new) — the picker screen itself. Deliberately reused existing components rather than designing new ones: the same centered full-screen layout as `SessionFinishedContent` (the app's other "decision moment" screen) and the exact `LevelChip` 3-option row component already used for onboarding's level selector (imported directly from `ui.onboarding`, not reimplemented) — this is what "hài hoà với hiện trạng" bought concretely: zero new visual language introduced.
+- Wired into `WorkoutScreen`'s existing phase `when`; the exercise-progress header is suppressed during the picker (nothing to show progress on yet) same as it already was for `SessionFinished`.
+
+### Testing
+This changes the well-tested state machine's bootstrapping, so handled the existing 14-test `WorkoutViewModelTest` suite carefully rather than letting it silently break: added a `Harness(startSession: Boolean = true)` flag that auto-calls `selectDuration(null)` after init, reproducing the exact pre-Gate-10 starting state (curated demo, block 0) for all 14 existing tests with a one-line harness change — none of their own assertions needed to change. Updated the one test whose behavior genuinely changed (`resetWorkout` no longer restarts immediately, it returns to the picker) to cover both steps explicitly. Added 3 new `WorkoutViewModelTest` cases covering the picker phase itself and the null-vs-minutes branch, and a dedicated `WorkoutTimeBudgetPlannerTest.kt` (6 tests) that — unlike `WorkoutViewModelTest`'s synthetic fixture — runs against the **real** `SeedData.exercises` catalog, so it tracks actual production content and would catch drift if an exercise's suggested sets/reps/rest changes later. Hand-verified the expected block sequences with an independent Python simulation before writing the assertions (30 min → Squat/Bench/Row/Shoulder Press, 1746s; 60 min → +Deadlift/Lat Pulldown/Leg Press/Lunge, 3465s) rather than trusting my own arithmetic.
+
+### Verification
+Same environment constraints as prior gates (no Gradle/Android SDK). Standalone `kotlinc` compile of `WorkoutModels.kt` + `WorkoutPlanSeed.kt` + `WorkoutTimeBudgetPlanner.kt` + the entity/`SeedData` layer — clean — and `WorkoutTimeBudgetPlannerTest.kt`: **6/6 pass**. `WorkoutViewModel.kt`/`WorkoutViewModelTest.kt` could **not** be compile-checked this way — `androidx.lifecycle` (ViewModel/viewModelScope) and `kotlinx-coroutines-test` aren't available anywhere in this environment (not just blocked-by-network like AndroidX elsewhere; the jars simply aren't present locally either) — verified by careful manual read-through of the full updated `WorkoutViewModel.kt` and the full `WorkoutViewModelTest.kt` instead, tracing each test's expected state by hand against the new two-step bootstrap. Caught and fixed one real compile error myself on manual re-read before it ever reached review: `WorkoutDurationPickerContent.kt` used `Modifier.weight(1f)` inside a `Row` without importing `androidx.compose.foundation.layout.weight`.
+
+**Independent review pass** (same general-purpose-agent stand-in as Gates 6–9), given the elevated risk of this gate (the first to restructure the core state machine's bootstrapping rather than add a leaf feature or content). One finding, fixed as a follow-up commit — and it's specifically the kind of bug this session's manual-read-through approach is weakest against (a test-suite regression, not a production-code bug):
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `WorkoutViewModelTest.kt`'s new `Harness.init` calls `viewModel.selectDuration(null)` to reproduce the old starting state — but that call is itself `debounced { }`, and `FakeClock` starts at a fixed `10_000L`. So `selectDuration(null)` stamps `lastActionAtMillis = 10_000`, and every one of the other 13 pre-existing tests' *first* action right after `Harness()` — fired with no intervening `tick()` — computed `now(10_000) − lastActionAtMillis(10_000) = 0 < 350ms` and was silently dropped by the debounce guard. This is the exact same failure mode `FakeClock`'s `10_000` starting offset was originally added to prevent (per its own doc comment), reintroduced one level up by the harness's own setup call. Traced by hand: ~9 of the 13 reused-`Harness()` tests would actually fail, and one (`skip rest returns to log immediately`) would pass but for the wrong reason (its priming action silently no-op'd, so it wasn't testing what it claimed to). The production `WorkoutViewModel` code itself was unaffected — real taps are always >350ms apart — this was purely a test-suite defect, but a serious one: it would have meant a big fraction of the app's one existing state-machine test suite silently stopped validating anything real. | Added `clock.advance()` right after the harness's internal `selectDuration(null)` call, moving the debounce clock 1000ms past the timestamp that call just stamped — giving every subsequent test's first action the same safety margin `FakeClock`'s original design intended |
+
+Everything else the reviewer checked came back correct on independent re-verification: the `WorkoutUiState` bootstrap is always a single atomic assignment (no stale-partial-state window), `resetWorkout()`/header-visibility/`sessionInitJob` cancellation all behave correctly under rapid re-triggering, the `WorkoutTimeBudgetPlanner` algorithm and its test assertions match an independent recomputation against the real `SeedData.exercises` catalog, and `git show` confirmed `WorkoutPlanSeed.kt` has a genuinely empty diff — "Không giới hạn" is byte-identical to pre-Gate-10 behavior.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Merging Gates 6–10 into master
+
+A fresh session picked this branch up specifically to give it an adversarial second look before
+merging (the environment doing Gates 6–10 above had no `codex`/network access, so its review
+relied entirely on its own independent-agent stand-in) — run `codex exec` plus manual
+cross-verification against source (README, prototype HTML, `SeedData`), deliberately trying to
+refute each finding rather than taking either side's word for it.
+
+**Findings that held up on cross-check, fixed:**
+| # | Issue | Fix |
+|---|---|---|
+| 1 | `LocaleController`/`AppLocalesMetadataHolderService` only *persists* the chosen locale on API 26–32 — it doesn't apply it to a plain `ComponentActivity`'s own resources, since that requires `AppCompatActivity`'s `attachBaseContext()` override. Re-checking the actual AndroidX locale mechanism (not just its own docs) confirmed Gate 8's fix was incomplete for that OS range. | `MainActivity` changed to `AppCompatActivity` |
+| 2 | `FitVietNavHost`'s `isEnglish` state defaulted to `false` before Room emitted the real persisted value, so an English-locale user saw a Vietnamese flash and an extra activity recreation on every cold start | `initialValue = null` ("unknown yet," same pattern as `onboardingCompleted`), only applies the locale once the real value is known |
+| 3 | `WorkoutTimeBudgetPlanner`'s time estimate used each exercise's own `suggestedRestSeconds`, but the runtime rest timer always counts down from a fixed `DEFAULT_REST_SECONDS = 60` — generated 30/60-minute sessions didn't actually take as long as promised | Estimator now uses the same constant. Hand-recomputed against the real `SeedData.exercises` catalog and cross-checked independently by codex: 30-min budget now fits 5 exercises (was 4, Deadlift's true cost is lower than its 150s suggested rest implied), 60-min fits 11 (was 8) — `WorkoutTimeBudgetPlannerTest.kt` updated to match |
+| 4 | If the planner ever produced zero blocks (mismatched/empty catalog), `selectDuration` would create a session, jump straight to `SessionFinished` without calling `completeSession()`, and leave its elapsed ticker running — an invisible, never-completed Room session | Early-return on empty blocks; nothing to start, stays on the picker |
+| 5 | 8 touch targets under the 44dp minimum, independently found by direct code inspection (not just codex): `LevelChip` (~40dp — shared by onboarding since Gate 1 *and* Gate 10's new duration picker, so this was a latent Gate-1 defect on `master` too, not just this branch), Community's tab chips/like button, the in-workout restart control, Profile's back button/update-measurement link, Nutrition's add-food chip/remove button, Dashboard's avatar (42dp) | All bumped to a 44dp touch zone, preserving the original visual size by wrapping it inside a larger invisible touch target where shrinking would look wrong |
+
+**Findings raised but not real bugs (checked against source, pushed back on):**
+- *"Critical — Room stays version 1 with no migration for `community_posts`"*: false alarm — this branch's own Gate 7 entry above explicitly reaffirms the Gate 2 "pre-release, no shipped installs, no migration needed" policy.
+- *"High — an action within 350ms of device boot gets debounce-dropped" / "High — debounce timestamp updates before phase validation"*: both real in isolation, but inherited unchanged from Gate 4's original debounce design (`master`'s own code), already accepted across multiple earlier reviews, and not practically reachable through normal UI interaction — not new regressions from Gates 7–10.
+- *"Medium — 'Làm lại' leaves an abandoned session row behind"*: already documented as by-design since Gate 4/5 (orphaned rows from a reset session are excluded from PR queries, not deleted).
+- *"Medium — planner stops at the first exercise that doesn't fit rather than trying shorter ones later"*: a documented, deliberate greedy-fill design choice (compound lifts prioritized), not a hidden defect.
+- *"Medium — unit/language switching doesn't cover the whole app"*: matches an already-established scope decision (Vietnamese-first domain content, Gates 3–8) — and notably, `master`'s own independent Gate 6 made the identical scope call for units (profile tiles only), so this isn't unique to this branch either.
+
+Two more small gaps surfaced by a second codex pass over the fixes themselves: the Community like button only had a guaranteed *height* of 44dp, not width, for short like counts (`sizeIn(minWidth/minHeight)` fixes both); and a manifest comment describing `MainActivity` as a plain `ComponentActivity` was left stale after the `AppCompatActivity` fix.
+
+### Push
+Fixes reviewed and pushed to `origin/claude/routines-code-session-n62xmx` (`6dc635b`, `c6265da`), then merged into `master`.
+
+## Roadmap status
+
+All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus three gates beyond
+the original plan: real per-app language/unit switching, real exercise photos, an expanded
+exercise/food library, and a workout time-budget picker.
+
+**Remaining from the original plan:**
+- General polish pass.
+- A real release APK build — every gate so far has been verified by standalone `kotlinc` compiles
+  and manual read-through, never an actual `./gradlew assembleDebug`/`assembleRelease`, since no
+  environment in this project's history has had a working JDK + Android SDK + network access to
+  `dl.google.com` at the same time. Needs a machine (e.g. Android Studio) that actually has all
+  three before a real build/install can be verified for the first time.
+
+**Not yet scoped into a gate** (raised as candidates along the way, not requested yet):
+- A real create-post flow for Community's "+ Đăng bài" (currently static, matching the prototype).
+- Extending Đơn vị (unit) conversion beyond the profile measurement tiles to the workout/dashboard/diary kg figures, if wanted.

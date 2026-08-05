@@ -7,6 +7,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.FitViet">
 
@@ -20,6 +21,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Belt-and-suspenders for AppCompat's per-app language back-compat path (API 26-32; API 33+
+             uses the framework LocaleManager directly). MainActivity is now an AppCompatActivity (see
+             MainActivity.kt), which applies the locale to itself directly via attachBaseContext() —
+             this service's auto-store mechanism is redundant with that but harmless to keep declared,
+             and would matter again if a future activity in this app isn't AppCompat-based. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
     </application>
 
 </manifest>

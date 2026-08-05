@@ -1,51 +1,37 @@
 package com.fitviet.app.domain
 
-data class MealMacros(val kcal: Int, val proteinG: Int, val carbG: Int, val fatG: Int)
+import com.fitviet.app.data.local.entity.MealEntity
+import kotlin.math.roundToInt
 
-data class NutritionStats(
-    val kcalTotal: Int,
-    val kcalGoal: Int,
-    val kcalPct: Int,
-    val proteinG: Int,
-    val proteinGoalG: Int,
-    val proteinPct: Int,
-    val carbG: Int,
-    val carbGoalG: Int,
-    val carbPct: Int,
-    val fatG: Int,
-    val fatGoalG: Int,
-    val fatPct: Int,
-)
+/** Daily goals from the 1g spec (README's `NutritionDay.goals`). */
+object NutritionGoals {
+    const val KCAL = 2200
+    const val PROTEIN_G = 140
+    const val CARB_G = 250
+    const val FAT_G = 70
+}
 
-/** Pure, unit-testable — goals match README's suggested NutritionDay defaults (kcal 2200, p 140, c 250, f 70). */
+data class NutritionTotals(
+    val kcal: Int = 0,
+    val proteinG: Int = 0,
+    val carbG: Int = 0,
+    val fatG: Int = 0,
+) {
+    val kcalPercent: Int get() = percentOf(kcal, NutritionGoals.KCAL)
+    val proteinPercent: Int get() = percentOf(proteinG, NutritionGoals.PROTEIN_G)
+    val carbPercent: Int get() = percentOf(carbG, NutritionGoals.CARB_G)
+    val fatPercent: Int get() = percentOf(fatG, NutritionGoals.FAT_G)
+}
+
+// Rounds rather than truncates, matching the prototype's `Math.round(...)`.
+private fun percentOf(value: Int, goal: Int): Int = (value * 100.0 / goal).roundToInt().coerceIn(0, 100)
+
+/** Pure sum of a day's logged meals — the 1g kcal ring + macro bars. */
 object NutritionCalculator {
-    const val KCAL_GOAL = 2200
-    const val PROTEIN_GOAL_G = 140
-    const val CARB_GOAL_G = 250
-    const val FAT_GOAL_G = 70
-
-    fun compute(meals: List<MealMacros>): NutritionStats {
-        val kcalTotal = meals.sumOf { it.kcal }
-        val proteinTotal = meals.sumOf { it.proteinG }
-        val carbTotal = meals.sumOf { it.carbG }
-        val fatTotal = meals.sumOf { it.fatG }
-
-        return NutritionStats(
-            kcalTotal = kcalTotal,
-            kcalGoal = KCAL_GOAL,
-            kcalPct = percentOf(kcalTotal, KCAL_GOAL),
-            proteinG = proteinTotal,
-            proteinGoalG = PROTEIN_GOAL_G,
-            proteinPct = percentOf(proteinTotal, PROTEIN_GOAL_G),
-            carbG = carbTotal,
-            carbGoalG = CARB_GOAL_G,
-            carbPct = percentOf(carbTotal, CARB_GOAL_G),
-            fatG = fatTotal,
-            fatGoalG = FAT_GOAL_G,
-            fatPct = percentOf(fatTotal, FAT_GOAL_G),
-        )
-    }
-
-    private fun percentOf(value: Int, goal: Int): Int =
-        if (goal <= 0) 0 else (value * 100 / goal).coerceIn(0, 100)
+    fun compute(meals: List<MealEntity>): NutritionTotals = NutritionTotals(
+        kcal = meals.sumOf { it.kcal },
+        proteinG = meals.sumOf { it.proteinG },
+        carbG = meals.sumOf { it.carbG },
+        fatG = meals.sumOf { it.fatG },
+    )
 }

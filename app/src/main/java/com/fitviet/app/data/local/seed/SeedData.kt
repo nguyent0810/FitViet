@@ -1,5 +1,7 @@
 package com.fitviet.app.data.local.seed
 
+import com.fitviet.app.data.local.entity.CommunityPostEntity
+import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
@@ -12,6 +14,18 @@ object SeedExerciseNames {
     const val SHOULDER_PRESS = "Đẩy vai tạ đơn"
     const val CABLE_FLY = "Cable fly"
     const val LATERAL_RAISE = "Lateral raise"
+
+    // Gate 9 — library expansion, not referenced by the fixed Gate 4 workout demo plan.
+    const val SQUAT = "Squat tạ đòn"
+    const val DEADLIFT = "Deadlift tạ đòn"
+    const val LAT_PULLDOWN = "Kéo xô cáp tay rộng"
+    const val BENT_OVER_ROW = "Row tạ đòn cúi người"
+    const val BARBELL_CURL = "Cuốn tay trước tạ đòn"
+    const val TRICEPS_PUSHDOWN = "Đẩy cáp tay sau"
+    const val LEG_PRESS = "Đạp đùi máy"
+    const val LUNGE = "Lunge tạ đơn"
+    const val CRUNCH = "Gập bụng"
+    const val PUSHUP = "Hít đất"
 }
 
 /** Seed content sourced from `UI Handoff/FitViet Prototype v2.dc.html` (screens 1c, 1d, 1e, 1g, 1i, 2c). */
@@ -125,6 +139,191 @@ object SeedData {
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
         ),
+        // Gate 9 — library expansion covering the muscle groups 1c/1e's original 4 exercises left
+        // untouched (legs, back, arms, core). Not part of the fixed Gate 4 workout demo plan; these
+        // are reachable via 1c's search and their own 1d detail screen. Instructions below are
+        // concise Vietnamese technique summaries (not literal translations) sourced from
+        // free-exercise-db, matching the style of the original 4 — see licenses/exercise-photos/.
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.SQUAT,
+            nameEn = "Barbell Squat",
+            gifAsset = "barbell-squat.gif",
+            primaryMuscle = "Đùi trước · chính",
+            secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            equipment = "Tạ đòn + giá đỡ",
+            instructions = listOf(
+                "Đặt đòn tạ sau gáy trên giá đỡ, bước ra với chân rộng bằng vai, mũi chân hơi mở.",
+                "Hít vào, gập gối và hông hạ người xuống, giữ lưng thẳng và đầu gối không vượt quá mũi chân.",
+                "Hạ tới khi đùi song song sàn, sau đó đạp gót chân đẩy người lên, thở ra khi đứng dậy.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 4,
+            suggestedRepsMin = 6,
+            suggestedRepsMax = 10,
+            suggestedRestSeconds = 120,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.DEADLIFT,
+            nameEn = "Barbell Deadlift",
+            gifAsset = "barbell-deadlift.gif",
+            primaryMuscle = "Lưng dưới · chính",
+            secondaryMuscles = listOf("Mông", "Đùi sau", "Lưng giữa"),
+            equipment = "Tạ đòn",
+            instructions = listOf(
+                "Đứng trước đòn tạ, chân rộng bằng vai, cúi người nắm đòn với lưng thẳng, ngực ưỡn.",
+                "Đẩy sàn bằng gót chân và duỗi hông để nâng đòn lên, giữ đòn sát người suốt quãng đường.",
+                "Ở tư thế đứng thẳng, siết mông và lưng; sau đó hạ đòn có kiểm soát về sàn.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 4,
+            suggestedRepsMin = 5,
+            suggestedRepsMax = 8,
+            suggestedRestSeconds = 150,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.LAT_PULLDOWN,
+            nameEn = "Wide-Grip Lat Pulldown",
+            gifAsset = "lat-pulldown.gif",
+            primaryMuscle = "Xô · chính",
+            secondaryMuscles = listOf("Tay trước", "Vai"),
+            equipment = "Máy cáp",
+            instructions = listOf(
+                "Ngồi vào máy, nắm thanh kéo rộng hơn vai, ngả người ra sau nhẹ khoảng 30 độ.",
+                "Kéo thanh xuống chạm ngực trên, siết xô và kéo vai xuống-ra sau, thở ra khi kéo.",
+                "Trở về từ từ đến khi tay duỗi thẳng, cảm nhận xô được kéo giãn.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 4,
+            suggestedRepsMin = 8,
+            suggestedRepsMax = 12,
+            suggestedRestSeconds = 90,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.BENT_OVER_ROW,
+            nameEn = "Bent Over Barbell Row",
+            gifAsset = "bent-over-row.gif",
+            primaryMuscle = "Lưng giữa · chính",
+            secondaryMuscles = listOf("Tay trước", "Xô", "Vai"),
+            equipment = "Tạ đòn",
+            instructions = listOf(
+                "Gập gối nhẹ, cúi người từ hông tới khi lưng gần song song sàn, đòn tạ treo trước người.",
+                "Giữ lưng thẳng và thân trên cố định, kéo đòn về phía bụng, khuỷu tay sát người.",
+                "Siết lưng giữa ở điểm cuối, sau đó hạ đòn có kiểm soát về vị trí ban đầu.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 4,
+            suggestedRepsMin = 8,
+            suggestedRepsMax = 12,
+            suggestedRestSeconds = 90,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.BARBELL_CURL,
+            nameEn = "Barbell Curl",
+            gifAsset = "barbell-curl.gif",
+            primaryMuscle = "Tay trước · chính",
+            secondaryMuscles = listOf("Cẳng tay"),
+            equipment = "Tạ đòn",
+            instructions = listOf(
+                "Đứng thẳng, nắm đòn rộng bằng vai, lòng bàn tay hướng ra trước, khuỷu tay sát người.",
+                "Giữ cánh tay trên cố định, cuốn đòn lên bằng lực tay trước, thở ra khi cuốn.",
+                "Siết tay trước ở đỉnh, sau đó hạ đòn có kiểm soát về vị trí ban đầu.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 10,
+            suggestedRepsMax = 12,
+            suggestedRestSeconds = 60,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.TRICEPS_PUSHDOWN,
+            nameEn = "Triceps Pushdown",
+            gifAsset = "triceps-pushdown.gif",
+            primaryMuscle = "Tay sau · chính",
+            secondaryMuscles = emptyList(),
+            equipment = "Máy cáp",
+            instructions = listOf(
+                "Đứng trước máy cáp, nắm thanh chữ V hoặc thanh thẳng, khuỷu tay sát người và cố định.",
+                "Đẩy thanh xuống tới khi tay duỗi thẳng, chỉ có cẳng tay di chuyển, thở ra khi đẩy.",
+                "Giữ 1 giây ở điểm cuối, sau đó thả lên có kiểm soát về vị trí ban đầu.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 10,
+            suggestedRepsMax = 15,
+            suggestedRestSeconds = 60,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.LEG_PRESS,
+            nameEn = "Leg Press",
+            gifAsset = "leg-press.gif",
+            primaryMuscle = "Đùi trước · chính",
+            secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            equipment = "Máy đạp đùi",
+            instructions = listOf(
+                "Ngồi vào máy, đặt chân lên bệ đạp rộng bằng vai, tháo chốt an toàn.",
+                "Hít vào, hạ bệ đạp có kiểm soát tới khi đùi và cẳng chân tạo góc 90 độ.",
+                "Đạp bệ trở về vị trí ban đầu bằng gót chân, không khóa thẳng gối, thở ra khi đạp.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 4,
+            suggestedRepsMin = 10,
+            suggestedRepsMax = 15,
+            suggestedRestSeconds = 90,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.LUNGE,
+            nameEn = "Dumbbell Lunges",
+            gifAsset = "dumbbell-lunges.gif",
+            primaryMuscle = "Đùi trước · chính",
+            secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            equipment = "Tạ đơn",
+            instructions = listOf(
+                "Đứng thẳng, mỗi tay cầm một tạ đơn, thân trên giữ thẳng.",
+                "Bước một chân lên trước khoảng 60cm, hạ người xuống, đầu gối trước không vượt mũi chân.",
+                "Đạp gót chân trước để trở về vị trí đứng, đổi chân sau khi hoàn thành số lần quy định.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 10,
+            suggestedRepsMax = 12,
+            suggestedRestSeconds = 75,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.CRUNCH,
+            nameEn = "Crunches",
+            gifAsset = "crunches.gif",
+            primaryMuscle = "Bụng · chính",
+            secondaryMuscles = emptyList(),
+            equipment = "Không thiết bị",
+            instructions = listOf(
+                "Nằm ngửa, gối gập, hai tay đặt nhẹ hai bên đầu, không đan tay sau gáy.",
+                "Ép lưng dưới xuống sàn, cuộn vai lên khỏi sàn khoảng 10cm, siết bụng và thở ra.",
+                "Giữ 1 giây ở điểm cuối, sau đó hạ xuống chậm rãi có kiểm soát.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 15,
+            suggestedRepsMax = 20,
+            suggestedRestSeconds = 45,
+        ),
+        ExerciseEntity(
+            nameVi = SeedExerciseNames.PUSHUP,
+            nameEn = "Pushups",
+            gifAsset = "pushups.gif",
+            primaryMuscle = "Ngực · chính",
+            secondaryMuscles = listOf("Vai", "Tay sau"),
+            equipment = "Không thiết bị",
+            instructions = listOf(
+                "Chống hai tay xuống sàn rộng hơn vai, thân người thẳng từ đầu đến gót chân.",
+                "Hít vào, hạ người xuống tới khi ngực gần chạm sàn, khuỷu tay hướng chéo ra sau.",
+                "Đẩy người lên trở lại vị trí ban đầu, siết ngực và thở ra khi đẩy.",
+            ),
+            suggestedSetsMin = 3,
+            suggestedSetsMax = 3,
+            suggestedRepsMin = 10,
+            suggestedRepsMax = 15,
+            suggestedRestSeconds = 60,
+        ),
     )
 
     /** Meals logged "today" in the prototype's default state (1g). [epochDay] is supplied at seed time. */
@@ -139,6 +338,72 @@ object SeedData {
     fun measurements(latestEpochDay: Long) = listOf(
         MeasurementEntity(epochDay = latestEpochDay - 14, weightKg = 70.8, chestCm = 96.0, waistCm = 81.0, armCm = 35.5),
         MeasurementEntity(epochDay = latestEpochDay, weightKg = 72.0, chestCm = 98.0, waistCm = 80.0, armCm = 36.0),
+    )
+
+    /** A meal the "+ Thêm món" button on 1g can add — not Room-seeded, [NutritionRepository] reads this list directly. */
+    data class MealPreset(val nameVi: String, val kcal: Int, val proteinG: Int, val carbG: Int, val fatG: Int)
+
+    /**
+     * Cycled through in order by "+ Thêm món" (1g). The first 5 are verbatim from the prototype's
+     * `presets` array; the rest (Gate 9) expand the Việt food library with more everyday dishes
+     * across meal types. Macros are estimated (kcal ≈ 4×protein + 4×carb + 9×fat, within ~10% —
+     * real dishes vary with recipe/portion) for demo purposes, same basis as the original 5.
+     */
+    val mealPresets = listOf(
+        MealPreset(nameVi = "Ức gà áp chảo 150g", kcal = 240, proteinG = 45, carbG = 0, fatG = 6),
+        MealPreset(nameVi = "Bánh mì thịt", kcal = 420, proteinG = 20, carbG = 48, fatG = 16),
+        MealPreset(nameVi = "Sữa tươi không đường 200ml", kcal = 130, proteinG = 7, carbG = 10, fatG = 7),
+        MealPreset(nameVi = "Cơm tấm sườn", kcal = 680, proteinG = 32, carbG = 82, fatG = 24),
+        MealPreset(nameVi = "Chuối", kcal = 105, proteinG = 1, carbG = 27, fatG = 0),
+        // Gate 9 additions
+        MealPreset(nameVi = "Bún chả Hà Nội", kcal = 550, proteinG = 28, carbG = 65, fatG = 18),
+        MealPreset(nameVi = "Gỏi cuốn tôm thịt (2 cuốn)", kcal = 180, proteinG = 12, carbG = 22, fatG = 5),
+        MealPreset(nameVi = "Canh chua cá lóc", kcal = 220, proteinG = 20, carbG = 15, fatG = 8),
+        MealPreset(nameVi = "Bánh cuốn chả lụa", kcal = 380, proteinG = 16, carbG = 55, fatG = 10),
+        MealPreset(nameVi = "Xôi xéo", kcal = 450, proteinG = 10, carbG = 78, fatG = 12),
+        MealPreset(nameVi = "Cá kho tộ + cơm trắng", kcal = 520, proteinG = 30, carbG = 60, fatG = 16),
+        MealPreset(nameVi = "Rau muống xào tỏi", kcal = 90, proteinG = 3, carbG = 8, fatG = 6),
+        MealPreset(nameVi = "Sữa đậu nành không đường", kcal = 80, proteinG = 6, carbG = 8, fatG = 3),
+        MealPreset(nameVi = "Bánh flan", kcal = 150, proteinG = 5, carbG = 20, fatG = 6),
+        MealPreset(nameVi = "Hủ tiếu Nam Vang", kcal = 480, proteinG = 24, carbG = 62, fatG = 14),
+        MealPreset(nameVi = "Bò lúc lắc", kcal = 400, proteinG = 35, carbG = 12, fatG = 24),
+        MealPreset(nameVi = "Trái cây thập cẩm", kcal = 90, proteinG = 1, carbG = 22, fatG = 0),
+        MealPreset(nameVi = "Đậu hũ sốt cà chua", kcal = 220, proteinG = 14, carbG = 12, fatG = 14),
+        MealPreset(nameVi = "Yến mạch trộn sữa chua & hạt", kcal = 280, proteinG = 14, carbG = 38, fatG = 8),
+        MealPreset(nameVi = "Chè đậu xanh", kcal = 160, proteinG = 4, carbG = 32, fatG = 2),
+    )
+
+    /** The 3 demo posts from 1h — content, like counts, and comment counts verbatim from the prototype. */
+    val communityPosts = listOf(
+        CommunityPostEntity(
+            authorInitial = "H",
+            authorName = "Hùng Trần",
+            timeLabel = "2 giờ trước · Tiến bộ",
+            postType = CommunityPostType.PROGRESS,
+            bodyText = "Sau 8 tuần theo giáo án 5×5, deadlift từ 80kg lên 110kg. Kiên trì là có kết quả anh em ơi!",
+            badgeText = "PR MỚI · DEADLIFT 110KG",
+            baseLikeCount = 48,
+            commentCount = 12,
+        ),
+        CommunityPostEntity(
+            authorInitial = "L",
+            authorName = "Lan Phạm",
+            timeLabel = "5 giờ trước · Hỏi đáp",
+            postType = CommunityPostType.QA,
+            bodyText = "Mới tập được 2 tuần, đau nhức cơ sau buổi chân thì có nên nghỉ hẳn không hay tập nhẹ?",
+            hasBestAnswerMarker = true,
+            baseLikeCount = 15,
+            commentCount = 23,
+        ),
+        CommunityPostEntity(
+            authorInitial = "T",
+            authorName = "Tuấn Vũ",
+            timeLabel = "Hôm qua · Chia sẻ",
+            postType = CommunityPostType.SHARE,
+            bodyText = "Chia sẻ thực đơn 2.400 kcal toàn món Việt dễ nấu cho anh em tăng cơ, ai cần mình gửi chi tiết.",
+            baseLikeCount = 96,
+            commentCount = 41,
+        ),
     )
 
     /**

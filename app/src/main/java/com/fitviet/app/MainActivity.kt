@@ -7,8 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.fitviet.app.ui.navigation.FitVietNavHost
 import com.fitviet.app.ui.theme.FitVietTheme
 
-// AppCompatActivity (not plain ComponentActivity) so AppCompatDelegate.setApplicationLocales()
-// actually recreates/relocalizes this activity on pre-API-33 devices.
+// AppCompatActivity (not plain ComponentActivity) — AppCompatDelegate.setApplicationLocales()
+// (see util/LocaleController.kt) only re-applies the chosen locale to a running activity via
+// AppCompatActivity's attachBaseContext() override on API 26-32; AppLocalesMetadataHolderService
+// alone only handles persisting the choice, not applying it to this activity's resources.
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

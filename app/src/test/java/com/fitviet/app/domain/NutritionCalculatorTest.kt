@@ -1,43 +1,53 @@
 package com.fitviet.app.domain
 
+import com.fitviet.app.data.local.entity.MealEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class NutritionCalculatorTest {
 
+    private fun meal(kcal: Int, protein: Int, carb: Int, fat: Int) =
+        MealEntity(epochDay = 0, slot = "Bữa phụ", nameVi = "Test", kcal = kcal, proteinG = protein, carbG = carb, fatG = fat)
+
     @Test
-    fun `sums macros and kcal across all meals`() {
-        val meals = listOf(
-            MealMacros(kcal = 452, proteinG = 30, carbG = 55, fatG = 12),
-            MealMacros(kcal = 618, proteinG = 42, carbG = 78, fatG = 14),
+    fun `no meals sums to zero`() {
+        val totals = NutritionCalculator.compute(emptyList())
+
+        assertEquals(0, totals.kcal)
+        assertEquals(0, totals.proteinG)
+        assertEquals(0, totals.carbG)
+        assertEquals(0, totals.fatG)
+    }
+
+    @Test
+    fun `totals sum every logged meal`() {
+        val totals = NutritionCalculator.compute(
+            listOf(meal(452, 30, 55, 12), meal(618, 42, 78, 14)),
         )
 
-        val stats = NutritionCalculator.compute(meals)
-
-        assertEquals(1070, stats.kcalTotal)
-        assertEquals(72, stats.proteinG)
-        assertEquals(133, stats.carbG)
-        assertEquals(26, stats.fatG)
+        assertEquals(1070, totals.kcal)
+        assertEquals(72, totals.proteinG)
+        assertEquals(133, totals.carbG)
+        assertEquals(26, totals.fatG)
     }
 
     @Test
-    fun `percentages are computed against the fixed goals and capped at 100`() {
-        val meals = listOf(MealMacros(kcal = 4400, proteinG = 280, carbG = 500, fatG = 140))
+    fun `percent is the value's share of its goal`() {
+        val totals = NutritionTotals(kcal = 1100, proteinG = 70, carbG = 125, fatG = 35)
 
-        val stats = NutritionCalculator.compute(meals)
-
-        assertEquals(100, stats.kcalPct) // 4400/2200 would be 200%, capped
-        assertEquals(100, stats.proteinPct)
-        assertEquals(100, stats.carbPct)
-        assertEquals(100, stats.fatPct)
+        assertEquals(50, totals.kcalPercent)
+        assertEquals(50, totals.proteinPercent)
+        assertEquals(50, totals.carbPercent)
+        assertEquals(50, totals.fatPercent)
     }
 
     @Test
-    fun `empty meal list is zero across the board, not a division error`() {
-        val stats = NutritionCalculator.compute(emptyList())
+    fun `percent caps at 100 once a goal is exceeded`() {
+        val totals = NutritionTotals(kcal = 5000, proteinG = 999, carbG = 999, fatG = 999)
 
-        assertEquals(0, stats.kcalTotal)
-        assertEquals(0, stats.kcalPct)
-        assertEquals(NutritionCalculator.KCAL_GOAL, stats.kcalGoal)
+        assertEquals(100, totals.kcalPercent)
+        assertEquals(100, totals.proteinPercent)
+        assertEquals(100, totals.carbPercent)
+        assertEquals(100, totals.fatPercent)
     }
 }

@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import kotlinx.coroutines.Deferred
@@ -15,7 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val DEFAULT_REST_SECONDS = 60
+// Not private: WorkoutTimeBudgetPlanner's time estimate needs the same value the runtime rest
+// timer actually uses (see the comment at its estimateSeconds call site) so estimated session
+// length matches what the app really runs.
+const val DEFAULT_REST_SECONDS = 60
 private const val SESSION_DAY_LABEL = "Thân trên"
 private const val ACTION_DEBOUNCE_MILLIS = 350L
 
@@ -24,7 +28,7 @@ data class WorkoutUiState(
     val dayLabel: String = SESSION_DAY_LABEL,
     val blocks: List<WorkoutBlockPlan> = emptyList(),
     val currentBlockIndex: Int = 0,
-    val phase: WorkoutPhase = WorkoutPhase.StraightLog,
+    val phase: WorkoutPhase = WorkoutPhase.SelectingDuration,
     // Straight-block sub-state
     val currentSetIndex: Int = 0,
     val restSecondsRemaining: Int = 0,
@@ -57,13 +61,14 @@ class WorkoutViewModel(
     val uiState: StateFlow<WorkoutUiState> = _uiState.asStateFlow()
 
     private var sessionId: Long = 0L
+    private var loadedExercises: List<ExerciseEntity> = emptyList()
     private var restJob: Job? = null
     private var elapsedJob: Job? = null
     private var sessionInitJob: Job? = null
     private var lastActionAtMillis = 0L
 
     init {
-        startNewSession()
+        loadExercisesAndShowDurationPicker()
     }
 
     /**
@@ -79,14 +84,37 @@ class WorkoutViewModel(
         action()
     }
 
-    private fun startNewSession() {
+    /** Loads the catalog once and lands on the "chọn thời gian tập" picker (Gate 10, not part of the
+     * original 12-screen spec) — the actual session/blocks aren't built until [selectDuration], no
+     * point starting a Room session row for a workout the user hasn't configured yet. */
+    private fun loadExercisesAndShowDurationPicker() {
         // Cancel any in-flight init so rapid "Làm lại" taps can't race to create multiple
         // sessions and leave sessionId pointing at whichever insert happened to finish last.
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
-            val exercises = exerciseRepository.getAll()
-            val blocks = WorkoutPlanSeed.buildBlocks(exercises)
+            loadedExercises = exerciseRepository.getAll()
+            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
+        }
+    }
+
+    /** [minutes] is `null` for "Không giới hạn" (the original curated demo session, unchanged
+     * from before Gate 10); otherwise builds a session sized to fit that time budget from the
+     * full exercise catalog (Gate 9) via [WorkoutTimeBudgetPlanner]. */
+    fun selectDuration(minutes: Int?) = debounced {
+        if (_uiState.value.phase != WorkoutPhase.SelectingDuration) return@debounced
+        val blocks = if (minutes == null) {
+            WorkoutPlanSeed.buildBlocks(loadedExercises)
+        } else {
+            WorkoutTimeBudgetPlanner.buildBlocks(loadedExercises, minutes)
+        }
+        // Guards against a mismatched/empty catalog (e.g. a seeding gap) producing zero blocks —
+        // without this, resetForBlock's block == null branch jumps straight to SessionFinished
+        // without ever calling completeSession(), leaving a session row that's never marked
+        // complete while its elapsed ticker keeps running. Nothing to start, so stay on the picker.
+        if (blocks.isEmpty()) return@debounced
+        sessionInitJob?.cancel()
+        sessionInitJob = viewModelScope.launch {
             sessionId = workoutRepository.startSession(dayLabel = SESSION_DAY_LABEL, startedAtMillis = System.currentTimeMillis())
             _uiState.value = resetForBlock(WorkoutUiState(blocks = blocks, isLoading = false), 0, blocks.firstOrNull())
             startElapsedTicker()
@@ -96,8 +124,8 @@ class WorkoutViewModel(
     fun resetWorkout() = debounced {
         restJob?.cancel()
         elapsedJob?.cancel()
-        _uiState.value = WorkoutUiState()
-        startNewSession()
+        sessionInitJob?.cancel()
+        _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
     }
 
     // ---- Straight block ----

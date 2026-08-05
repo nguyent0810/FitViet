@@ -74,7 +74,7 @@ fun DashboardScreen(
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
-        GreetingHeader(today = today, onOpenProfile = onOpenProfile)
+        GreetingHeader(today = today, onAvatarClick = onOpenProfile)
         HeroCard(
             program = uiState.featuredProgram,
             onStart = if (uiState.featuredProgram != null) onStartWorkout else onBrowsePrograms,
@@ -95,7 +95,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun GreetingHeader(today: LocalDate, onOpenProfile: () -> Unit) {
+private fun GreetingHeader(today: LocalDate, onAvatarClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -121,7 +121,7 @@ private fun GreetingHeader(today: LocalDate, onOpenProfile: () -> Unit) {
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .clickable(onClick = onOpenProfile),
+                .clickable(onClick = onAvatarClick),
             contentAlignment = Alignment.Center,
         ) {
             Box(

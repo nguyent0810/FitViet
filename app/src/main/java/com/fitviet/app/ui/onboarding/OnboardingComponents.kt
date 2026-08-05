@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.weight
@@ -100,6 +101,7 @@ fun SelectionDot(selected: Boolean, modifier: Modifier = Modifier) {
 fun LevelChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
+            .heightIn(min = 44.dp)
             .clip(MaterialTheme.shapes.small)
             .background(if (selected) AccentSurfaceSelected else SurfaceCard)
             .border(

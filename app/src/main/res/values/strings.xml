@@ -139,6 +139,13 @@
     <string name="workout_back_to_home">Về trang chủ</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
+    <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->
+    <string name="workout_duration_title">Bạn có bao nhiêu thời gian?</string>
+    <string name="workout_duration_subtitle">Chọn thời gian tập, chúng tôi sẽ chọn bài tập phù hợp.</string>
+    <string name="workout_duration_30">30 phút</string>
+    <string name="workout_duration_60">60 phút</string>
+    <string name="workout_duration_unlimited">Không giới hạn</string>
+
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 BÀI LIÊN TIẾP</string>
@@ -197,53 +204,59 @@
 
     <!-- 1g Nutrition -->
     <string name="nutrition_title">Dinh dưỡng</string>
-    <string name="nutrition_kcal_goal">/ %1$s kcal</string>
+    <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>
     <string name="nutrition_macro_protein">Đạm</string>
     <string name="nutrition_macro_carb">Tinh bột</string>
     <string name="nutrition_macro_fat">Chất béo</string>
-    <string name="nutrition_macro_label">%1$d/%2$dg</string>
+    <string name="nutrition_macro_value">%1$d/%2$dg</string>
     <string name="nutrition_meals_title">Bữa ăn hôm nay</string>
-    <string name="nutrition_add_meal">+ Thêm món</string>
-    <string name="nutrition_kcal_unit">%1$d kcal</string>
+    <string name="nutrition_add_meal">+ %1$s</string>
+    <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Cơ sở dữ liệu món ăn Việt · hoạt động offline</string>
-    <string name="nutrition_picker_title">Chọn món ăn</string>
-    <string name="nutrition_meals_empty">Chưa có bữa ăn nào hôm nay</string>
-    <string name="nutrition_slot_extra">Bữa phụ</string>
 
     <!-- 1i Profile & settings -->
-    <string name="profile_summary">%1$s · Mục tiêu: %2$s · %3$d tuần đồng hành</string>
+    <string name="profile_back">Hồ sơ</string>
+    <string name="profile_meta">%1$s · Mục tiêu: %2$s · 8 tuần đồng hành</string>
     <string name="profile_measurements_title">Số đo cơ thể</string>
-    <string name="profile_update">+ Cập nhật</string>
-    <string name="profile_weight_label">Cân nặng (kg)</string>
-    <string name="profile_chest_label">Ngực (cm)</string>
-    <string name="profile_waist_label">Eo (cm)</string>
-    <string name="profile_arm_label">Tay (cm)</string>
-    <string name="profile_weight_label_imperial">Cân nặng (lb)</string>
-    <string name="profile_chest_label_imperial">Ngực (in)</string>
-    <string name="profile_waist_label_imperial">Eo (in)</string>
-    <string name="profile_arm_label_imperial">Tay (in)</string>
-    <string name="profile_measurements_empty">Chưa có số đo nào — chạm "+ Cập nhật" để bắt đầu</string>
-    <string name="profile_setting_language">Ngôn ngữ</string>
-    <string name="profile_setting_offline">Chế độ offline</string>
-    <string name="profile_setting_backup">Sao lưu dữ liệu</string>
-    <string name="profile_setting_backup_value">Xuất file ›</string>
-    <string name="profile_setting_unit">Đơn vị</string>
+    <string name="profile_update_cta">+ Cập nhật</string>
+    <string name="profile_tile_weight">Cân nặng (kg)</string>
+    <string name="profile_tile_chest">Ngực (cm)</string>
+    <string name="profile_tile_waist">Eo (cm)</string>
+    <string name="profile_tile_arm">Tay (cm)</string>
+    <!-- Unit-less tile labels — the tile's value text carries the unit itself so it stays correct
+         when Đơn vị is set to lb/in (see profile_tile_weight etc. above, still kg/cm-labeled, used
+         for the "+ Cập nhật" input fields, which always collect metric values). -->
+    <string name="profile_tile_weight_short">Cân nặng</string>
+    <string name="profile_tile_chest_short">Ngực</string>
+    <string name="profile_tile_waist_short">Eo</string>
+    <string name="profile_tile_arm_short">Tay</string>
+    <string name="profile_settings_language">Ngôn ngữ</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>
+    <string name="profile_settings_offline">Chế độ offline</string>
     <string name="profile_offline_on">Bật</string>
     <string name="profile_offline_off">Tắt</string>
+    <string name="profile_settings_backup">Sao lưu dữ liệu</string>
+    <string name="profile_settings_backup_value">Xuất file ›</string>
+    <string name="profile_settings_units">Đơn vị</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
-    <string name="profile_donate_free_title">Ứng dụng miễn phí 100%</string>
-    <string name="profile_donate_free_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
+    <string name="profile_donate_title">Ứng dụng miễn phí 100%</string>
+    <string name="profile_donate_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
     <string name="profile_donate_cta">Ủng hộ dự án</string>
-    <string name="profile_donate_thanks_title">Cảm ơn bạn đã ủng hộ!</string>
-    <string name="profile_donate_thanks_body">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</string>
-    <string name="profile_donate_undo">Hoàn tác (demo)</string>
-    <string name="profile_update_measurement_title">Cập nhật số đo</string>
-    <string name="profile_save">Lưu</string>
-    <string name="profile_back">Hồ sơ</string>
+    <string name="profile_donated_title">Cảm ơn bạn đã ủng hộ!</string>
+    <string name="profile_donated_body">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</string>
+    <string name="profile_donated_undo">Hoàn tác (demo)</string>
+    <string name="profile_update_sheet_title">Cập nhật số đo</string>
+    <string name="profile_update_save">Lưu</string>
 
-    <!-- Placeholder screens (built in later gates) -->
-    <string name="placeholder_coming_soon">Sẽ có ở gate tiếp theo</string>
+    <!-- 1h Community -->
+    <string name="community_title">Cộng đồng</string>
+    <string name="community_add_post">+ Đăng bài</string>
+    <string name="community_tab_latest">Mới nhất</string>
+    <string name="community_tab_qa">Hỏi đáp</string>
+    <string name="community_tab_progress">Tiến bộ</string>
+    <string name="community_comments">💬 %1$d bình luận</string>
+    <string name="community_replies">💬 %1$d trả lời</string>
+    <string name="community_best_answer">1 trả lời hay nhất</string>
 </resources>

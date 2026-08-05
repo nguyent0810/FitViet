@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
-import com.fitviet.app.data.repository.MeasurementRepository
-import com.fitviet.app.data.repository.SettingsRepository
-import java.time.LocalDate
+import com.fitviet.app.data.repository.ProfileRepository
+import com.fitviet.app.domain.MeasurementDeltaCalculator
+import com.fitviet.app.domain.MeasurementDeltas
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,72 +17,48 @@ import kotlinx.coroutines.launch
 
 data class ProfileUiState(
     val settings: SettingsEntity = SettingsEntity(),
-    val weeksWithApp: Int = 0,
     val latestMeasurement: MeasurementEntity? = null,
-    val previousMeasurement: MeasurementEntity? = null,
-    val isUpdateMeasurementOpen: Boolean = false,
+    val deltas: MeasurementDeltas = MeasurementDeltas(null, null, null, null),
+    val showUpdateSheet: Boolean = false,
 )
 
-class ProfileViewModel(
-    private val settingsRepository: SettingsRepository,
-    private val measurementRepository: MeasurementRepository,
-) : ViewModel() {
-    private val isUpdateMeasurementOpen = MutableStateFlow(false)
+class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() {
+    private val showUpdateSheet = MutableStateFlow(false)
 
-    val uiState: StateFlow<ProfileUiState> = combine(
-        settingsRepository.observe(),
-        measurementRepository.observeLatestTwo(),
-        isUpdateMeasurementOpen,
-    ) { settings, measurements, pickerOpen ->
-        val completedAt = settings.onboardingCompletedAtEpochDay
-        val weeks = if (completedAt == null) 0 else ((LocalDate.now().toEpochDay() - completedAt) / 7).toInt().coerceAtLeast(0)
+    val uiState: StateFlow<ProfileUiState> = combine(repository.observe(), showUpdateSheet) { data, showSheet ->
         ProfileUiState(
-            settings = settings,
-            weeksWithApp = weeks,
-            latestMeasurement = measurements.latest,
-            previousMeasurement = measurements.previous,
-            isUpdateMeasurementOpen = pickerOpen,
+            settings = data.settings,
+            latestMeasurement = data.latestMeasurement,
+            deltas = MeasurementDeltaCalculator.compute(data.latestMeasurement, data.previousMeasurement),
+            showUpdateSheet = showSheet,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState())
 
-    fun cycleLanguage() = launch { settingsRepository.cycleLanguage() }
-    fun toggleOffline() = launch { settingsRepository.toggleOffline() }
-    fun cycleUnits() = launch { settingsRepository.cycleUnits() }
-    fun toggleDonated() = launch { settingsRepository.toggleDonated() }
+    fun cycleLanguage() = viewModelScope.launch { repository.cycleLanguage() }
 
-    fun openUpdateMeasurement() {
-        isUpdateMeasurementOpen.value = true
+    fun toggleOffline() = viewModelScope.launch { repository.toggleOffline() }
+
+    fun cycleUnits() = viewModelScope.launch { repository.cycleUnits() }
+
+    fun toggleDonated() = viewModelScope.launch { repository.toggleDonated() }
+
+    fun openUpdateSheet() {
+        showUpdateSheet.value = true
     }
 
-    fun closeUpdateMeasurement() {
-        isUpdateMeasurementOpen.value = false
+    fun dismissUpdateSheet() {
+        showUpdateSheet.value = false
     }
 
     fun saveMeasurement(weightKg: Double?, chestCm: Double?, waistCm: Double?, armCm: Double?) {
         viewModelScope.launch {
-            measurementRepository.addCheckIn(
-                MeasurementEntity(
-                    epochDay = LocalDate.now().toEpochDay(),
-                    weightKg = weightKg,
-                    chestCm = chestCm,
-                    waistCm = waistCm,
-                    armCm = armCm,
-                ),
-            )
+            repository.addMeasurement(weightKg, chestCm, waistCm, armCm)
+            showUpdateSheet.value = false
         }
-        closeUpdateMeasurement()
     }
 
-    private fun launch(block: suspend () -> Unit) {
-        viewModelScope.launch { block() }
-    }
-
-    class Factory(
-        private val settingsRepository: SettingsRepository,
-        private val measurementRepository: MeasurementRepository,
-    ) : ViewModelProvider.Factory {
+    class Factory(private val repository: ProfileRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ProfileViewModel(settingsRepository, measurementRepository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = ProfileViewModel(repository) as T
     }
 }

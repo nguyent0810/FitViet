@@ -1,6 +1,5 @@
 package com.fitviet.app.ui.navigation
 
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,7 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitviet.app.data.AppContainer
-import com.fitviet.app.ui.common.PlaceholderScreen
+import com.fitviet.app.ui.community.CommunityScreen
+import com.fitviet.app.ui.community.CommunityViewModel
 import com.fitviet.app.ui.dashboard.DashboardScreen
 import com.fitviet.app.ui.dashboard.DashboardViewModel
 import com.fitviet.app.ui.diary.DiaryScreen
@@ -45,27 +44,25 @@ import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.workout.WorkoutScreen
 import com.fitviet.app.ui.workout.WorkoutViewModel
+import com.fitviet.app.util.LocaleController
 import kotlinx.coroutines.launch
 
 private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
 
 @Composable
 fun FitVietNavHost(container: AppContainer) {
+    // Keeps the real per-app locale (see LocaleController) in sync with the persisted 1i language
+    // setting on every launch and every toggle. Idempotent, so re-firing after the locale-change
+    // recreation this triggers is harmless. initialValue is null (not false) so a device that has
+    // English persisted doesn't flash Vietnamese-then-English (and recreate twice) on cold start —
+    // same "unknown yet, don't assume" pattern as onboardingCompleted below.
+    val isEnglish by container.languageIsEnglish.collectAsStateWithLifecycle(initialValue = null)
+    LaunchedEffect(isEnglish) { isEnglish?.let(LocaleController::apply) }
+
     // Onboarding completion decides the start destination, so hold off composing the graph
     // until the first read of settings resolves (null = unknown yet, not "not completed").
     val onboardingCompleted by container.onboardingRepository.isOnboardingCompleted()
         .collectAsStateWithLifecycle(initialValue = null)
-    val settings by container.settingsRepository.observe()
-        .collectAsStateWithLifecycle(initialValue = null)
-
-    // Applies the stored language preference app-wide (including onboarding), not just on the
-    // Profile screen where the toggle lives — AppCompat no-ops if the locale is already current.
-    LaunchedEffect(settings?.languageIsEnglish) {
-        val isEnglish = settings?.languageIsEnglish ?: return@LaunchedEffect
-        AppCompatDelegate.setApplicationLocales(
-            LocaleListCompat.forLanguageTags(if (isEnglish) "en" else "vi"),
-        )
-    }
 
     when (val completed = onboardingCompleted) {
         null -> Box(modifier = Modifier.fillMaxSize().background(BackgroundPage))
@@ -151,12 +148,6 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     onOpenProfile = { navController.navigate(FitVietDestination.Profile.route) },
                 )
             }
-            composable(FitVietDestination.Profile.route) {
-                val viewModel: ProfileViewModel = viewModel(
-                    factory = ProfileViewModel.Factory(container.settingsRepository, container.measurementRepository),
-                )
-                ProfileScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
-            }
             composable(FitVietDestination.Programs.route) {
                 val viewModel: ProgramsViewModel = viewModel(
                     factory = ProgramsViewModel.Factory(container.programRepository, container.exerciseRepository, container.databaseReady),
@@ -174,6 +165,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             composable(FitVietDestination.Diary.route) {
                 val viewModel: DiaryViewModel = viewModel(factory = DiaryViewModel.Factory(container.diaryRepository))
                 DiaryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(FitVietDestination.Profile.route) {
+                val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(container.profileRepository))
+                ProfileScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
                 route = FitVietDestination.ExerciseDetail.route,
@@ -218,7 +213,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: NutritionViewModel = viewModel(factory = NutritionViewModel.Factory(container.nutritionRepository))
                 NutritionScreen(viewModel = viewModel)
             }
-            composable(FitVietDestination.Community.route) { PlaceholderScreen(title = "Cộng đồng") }
+            composable(FitVietDestination.Community.route) {
+                val viewModel: CommunityViewModel = viewModel(factory = CommunityViewModel.Factory(container.communityRepository))
+                CommunityScreen(viewModel = viewModel)
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.fitviet.app.data.local.dao.CommunityPostDao
 import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
@@ -12,6 +13,7 @@ import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
+import com.fitviet.app.data.local.entity.CommunityPostEntity
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
@@ -29,6 +31,7 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
         MealEntity::class,
         MeasurementEntity::class,
         SettingsEntity::class,
+        CommunityPostEntity::class,
     ],
     version = 1,
     exportSchema = false,
@@ -42,6 +45,7 @@ abstract class FitVietDatabase : RoomDatabase() {
     abstract fun mealDao(): MealDao
     abstract fun measurementDao(): MeasurementDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun communityPostDao(): CommunityPostDao
 
     companion object {
         @Volatile private var instance: FitVietDatabase? = null

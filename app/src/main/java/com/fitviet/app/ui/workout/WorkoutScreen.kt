@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -46,11 +47,12 @@ fun WorkoutScreen(
             return@Column
         }
 
-        if (uiState.phase != WorkoutPhase.SessionFinished) {
+        if (uiState.phase != WorkoutPhase.SessionFinished && uiState.phase != WorkoutPhase.SelectingDuration) {
             WorkoutHeader(uiState = uiState, onReset = viewModel::resetWorkout)
         }
 
         when (uiState.phase) {
+            WorkoutPhase.SelectingDuration -> WorkoutDurationPickerContent(onSelect = viewModel::selectDuration)
             WorkoutPhase.StraightLog -> StraightLogContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.StraightRest -> {
                 val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan
@@ -128,11 +130,13 @@ private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit) {
         }
         Box(
             modifier = Modifier
+                .heightIn(min = 44.dp)
                 .clip(MaterialTheme.shapes.small)
                 .background(SurfaceCard)
                 .border(1.dp, CardBorder, MaterialTheme.shapes.small)
                 .clickable(onClick = onReset)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Text(text = stringResource(R.string.workout_reset), style = MaterialTheme.typography.labelMedium, color = TextFaint)
         }

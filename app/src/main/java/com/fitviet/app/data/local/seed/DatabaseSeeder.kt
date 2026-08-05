@@ -16,6 +16,7 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
     suspend fun seedIfEmpty() {
         database.withTransaction {
             seedMissingExercises()
+            seedMissingCommunityPosts()
 
             if (database.programDao().count() > 0) return@withTransaction
 
@@ -31,5 +32,14 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
         val existingNames = database.exerciseDao().getAllOnce().map { it.nameVi }.toSet()
         val missing = SeedData.exercises.filter { it.nameVi !in existingNames }
         if (missing.isNotEmpty()) database.exerciseDao().insertAll(missing)
+    }
+
+    /** Backfills independently of the "is this a fresh DB" gate above — same reason as
+     * [seedMissingExercises]: a database already seeded by an earlier gate (pre-Gate-7) would
+     * otherwise never pick up the community posts added here, since [seedIfEmpty] only checks
+     * whether programs exist. */
+    private suspend fun seedMissingCommunityPosts() {
+        if (database.communityPostDao().count() > 0) return
+        database.communityPostDao().insertAll(SeedData.communityPosts)
     }
 }

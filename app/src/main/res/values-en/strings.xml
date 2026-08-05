@@ -139,6 +139,13 @@
     <string name="workout_back_to_home">Back to home</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
+    <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->
+    <string name="workout_duration_title">How much time do you have?</string>
+    <string name="workout_duration_subtitle">Pick a time budget and we\'ll pick the exercises to match.</string>
+    <string name="workout_duration_30">30 min</string>
+    <string name="workout_duration_60">60 min</string>
+    <string name="workout_duration_unlimited">No limit</string>
+
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 EXERCISES BACK-TO-BACK</string>
@@ -197,53 +204,56 @@
 
     <!-- 1g Nutrition -->
     <string name="nutrition_title">Nutrition</string>
-    <string name="nutrition_kcal_goal">/ %1$s kcal</string>
+    <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>
     <string name="nutrition_macro_protein">Protein</string>
     <string name="nutrition_macro_carb">Carbs</string>
     <string name="nutrition_macro_fat">Fat</string>
-    <string name="nutrition_macro_label">%1$d/%2$dg</string>
+    <string name="nutrition_macro_value">%1$d/%2$dg</string>
     <string name="nutrition_meals_title">Today\'s meals</string>
-    <string name="nutrition_add_meal">+ Add food</string>
-    <string name="nutrition_kcal_unit">%1$d kcal</string>
+    <string name="nutrition_add_meal">+ %1$s</string>
+    <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Vietnamese food database · works offline</string>
-    <string name="nutrition_picker_title">Choose a food</string>
-    <string name="nutrition_meals_empty">No meals logged today</string>
-    <string name="nutrition_slot_extra">Extra</string>
 
     <!-- 1i Profile & settings -->
-    <string name="profile_summary">%1$s · Goal: %2$s · %3$d weeks with FitViet</string>
+    <string name="profile_back">Profile</string>
+    <string name="profile_meta">%1$s · Goal: %2$s · 8-week journey</string>
     <string name="profile_measurements_title">Body measurements</string>
-    <string name="profile_update">+ Update</string>
-    <string name="profile_weight_label">Weight (kg)</string>
-    <string name="profile_chest_label">Chest (cm)</string>
-    <string name="profile_waist_label">Waist (cm)</string>
-    <string name="profile_arm_label">Arm (cm)</string>
-    <string name="profile_weight_label_imperial">Weight (lb)</string>
-    <string name="profile_chest_label_imperial">Chest (in)</string>
-    <string name="profile_waist_label_imperial">Waist (in)</string>
-    <string name="profile_arm_label_imperial">Arm (in)</string>
-    <string name="profile_measurements_empty">No measurements yet — tap "+ Update" to start</string>
-    <string name="profile_setting_language">Language</string>
-    <string name="profile_setting_offline">Offline mode</string>
-    <string name="profile_setting_backup">Back up data</string>
-    <string name="profile_setting_backup_value">Export file ›</string>
-    <string name="profile_setting_unit">Units</string>
+    <string name="profile_update_cta">+ Update</string>
+    <string name="profile_tile_weight">Weight (kg)</string>
+    <string name="profile_tile_chest">Chest (cm)</string>
+    <string name="profile_tile_waist">Waist (cm)</string>
+    <string name="profile_tile_arm">Arm (cm)</string>
+    <string name="profile_tile_weight_short">Weight</string>
+    <string name="profile_tile_chest_short">Chest</string>
+    <string name="profile_tile_waist_short">Waist</string>
+    <string name="profile_tile_arm_short">Arm</string>
+    <string name="profile_settings_language">Language</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>
+    <string name="profile_settings_offline">Offline mode</string>
     <string name="profile_offline_on">On</string>
     <string name="profile_offline_off">Off</string>
+    <string name="profile_settings_backup">Back up data</string>
+    <string name="profile_settings_backup_value">Export file ›</string>
+    <string name="profile_settings_units">Units</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
-    <string name="profile_donate_free_title">100% free app</string>
-    <string name="profile_donate_free_body">No ads, no fees. If the app is useful to you, you can chip in to help keep the servers running and fund new features.</string>
+    <string name="profile_donate_title">100% free app</string>
+    <string name="profile_donate_body">No ads, no fees. If the app has been useful, you can chip in to help keep the servers running and fund new features.</string>
     <string name="profile_donate_cta">Support the project</string>
-    <string name="profile_donate_thanks_title">Thanks for your support!</string>
-    <string name="profile_donate_thanks_body">Your contribution helps keep the servers running and the app free for the community.</string>
-    <string name="profile_donate_undo">Undo (demo)</string>
-    <string name="profile_update_measurement_title">Update measurements</string>
-    <string name="profile_save">Save</string>
-    <string name="profile_back">Profile</string>
+    <string name="profile_donated_title">Thanks for your support!</string>
+    <string name="profile_donated_body">Your contribution helps keep the servers running and the app free for the community.</string>
+    <string name="profile_donated_undo">Undo (demo)</string>
+    <string name="profile_update_sheet_title">Update measurements</string>
+    <string name="profile_update_save">Save</string>
 
-    <!-- Placeholder screens (built in later gates) -->
-    <string name="placeholder_coming_soon">Coming in the next gate</string>
+    <!-- 1h Community -->
+    <string name="community_title">Community</string>
+    <string name="community_add_post">+ New post</string>
+    <string name="community_tab_latest">Latest</string>
+    <string name="community_tab_qa">Q&amp;A</string>
+    <string name="community_tab_progress">Progress</string>
+    <string name="community_comments">💬 %1$d comments</string>
+    <string name="community_replies">💬 %1$d replies</string>
+    <string name="community_best_answer">1 best answer</string>
 </resources>
