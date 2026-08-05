@@ -474,6 +474,61 @@ Feature #4: monthly workout calendar (history-only version — reuses `completed
 defers future/scheduled-day markers since those need the not-yet-built active-program data
 model), per the same gate-by-gate workflow.
 
+## Gate 12 — Monthly workout calendar (Diary extension)
+
+Feature #4 from the roadmap discussion above.
+
+### What was built
+- `domain/WorkoutCalendar.kt` — pure `WorkoutCalendarCalculator.grid(month, completedDates)`,
+  building a Monday-start month grid padded to full weeks (leading/trailing days from adjacent
+  months marked `isCurrentMonth = false`). `WorkoutCalendarCalculatorTest.kt` — 7 tests (grid size
+  a multiple of 7, Monday-start/Sunday-end, every day of the target month present, padding-day
+  flags, a month starting exactly on Monday, completed-date flagging, an out-of-range completed
+  date ignored).
+- `ui/calendar/{WorkoutCalendarViewModel,WorkoutCalendarScreen}.kt` — reuses the **existing**
+  `DiaryRepository.observe()` (already used by the Diary screen, exposes the full uncapped
+  completed-session history) rather than adding a new repository; groups sessions by date,
+  derives the grid via the calculator, and tracks the selected month/day as local
+  `MutableStateFlow`s. The screen shows a back button, month navigator (prev/next chevrons +
+  month/year header via a new `Month.labelRes()` helper mirroring the existing
+  `DayOfWeek.shortLabelRes()` pattern), a Monday-first weekday header, and a 7-column day grid —
+  an accent dot/tint on days with a completed session, an accent ring on today. Tapping a
+  current-month day opens a `ModalBottomSheet` listing that day's completed sessions (dayLabel +
+  duration/volume, reusing the existing `diary_recent_meta` string) or an empty-state message.
+- `ui/diary/DiaryScreen.kt` — header restructured to `SpaceBetween` with a new small
+  "Lịch"/"Calendar" pill button on the right, opening the new screen via a new `onOpenCalendar`
+  callback threaded through `FitVietNavHost`. New `diary/calendar` route
+  (`FitVietDestination.WorkoutCalendar`).
+
+### Scope decision (documented, not a defect)
+**Future/scheduled-day markers are out of scope.** Per the roadmap discussion, this calendar is
+history-only — it can only ever show a dot for a day that has a real completed session, since
+there's no persisted "active program"/program-day-template data model yet to know what's
+*planned* for a future date. Revisit once that data model (needed for several other roadmap
+items too) gets built.
+
+### Codex review — 2 passes
+**Pass 1** found 3 issues, all fixed:
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `DayCell` called `Modifier.weight(1f)` as a plain top-level `@Composable` function, not a `RowScope` extension — so the `RowScope` receiver wasn't available even though the call site (`MonthGrid`'s `week.forEach`) was lexically inside a `Row`. Would not compile. | Changed to `private fun RowScope.DayCell(...)`, matching the existing `RowScope.NavItemView` pattern already used elsewhere in this codebase |
+| 2 (Medium) | Diary's back button was still `.size(34.dp)`, under the app's established 44dp touch-target minimum, in code this same diff was already restructuring | Bumped to `Dimens.MinTouchTarget` |
+| 3 (Low) | A day's session list in the detail sheet was an unbounded plain `Column`, so a day with many sessions could push entries below the visible sheet with no way to scroll to them | Bounded with an inner `Column(heightIn(max = 320.dp) + verticalScroll(...))` |
+
+**Pass 2** independently re-verified the `RowScope` extension-function fix against Kotlin's actual
+receiver-resolution rules (confirming it's a real, established pattern — not something that only
+compiles by accident), checked every other `.weight()` call site in the touched files for the same
+defect (none found), confirmed the new nested `verticalScroll` inside the bottom sheet has no
+same-axis nested-scroll conflict with the sheet's own (non-scrollable) content column, and
+confirmed no unused imports or other regressions. Clean.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/master` (`f827ca2`).
+
+### Next
+Feature #6: motivational recommendation cards (rule-based/transparent), continuing the same
+gate-by-gate workflow.
+
 ## Roadmap status
 
 All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
@@ -489,7 +544,7 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
 
 **Feature-roadmap priority order** (user-approved, continuing gate-by-gate):
 1. ~~#7 Weight history chart~~ — done, Gate 11 above.
-2. #4 Monthly workout calendar (history-only).
+2. ~~#4 Monthly workout calendar (history-only)~~ — done, Gate 12 above.
 3. #6 Motivational recommendation cards (rule-based/transparent).
 4. #11 Measurement history/polish (edit/delete, per-measurement history view).
 5. #2 Fix "current program" (needs a small persisted program-enrollment concept — Dashboard
