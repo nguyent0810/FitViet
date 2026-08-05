@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.weight
@@ -67,10 +68,12 @@ fun NutritionScreen(viewModel: NutritionViewModel) {
             Text(text = stringResource(R.string.nutrition_meals_title), style = MaterialTheme.typography.titleSmall)
             Box(
                 modifier = Modifier
+                    .heightIn(min = 44.dp)
                     .clip(MaterialTheme.shapes.small)
                     .border(1.dp, AccentBorder, MaterialTheme.shapes.small)
                     .clickable(onClick = viewModel::addNextPreset)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 10.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(R.string.nutrition_add_meal, uiState.nextPresetName),
@@ -206,13 +209,19 @@ private fun MealRow(meal: MealEntity, onRemove: () -> Unit) {
         )
         Box(
             modifier = Modifier
-                .size(24.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.extraSmall)
+                .size(44.dp)
                 .clickable(onClick = onRemove),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "×", style = MaterialTheme.typography.bodyMedium, color = TextFaint)
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .border(1.dp, CardBorder, MaterialTheme.shapes.extraSmall),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "×", style = MaterialTheme.typography.bodyMedium, color = TextFaint)
+            }
         }
     }
 }

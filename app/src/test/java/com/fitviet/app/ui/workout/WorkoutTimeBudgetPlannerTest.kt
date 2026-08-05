@@ -18,7 +18,12 @@ class WorkoutTimeBudgetPlannerTest {
         blocks.map { (it as WorkoutBlockPlan.Straight).plan.exercise.nameVi }
 
     @Test
-    fun `30-minute budget fits 4 compound exercises in curriculum order`() {
+    fun `30-minute budget fits 5 compound exercises in curriculum order`() {
+        // Rest between sets during estimation must match DEFAULT_REST_SECONDS (the fixed value the
+        // runtime rest timer actually counts down from, see WorkoutViewModel) rather than each
+        // exercise's own suggestedRestSeconds — otherwise the estimate doesn't reflect the session
+        // the app actually runs. With the shared fixed rest, Deadlift's block is cheaper than its
+        // own 150s suggested rest would imply, so it now fits within 30 minutes.
         val blocks = WorkoutTimeBudgetPlanner.buildBlocks(SeedData.exercises, budgetMinutes = 30)
 
         assertEquals(
@@ -27,13 +32,14 @@ class WorkoutTimeBudgetPlannerTest {
                 SeedExerciseNames.BENCH_PRESS,
                 SeedExerciseNames.BENT_OVER_ROW,
                 SeedExerciseNames.SHOULDER_PRESS,
+                SeedExerciseNames.DEADLIFT,
             ),
             blockNames(blocks),
         )
     }
 
     @Test
-    fun `60-minute budget fits 8 exercises before Deadlift's rest time would push past the limit`() {
+    fun `60-minute budget fits 11 exercises before Lateral Raise would push past the limit`() {
         val blocks = WorkoutTimeBudgetPlanner.buildBlocks(SeedData.exercises, budgetMinutes = 60)
 
         assertEquals(
@@ -46,6 +52,9 @@ class WorkoutTimeBudgetPlannerTest {
                 SeedExerciseNames.LAT_PULLDOWN,
                 SeedExerciseNames.LEG_PRESS,
                 SeedExerciseNames.LUNGE,
+                SeedExerciseNames.BARBELL_CURL,
+                SeedExerciseNames.TRICEPS_PUSHDOWN,
+                SeedExerciseNames.CABLE_FLY,
             ),
             blockNames(blocks),
         )

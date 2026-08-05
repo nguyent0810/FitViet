@@ -16,7 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val DEFAULT_REST_SECONDS = 60
+// Not private: WorkoutTimeBudgetPlanner's time estimate needs the same value the runtime rest
+// timer actually uses (see the comment at its estimateSeconds call site) so estimated session
+// length matches what the app really runs.
+const val DEFAULT_REST_SECONDS = 60
 private const val SESSION_DAY_LABEL = "Thân trên"
 private const val ACTION_DEBOUNCE_MILLIS = 350L
 
@@ -105,6 +108,11 @@ class WorkoutViewModel(
         } else {
             WorkoutTimeBudgetPlanner.buildBlocks(loadedExercises, minutes)
         }
+        // Guards against a mismatched/empty catalog (e.g. a seeding gap) producing zero blocks —
+        // without this, resetForBlock's block == null branch jumps straight to SessionFinished
+        // without ever calling completeSession(), leaving a session row that's never marked
+        // complete while its elapsed ticker keeps running. Nothing to start, so stay on the picker.
+        if (blocks.isEmpty()) return@debounced
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             sessionId = workoutRepository.startSession(dayLabel = SESSION_DAY_LABEL, startedAtMillis = System.currentTimeMillis())

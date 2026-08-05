@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.weight
@@ -71,14 +72,20 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .size(44.dp)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(SurfaceCard)
+                        .border(1.dp, CardBorder, MaterialTheme.shapes.small),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                }
             }
             Text(text = stringResource(R.string.profile_back), style = MaterialTheme.typography.bodySmall, color = TextMuted)
         }
@@ -152,13 +159,20 @@ private fun MeasurementsCard(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = stringResource(R.string.profile_measurements_title), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = stringResource(R.string.profile_update_cta),
-                style = MaterialTheme.typography.labelLarge,
-                color = Accent,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(onClick = onUpdateClick),
-            )
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 44.dp)
+                    .clickable(onClick = onUpdateClick)
+                    .padding(start = 8.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_update_cta),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Accent,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             MeasurementTile(

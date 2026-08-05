@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -87,11 +88,13 @@ private fun TabRow(selectedTab: Int, onSelect: (Int) -> Unit) {
             val selected = tab.tab == selectedTab
             Box(
                 modifier = Modifier
+                    .heightIn(min = 44.dp)
                     .clip(PillShape)
                     .background(if (selected) Accent else SurfaceCard)
                     .border(1.dp, if (selected) Accent else CardBorder, PillShape)
                     .clickable { onSelect(tab.tab) }
-                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(tab.labelRes),
@@ -142,12 +145,16 @@ private fun PostCard(post: CommunityPostEntity, onLikeClick: () -> Unit) {
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             val likeCount = post.baseLikeCount + if (post.likedByUser) 1 else 0
-            Text(
-                text = "${if (post.likedByUser) "♥" else "♡"} ${formatVi(likeCount)}",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (post.likedByUser) Accent else TextFaint,
-                modifier = Modifier.clickable(onClick = onLikeClick),
-            )
+            Box(
+                modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onLikeClick),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    text = "${if (post.likedByUser) "♥" else "♡"} ${formatVi(likeCount)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (post.likedByUser) Accent else TextFaint,
+                )
+            }
             Text(
                 text = stringResource(
                     if (post.postType == CommunityPostType.QA) R.string.community_replies else R.string.community_comments,

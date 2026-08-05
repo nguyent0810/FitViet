@@ -53,9 +53,11 @@ private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
 fun FitVietNavHost(container: AppContainer) {
     // Keeps the real per-app locale (see LocaleController) in sync with the persisted 1i language
     // setting on every launch and every toggle. Idempotent, so re-firing after the locale-change
-    // recreation this triggers is harmless.
-    val isEnglish by container.languageIsEnglish.collectAsStateWithLifecycle(initialValue = false)
-    LaunchedEffect(isEnglish) { LocaleController.apply(isEnglish) }
+    // recreation this triggers is harmless. initialValue is null (not false) so a device that has
+    // English persisted doesn't flash Vietnamese-then-English (and recreate twice) on cold start —
+    // same "unknown yet, don't assume" pattern as onboardingCompleted below.
+    val isEnglish by container.languageIsEnglish.collectAsStateWithLifecycle(initialValue = null)
+    LaunchedEffect(isEnglish) { isEnglish?.let(LocaleController::apply) }
 
     // Onboarding completion decides the start destination, so hold off composing the graph
     // until the first read of settings resolves (null = unknown yet, not "not completed").

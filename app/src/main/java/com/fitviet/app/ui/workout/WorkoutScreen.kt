@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -129,11 +130,13 @@ private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit) {
         }
         Box(
             modifier = Modifier
+                .heightIn(min = 44.dp)
                 .clip(MaterialTheme.shapes.small)
                 .background(SurfaceCard)
                 .border(1.dp, CardBorder, MaterialTheme.shapes.small)
                 .clickable(onClick = onReset)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Text(text = stringResource(R.string.workout_reset), style = MaterialTheme.typography.labelMedium, color = TextFaint)
         }

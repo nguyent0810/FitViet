@@ -60,7 +60,11 @@ object WorkoutTimeBudgetPlanner {
         for (name in CURRICULUM_ORDER) {
             val exercise = byName[name] ?: continue
             val plannedSets = plannedSetsFor(exercise)
-            val blockSeconds = estimateSeconds(plannedSets, exercise.suggestedRestSeconds)
+            // Uses DEFAULT_REST_SECONDS, not exercise.suggestedRestSeconds — the runtime rest timer
+            // (WorkoutViewModel.completeCurrentSet) always counts down from the same fixed default
+            // regardless of exercise, so the estimate has to match that or generated sessions run
+            // longer/shorter than the budget the user picked.
+            val blockSeconds = estimateSeconds(plannedSets, DEFAULT_REST_SECONDS)
             if (blocks.isNotEmpty() && usedSeconds + blockSeconds > budgetSeconds) break
             usedSeconds += blockSeconds
             blocks += WorkoutBlockPlan.Straight(StraightBlockPlan(exercise, plannedSets))
