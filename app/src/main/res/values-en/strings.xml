@@ -202,6 +202,24 @@
     <string name="diary_recent_empty">No sessions yet</string>
     <string name="diary_recent_meta">%1$s min · %2$s kg</string>
 
+    <!-- Workout calendar (Diary extension, feature 4) -->
+    <string name="calendar_title">Workout calendar</string>
+    <string name="calendar_open_button">Calendar</string>
+    <string name="calendar_month_year">%1$s %2$d</string>
+    <string name="calendar_no_sessions">No workouts on this day</string>
+    <string name="month_1">January</string>
+    <string name="month_2">February</string>
+    <string name="month_3">March</string>
+    <string name="month_4">April</string>
+    <string name="month_5">May</string>
+    <string name="month_6">June</string>
+    <string name="month_7">July</string>
+    <string name="month_8">August</string>
+    <string name="month_9">September</string>
+    <string name="month_10">October</string>
+    <string name="month_11">November</string>
+    <string name="month_12">December</string>
+
     <!-- 1g Nutrition -->
     <string name="nutrition_title">Nutrition</string>
     <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>

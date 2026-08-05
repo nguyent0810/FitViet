@@ -22,6 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitviet.app.data.AppContainer
+import com.fitviet.app.ui.calendar.WorkoutCalendarScreen
+import com.fitviet.app.ui.calendar.WorkoutCalendarViewModel
 import com.fitviet.app.ui.community.CommunityScreen
 import com.fitviet.app.ui.community.CommunityViewModel
 import com.fitviet.app.ui.dashboard.DashboardScreen
@@ -164,7 +166,15 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             }
             composable(FitVietDestination.Diary.route) {
                 val viewModel: DiaryViewModel = viewModel(factory = DiaryViewModel.Factory(container.diaryRepository))
-                DiaryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+                DiaryScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onOpenCalendar = { navController.navigate(FitVietDestination.WorkoutCalendar.route) },
+                )
+            }
+            composable(FitVietDestination.WorkoutCalendar.route) {
+                val viewModel: WorkoutCalendarViewModel = viewModel(factory = WorkoutCalendarViewModel.Factory(container.diaryRepository))
+                WorkoutCalendarScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(FitVietDestination.Profile.route) {
                 val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(container.profileRepository))

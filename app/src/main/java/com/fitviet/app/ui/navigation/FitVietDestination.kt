@@ -21,6 +21,8 @@ sealed class FitVietDestination(val route: String) {
 
     data object Diary : FitVietDestination("diary")
 
+    data object WorkoutCalendar : FitVietDestination("diary/calendar")
+
     data object Profile : FitVietDestination("profile")
 }
 

@@ -3,6 +3,7 @@ package com.fitviet.app.util
 import androidx.annotation.StringRes
 import com.fitviet.app.R
 import java.time.DayOfWeek
+import java.time.Month
 
 /** Short day label (T2..CN) used on the dashboard's 7-day chart and the weekly schedule rows. */
 @StringRes
@@ -26,4 +27,21 @@ fun DayOfWeek.longLabelRes(): Int = when (this) {
     DayOfWeek.FRIDAY -> R.string.day_long_fri
     DayOfWeek.SATURDAY -> R.string.day_long_sat
     DayOfWeek.SUNDAY -> R.string.day_long_sun
+}
+
+/** Month label ("Tháng 8" / "August") used by the workout calendar's month header. */
+@StringRes
+fun Month.labelRes(): Int = when (this) {
+    Month.JANUARY -> R.string.month_1
+    Month.FEBRUARY -> R.string.month_2
+    Month.MARCH -> R.string.month_3
+    Month.APRIL -> R.string.month_4
+    Month.MAY -> R.string.month_5
+    Month.JUNE -> R.string.month_6
+    Month.JULY -> R.string.month_7
+    Month.AUGUST -> R.string.month_8
+    Month.SEPTEMBER -> R.string.month_9
+    Month.OCTOBER -> R.string.month_10
+    Month.NOVEMBER -> R.string.month_11
+    Month.DECEMBER -> R.string.month_12
 }

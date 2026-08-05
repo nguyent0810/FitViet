@@ -202,6 +202,24 @@
     <string name="diary_recent_empty">Chưa có buổi tập nào</string>
     <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
+    <!-- Workout calendar (Diary extension, feature 4) -->
+    <string name="calendar_title">Lịch tập luyện</string>
+    <string name="calendar_open_button">Lịch</string>
+    <string name="calendar_month_year">%1$s, %2$d</string>
+    <string name="calendar_no_sessions">Chưa có buổi tập vào ngày này</string>
+    <string name="month_1">Tháng 1</string>
+    <string name="month_2">Tháng 2</string>
+    <string name="month_3">Tháng 3</string>
+    <string name="month_4">Tháng 4</string>
+    <string name="month_5">Tháng 5</string>
+    <string name="month_6">Tháng 6</string>
+    <string name="month_7">Tháng 7</string>
+    <string name="month_8">Tháng 8</string>
+    <string name="month_9">Tháng 9</string>
+    <string name="month_10">Tháng 10</string>
+    <string name="month_11">Tháng 11</string>
+    <string name="month_12">Tháng 12</string>
+
     <!-- 1g Nutrition -->
     <string name="nutrition_title">Dinh dưỡng</string>
     <string name="nutrition_kcal_of_goal">/ %1$s kcal</string>

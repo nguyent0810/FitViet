@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -54,7 +55,7 @@ import java.time.ZoneId
 import java.time.temporal.WeekFields
 
 @Composable
-fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit) {
+fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -64,19 +65,37 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit) {
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(Dimens.MinTouchTarget)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(SurfaceCard)
+                        .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                }
+                Text(text = stringResource(R.string.diary_title), style = MaterialTheme.typography.headlineMedium)
+            }
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .heightIn(min = Dimens.MinTouchTarget)
                     .clip(MaterialTheme.shapes.small)
                     .background(SurfaceCard)
                     .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-                    .clickable(onClick = onBack),
+                    .clickable(onClick = onOpenCalendar)
+                    .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Text(text = stringResource(R.string.calendar_open_button), style = MaterialTheme.typography.labelLarge, color = TextBody)
             }
-            Text(text = stringResource(R.string.diary_title), style = MaterialTheme.typography.headlineMedium)
         }
         DayStrip(last7Days = uiState.last7Days, selectedIndex = uiState.selectedDayIndex, onSelect = viewModel::selectDay)
         DayHintCard(day = uiState.last7Days.getOrNull(uiState.selectedDayIndex), sessions = uiState.allCompletedSessions)
