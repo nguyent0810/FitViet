@@ -280,7 +280,17 @@
     <string name="profile_donated_body">Khoản đóng góp giúp duy trì máy chủ và giữ app miễn phí cho cộng đồng.</string>
     <string name="profile_donated_undo">Hoàn tác (demo)</string>
     <string name="profile_update_sheet_title">Cập nhật số đo</string>
+    <string name="profile_update_sheet_edit_title">Sửa lần đo</string>
     <string name="profile_update_save">Lưu</string>
+    <string name="profile_history_button">Lịch sử</string>
+    <string name="profile_history_title">Lịch sử số đo</string>
+    <string name="profile_history_empty">Chưa có số đo nào</string>
+    <string name="profile_history_edit_button">Sửa</string>
+    <string name="profile_history_delete_button">Xóa</string>
+    <string name="profile_history_delete_confirm_title">Xóa số đo này?</string>
+    <string name="profile_history_delete_confirm_body">Hành động này không thể hoàn tác.</string>
+    <string name="profile_history_delete_confirm_yes">Xóa</string>
+    <string name="profile_history_delete_confirm_cancel">Hủy</string>
     <string name="profile_weight_history_title">Lịch sử cân nặng</string>
     <string name="profile_weight_range_30d">30 ngày</string>
     <string name="profile_weight_range_3m">3 tháng</string>

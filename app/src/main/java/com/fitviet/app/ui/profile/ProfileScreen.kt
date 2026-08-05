@@ -111,6 +111,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             armCm = uiState.latestMeasurement?.armCm,
             useImperial = uiState.settings.useImperialUnits,
             onUpdateClick = viewModel::openUpdateSheet,
+            onHistoryClick = viewModel::openHistorySheet,
         )
         WeightHistoryCard(
             points = uiState.weightHistoryPoints,
@@ -124,9 +125,19 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
 
     if (uiState.showUpdateSheet) {
         UpdateMeasurementSheet(
-            latest = uiState.latestMeasurement,
+            prefill = uiState.editingMeasurement ?: uiState.latestMeasurement,
+            isEditing = uiState.editingMeasurement != null,
             onSave = viewModel::saveMeasurement,
             onDismiss = viewModel::dismissUpdateSheet,
+        )
+    }
+    if (uiState.showHistorySheet) {
+        MeasurementHistorySheet(
+            history = uiState.measurementHistory,
+            useImperial = uiState.settings.useImperialUnits,
+            onEdit = viewModel::openEditSheet,
+            onDelete = { viewModel.deleteMeasurement(it.id) },
+            onDismiss = viewModel::dismissHistorySheet,
         )
     }
 }
@@ -166,6 +177,7 @@ private fun MeasurementsCard(
     armCm: Double?,
     useImperial: Boolean,
     onUpdateClick: () -> Unit,
+    onHistoryClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -178,19 +190,34 @@ private fun MeasurementsCard(
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = stringResource(R.string.profile_measurements_title), style = MaterialTheme.typography.titleSmall)
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 44.dp)
-                    .clickable(onClick = onUpdateClick)
-                    .padding(start = 8.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Text(
-                    text = stringResource(R.string.profile_update_cta),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Accent,
-                    fontWeight = FontWeight.Bold,
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 44.dp)
+                        .clickable(onClick = onHistoryClick)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_history_button),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextMuted,
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 44.dp)
+                        .clickable(onClick = onUpdateClick)
+                        .padding(start = 4.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_update_cta),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Accent,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {

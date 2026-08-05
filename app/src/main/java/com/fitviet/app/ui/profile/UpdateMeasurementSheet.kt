@@ -44,21 +44,25 @@ private fun String.toMeasurementOrNull(): Double? = trim().replace(',', '.').toD
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateMeasurementSheet(
-    latest: MeasurementEntity?,
+    prefill: MeasurementEntity?,
+    isEditing: Boolean,
     onSave: (weightKg: Double?, chestCm: Double?, waistCm: Double?, armCm: Double?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var weight by remember { mutableStateOf(latest?.weightKg?.let(::formatWeight).orEmpty()) }
-    var chest by remember { mutableStateOf(latest?.chestCm?.let(::formatWeight).orEmpty()) }
-    var waist by remember { mutableStateOf(latest?.waistCm?.let(::formatWeight).orEmpty()) }
-    var arm by remember { mutableStateOf(latest?.armCm?.let(::formatWeight).orEmpty()) }
+    var weight by remember { mutableStateOf(prefill?.weightKg?.let(::formatWeight).orEmpty()) }
+    var chest by remember { mutableStateOf(prefill?.chestCm?.let(::formatWeight).orEmpty()) }
+    var waist by remember { mutableStateOf(prefill?.waistCm?.let(::formatWeight).orEmpty()) }
+    var arm by remember { mutableStateOf(prefill?.armCm?.let(::formatWeight).orEmpty()) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(text = stringResource(R.string.profile_update_sheet_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(if (isEditing) R.string.profile_update_sheet_edit_title else R.string.profile_update_sheet_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
             MeasurementField(label = stringResource(R.string.profile_tile_weight), value = weight, onValueChange = { weight = it })
             MeasurementField(label = stringResource(R.string.profile_tile_chest), value = chest, onValueChange = { chest = it })
             MeasurementField(label = stringResource(R.string.profile_tile_waist), value = waist, onValueChange = { waist = it })

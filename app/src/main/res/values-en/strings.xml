@@ -277,7 +277,17 @@
     <string name="profile_donated_body">Your contribution helps keep the servers running and the app free for the community.</string>
     <string name="profile_donated_undo">Undo (demo)</string>
     <string name="profile_update_sheet_title">Update measurements</string>
+    <string name="profile_update_sheet_edit_title">Edit check-in</string>
     <string name="profile_update_save">Save</string>
+    <string name="profile_history_button">History</string>
+    <string name="profile_history_title">Measurement history</string>
+    <string name="profile_history_empty">No measurements yet</string>
+    <string name="profile_history_edit_button">Edit</string>
+    <string name="profile_history_delete_button">Delete</string>
+    <string name="profile_history_delete_confirm_title">Delete this measurement?</string>
+    <string name="profile_history_delete_confirm_body">This action cannot be undone.</string>
+    <string name="profile_history_delete_confirm_yes">Delete</string>
+    <string name="profile_history_delete_confirm_cancel">Cancel</string>
     <string name="profile_weight_history_title">Weight history</string>
     <string name="profile_weight_range_30d">30 days</string>
     <string name="profile_weight_range_3m">3 months</string>

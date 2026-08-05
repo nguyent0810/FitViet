@@ -60,6 +60,26 @@ class ProfileRepository(
         )
     }
 
+    /** Corrects an existing check-in's values in place. [epochDay] is kept as-is — editing fixes a
+     * mistaken measurement, not when it was taken; changing the date of a historical entry is a
+     * separate, rarer feature not built here. */
+    suspend fun updateMeasurement(id: Long, epochDay: Long, weightKg: Double?, chestCm: Double?, waistCm: Double?, armCm: Double?) {
+        measurementDao.update(
+            MeasurementEntity(
+                id = id,
+                epochDay = epochDay,
+                weightKg = weightKg,
+                chestCm = chestCm,
+                waistCm = waistCm,
+                armCm = armCm,
+            ),
+        )
+    }
+
+    suspend fun deleteMeasurement(id: Long) {
+        measurementDao.deleteById(id)
+    }
+
     private suspend fun updateSettings(transform: (SettingsEntity) -> SettingsEntity) {
         val current = settingsDao.get() ?: SettingsEntity()
         settingsDao.upsert(transform(current))
