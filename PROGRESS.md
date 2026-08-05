@@ -626,6 +626,87 @@ persisted active-program/enrollment concept exists yet. This is the last item in
 high-value" group before the roadmap moves into the larger shared "program template" data-model
 investment.
 
+## Gate 15 — Program data-model foundation (active program, real per-program schedules)
+
+Feature #2 from the roadmap discussion, but the user explicitly chose the larger of two options
+when asked: invest in the full shared "program template" data model (unlocking #3, #1, #8, #9
+too) rather than a minimal `activeProgramId`-only patch — accepting the tradeoff of a bigger,
+riskier gate needing more review rounds.
+
+### What was built
+- New entities `ProgramDayEntity`/`ProgramExerciseEntity` — a program's real weekly schedule
+  (calendar weekday + assigned exercises with target sets/reps), replacing 2b's previous
+  one-size-fits-all static Push-Pull-Legs reference week shown for every program (a documented
+  gap since Gate 3).
+- `SettingsEntity.activeProgramId` (nullable FK) — the persisted "current program" enrollment, set
+  via a new "Đặt làm giáo án hiện tại" button on 2b. Dashboard's featured program now reads this
+  (falling back to the first seeded program if none chosen yet) instead of always
+  `programs.firstOrNull()`.
+- `ExerciseEntity` gained stable `muscleGroupCode`/`movementType` classification codes (new
+  `MuscleGroup`/`MovementType` enums), distinct from the existing free-text Vietnamese display
+  fields — for future charts (#8/#9), **not built in this gate**.
+- All 3 seeded programs got real weekly schedules built from the existing 14-exercise library: an
+  upper/lower split for the 4x/week gym program, a StrongLifts-style A/B 5×5 alternation for the
+  barbell program (squat every session, deadlift at 1×5 not 5×5 — the real convention for that
+  program style), and a content-constrained Pushup+Crunch rotation for the no-equipment program
+  (this library only has 2 bodyweight exercises — documented as a real content limitation, not a
+  bug; expanding the bodyweight section would make it richer, not done here).
+- `domain/ProgramSchedule.kt` — `ProgramScheduleCalculator.build()`, a pure function joining raw
+  day/exercise-target rows against the exercise catalog into display-ready schedule objects,
+  extracted specifically for testability (6 unit tests), matching the established
+  `WeightHistoryCalculator`/`WorkoutCalendarCalculator` pattern of keeping join/grouping logic out
+  of the repository's reactive `combine {}`.
+- `WeeklyScheduleScreen`/`ViewModel` rewritten to render the real per-program schedule; the old
+  static `WeeklyScheduleData.kt` (WEEKLY_SCHEDULE/ScheduleDay) deleted as fully superseded.
+  Opportunistically fixed a small pre-existing bug found while rewriting this screen: the rest-day
+  hint text was a single hardcoded string always saying "CN" (Sunday) regardless of which rest day
+  was actually selected.
+
+### Codex review — 3 passes (matches the elevated scrutiny this size of gate needed)
+**Pass 1** found one real, significant issue and one minor one:
+| # | Issue | Fix |
+|---|---|---|
+| 1 (Medium, real) | The schema changed substantially (2 new tables, new required columns on `ExerciseEntity`, new column+FK on `SettingsEntity`) but `@Database` stayed at `version = 1`. Room validates a stored schema *identity hash* on open — a real device already running an earlier build (like the one this session has been testing on all along) would **crash on next launch** rather than gracefully continue, contradicting the seeder's "backfills an existing install" assumption. This is the first schema change to hit this class of bug in practice, because it's the first one made *after* the user started doing real incremental installs on their own device (Gates 1–10's schema changes all shipped as part of the user's very first real install, so this exact transition was never actually exercised before). | Bumped `@Database(version = 1)` to `version = 2`, added `.fallbackToDestructiveMigration()` to the builder, and established "bump the version + destructive fallback on every schema change, pre-release" as the corrected going-forward policy (documented in a code comment). Verified `fallbackToDestructiveMigration()` is a real, correctly-shaped no-arg Room 2.6.1 API by running `javap` directly against the actual `room-runtime-2.6.1` jar found in the local Gradle cache — not from memory. |
+| 2 (Low) | `seedMissingProgramSchedules()`'s per-program skip check (`countForProgram > 0`) would treat a hypothetical partially-seeded program as "fully done" forever | *(see passes 2–3 below — the first attempted fix here introduced a worse bug)* |
+
+**Pass 2**: my first fix for issue #2 (`>= days.size` instead of `> 0`) was itself broken — it would
+re-insert **all** of a program's days whenever the count was below the expected total, including
+already-existing ones, which would violate the `(programId, dayOfWeek)` unique index the moment it
+hit an already-seeded day and roll back the whole transaction. Codex independently verified the
+version-bump + `fallbackToDestructiveMigration()` fix is correct by reading Room 2.6.1's actual
+`RoomOpenHelper` bytecode line-by-line (confirming the upgrade path: SQLite detects the version
+mismatch → no `Migration(1,2)` registered → `fallbackToDestructiveMigration()` intercepts →
+`dropAllTables()`/`createAllTables()` → new identity hash matches on the next `onOpen()` check).
+
+**Pass 3**: reverted the broken `>=` check back to the original, already-proven `> 0` check
+(matching the sibling `seedMissingExercises`/`seedMissingCommunityPosts` pattern), with a corrected
+doc comment stating plainly this method seeds an entirely-missing schedule only — it is **not** a
+general repair mechanism, and doing real partial-repair would need matching by `dayOfWeek`, not a
+row count. Confirmed clean, no further findings, on a full 22-file/737-line diff.
+
+### Important: existing test devices will be wiped on next launch
+Because of the `fallbackToDestructiveMigration()` fix above, any device currently running a
+pre-Gate-15 build will have its local database **destructively recreated** (wiped and reseeded
+from scratch) the next time it opens a post-Gate-15 build — this is the correct, intended fix for
+the schema-identity crash, not a bug, but it does mean any manually-logged test data on the user's
+own device (extra workout sessions, measurements, etc. added during testing) will reset to the
+fresh seed content.
+
+### Deliberately out of scope (confirmed with the user)
+#3 (next-training list + completion %), #1 (program export/import via share sheet), #8
+(muscle-group workload chart), #9 (exercise-type distribution chart) — this gate only builds the
+data foundation those depend on.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/master` (`6f2cce8`).
+
+### Next
+Continuing through the roadmap: the lower-priority/optional group (#12 dashboard widget
+visibility, #5 muscle-group progress bars, #10 calories burned), or the newly-unlocked #3/#1/#8/#9
+now that the data foundation exists — next session should confirm which with the user rather than
+assume, since the original roadmap discussion prioritized the "cheap and high-value" group (now
+fully done) but didn't fix an order beyond that.
+
 ## Roadmap status
 
 All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
@@ -645,13 +726,13 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
 3. ~~#6 Motivational recommendation cards (rule-based/transparent)~~ — done, Gate 13 above.
 4. ~~#11 Measurement history/polish (edit/delete, per-measurement history view)~~ — done, Gate 14
    above.
-5. #2 Fix "current program" (needs a small persisted program-enrollment concept — Dashboard
-   currently just shows `programs.firstOrNull()`).
-6. The shared "program template" data-model investment (active program/enrollment,
-   program-day/template entities, program-exercise targets, stable muscle/exercise-category
-   codes) — unlocks #3 (next-training list + completion %), #1 (program export/import via the
-   Android share sheet), #8 (muscle-group workload chart), #9 (exercise-type distribution).
-7. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
+5. ~~#2 Fix "current program"~~ — done, Gate 15 above. The user chose to build the full shared
+   "program template" data-model investment (active program/enrollment, program-day/template
+   entities, program-exercise targets, stable muscle/exercise-category codes) rather than a
+   minimal patch, which also unlocks #3 (next-training list + completion %), #1 (program
+   export/import via the Android share sheet), #8 (muscle-group workload chart), #9 (exercise-type
+   distribution) — none of those 4 are built yet, only the foundation they need.
+6. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
    progress-bar list — explicitly not a silhouette illustration), #10 (calories burned — only
    ever an estimate).
 
