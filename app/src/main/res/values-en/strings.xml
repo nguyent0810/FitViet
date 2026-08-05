@@ -80,6 +80,20 @@
     <string name="dashboard_no_program_meta">Pick a program to start your first workout</string>
     <string name="dashboard_browse_programs">Browse programs</string>
 
+    <!-- Dashboard recommendation card (feature 6) -->
+    <string name="recommendation_title">Today\'s tip</string>
+    <string name="recommendation_come_back">It\'s been over a week since your last workout — let\'s get back to it!</string>
+    <string name="recommendation_streak_praise">%1$d-day streak — keep up the great work!</string>
+    <string name="recommendation_measurement_reminder">It\'s been a while since you updated your measurements — check them in Profile!</string>
+    <string name="recommendation_tip_1">Warm up properly before training to reduce injury risk.</string>
+    <string name="recommendation_tip_2">Good sleep helps your muscles recover better.</string>
+    <string name="recommendation_tip_3">Stay hydrated during and after your workout.</string>
+    <string name="recommendation_tip_4">Increase weight gradually so your body can adapt.</string>
+    <string name="recommendation_tip_5">Eat enough protein to support muscle recovery.</string>
+    <string name="recommendation_tip_6">Rest between sessions that train the same muscle group.</string>
+    <string name="recommendation_tip_7">Logging your sessions makes progress easier to see.</string>
+    <string name="recommendation_tip_8">Good form matters more than heavy weight.</string>
+
     <!-- 1c Programs list -->
     <string name="programs_title">Training programs</string>
     <string name="programs_search_placeholder">Search programs, exercises…</string>

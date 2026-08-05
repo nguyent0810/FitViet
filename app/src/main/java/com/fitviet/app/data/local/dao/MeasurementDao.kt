@@ -11,6 +11,9 @@ interface MeasurementDao {
     @Query("SELECT * FROM measurements ORDER BY epochDay DESC, id DESC")
     fun observeAll(): Flow<List<MeasurementEntity>>
 
+    @Query("SELECT * FROM measurements ORDER BY epochDay DESC, id DESC LIMIT 1")
+    fun observeLatest(): Flow<MeasurementEntity?>
+
     @Query("SELECT * FROM measurements ORDER BY epochDay DESC, id DESC LIMIT 2")
     suspend fun getLatestTwo(): List<MeasurementEntity>
 

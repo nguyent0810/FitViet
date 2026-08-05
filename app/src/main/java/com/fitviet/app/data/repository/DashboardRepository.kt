@@ -1,13 +1,17 @@
 package com.fitviet.app.data.repository
 
 import com.fitviet.app.data.local.dao.MealDao
+import com.fitviet.app.data.local.dao.MeasurementDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
+import com.fitviet.app.domain.Recommendation
+import com.fitviet.app.domain.RecommendationCalculator
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -18,12 +22,14 @@ data class DashboardData(
     val stats: DashboardStats,
     val kcalToday: Int,
     val featuredProgram: ProgramEntity?,
+    val recommendation: Recommendation,
 )
 
 class DashboardRepository(
     private val workoutSessionDao: WorkoutSessionDao,
     private val mealDao: MealDao,
     private val programDao: ProgramDao,
+    private val measurementDao: MeasurementDao,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observe(): Flow<DashboardData> {
@@ -36,7 +42,8 @@ class DashboardRepository(
                 workoutSessionDao.observeCompleted(),
                 mealDao.observeForDay(today.toEpochDay()),
                 programDao.observeAll(),
-            ) { sessions, meals, programs ->
+                measurementDao.observeLatest(),
+            ) { sessions, meals, programs, latestMeasurement ->
                 val completedSessions = sessions.mapNotNull { session ->
                     val completedAt = session.completedAt ?: return@mapNotNull null
                     CompletedSession(
@@ -44,10 +51,17 @@ class DashboardRepository(
                         volumeKg = session.totalVolumeKg,
                     )
                 }
+                val stats = DashboardStatsCalculator.compute(completedSessions, today)
                 DashboardData(
-                    stats = DashboardStatsCalculator.compute(completedSessions, today),
+                    stats = stats,
                     kcalToday = meals.sumOf { it.kcal },
                     featuredProgram = programs.firstOrNull(),
+                    recommendation = RecommendationCalculator.compute(
+                        today = today,
+                        last7Days = stats.last7Days,
+                        streakDays = stats.streakDays,
+                        lastMeasurementDate = latestMeasurement?.let { LocalDate.ofEpochDay(it.epochDay) },
+                    ),
                 )
             }
         }

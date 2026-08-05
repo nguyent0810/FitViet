@@ -80,6 +80,20 @@
     <string name="dashboard_no_program_meta">Chọn một giáo án để bắt đầu buổi tập đầu tiên</string>
     <string name="dashboard_browse_programs">Xem giáo án</string>
 
+    <!-- Dashboard recommendation card (feature 6) -->
+    <string name="recommendation_title">Gợi ý hôm nay</string>
+    <string name="recommendation_come_back">Đã hơn 1 tuần bạn chưa tập — quay lại thôi!</string>
+    <string name="recommendation_streak_praise">Chuỗi %1$d ngày liên tiếp — giữ vững phong độ nhé!</string>
+    <string name="recommendation_measurement_reminder">Đã lâu chưa cập nhật số đo — ghé Hồ sơ để cập nhật nhé!</string>
+    <string name="recommendation_tip_1">Khởi động kỹ trước khi tập để giảm chấn thương.</string>
+    <string name="recommendation_tip_2">Ngủ đủ giấc giúp cơ bắp phục hồi tốt hơn.</string>
+    <string name="recommendation_tip_3">Uống đủ nước trong và sau buổi tập.</string>
+    <string name="recommendation_tip_4">Tăng dần khối lượng tạ để cơ thể thích nghi.</string>
+    <string name="recommendation_tip_5">Ăn đủ đạm để hỗ trợ phục hồi cơ bắp.</string>
+    <string name="recommendation_tip_6">Nghỉ ngơi giữa các buổi tập cùng nhóm cơ.</string>
+    <string name="recommendation_tip_7">Ghi lại buổi tập giúp bạn theo dõi tiến bộ rõ ràng hơn.</string>
+    <string name="recommendation_tip_8">Kỹ thuật đúng quan trọng hơn khối lượng tạ nặng.</string>
+
     <!-- 1c Programs list -->
     <string name="programs_title">Giáo án tập luyện</string>
     <string name="programs_search_placeholder">Tìm giáo án, bài tập…</string>

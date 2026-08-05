@@ -1,6 +1,7 @@
 package com.fitviet.app.ui.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +32,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.DayVolume
+import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.ui.theme.Accent
+import com.fitviet.app.ui.theme.AccentBorder
+import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.ChartBarIdle
@@ -41,6 +45,7 @@ import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.SurfaceCard
+import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatCompactKg
@@ -78,6 +83,7 @@ fun DashboardScreen(
             program = uiState.featuredProgram,
             onStart = if (uiState.featuredProgram != null) onStartWorkout else onBrowsePrograms,
         )
+        uiState.recommendation?.let { RecommendationCard(recommendation = it) }
         StatTilesRow(
             streakDays = uiState.stats.streakDays,
             sessionsThisWeek = uiState.stats.sessionsThisWeek,
@@ -188,6 +194,41 @@ private fun HeroCard(program: ProgramEntity?, onStart: () -> Unit) {
                 color = OnAccent,
             )
         }
+    }
+}
+
+// Index-matched to the recommendation_tip_1..8 string resources — must stay in sync with
+// RecommendationCalculator.GENERIC_TIP_COUNT.
+private val GENERIC_TIP_RES_IDS = listOf(
+    R.string.recommendation_tip_1,
+    R.string.recommendation_tip_2,
+    R.string.recommendation_tip_3,
+    R.string.recommendation_tip_4,
+    R.string.recommendation_tip_5,
+    R.string.recommendation_tip_6,
+    R.string.recommendation_tip_7,
+    R.string.recommendation_tip_8,
+)
+
+@Composable
+private fun RecommendationCard(recommendation: Recommendation) {
+    val text = when (recommendation) {
+        is Recommendation.ComeBackReminder -> stringResource(R.string.recommendation_come_back)
+        is Recommendation.StreakPraise -> stringResource(R.string.recommendation_streak_praise, recommendation.streakDays)
+        is Recommendation.MeasurementReminder -> stringResource(R.string.recommendation_measurement_reminder)
+        is Recommendation.GenericTip -> stringResource(GENERIC_TIP_RES_IDS[recommendation.tipIndex])
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(AccentSurfaceSelected)
+            .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
+            .padding(Dimens.CardPaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(text = stringResource(R.string.recommendation_title), style = MaterialTheme.typography.labelLarge, color = Accent)
+        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = TextBody)
     }
 }
 
