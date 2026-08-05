@@ -913,3 +913,66 @@ independently re-fetched the same Maven Central jars and re-ran `ProgramTransfer
 
 ### Push
 Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 18 — Muscle-group workload + exercise-type distribution charts (features #8, #9)
+
+Second of the three remaining "do it all" gates.
+
+### What was built
+- `domain/WorkoutComposition.kt` (new) — `CompletedSet` (a completed set already resolved to a
+  calendar date and joined to its exercise's stable `muscleGroupCode`/`movementType`, mirroring
+  `CompletedSession`'s "repository resolves dates, domain stays pure" split) +
+  `WorkoutCompositionCalculator.muscleGroupWorkload()`/`.movementTypeDistribution()`. The former
+  always returns exactly 6 rows (one per `MuscleGroup`, in enum order) including zero-set groups,
+  so the chart has a stable row set to draw regardless of training habits; the latter returns
+  `MovementTypeDistribution(compoundSets, isolationSets)` with 0-safe `compoundFraction`/
+  `isolationFraction`. An unrecognized classification code is silently excluded (shouldn't happen
+  given how `ExerciseEntity` is seeded, but isn't DB-enforced) rather than crashing a read-only
+  chart. `WorkoutCompositionCalculatorTest.kt` — 7 tests (empty-state zero rows, sum/count
+  correctness, window-exclusion, unrecognized-code exclusion, zero-set fractions, fraction math,
+  window-exclusion for the distribution).
+- `SetLogDao.observeCompletedSetBreakdown()` (new) — joins `set_logs`→`exercises`→`workout_sessions`
+  (same `isDone = 1 AND completedAt IS NOT NULL` filter `observePersonalBests` already uses) to a
+  new `SetBreakdownRow` projection (muscle/movement codes + weight/reps/completedAt).
+- `DiaryRepository.observe()` — added `setLogDao.observeCompletedSetBreakdown()` as a third
+  `combine()` source, maps rows to `CompletedSet`s, and computes both charts over a trailing
+  4-week window (`today.with(MONDAY).minusWeeks(3)` — the same window `DiaryStatsCalculator`'s
+  4-week bar chart already uses, so the two agree on "recent"). `DiaryData` gained
+  `muscleGroupWorkload`/`movementTypeDistribution`; threaded through `DiaryViewModel`/`DiaryUiState`.
+- `domain/ExerciseCategory.kt` — added `MuscleGroup.labelRes(): Int` (display-name lookup), same
+  "enum → string resource" pattern as `util/shortLabelRes`/`longLabelRes`/`Month.labelRes`. This is
+  the first UI consumer of `MuscleGroup`/`MovementType` since Gate 15 added them.
+- `DiaryScreen.kt` — two new cards between the existing weekly-volume bar chart and the
+  personal-bests card: `MuscleGroupWorkloadCard` (one row per muscle group — label, kg value, and a
+  horizontal track/fill bar) and `MovementTypeCard` (Compound vs. Isolation, same track/fill style,
+  set counts). Both reuse the exact `AccentBorder` track / `Accent` fill bar established by the
+  Dashboard's `ProgramProgressBar` (Gate 16) — no new chart primitive invented. Both show a muted
+  empty-state line (reusing the existing empty-state text convention) when the 4-week window has no
+  completed sets at all.
+- New strings (vi + en): `diary_muscle_workload_title/_empty/_kg`, `muscle_group_{chest,back,legs,
+  shoulders,arms,core}`, `diary_movement_type_title/_compound/_isolation/_sets`.
+
+### Scope decisions (documented, not defects)
+- **Muscle-group display names are real per-locale translations, not left Vietnamese-only.**
+  Earlier gates (3–8) deliberately kept `ExerciseEntity`'s free-text `primaryMuscle`/`nameVi`
+  content Vietnamese-only in the English locale (seeded prototype *content*, not UI chrome). The
+  new `MuscleGroup` enum is different: it's this gate's own UI chrome/chart-axis labeling, not
+  seeded content, so it gets a real English translation like `level`/`equipment`-style categorical
+  vocabulary would.
+- **The two new cards share the Diary screen's existing 4-week window**, not "all-time" — keeps the
+  chart meaningful for a currently-active training pattern rather than accumulating forever, and
+  keeps this gate's repository change additive (one more `combine()` source) instead of a second
+  windowing scheme to reconcile.
+
+### Verification
+Standalone `kotlinc` compile of `WorkoutComposition.kt` + `ExerciseCategory.kt` (with hand-written
+`androidx.annotation.StringRes` and a minimal `R.string` stub, same "annotation shapes only"
+approach Room stubs already use) + `DashboardStats(Calculator).kt` + `DiaryStatsCalculator.kt` +
+the touched entities/DAOs + the full rewritten `DiaryRepository.kt` — clean, no errors. Ran
+`WorkoutCompositionCalculatorTest.kt` standalone: **7/7 pass**. `DiaryViewModel.kt`/`DiaryScreen.kt`
+(real `androidx.lifecycle`/Compose) verified by manual read-through — confirmed both new cards'
+`.weight(1f)` calls (inside `WeeklyVolumeCard`, unrelated to this gate but re-checked while in the
+file) are still valid direct-`Row`/`Column`-child usage, no stray
+`androidx.compose.foundation.layout.weight` import, and every new string resource referenced from
+Kotlin exists in both `values/strings.xml` and `values-en/strings.xml` (checked by grep, given
+Gate 17's review just caught exactly this class of miss).
