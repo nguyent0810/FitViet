@@ -1009,8 +1009,15 @@ Last of the three remaining "do it all" gates — closes out the full feature-ro
   same tile component — no new UI element.
 - **#5 Muscle-group balance (this week).** `DashboardRepository.observe()` gained a 6th source
   (`setLogDao.observeCompletedSetBreakdown()`, from Gate 18) chained via a 2-flow `.combine()`
-  rather than a 6-argument `combine{}` (kotlinx.coroutines has no typed overload past 5 flows) —
-  computes `WorkoutCompositionCalculator.muscleGroupWorkload()` (already built in Gate 18, reused
+  rather than a 6-argument `combine{}` (kotlinx.coroutines has no typed overload past 5 flows). The
+  5-flow stage's output is a private `Stage1Data(today, stats, kcalToday, featuredProgram,
+  recommendation, settings)` data class — the first version of this (before self-review caught it)
+  returned a nested `Pair<Pair<...>, Pair<Triple<...>, SettingsEntity>>`, which worked but forced
+  the chained `.combine()` to destructure 4 levels deep to reach one field; replaced with the named
+  class before this gate was even sent for independent review, matching the codebase's own
+  established preference for named intermediate holders over positional tuples (`BaseDashboardData`,
+  one stage later in the same file, is exactly this pattern already). Computes
+  `WorkoutCompositionCalculator.muscleGroupWorkload()` (already built in Gate 18, reused
   as-is) windowed to just `today.with(MONDAY)` instead of Gate 18's 4-week window. New
   `MuscleBalanceCard` on the Dashboard — one row per muscle group (label, a thin `Accent`-on-
   `AccentBorder` fill bar, set count), set-count-based rather than Gate 18's volume-based bars, so
@@ -1050,8 +1057,7 @@ Last of the three remaining "do it all" gates — closes out the full feature-ro
 
 ### Verification
 Standalone `kotlinc` compile of `CaloriesCalculator.kt` — clean, **4/4 tests pass**. Standalone
-compile of the full `DashboardRepository.kt` (including the new 6th-source `.combine()` chain with
-nested `Pair`/`Triple` destructuring) against the touched entities/DAOs/domain files — clean, no
+compile of the full `DashboardRepository.kt` (including the new 6th-source `.combine()` chain) against the touched entities/DAOs/domain files — clean, no
 errors; this specifically exercises the trickiest new code in this gate (the 5-flow `combine{}` +
 chained 2-flow `.combine()` splice, since `kotlinx.coroutines.flow.combine` has no typed overload
 past 5 flows) rather than leaving it to manual review alone. Standalone compile of the updated
@@ -1067,5 +1073,17 @@ done), and the `FitVietDatabase` version bump follows the exact `version++` +
 `fallbackToDestructiveMigration()` pattern Gate 15 established (no new migration code needed, matches
 the documented pre-release policy).
 
+**Independent review pass** — **clean**, no bugs found. It independently hand-recomputed the
+calories formula (`5.0 MET × 3.5 × 70kg ÷ 200 = 6.125 kcal/min`; 45 min → 276, matching the test),
+recompiled and re-ran `CaloriesCalculatorTest.kt` on its own build (4/4), traced the (already-fixed)
+`Stage1Data`-based `combine()` chain field-by-field confirming every value lands in the correct
+`BaseDashboardData` slot, confirmed the `showXCard` settings default to `true` on a null-settings
+fallback, confirmed `MuscleBalanceCard`'s fraction math has no real divide-by-zero path (the
+`maxSets > 0` branch guard makes the inner redundant check unreachable-but-harmless), confirmed the
+`FitVietDatabase` version bump (2→3) needs no new `Migration` object under the existing
+destructive-fallback policy, confirmed each of the 3 new `ProfileRepository` toggle functions
+mutates its own matching field (no copy/paste cross-wiring), and confirmed all new string keys
+exist in both locale files with matching placeholder types.
+
 ### Push
-Pending independent review.
+Reviewed, no further fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
