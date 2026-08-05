@@ -23,4 +23,7 @@ interface ProgramDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(programs: List<ProgramEntity>)
+
+    @Insert
+    suspend fun insert(program: ProgramEntity): Long
 }

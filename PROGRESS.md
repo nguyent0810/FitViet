@@ -821,3 +821,82 @@ flat tabs.
 **Not yet scoped into a gate** (raised as candidates along the way, not requested yet):
 - A real create-post flow for Community's "+ Đăng bài" (currently static, matching the prototype).
 - Extending Đơn vị (unit) conversion beyond the profile measurement tiles to the workout/dashboard/diary kg figures, if wanted.
+
+## Gate 17 — Program export/import via the Android share sheet (feature #1)
+
+User asked to build out the rest of the roadmap in one push ("làm cả luôn đi nhé, tất tần tật").
+This is the first of the three remaining gates: #1, then #8/#9 (Gate 18), then #12/#5/#10 (Gate 19).
+
+### What was built
+- `domain/ProgramTransfer.kt` (new) — `ProgramTransferData`/`Day`/`Exercise` + `ProgramTransfer.encode`/`decode`,
+  a pure JSON codec (using `org.json`, same library `Converters.kt` already uses — no new dependency)
+  for a program's real weekly schedule. Exercises are identified by `nameVi` text, not a database
+  id — ids aren't portable across separate installs' databases. `decode` returns null (rather than
+  throwing) for anything malformed: invalid JSON, a missing/mismatched format tag, missing fields,
+  or a `dayOfWeek` outside 1..7 — the last one specifically guards against a value that would
+  otherwise crash later at `DayOfWeek.of()` inside `ProgramScheduleCalculator.build` once the bad
+  row reached the schedule screen. `ProgramTransferTest.kt` — 6 tests (round-trip, garbage input,
+  wrong format tag, out-of-range day, missing required field, zero-day program).
+- `ProgramDao.insert(program): Long` (new single-row insert; `insertAll` already existed for seeding).
+- `ProgramRepository.exportProgram(programId): String?` — loads the program + its already-built
+  schedule (via the existing `observeSchedule`, `.first()`) and encodes it; null if the program or
+  its schedule doesn't exist yet (same "empty until backfilled" case `observeSchedule` already has).
+  `ProgramRepository.importProgram(json): ImportProgramResult` — decodes, inserts a **brand new**
+  program (never overwrites an existing one — there's no reliable cross-install identity to match
+  against), resolves each transfer exercise's name against this device's own exercise library, and
+  drops (not fails) any exercise name that doesn't match — `ImportProgramResult.Success` reports
+  which names were skipped so the UI can tell the user, matching this app's existing
+  library-driven-content convention (e.g. Gate 15's no-equipment-program note).
+- `WeeklyScheduleScreen.kt` — a new "Chia sẻ" button next to the existing back button (only shown
+  once the schedule has loaded), builds an `Intent.ACTION_SEND` (`text/plain`, `EXTRA_TEXT` = the
+  JSON) wrapped in `Intent.createChooser` — the real Android share sheet, so the user can send it to
+  any app (Messages, Email, Drive, Notes, etc.) or a contact.
+- `ProgramsListScreen.kt` — a new "+ Nhập" button next to the screen title, opens
+  `ActivityResultContracts.GetContent("*/*")` (the standard system file/content picker — already a
+  dependency via `activity-compose`, no new one added), reads the picked file's text off
+  `Dispatchers.IO`, and calls through to `importProgram`. Result (success/skipped-count/invalid
+  format/read error) shown as a dismiss-on-tap message card reusing the exact
+  `AccentSurfaceSelected`/`AccentBorder` hint-card style already established by
+  `DiaryScreen.DayHintCard`/`WeeklyScheduleScreen.ScheduleHintCard` — no new UI paradigm (no
+  Snackbar/Toast) introduced.
+- New strings (vi + en): `schedule_export_button`, `schedule_export_chooser_title`,
+  `programs_import_button`, `programs_import_success[_with_skipped]`, `programs_import_invalid`,
+  `programs_import_read_error`.
+
+### Scope decisions (documented, not defects)
+- **Import via the system file/content picker, not a registered `ACTION_SEND` receive-intent-filter.**
+  Both are legitimate readings of "via the share sheet." A receive-intent-filter (so FitViet appears
+  in *other* apps' own share menus) would need `AndroidManifest` changes, `MainActivity.onNewIntent`
+  handling, and single-top launch-mode reasoning — real Activity-lifecycle surface this environment
+  cannot exercise on a device to catch subtle bugs in, and higher blast radius if wrong (manifest
+  intent-filters affect how the OS routes intents system-wide). The document-picker approach is a
+  standard, self-contained Compose `ActivityResultContracts` call with no manifest/lifecycle changes
+  and pairs naturally with export (share to any app, including ones like Files/Drive that let the
+  user pick a save location the picker can later browse back to). Reopening the receive-intent-filter
+  path is straightforward later if wanted.
+- **Import always creates a new program, never merges/overwrites.** There's no stable identity to
+  match an imported program against an existing one across two different installs' databases —
+  silently overwriting by title text would risk clobbering a same-named program that happens to be
+  different content.
+
+### Verification
+Same environment constraints as every prior gate (no Gradle/Android SDK/AndroidX artifacts
+reachable). This gate needed `org.json` for real (not just as a `Converters.kt` passthrough) — the
+Android framework ships it, but nothing does on a bare JDK. Fetched the real `org.json:json`
+reference-implementation jar (and `org.jetbrains.annotations`, needed by the Kotlin backend's
+codegen) directly from Maven Central (`repo1.maven.org`, reachable from this environment unlike
+`dl.google.com`/`maven.google.com`) rather than hand-stubbing JSON parsing — using the real library
+means `ProgramTransferTest`'s malformed-input cases exercise real `JSONException` behavior, not an
+approximation of it.
+
+Standalone `kotlinc` compile of `ProgramTransfer.kt` + `ProgramSchedule.kt` + the program/exercise
+entities and DAOs (including the new `ProgramDao.insert`) + the full rewritten `ProgramRepository.kt`
+— clean, no errors, confirming the repository-layer wiring (not just the pure codec) compiles. Ran
+`ProgramTransferTest.kt` standalone: **6/6 pass**. The Compose UI layer (`WeeklyScheduleScreen.kt`,
+`ProgramsListScreen.kt`, `WeeklyScheduleViewModel.kt`, `ProgramsViewModel.kt`) verified by manual
+read-through, same limitation as every prior gate — confirmed `activity-compose` (already a
+dependency) is sufficient for `ActivityResultContracts`/`rememberLauncherForActivityResult`, no
+stray `androidx.compose.foundation.layout.weight` import, `strings.xml`/`values-en/strings.xml`
+both well-formed XML (checked with a real XML parser — no `aapt2` binary available in this
+environment to do the real resource-compile check Gate 14 established, since that was run in a
+different environment with Android Studio installed).

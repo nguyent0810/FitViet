@@ -60,6 +60,10 @@ class WeeklyScheduleViewModel(
 
     fun setAsActiveProgram() = viewModelScope.launch { repository.setActiveProgram(programId) }
 
+    /** Feature #1 — the JSON text to share via the Android share sheet, or null if this program's
+     * schedule isn't available yet (see [ProgramRepository.exportProgram]). */
+    suspend fun exportScheduleText(): String? = repository.exportProgram(programId)
+
     class Factory(private val programId: Long, private val repository: ProgramRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =

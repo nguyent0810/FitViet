@@ -1,5 +1,7 @@
 package com.fitviet.app.ui.programs
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,10 +24,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,17 +41,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
+import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.ui.theme.Accent
+import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentBorderAlt
+import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
+import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ProgramsListScreen(
@@ -52,6 +67,35 @@ fun ProgramsListScreen(
     onExerciseClick: (ExerciseEntity) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var importMessage by remember { mutableStateOf<String?>(null) }
+    val readErrorText = stringResource(R.string.programs_import_read_error)
+    val invalidFormatText = stringResource(R.string.programs_import_invalid)
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val text = withContext(Dispatchers.IO) {
+                runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }
+                    .getOrNull()
+            }
+            importMessage = when {
+                text == null -> readErrorText
+                else -> when (val result = viewModel.importProgram(text)) {
+                    is ImportProgramResult.Success -> if (result.skippedExerciseNames.isEmpty()) {
+                        context.getString(R.string.programs_import_success, result.titleVi)
+                    } else {
+                        context.getString(
+                            R.string.programs_import_success_with_skipped,
+                            result.titleVi,
+                            result.skippedExerciseNames.size,
+                        )
+                    }
+                    ImportProgramResult.InvalidFormat -> invalidFormatText
+                }
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -61,7 +105,19 @@ fun ProgramsListScreen(
         verticalArrangement = Arrangement.spacedBy(13.dp),
     ) {
         item {
-            Text(text = stringResource(R.string.programs_title), style = MaterialTheme.typography.headlineMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = stringResource(R.string.programs_title), style = MaterialTheme.typography.headlineMedium)
+                ImportButton(onClick = { importLauncher.launch("*/*") })
+            }
+        }
+        importMessage?.let { message ->
+            item {
+                ImportMessageCard(message = message, onDismiss = { importMessage = null })
+            }
         }
         item {
             SearchField(query = uiState.searchQuery, onQueryChange = viewModel::onSearchQueryChange)
@@ -95,6 +151,39 @@ fun ProgramsListScreen(
                 ProgramCard(program = program, onClick = { onProgramClick(program) })
             }
         }
+    }
+}
+
+@Composable
+private fun ImportButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clip(MaterialTheme.shapes.small)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = stringResource(R.string.programs_import_button), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+    }
+}
+
+@Composable
+private fun ImportMessageCard(message: String, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .background(AccentSurfaceSelected)
+            .border(1.dp, AccentBorder, MaterialTheme.shapes.small)
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = message, style = MaterialTheme.typography.bodySmall, color = TextBody, modifier = Modifier.weight(1f))
     }
 }
 

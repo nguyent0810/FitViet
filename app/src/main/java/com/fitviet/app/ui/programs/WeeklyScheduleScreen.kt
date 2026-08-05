@@ -1,5 +1,6 @@
 package com.fitviet.app.ui.programs
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,9 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,6 +44,7 @@ import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.shortLabelRes
 import java.time.DayOfWeek
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun WeeklyScheduleScreen(
@@ -49,6 +53,9 @@ fun WeeklyScheduleScreen(
     onStartToday: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val shareChooserTitle = stringResource(R.string.schedule_export_chooser_title)
 
     Column(
         modifier = Modifier
@@ -58,9 +65,27 @@ fun WeeklyScheduleScreen(
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BackRow(onBack = onBack)
-
         val program = uiState.program
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            BackRow(onBack = onBack)
+            if (uiState.schedule.isNotEmpty()) {
+                ExportButton(
+                    onClick = {
+                        scope.launch {
+                            val json = viewModel.exportScheduleText() ?: return@launch
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, json)
+                                putExtra(Intent.EXTRA_SUBJECT, program?.titleVi.orEmpty())
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, shareChooserTitle))
+                        }
+                    },
+                )
+            }
+        }
+
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = stringResource(R.string.schedule_title), style = MaterialTheme.typography.headlineMedium)
             if (program != null) {
@@ -113,6 +138,22 @@ private fun BackRow(onBack: () -> Unit) {
             Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
         }
         Text(text = stringResource(R.string.nav_programs), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+    }
+}
+
+@Composable
+private fun ExportButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clip(MaterialTheme.shapes.small)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = stringResource(R.string.schedule_export_button), style = MaterialTheme.typography.labelLarge, color = TextMuted)
     }
 }
 

@@ -109,6 +109,11 @@
     <string name="programs_card_meta">%1$d weeks · %2$d sessions/week · %3$s · %4$s</string>
     <string name="programs_empty">No matching programs found</string>
     <string name="programs_exercises_section">Exercises</string>
+    <string name="programs_import_button">+ Import</string>
+    <string name="programs_import_success">Imported program \"%1$s\".</string>
+    <string name="programs_import_success_with_skipped">Imported program \"%1$s\" (%2$d exercises not in your library were skipped).</string>
+    <string name="programs_import_invalid">This file isn\'t a valid FitViet program export.</string>
+    <string name="programs_import_read_error">Couldn\'t read the selected file.</string>
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Your weekly schedule</string>

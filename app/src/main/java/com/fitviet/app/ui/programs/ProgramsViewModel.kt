@@ -8,6 +8,7 @@ import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.ExerciseRepository
+import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.data.repository.ProgramRepository
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +38,7 @@ data class ProgramsUiState(
 )
 
 class ProgramsViewModel(
-    programRepository: ProgramRepository,
+    private val programRepository: ProgramRepository,
     exerciseRepository: ExerciseRepository,
     databaseReady: Deferred<Unit>,
 ) : ViewModel() {
@@ -83,6 +84,10 @@ class ProgramsViewModel(
     fun onFilterSelected(index: Int) {
         selectedFilterIndex.value = index
     }
+
+    /** Feature #1 — parses [json] (read from a user-picked file) as a FitViet program export and
+     * inserts it as a new program if valid. See [ProgramRepository.importProgram]. */
+    suspend fun importProgram(json: String): ImportProgramResult = programRepository.importProgram(json)
 
     class Factory(
         private val programRepository: ProgramRepository,
