@@ -52,6 +52,19 @@ class ProgramTransferTest {
     }
 
     @Test
+    fun `decode rejects duplicate day-of-week values`() {
+        // Would otherwise violate ProgramDayEntity's unique (programId, dayOfWeek) index mid-import.
+        val bad = """
+            {"format":"fitviet-program-v1","titleVi":"x","durationWeeks":1,"sessionsPerWeek":1,
+             "level":"l","equipment":"e","days":[
+               {"dayOfWeek":1,"titleVi":"a","isRestDay":false,"exercises":[]},
+               {"dayOfWeek":1,"titleVi":"b","isRestDay":false,"exercises":[]}
+             ]}
+        """.trimIndent()
+        assertNull(ProgramTransfer.decode(bad))
+    }
+
+    @Test
     fun `decode rejects JSON missing a required field`() {
         val bad = """{"format":"fitviet-program-v1","titleVi":"x","days":[]}"""
         assertNull(ProgramTransfer.decode(bad))

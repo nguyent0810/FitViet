@@ -77,7 +77,11 @@ fun WeeklyScheduleScreen(
                             val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, json)
-                                putExtra(Intent.EXTRA_SUBJECT, program?.titleVi.orEmpty())
+                                // program can still be null here if this screen's separate program
+                                // load hasn't resolved yet even though the schedule already has (see
+                                // WeeklyScheduleViewModel) — omit the subject line entirely rather
+                                // than send an empty one.
+                                program?.titleVi?.let { putExtra(Intent.EXTRA_SUBJECT, it) }
                             }
                             context.startActivity(Intent.createChooser(sendIntent, shareChooserTitle))
                         }

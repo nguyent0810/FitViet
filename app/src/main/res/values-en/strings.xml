@@ -126,6 +126,8 @@
     <string name="schedule_set_active">Set as current program</string>
     <string name="schedule_active_badge">✓ Your current program</string>
     <string name="schedule_empty">No detailed schedule for this program yet</string>
+    <string name="schedule_export_button">Share</string>
+    <string name="schedule_export_chooser_title">Share program</string>
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Restart</string>
@@ -212,6 +214,21 @@
     <string name="diary_recent_title">Recent sessions</string>
     <string name="diary_recent_empty">No sessions yet</string>
     <string name="diary_recent_meta">%1$s min · %2$s kg</string>
+
+    <!-- Muscle-group workload + movement-type distribution (features #8/#9) -->
+    <string name="diary_muscle_workload_title">Workload by muscle group (4 weeks)</string>
+    <string name="diary_muscle_workload_empty">No sessions in the last 4 weeks</string>
+    <string name="diary_muscle_workload_kg">%1$s kg</string>
+    <string name="muscle_group_chest">Chest</string>
+    <string name="muscle_group_back">Back</string>
+    <string name="muscle_group_legs">Legs</string>
+    <string name="muscle_group_shoulders">Shoulders</string>
+    <string name="muscle_group_arms">Arms</string>
+    <string name="muscle_group_core">Core</string>
+    <string name="diary_movement_type_title">Exercise type (4 weeks)</string>
+    <string name="diary_movement_type_compound">Compound</string>
+    <string name="diary_movement_type_isolation">Isolation</string>
+    <string name="diary_movement_type_sets">%1$d sets</string>
 
     <!-- Workout calendar (Diary extension, feature 4) -->
     <string name="calendar_title">Workout calendar</string>

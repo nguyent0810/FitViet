@@ -1,5 +1,6 @@
 package com.fitviet.app.ui.diary
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,7 +34,10 @@ import com.fitviet.app.R
 import com.fitviet.app.data.local.dao.PersonalBestRow
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.domain.DayVolume
+import com.fitviet.app.domain.MovementTypeDistribution
+import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.WeekVolume
+import com.fitviet.app.domain.labelRes
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -100,6 +104,8 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
         DayStrip(last7Days = uiState.last7Days, selectedIndex = uiState.selectedDayIndex, onSelect = viewModel::selectDay)
         DayHintCard(day = uiState.last7Days.getOrNull(uiState.selectedDayIndex), sessions = uiState.allCompletedSessions)
         WeeklyVolumeCard(last4Weeks = uiState.last4Weeks, selectedIndex = uiState.selectedWeekIndex, onSelect = viewModel::selectWeek)
+        MuscleGroupWorkloadCard(workload = uiState.muscleGroupWorkload)
+        MovementTypeCard(distribution = uiState.movementTypeDistribution)
         PersonalBestsCard(personalBests = uiState.personalBests)
         RecentSessionsCard(sessions = uiState.recentSessions)
     }
@@ -260,6 +266,99 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
 }
 
 private fun LocalDate.isoWeekNumber(): Int = this.get(WeekFields.ISO.weekOfWeekBasedYear())
+
+@Composable
+private fun MuscleGroupWorkloadCard(workload: List<MuscleGroupWorkload>) {
+    val maxVolume = workload.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 0.0
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(Dimens.CardPaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = stringResource(R.string.diary_muscle_workload_title), style = MaterialTheme.typography.titleSmall)
+        if (maxVolume <= 0.0) {
+            Text(text = stringResource(R.string.diary_muscle_workload_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                workload.forEach { entry ->
+                    val fraction = (entry.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(text = stringResource(entry.muscleGroup.labelRes()), style = MaterialTheme.typography.labelLarge, color = TextBody)
+                            Text(
+                                text = stringResource(R.string.diary_muscle_workload_kg, formatVi(entry.volumeKg)),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = TextMuted,
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                                .background(AccentBorder),
+                        ) {
+                            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction).background(Accent))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MovementTypeCard(distribution: MovementTypeDistribution) {
+    val hasSets = distribution.compoundSets + distribution.isolationSets > 0
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(Dimens.CardPaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = stringResource(R.string.diary_movement_type_title), style = MaterialTheme.typography.titleSmall)
+        if (!hasSets) {
+            Text(text = stringResource(R.string.diary_muscle_workload_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        } else {
+            MovementTypeRow(
+                labelRes = R.string.diary_movement_type_compound,
+                sets = distribution.compoundSets,
+                fraction = distribution.compoundFraction,
+            )
+            MovementTypeRow(
+                labelRes = R.string.diary_movement_type_isolation,
+                sets = distribution.isolationSets,
+                fraction = distribution.isolationFraction,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MovementTypeRow(@StringRes labelRes: Int, sets: Int, fraction: Float) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = stringResource(labelRes), style = MaterialTheme.typography.labelLarge, color = TextBody)
+            Text(text = stringResource(R.string.diary_movement_type_sets, sets), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(AccentBorder),
+        ) {
+            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(Accent))
+        }
+    }
+}
 
 @Composable
 private fun PersonalBestsCard(personalBests: List<PersonalBestRow>) {

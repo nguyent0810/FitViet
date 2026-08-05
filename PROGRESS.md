@@ -900,3 +900,16 @@ stray `androidx.compose.foundation.layout.weight` import, `strings.xml`/`values-
 both well-formed XML (checked with a real XML parser — no `aapt2` binary available in this
 environment to do the real resource-compile check Gate 14 established, since that was run in a
 different environment with Android Studio installed).
+
+**Independent review pass** (general-purpose-agent stand-in, same as every prior gate). It
+independently re-fetched the same Maven Central jars and re-ran `ProgramTransferTest.kt` itself
+(confirmed 6/6 on its own build). Findings, all fixed as a follow-up:
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High) | `ProgramRepository.importProgram` inserted `ProgramEntity` → `ProgramDayEntity` → `ProgramExerciseEntity` with no transaction. A crafted/corrupted file with two days sharing a `dayOfWeek` would decode successfully (only the 1..7 range was checked) but then violate `ProgramDayEntity`'s unique `(programId, dayOfWeek)` index on the second insert — throwing uncaught out of the `ViewModel`/`Composable` coroutine (crashing the app) and leaving an orphaned half-imported program in the DB with no error shown to the user. | Threaded `FitVietDatabase` into `ProgramRepository` and wrapped the whole insert sequence in `database.withTransaction { }` (same pattern `DatabaseSeeder` already uses); `ProgramTransfer.decode()` now also rejects duplicate `dayOfWeek` values outright, so the constraint violation this depended on can no longer occur in the first place. Added a 7th test (`ProgramTransferTest`) covering the duplicate-day rejection; re-ran standalone — **7/7 pass**, and re-compiled `ProgramRepository.kt` clean against a Room stub exposing `withTransaction`. |
+| 2 (Low) | `values-en/strings.xml` was missing `schedule_export_button`/`schedule_export_chooser_title` — an English-locale user would see the Vietnamese "Chia sẻ" text on the export button. | Added both keys to `values-en/strings.xml`; re-checked both locale files parse as well-formed XML. |
+| 3 (Low) | `WeeklyScheduleViewModel.program` resolves via a separate `init{}` suspend read, independent of the `schedule` Flow in the same `combine()` — so the export button (gated only on `schedule.isNotEmpty()`) could show while `program` is still null, sending a share intent with an empty subject line. | Export intent now omits `EXTRA_SUBJECT` entirely when `program` is still null, instead of sending an empty string. |
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.

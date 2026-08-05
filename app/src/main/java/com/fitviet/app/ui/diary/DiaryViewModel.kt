@@ -7,6 +7,8 @@ import com.fitviet.app.data.local.dao.PersonalBestRow
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.data.repository.DiaryRepository
 import com.fitviet.app.domain.DayVolume
+import com.fitviet.app.domain.MovementTypeDistribution
+import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.WeekVolume
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +28,8 @@ data class DiaryUiState(
     val recentSessions: List<WorkoutSessionEntity> = emptyList(),
     val selectedDayIndex: Int = 6,
     val selectedWeekIndex: Int = 3,
+    val muscleGroupWorkload: List<MuscleGroupWorkload> = emptyList(),
+    val movementTypeDistribution: MovementTypeDistribution = MovementTypeDistribution(0, 0),
 )
 
 class DiaryViewModel(repository: DiaryRepository) : ViewModel() {
@@ -45,6 +49,8 @@ class DiaryViewModel(repository: DiaryRepository) : ViewModel() {
             recentSessions = data.completedSessions.take(RECENT_SESSIONS_DISPLAY_LIMIT),
             selectedDayIndex = dayIndex.coerceIn(0, (data.last7Days.size - 1).coerceAtLeast(0)),
             selectedWeekIndex = weekIndex.coerceIn(0, (data.last4Weeks.size - 1).coerceAtLeast(0)),
+            muscleGroupWorkload = data.muscleGroupWorkload,
+            movementTypeDistribution = data.movementTypeDistribution,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DiaryUiState())
 

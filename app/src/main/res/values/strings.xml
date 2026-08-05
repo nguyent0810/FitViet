@@ -215,6 +215,21 @@
     <string name="diary_recent_empty">Chưa có buổi tập nào</string>
     <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
+    <!-- Muscle-group workload + movement-type distribution (features #8/#9) -->
+    <string name="diary_muscle_workload_title">Khối lượng theo nhóm cơ (4 tuần)</string>
+    <string name="diary_muscle_workload_empty">Chưa có buổi tập nào trong 4 tuần qua</string>
+    <string name="diary_muscle_workload_kg">%1$s kg</string>
+    <string name="muscle_group_chest">Ngực</string>
+    <string name="muscle_group_back">Lưng</string>
+    <string name="muscle_group_legs">Chân</string>
+    <string name="muscle_group_shoulders">Vai</string>
+    <string name="muscle_group_arms">Tay</string>
+    <string name="muscle_group_core">Bụng</string>
+    <string name="diary_movement_type_title">Loại bài tập (4 tuần)</string>
+    <string name="diary_movement_type_compound">Bài tổng hợp (Compound)</string>
+    <string name="diary_movement_type_isolation">Bài cô lập (Isolation)</string>
+    <string name="diary_movement_type_sets">%1$d set</string>
+
     <!-- Workout calendar (Diary extension, feature 4) -->
     <string name="calendar_title">Lịch tập luyện</string>
     <string name="calendar_open_button">Lịch</string>

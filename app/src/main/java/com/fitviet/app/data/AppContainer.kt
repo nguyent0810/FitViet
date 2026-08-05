@@ -27,6 +27,7 @@ class AppContainer(context: Context) {
     val database: FitVietDatabase = FitVietDatabase.getInstance(context)
     val onboardingRepository = OnboardingRepository(database.settingsDao())
     val programRepository = ProgramRepository(
+        database = database,
         programDao = database.programDao(),
         programDayDao = database.programDayDao(),
         programExerciseDao = database.programExerciseDao(),

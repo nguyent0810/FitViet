@@ -113,7 +113,10 @@ object ProgramTransfer {
                     )
                 }
             }
-            if (days.any { it.dayOfWeek !in 1..7 }) {
+            val dayOfWeekValues = days.map { it.dayOfWeek }
+            if (dayOfWeekValues.any { it !in 1..7 } || dayOfWeekValues.size != dayOfWeekValues.distinct().size) {
+                // Out-of-range values would crash later at DayOfWeek.of(); duplicates would violate
+                // ProgramDayEntity's unique (programId, dayOfWeek) index mid-import.
                 null
             } else {
                 ProgramTransferData(

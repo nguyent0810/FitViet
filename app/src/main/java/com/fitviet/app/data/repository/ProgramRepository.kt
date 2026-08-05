@@ -1,5 +1,7 @@
 package com.fitviet.app.data.repository
 
+import androidx.room.withTransaction
+import com.fitviet.app.data.local.FitVietDatabase
 import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
@@ -32,6 +34,7 @@ sealed interface ImportProgramResult {
 }
 
 class ProgramRepository(
+    private val database: FitVietDatabase,
     private val programDao: ProgramDao,
     private val programDayDao: ProgramDayDao,
     private val programExerciseDao: ProgramExerciseDao,
@@ -97,47 +100,53 @@ class ProgramRepository(
      * device's own library; unmatched ones are dropped from their day (see [ImportProgramResult]). */
     suspend fun importProgram(json: String): ImportProgramResult {
         val data = ProgramTransfer.decode(json) ?: return ImportProgramResult.InvalidFormat
-        val exercisesByName = exerciseDao.getAllOnce().associateBy { it.nameVi }
         val skipped = mutableListOf<String>()
-        val programId = programDao.insert(
-            ProgramEntity(
-                titleVi = data.titleVi,
-                imageAsset = "nhap-giao-an.jpg",
-                durationWeeks = data.durationWeeks,
-                sessionsPerWeek = data.sessionsPerWeek,
-                level = data.level,
-                equipment = data.equipment,
-                tags = emptyList(),
-            ),
-        )
-        data.days.forEach { day ->
-            val dayId = programDayDao.insert(
-                ProgramDayEntity(
-                    programId = programId,
-                    dayOfWeek = day.dayOfWeek,
-                    titleVi = day.titleVi,
-                    isRestDay = day.isRestDay,
+        // All-or-nothing: a decode()-validated file can still fail partway through (e.g. a Room
+        // constraint this method doesn't itself check) — without a transaction that would leave an
+        // orphaned half-imported program with no error surfaced to the user.
+        val programId = database.withTransaction {
+            val exercisesByName = exerciseDao.getAllOnce().associateBy { it.nameVi }
+            val programId = programDao.insert(
+                ProgramEntity(
+                    titleVi = data.titleVi,
+                    imageAsset = "nhap-giao-an.jpg",
+                    durationWeeks = data.durationWeeks,
+                    sessionsPerWeek = data.sessionsPerWeek,
+                    level = data.level,
+                    equipment = data.equipment,
+                    tags = emptyList(),
                 ),
             )
-            val programExercises = day.exercises.mapIndexedNotNull { index, transferExercise ->
-                val exercise = exercisesByName[transferExercise.nameVi]
-                if (exercise == null) {
-                    skipped += transferExercise.nameVi
-                    null
-                } else {
-                    ProgramExerciseEntity(
-                        programDayId = dayId,
-                        exerciseId = exercise.id,
-                        orderIndex = index,
-                        targetSets = transferExercise.targetSets,
-                        targetRepsMin = transferExercise.targetRepsMin,
-                        targetRepsMax = transferExercise.targetRepsMax,
-                    )
+            data.days.forEach { day ->
+                val dayId = programDayDao.insert(
+                    ProgramDayEntity(
+                        programId = programId,
+                        dayOfWeek = day.dayOfWeek,
+                        titleVi = day.titleVi,
+                        isRestDay = day.isRestDay,
+                    ),
+                )
+                val programExercises = day.exercises.mapIndexedNotNull { index, transferExercise ->
+                    val exercise = exercisesByName[transferExercise.nameVi]
+                    if (exercise == null) {
+                        skipped += transferExercise.nameVi
+                        null
+                    } else {
+                        ProgramExerciseEntity(
+                            programDayId = dayId,
+                            exerciseId = exercise.id,
+                            orderIndex = index,
+                            targetSets = transferExercise.targetSets,
+                            targetRepsMin = transferExercise.targetRepsMin,
+                            targetRepsMax = transferExercise.targetRepsMax,
+                        )
+                    }
+                }
+                if (programExercises.isNotEmpty()) {
+                    programExerciseDao.insertAll(programExercises)
                 }
             }
-            if (programExercises.isNotEmpty()) {
-                programExerciseDao.insertAll(programExercises)
-            }
+            programId
         }
         return ImportProgramResult.Success(programId, data.titleVi, skipped.distinct())
     }

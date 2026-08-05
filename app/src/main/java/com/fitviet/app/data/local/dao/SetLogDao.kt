@@ -9,6 +9,16 @@ import kotlinx.coroutines.flow.Flow
 
 data class PersonalBestRow(val exerciseId: Long, val nameVi: String, val maxWeightKg: Double)
 
+/** One completed set joined to its exercise's stable classification codes — feeds
+ * [com.fitviet.app.domain.WorkoutCompositionCalculator] (features #8/#9). */
+data class SetBreakdownRow(
+    val muscleGroupCode: String,
+    val movementType: String,
+    val weightKg: Double,
+    val reps: Int,
+    val completedAt: Long,
+)
+
 @Dao
 interface SetLogDao {
     @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId ORDER BY exerciseOrder, setIndex")
@@ -30,6 +40,18 @@ interface SetLogDao {
         """,
     )
     fun observePersonalBests(limit: Int): Flow<List<PersonalBestRow>>
+
+    @Query(
+        """
+        SELECT e.muscleGroupCode AS muscleGroupCode, e.movementType AS movementType,
+               s.weightKg AS weightKg, s.reps AS reps, w.completedAt AS completedAt
+        FROM set_logs s
+        INNER JOIN exercises e ON e.id = s.exerciseId
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.isDone = 1 AND w.completedAt IS NOT NULL
+        """,
+    )
+    fun observeCompletedSetBreakdown(): Flow<List<SetBreakdownRow>>
 
     @Insert
     suspend fun insert(setLog: SetLogEntity): Long
