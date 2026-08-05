@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -22,11 +21,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
+import com.fitviet.app.ui.exercise.ExerciseMediaBox
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.DeepSurface2
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.OnAccent
@@ -49,7 +48,7 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
                 .padding(horizontal = Dimens.ScreenPaddingHorizontal),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ExerciseMediaPlaceholder(gifAsset = block.exercise.gifAsset)
+            ExerciseMediaBox(exercise = block.exercise, height = 140.dp)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 block.plannedSets.forEachIndexed { index, planned ->
                     val status = when {
@@ -76,21 +75,6 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
                 onClick = viewModel::completeCurrentSet,
             )
         }
-    }
-}
-
-@Composable
-internal fun ExerciseMediaPlaceholder(gifAsset: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp)
-            .clip(MaterialTheme.shapes.large)
-            .background(DeepSurface1)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = "gif: $gifAsset", style = MaterialTheme.typography.labelMedium, color = TextFaint)
     }
 }
 

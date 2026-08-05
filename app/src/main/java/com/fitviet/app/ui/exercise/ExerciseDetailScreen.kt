@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.Image
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,8 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,7 +35,6 @@ import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
@@ -164,46 +160,6 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, isAdded: Boolean, on
                 style = MaterialTheme.typography.titleMedium,
                 color = if (isAdded) Accent else OnAccent,
             )
-        }
-    }
-}
-
-/**
- * Real start/end-position photos when [exercisePhotosFor] has an entry for this exercise (see that
- * file for sourcing/licensing), otherwise the original filename placeholder box.
- */
-@Composable
-private fun ExerciseMediaBox(exercise: ExerciseEntity) {
-    val photos = exercisePhotosFor(exercise.nameVi)
-    if (photos.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(DeepSurface1)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.large),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = "gif: ${exercise.gifAsset}", style = MaterialTheme.typography.labelMedium, color = TextFaint)
-        }
-    } else {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(MaterialTheme.shapes.large)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.large),
-            horizontalArrangement = Arrangement.spacedBy(1.dp),
-        ) {
-            photos.forEach { photoRes ->
-                Image(
-                    painter = painterResource(photoRes),
-                    contentDescription = exercise.nameVi,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.weight(1f).fillMaxSize(),
-                )
-            }
         }
     }
 }
