@@ -991,3 +991,81 @@ Re-ran the standalone compile after the `labelRes()` move: still clean, `Workout
 
 ### Push
 Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 19 — Dashboard widget toggles + muscle-group balance + calories burned (features #12, #5, #10)
+
+Last of the three remaining "do it all" gates — closes out the full feature-roadmap priority list.
+
+### What was built
+- **#10 Calories burned (estimate).** `domain/CaloriesCalculator.kt` — `estimateKcal(durationSeconds)`,
+  a transparent MET-based formula (moderate-effort resistance training, MET ≈ 5.0, standard
+  `kcal/min = MET × 3.5 × bodyweightKg ÷ 200` formula) using a fixed assumed 70kg bodyweight, since
+  the in-progress workout screen has no dependency on the user's logged bodyweight (that lives in
+  `ProfileRepository`/`MeasurementDao`, a separate repository the workout flow doesn't touch) —
+  documented plainly as an approximation, matching the roadmap's own "only ever an estimate" framing.
+  `CaloriesCalculatorTest.kt` — 4 tests (zero, negative-clamped-to-zero, a hand-computed 45-minute
+  value, monotonically-increasing with duration). Shown as a 4th `SummaryTile` on
+  `SessionFinishedContent.kt`'s post-workout summary row (sets/volume/time/kcal), reusing the exact
+  same tile component — no new UI element.
+- **#5 Muscle-group balance (this week).** `DashboardRepository.observe()` gained a 6th source
+  (`setLogDao.observeCompletedSetBreakdown()`, from Gate 18) chained via a 2-flow `.combine()`
+  rather than a 6-argument `combine{}` (kotlinx.coroutines has no typed overload past 5 flows) —
+  computes `WorkoutCompositionCalculator.muscleGroupWorkload()` (already built in Gate 18, reused
+  as-is) windowed to just `today.with(MONDAY)` instead of Gate 18's 4-week window. New
+  `MuscleBalanceCard` on the Dashboard — one row per muscle group (label, a thin `Accent`-on-
+  `AccentBorder` fill bar, set count), set-count-based rather than Gate 18's volume-based bars, so
+  the two "muscle group" cards read as distinct signals (a quick weekly balance glance here vs. a
+  detailed 4-week volume chart on Diary) even though both reuse the identical bar-chart visual
+  language and the same underlying pure calculator.
+- **#12 Dashboard widget visibility toggles.** `SettingsEntity` gained
+  `showRecommendationCard`/`showMuscleBalanceCard`/`showNutritionCard` (all default `true`) — a
+  real schema change, so `FitVietDatabase` bumped `version = 2 → 3` (destructive-fallback policy
+  from Gate 15 applies again: existing installs get reseeded on next launch, expected/documented,
+  not a bug). `ProfileRepository`/`ProfileViewModel` gained matching toggle functions.
+  `ProfileScreen.kt`'s new `DashboardWidgetsCard` (a second settings-style card, right below the
+  existing `SettingsCard`) lists the 3 toggles using the exact same `SettingsRow`
+  tap-to-cycle/Bật-Tắt pattern the language/offline/units rows already use — reused the
+  `profile_offline_on`/`_off` ("Bật"/"Tắt") strings directly rather than adding duplicate generic
+  on/off strings. `DashboardScreen.kt` wraps `RecommendationCard`/`MuscleBalanceCard`/`NutritionCard`
+  in `if (uiState.showXCard)` checks; the hero card, stat tiles, and weekly-volume chart are always
+  shown (core content, not optional widgets, per the roadmap's own framing).
+- New strings (vi + en): `workout_stat_kcal`, `dashboard_muscle_balance_title/_empty/_sets`,
+  `profile_widgets_title`, `profile_widget_{recommendation,muscle_balance,nutrition}`.
+
+### Scope decisions (documented, not defects)
+- **Calories-burned uses a fixed assumed bodyweight, not the user's own logged weight.** Wiring the
+  workout flow to the user's latest `MeasurementEntity` would mean threading `ProfileRepository`
+  (or just `MeasurementDao`) into `WorkoutViewModel`/`AppContainer.workoutRepository`'s construction
+  chain — a real new cross-repository dependency for a value that's already only a rough estimate
+  either way. Kept the formula self-contained (no new repository wiring) as the more honest,
+  clearly-scoped version of "an estimate," same spirit as Gate 8's "kg stays kg, no half-finished
+  conversion" call.
+- **#5 and #8 (Gate 18) are deliberately two different metrics over two different windows**, not a
+  copy-pasted card in two places — documented above. If this reads as redundant to the user later,
+  consolidating them into a single shared component would be a straightforward follow-up.
+- **Widget toggles cover only the 3 truly optional Dashboard cards.** The hero card (with its
+  progress bar), stat tiles row, and 7-day volume chart are the screen's core content per every
+  prior gate's own framing of the Dashboard — not offered as togglable, matching the roadmap note's
+  own "widget visibility" framing (optional add-ons, not the primary content).
+
+### Verification
+Standalone `kotlinc` compile of `CaloriesCalculator.kt` — clean, **4/4 tests pass**. Standalone
+compile of the full `DashboardRepository.kt` (including the new 6th-source `.combine()` chain with
+nested `Pair`/`Triple` destructuring) against the touched entities/DAOs/domain files — clean, no
+errors; this specifically exercises the trickiest new code in this gate (the 5-flow `combine{}` +
+chained 2-flow `.combine()` splice, since `kotlinx.coroutines.flow.combine` has no typed overload
+past 5 flows) rather than leaving it to manual review alone. Standalone compile of the updated
+`ProfileRepository.kt` (with its 3 new toggle functions) — clean. `ProfileScreen.kt`/
+`ProfileViewModel.kt`/`DashboardScreen.kt`/`DashboardViewModel.kt`/`SessionFinishedContent.kt` (real
+`androidx.lifecycle`/Compose) verified by manual read-through — confirmed the new `DashboardWidgetsCard`
+correctly reuses the private `SettingsRow` composable already in `ProfileScreen.kt`, no stray
+`androidx.compose.foundation.layout.weight` import anywhere in the touched files (grepped the whole
+`ui/` tree), every new string resource exists in both `values/strings.xml` and `values-en/strings.xml`
+with matching placeholder types (checked by grep — Gate 17's review caught exactly this class of
+miss, so this is now a standing check every gate touching `strings.xml` runs before calling itself
+done), and the `FitVietDatabase` version bump follows the exact `version++` +
+`fallbackToDestructiveMigration()` pattern Gate 15 established (no new migration code needed, matches
+the documented pre-release policy).
+
+### Push
+Pending independent review.

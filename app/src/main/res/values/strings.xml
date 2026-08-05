@@ -77,6 +77,9 @@
     <string name="dashboard_stat_volume_this_week">Tổng kg tuần</string>
     <string name="dashboard_weekly_volume_title">Khối lượng 7 ngày</string>
     <string name="dashboard_bar_rest">Nghỉ</string>
+    <string name="dashboard_muscle_balance_title">Cân bằng nhóm cơ tuần này</string>
+    <string name="dashboard_muscle_balance_empty">Chưa có buổi tập nào tuần này</string>
+    <string name="dashboard_muscle_balance_sets">%1$d set</string>
     <string name="dashboard_nutrition_title">Dinh dưỡng hôm nay</string>
     <string name="dashboard_nutrition_progress">%1$s / %2$s kcal</string>
     <string name="dashboard_no_program_title">Chưa có giáo án</string>
@@ -145,6 +148,7 @@
     <string name="workout_stat_sets">Set</string>
     <string name="workout_stat_volume">Tổng kg</string>
     <string name="workout_stat_time">Thời gian</string>
+    <string name="workout_stat_kcal">Kcal (ước tính)</string>
     <string name="workout_next_exercise">Bài tiếp theo: %1$s →</string>
     <string name="workout_finish_session">Hoàn tất buổi tập</string>
     <string name="workout_session_finished_title">BUỔI TẬP\nHOÀN THÀNH</string>
@@ -287,6 +291,10 @@
     <string name="profile_settings_units">Đơn vị</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_widgets_title">Widget Trang chủ</string>
+    <string name="profile_widget_recommendation">Gợi ý hôm nay</string>
+    <string name="profile_widget_muscle_balance">Cân bằng nhóm cơ</string>
+    <string name="profile_widget_nutrition">Dinh dưỡng</string>
     <string name="profile_donate_title">Ứng dụng miễn phí 100%</string>
     <string name="profile_donate_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
     <string name="profile_donate_cta">Ủng hộ dự án</string>

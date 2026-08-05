@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
+import com.fitviet.app.domain.CaloriesCalculator
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.Dimens
@@ -42,6 +43,12 @@ fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit) {
             SummaryTile(value = uiState.sessionTotalSets.toString(), label = stringResource(R.string.workout_stat_sets), accent = true, modifier = Modifier.weight(1f))
             SummaryTile(value = formatVi(uiState.sessionTotalVolumeKg), label = stringResource(R.string.workout_stat_volume), modifier = Modifier.weight(1f))
             SummaryTile(value = formatMinutesSeconds(uiState.sessionElapsedSeconds), label = stringResource(R.string.workout_stat_time), modifier = Modifier.weight(1f))
+            SummaryTile(
+                // Feature #10 — a rough estimate, not a precise measurement; see CaloriesCalculator's doc comment.
+                value = CaloriesCalculator.estimateKcal(uiState.sessionElapsedSeconds).toString(),
+                label = stringResource(R.string.workout_stat_kcal),
+                modifier = Modifier.weight(1f),
+            )
         }
         Text(
             text = stringResource(R.string.workout_session_finished_note),

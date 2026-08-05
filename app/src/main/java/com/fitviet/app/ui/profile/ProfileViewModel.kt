@@ -64,6 +64,12 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     fun toggleDonated() = viewModelScope.launch { repository.toggleDonated() }
 
+    fun toggleShowRecommendationCard() = viewModelScope.launch { repository.toggleShowRecommendationCard() }
+
+    fun toggleShowMuscleBalanceCard() = viewModelScope.launch { repository.toggleShowMuscleBalanceCard() }
+
+    fun toggleShowNutritionCard() = viewModelScope.launch { repository.toggleShowNutritionCard() }
+
     fun openUpdateSheet() {
         editingMeasurement.value = null
         showUpdateSheet.value = true

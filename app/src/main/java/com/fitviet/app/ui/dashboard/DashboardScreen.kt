@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -27,11 +28,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.DayVolume
+import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
@@ -52,6 +55,7 @@ import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatCompactKg
 import com.fitviet.app.util.formatVi
+import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.longLabelRes
 import com.fitviet.app.util.shortLabelRes
 import java.time.LocalDate
@@ -87,19 +91,26 @@ fun DashboardScreen(
             programProgress = uiState.programProgress,
             onStart = if (uiState.featuredProgram != null) onStartWorkout else onBrowsePrograms,
         )
-        uiState.recommendation?.let { RecommendationCard(recommendation = it) }
+        if (uiState.showRecommendationCard) {
+            uiState.recommendation?.let { RecommendationCard(recommendation = it) }
+        }
         StatTilesRow(
             streakDays = uiState.stats.streakDays,
             sessionsThisWeek = uiState.stats.sessionsThisWeek,
             volumeThisWeekKg = uiState.stats.volumeThisWeekKg,
         )
+        if (uiState.showMuscleBalanceCard) {
+            MuscleBalanceCard(workload = uiState.muscleGroupWorkloadThisWeek)
+        }
         WeeklyVolumeCard(
             last7Days = uiState.stats.last7Days,
             selectedIndex = uiState.selectedDayIndex,
             onSelectDay = viewModel::selectDay,
             onOpenDiary = onOpenDiary,
         )
-        NutritionCard(kcalToday = uiState.kcalToday, kcalGoal = uiState.kcalGoal)
+        if (uiState.showNutritionCard) {
+            NutritionCard(kcalToday = uiState.kcalToday, kcalGoal = uiState.kcalGoal)
+        }
     }
 }
 
@@ -276,6 +287,52 @@ private fun RecommendationCard(recommendation: Recommendation) {
     ) {
         Text(text = stringResource(R.string.recommendation_title), style = MaterialTheme.typography.labelLarge, color = Accent)
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = TextBody)
+    }
+}
+
+@Composable
+private fun MuscleBalanceCard(workload: List<MuscleGroupWorkload>) {
+    val maxSets = workload.maxOfOrNull { it.setCount } ?: 0
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(SurfaceCard)
+            .padding(Dimens.CardPaddingSmall),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(text = stringResource(R.string.dashboard_muscle_balance_title), style = MaterialTheme.typography.titleSmall)
+        if (maxSets <= 0) {
+            Text(text = stringResource(R.string.dashboard_muscle_balance_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        } else {
+            workload.forEach { entry ->
+                val fraction = if (maxSets <= 0) 0f else entry.setCount.toFloat() / maxSets
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = stringResource(entry.muscleGroup.labelRes()),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextBody,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.width(64.dp),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(AccentBorder),
+                    ) {
+                        Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(Accent))
+                    }
+                    Text(
+                        text = stringResource(R.string.dashboard_muscle_balance_sets, entry.setCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                    )
+                }
+            }
+        }
     }
 }
 

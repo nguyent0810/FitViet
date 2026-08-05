@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.domain.DashboardStats
+import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
@@ -24,6 +25,10 @@ data class DashboardUiState(
     val nextTraining: NextTraining? = null,
     val programProgress: ProgramProgress? = null,
     val selectedDayIndex: Int = 6,
+    val muscleGroupWorkloadThisWeek: List<MuscleGroupWorkload> = emptyList(),
+    val showRecommendationCard: Boolean = true,
+    val showMuscleBalanceCard: Boolean = true,
+    val showNutritionCard: Boolean = true,
 )
 
 class DashboardViewModel(private val repository: DashboardRepository) : ViewModel() {
@@ -41,6 +46,10 @@ class DashboardViewModel(private val repository: DashboardRepository) : ViewMode
             nextTraining = data.nextTraining,
             programProgress = data.programProgress,
             selectedDayIndex = selected,
+            muscleGroupWorkloadThisWeek = data.muscleGroupWorkloadThisWeek,
+            showRecommendationCard = data.showRecommendationCard,
+            showMuscleBalanceCard = data.showMuscleBalanceCard,
+            showNutritionCard = data.showNutritionCard,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 

@@ -120,6 +120,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             onRangeSelect = viewModel::selectWeightHistoryRange,
         )
         SettingsCard(settings = uiState.settings, viewModel = viewModel)
+        DashboardWidgetsCard(settings = uiState.settings, viewModel = viewModel)
         DonateCard(donated = uiState.settings.hasDonated, onDonateClick = viewModel::toggleDonated)
     }
 
@@ -433,6 +434,52 @@ private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel) 
             showDivider = false,
         )
     }
+}
+
+@Composable
+private fun DashboardWidgetsCard(settings: SettingsEntity, viewModel: ProfileViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+    ) {
+        Text(
+            text = stringResource(R.string.profile_widgets_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = TextMuted,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
+        WidgetToggleRow(
+            label = stringResource(R.string.profile_widget_recommendation),
+            enabled = settings.showRecommendationCard,
+            onClick = viewModel::toggleShowRecommendationCard,
+        )
+        WidgetToggleRow(
+            label = stringResource(R.string.profile_widget_muscle_balance),
+            enabled = settings.showMuscleBalanceCard,
+            onClick = viewModel::toggleShowMuscleBalanceCard,
+        )
+        WidgetToggleRow(
+            label = stringResource(R.string.profile_widget_nutrition),
+            enabled = settings.showNutritionCard,
+            onClick = viewModel::toggleShowNutritionCard,
+            showDivider = false,
+        )
+    }
+}
+
+@Composable
+private fun WidgetToggleRow(label: String, enabled: Boolean, onClick: () -> Unit, showDivider: Boolean = true) {
+    SettingsRow(
+        label = label,
+        value = stringResource(if (enabled) R.string.profile_offline_on else R.string.profile_offline_off),
+        valueColor = if (enabled) Accent else TextMuted,
+        valueBold = true,
+        onClick = onClick,
+        showDivider = showDivider,
+    )
 }
 
 @Composable

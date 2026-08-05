@@ -33,6 +33,11 @@ data class SettingsEntity(
     /** The program the user has chosen as "current" (2b's "Đặt làm giáo án hiện tại"). Null before
      * any explicit choice — the dashboard falls back to the first seeded program in that case. */
     val activeProgramId: Long? = null,
+    /** Feature #12 — per-widget Dashboard visibility toggles, all on by default. The hero card and
+     * the weekly-volume/stat-tile row are always shown (core content, not optional widgets). */
+    val showRecommendationCard: Boolean = true,
+    val showMuscleBalanceCard: Boolean = true,
+    val showNutritionCard: Boolean = true,
 ) {
     companion object {
         const val SINGLETON_ID = 0

@@ -77,6 +77,9 @@
     <string name="dashboard_stat_volume_this_week">Total kg this week</string>
     <string name="dashboard_weekly_volume_title">7-day volume</string>
     <string name="dashboard_bar_rest">Rest</string>
+    <string name="dashboard_muscle_balance_title">Muscle balance this week</string>
+    <string name="dashboard_muscle_balance_empty">No sessions yet this week</string>
+    <string name="dashboard_muscle_balance_sets">%1$d sets</string>
     <string name="dashboard_nutrition_title">Nutrition today</string>
     <string name="dashboard_nutrition_progress">%1$s / %2$s kcal</string>
     <string name="dashboard_no_program_title">No program yet</string>
@@ -145,6 +148,7 @@
     <string name="workout_stat_sets">Sets</string>
     <string name="workout_stat_volume">Total kg</string>
     <string name="workout_stat_time">Time</string>
+    <string name="workout_stat_kcal">Kcal (est.)</string>
     <string name="workout_next_exercise">Next: %1$s →</string>
     <string name="workout_finish_session">Finish workout</string>
     <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
@@ -284,6 +288,10 @@
     <string name="profile_settings_units">Units</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
+    <string name="profile_widgets_title">Dashboard widgets</string>
+    <string name="profile_widget_recommendation">Today's tip</string>
+    <string name="profile_widget_muscle_balance">Muscle balance</string>
+    <string name="profile_widget_nutrition">Nutrition</string>
     <string name="profile_donate_title">100% free app</string>
     <string name="profile_donate_body">No ads, no fees. If the app has been useful, you can chip in to help keep the servers running and fund new features.</string>
     <string name="profile_donate_cta">Support the project</string>

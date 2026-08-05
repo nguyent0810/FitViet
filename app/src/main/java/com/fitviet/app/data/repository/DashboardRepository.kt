@@ -6,18 +6,23 @@ import com.fitviet.app.data.local.dao.MeasurementDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
+import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.CompletedSession
+import com.fitviet.app.domain.CompletedSet
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
+import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.NextTrainingCalculator
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.ProgramScheduleCalculator
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.RecommendationCalculator
+import com.fitviet.app.domain.WorkoutCompositionCalculator
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -40,6 +45,14 @@ data class DashboardData(
      * when there's no featured program at all (see [NextTraining]/[ProgramProgress] docs for the
      * "session count, not per-day tracking" scope note). */
     val programProgress: ProgramProgress?,
+    /** Feature #5 — this week's (Monday-start) set distribution across muscle groups, always 6
+     * entries. A quick "balance" glance, distinct from Diary's #8 chart (that one's a 4-week
+     * volume-based window; this one's set-count-based and scoped to just the current week). */
+    val muscleGroupWorkloadThisWeek: List<MuscleGroupWorkload>,
+    /** Feature #12 — per-widget Dashboard visibility, read straight from [com.fitviet.app.data.local.entity.SettingsEntity]. */
+    val showRecommendationCard: Boolean,
+    val showMuscleBalanceCard: Boolean,
+    val showNutritionCard: Boolean,
 )
 
 /** Everything computable before the active program's schedule is known — kept separate from
@@ -51,6 +64,10 @@ private data class BaseDashboardData(
     val kcalToday: Int,
     val featuredProgram: ProgramEntity?,
     val recommendation: Recommendation,
+    val muscleGroupWorkloadThisWeek: List<MuscleGroupWorkload>,
+    val showRecommendationCard: Boolean,
+    val showMuscleBalanceCard: Boolean,
+    val showNutritionCard: Boolean,
 )
 
 class DashboardRepository(
@@ -62,6 +79,7 @@ class DashboardRepository(
     private val programDayDao: ProgramDayDao,
     private val programExerciseDao: ProgramExerciseDao,
     private val exerciseDao: ExerciseDao,
+    private val setLogDao: SetLogDao,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observe(): Flow<DashboardData> {
@@ -88,17 +106,48 @@ class DashboardRepository(
                 // Falls back to the first seeded program until the user explicitly picks one on
                 // 2b (see ProgramRepository.setActiveProgram) — matches the pre-Gate-15 default.
                 val featuredProgram = programs.firstOrNull { it.id == settings?.activeProgramId } ?: programs.firstOrNull()
+                Pair(
+                    today to stats,
+                    Triple(
+                        featuredProgram,
+                        RecommendationCalculator.compute(
+                            today = today,
+                            last7Days = stats.last7Days,
+                            streakDays = stats.streakDays,
+                            lastMeasurementDate = latestMeasurement?.let { LocalDate.ofEpochDay(it.epochDay) },
+                        ),
+                        meals.sumOf { it.kcal },
+                    ) to (settings ?: com.fitviet.app.data.local.entity.SettingsEntity()),
+                )
+            }
+            // 6th independent source (completed-set breakdown, for feature #5) — chained via a
+            // 2-flow `combine` rather than a 6-arg `combine{}`, which kotlinx.coroutines doesn't
+            // offer a typed overload for.
+            .combine(setLogDao.observeCompletedSetBreakdown()) { (todayAndStats, rest), setBreakdown ->
+                val (today, stats) = todayAndStats
+                val (featuredAndRecommendation, settings) = rest
+                val (featuredProgram, recommendation, kcalToday) = featuredAndRecommendation
+                val completedSets = setBreakdown.map { row ->
+                    CompletedSet(
+                        date = Instant.ofEpochMilli(row.completedAt).atZone(zone).toLocalDate(),
+                        muscleGroupCode = row.muscleGroupCode,
+                        movementType = row.movementType,
+                        volumeKg = row.weightKg * row.reps,
+                    )
+                }
                 BaseDashboardData(
                     today = today,
                     stats = stats,
-                    kcalToday = meals.sumOf { it.kcal },
+                    kcalToday = kcalToday,
                     featuredProgram = featuredProgram,
-                    recommendation = RecommendationCalculator.compute(
-                        today = today,
-                        last7Days = stats.last7Days,
-                        streakDays = stats.streakDays,
-                        lastMeasurementDate = latestMeasurement?.let { LocalDate.ofEpochDay(it.epochDay) },
+                    recommendation = recommendation,
+                    muscleGroupWorkloadThisWeek = WorkoutCompositionCalculator.muscleGroupWorkload(
+                        completedSets,
+                        since = today.with(DayOfWeek.MONDAY),
                     ),
+                    showRecommendationCard = settings.showRecommendationCard,
+                    showMuscleBalanceCard = settings.showMuscleBalanceCard,
+                    showNutritionCard = settings.showNutritionCard,
                 )
             }
         }.flatMapLatest { base ->
@@ -121,6 +170,10 @@ class DashboardRepository(
                     recommendation = base.recommendation,
                     nextTraining = NextTrainingCalculator.findNext(schedule, base.today.dayOfWeek),
                     programProgress = program?.let { ProgramProgress(base.stats.sessionsThisWeek, it.sessionsPerWeek) },
+                    muscleGroupWorkloadThisWeek = base.muscleGroupWorkloadThisWeek,
+                    showRecommendationCard = base.showRecommendationCard,
+                    showMuscleBalanceCard = base.showMuscleBalanceCard,
+                    showNutritionCard = base.showNutritionCard,
                 )
             }
         }

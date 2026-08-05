@@ -48,6 +48,13 @@ class ProfileRepository(
 
     suspend fun toggleDonated() = updateSettings { it.copy(hasDonated = !it.hasDonated) }
 
+    /** Feature #12 — Dashboard widget visibility toggles. */
+    suspend fun toggleShowRecommendationCard() = updateSettings { it.copy(showRecommendationCard = !it.showRecommendationCard) }
+
+    suspend fun toggleShowMuscleBalanceCard() = updateSettings { it.copy(showMuscleBalanceCard = !it.showMuscleBalanceCard) }
+
+    suspend fun toggleShowNutritionCard() = updateSettings { it.copy(showNutritionCard = !it.showNutritionCard) }
+
     suspend fun addMeasurement(weightKg: Double?, chestCm: Double?, waistCm: Double?, armCm: Double?) {
         measurementDao.insert(
             MeasurementEntity(

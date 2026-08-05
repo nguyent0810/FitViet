@@ -46,7 +46,7 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // version bump or an explicit Migration. There are no shipped installs to preserve data for
     // yet, so destructive fallback (wipe + reseed from scratch) is the correct, simplest policy —
     // not a real Migration, which would be premature complexity pre-release.
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
