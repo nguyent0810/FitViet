@@ -10,6 +10,7 @@ import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.ProgramEntity
+import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.CompletedSet
 import com.fitviet.app.domain.DashboardStats
@@ -53,6 +54,19 @@ data class DashboardData(
     val showRecommendationCard: Boolean,
     val showMuscleBalanceCard: Boolean,
     val showNutritionCard: Boolean,
+)
+
+/** Output of the first 5-source `combine{}` below — everything except the completed-set breakdown
+ * (a 6th independent source, chained on via a separate 2-flow `.combine()` since kotlinx.coroutines
+ * has no typed `combine{}` overload past 5 flows). Named fields instead of nested `Pair`/`Triple`
+ * so the chained `.combine()` below can destructure it without a multi-level positional-tuple trace. */
+private data class Stage1Data(
+    val today: LocalDate,
+    val stats: DashboardStats,
+    val kcalToday: Int,
+    val featuredProgram: ProgramEntity?,
+    val recommendation: Recommendation,
+    val settings: SettingsEntity,
 )
 
 /** Everything computable before the active program's schedule is known — kept separate from
@@ -106,27 +120,24 @@ class DashboardRepository(
                 // Falls back to the first seeded program until the user explicitly picks one on
                 // 2b (see ProgramRepository.setActiveProgram) — matches the pre-Gate-15 default.
                 val featuredProgram = programs.firstOrNull { it.id == settings?.activeProgramId } ?: programs.firstOrNull()
-                Pair(
-                    today to stats,
-                    Triple(
-                        featuredProgram,
-                        RecommendationCalculator.compute(
-                            today = today,
-                            last7Days = stats.last7Days,
-                            streakDays = stats.streakDays,
-                            lastMeasurementDate = latestMeasurement?.let { LocalDate.ofEpochDay(it.epochDay) },
-                        ),
-                        meals.sumOf { it.kcal },
-                    ) to (settings ?: com.fitviet.app.data.local.entity.SettingsEntity()),
+                Stage1Data(
+                    today = today,
+                    stats = stats,
+                    kcalToday = meals.sumOf { it.kcal },
+                    featuredProgram = featuredProgram,
+                    recommendation = RecommendationCalculator.compute(
+                        today = today,
+                        last7Days = stats.last7Days,
+                        streakDays = stats.streakDays,
+                        lastMeasurementDate = latestMeasurement?.let { LocalDate.ofEpochDay(it.epochDay) },
+                    ),
+                    settings = settings ?: SettingsEntity(),
                 )
             }
             // 6th independent source (completed-set breakdown, for feature #5) — chained via a
             // 2-flow `combine` rather than a 6-arg `combine{}`, which kotlinx.coroutines doesn't
             // offer a typed overload for.
-            .combine(setLogDao.observeCompletedSetBreakdown()) { (todayAndStats, rest), setBreakdown ->
-                val (today, stats) = todayAndStats
-                val (featuredAndRecommendation, settings) = rest
-                val (featuredProgram, recommendation, kcalToday) = featuredAndRecommendation
+            .combine(setLogDao.observeCompletedSetBreakdown()) { stage1, setBreakdown ->
                 val completedSets = setBreakdown.map { row ->
                     CompletedSet(
                         date = Instant.ofEpochMilli(row.completedAt).atZone(zone).toLocalDate(),
@@ -136,18 +147,18 @@ class DashboardRepository(
                     )
                 }
                 BaseDashboardData(
-                    today = today,
-                    stats = stats,
-                    kcalToday = kcalToday,
-                    featuredProgram = featuredProgram,
-                    recommendation = recommendation,
+                    today = stage1.today,
+                    stats = stage1.stats,
+                    kcalToday = stage1.kcalToday,
+                    featuredProgram = stage1.featuredProgram,
+                    recommendation = stage1.recommendation,
                     muscleGroupWorkloadThisWeek = WorkoutCompositionCalculator.muscleGroupWorkload(
                         completedSets,
-                        since = today.with(DayOfWeek.MONDAY),
+                        since = stage1.today.with(DayOfWeek.MONDAY),
                     ),
-                    showRecommendationCard = settings.showRecommendationCard,
-                    showMuscleBalanceCard = settings.showMuscleBalanceCard,
-                    showNutritionCard = settings.showNutritionCard,
+                    showRecommendationCard = stage1.settings.showRecommendationCard,
+                    showMuscleBalanceCard = stage1.settings.showMuscleBalanceCard,
+                    showNutritionCard = stage1.settings.showNutritionCard,
                 )
             }
         }.flatMapLatest { base ->
