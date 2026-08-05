@@ -41,6 +41,9 @@ class AppContainer(context: Context) {
         programDao = database.programDao(),
         measurementDao = database.measurementDao(),
         settingsDao = database.settingsDao(),
+        programDayDao = database.programDayDao(),
+        programExerciseDao = database.programExerciseDao(),
+        exerciseDao = database.exerciseDao(),
     )
     val diaryRepository = DiaryRepository(
         workoutSessionDao = database.workoutSessionDao(),

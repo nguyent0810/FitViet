@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.DayVolume
+import com.fitviet.app.domain.NextTraining
+import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
@@ -81,6 +83,8 @@ fun DashboardScreen(
         GreetingHeader(today = today, onAvatarClick = onOpenProfile)
         HeroCard(
             program = uiState.featuredProgram,
+            nextTraining = uiState.nextTraining,
+            programProgress = uiState.programProgress,
             onStart = if (uiState.featuredProgram != null) onStartWorkout else onBrowsePrograms,
         )
         uiState.recommendation?.let { RecommendationCard(recommendation = it) }
@@ -146,7 +150,12 @@ private fun GreetingHeader(today: LocalDate, onAvatarClick: () -> Unit) {
 }
 
 @Composable
-private fun HeroCard(program: ProgramEntity?, onStart: () -> Unit) {
+private fun HeroCard(
+    program: ProgramEntity?,
+    nextTraining: NextTraining?,
+    programProgress: ProgramProgress?,
+    onStart: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,7 +166,11 @@ private fun HeroCard(program: ProgramEntity?, onStart: () -> Unit) {
     ) {
         Column {
             Text(
-                text = stringResource(R.string.dashboard_hero_label),
+                text = if (nextTraining != null && !nextTraining.isToday) {
+                    stringResource(R.string.dashboard_hero_label_next, stringResource(nextTraining.day.dayOfWeek.shortLabelRes()))
+                } else {
+                    stringResource(R.string.dashboard_hero_label)
+                },
                 style = MaterialTheme.typography.labelLarge,
                 color = Accent,
             )
@@ -167,17 +180,26 @@ private fun HeroCard(program: ProgramEntity?, onStart: () -> Unit) {
                 modifier = Modifier.padding(top = 4.dp),
             )
             Text(
-                // No per-day exercise assignment exists yet (see PROGRESS.md), so this shows the
-                // program's real weekly cadence/level/equipment rather than inventing a day plan.
-                text = if (program != null) {
-                    stringResource(R.string.dashboard_hero_meta, program.sessionsPerWeek, program.level, program.equipment)
-                } else {
-                    stringResource(R.string.dashboard_no_program_meta)
+                // Feature #3: the real next scheduled day + exercise count (Gate 15's per-day
+                // assignment) when the active program's schedule resolves one; falls back to the
+                // program's general weekly cadence/level/equipment otherwise (schedule not yet
+                // seeded, or genuinely no active program).
+                text = when {
+                    nextTraining != null -> stringResource(
+                        R.string.dashboard_hero_meta_schedule,
+                        nextTraining.day.titleVi,
+                        nextTraining.day.exercises.size,
+                    )
+                    program != null -> stringResource(R.string.dashboard_hero_meta, program.sessionsPerWeek, program.level, program.equipment)
+                    else -> stringResource(R.string.dashboard_no_program_meta)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = TextMuted,
                 modifier = Modifier.padding(top = 2.dp),
             )
+        }
+        if (programProgress != null) {
+            ProgramProgressBar(progress = programProgress)
         }
         Box(
             modifier = Modifier
@@ -192,6 +214,31 @@ private fun HeroCard(program: ProgramEntity?, onStart: () -> Unit) {
                 text = stringResource(if (program != null) R.string.dashboard_start_workout else R.string.dashboard_browse_programs),
                 style = MaterialTheme.typography.titleMedium,
                 color = OnAccent,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProgramProgressBar(progress: ProgramProgress) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = stringResource(R.string.dashboard_progress_label, progress.completedThisWeek, progress.targetPerWeek),
+            style = MaterialTheme.typography.labelMedium,
+            color = TextMuted,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(AccentBorder),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress.fraction)
+                    .background(Accent),
             )
         }
     }

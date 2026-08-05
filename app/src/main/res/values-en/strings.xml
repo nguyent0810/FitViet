@@ -66,7 +66,10 @@
     <!-- 1b Dashboard -->
     <string name="dashboard_greeting">Hi %1$s</string>
     <string name="dashboard_hero_label">Today\'s workout</string>
+    <string name="dashboard_hero_label_next">Next up · %1$s</string>
     <string name="dashboard_hero_meta">%1$d sessions/week · %2$s · %3$s</string>
+    <string name="dashboard_hero_meta_schedule">%1$s · %2$d exercises</string>
+    <string name="dashboard_progress_label">%1$d/%2$d sessions this week</string>
     <string name="dashboard_start_workout">Start workout</string>
     <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
     <string name="dashboard_stat_streak">Day streak</string>

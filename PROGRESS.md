@@ -707,6 +707,66 @@ now that the data foundation exists — next session should confirm which with t
 assume, since the original roadmap discussion prioritized the "cheap and high-value" group (now
 fully done) but didn't fix an order beyond that.
 
+## Gate 16 — Next-training list + completion % (Dashboard hero card)
+
+Feature #3, the first of the 4 newly-unlocked-by-Gate-15 features. User picked this one explicitly
+when asked (over #8/#9 charts and #1 export/import) as the highest-value consumer of the new
+program-schedule data.
+
+### What was built
+- `domain/NextTraining.kt` (new) — `NextTrainingCalculator.findNext(schedule, today)`, a pure
+  function scanning forward from today (inclusive, wraps into next week) through a program's
+  `ProgramScheduleDay`s for the nearest non-rest day; `ProgramProgress(completedThisWeek,
+  targetPerWeek)` with a `fraction` property (coerced 0..1, safe against a 0 weekly target).
+  `NextTrainingTest.kt` — 10 tests (empty/all-rest schedules, today-is-training-day, wrap-to-next-week,
+  nearest-not-just-any training day, fraction math including the zero-target and over-100% cases).
+- `DashboardRepository.kt` — `observe()` restructured into two `flatMapLatest` stages: the existing
+  `combine()` (sessions/meals/programs/measurements/settings) now produces an intermediate
+  `BaseDashboardData` including the resolved `featuredProgram`; a second stage subscribes to
+  `programDayDao`/`programExerciseDao`/`exerciseDao` for *that* program's id (only knowable after
+  the first stage resolves it) via the existing `ProgramScheduleCalculator.build`, feeding
+  `NextTrainingCalculator` and `ProgramProgress` (using the already-existing
+  `DashboardStats.sessionsThisWeek` as the numerator) into the final `DashboardData`. No program →
+  `flowOf(emptyList())` short-circuit, matching the existing no-program empty-state handling.
+- `DashboardScreen.kt`'s hero card: the label switches to "Buổi tiếp theo · <Thứ>" when the next
+  training day isn't today (else keeps the existing "Buổi tập hôm nay"); the meta line shows the
+  *real* scheduled day title + exercise count (e.g. "Ngực & Vai · 4 bài tập") instead of the old
+  generic "sessions/week · level · equipment" blurb, falling back to that old text if no schedule
+  resolves (not yet seeded, or genuinely no active program) — replaces a stale
+  pre-Gate-15 comment that had become inaccurate. New `ProgramProgressBar` (a slim
+  accent-on-accent-border bar, matching `NutritionCard`'s track/fill pattern already on this same
+  screen) shows "X/Y buổi tuần này" whenever a featured program exists.
+
+### Deliberate scope boundary: session-count completion, not per-day tracking
+"Completion %" is **this week's total session count ÷ the program's weekly target**, not "did you
+do the specific prescribed exercises on the scheduled days." `WorkoutSessionEntity` has a
+`programId` column but it's never actually populated by any code path today (confirmed by reading
+`WorkoutRepository.startSession`/`WorkoutViewModel.selectDuration` — the call site only ever passes
+a hardcoded `dayLabel`), and there's no `programDayId` column at all. Wiring a completed session
+back to the specific program day it was for would mean threading program/day identifiers through
+the "Start workout" navigation → `WorkoutViewModel` → `startSession()` call — a real change to the
+already-reviewed workout-start flow (Gate 10), and a new schema column, for a gate whose actual ask
+was "next training + completion %" as a Dashboard read surface. Documented here as the honest
+boundary rather than silently approximating without saying so; per-day accuracy is a natural
+follow-up if wanted.
+
+### Verification
+Same environment constraints as prior gates (no Gradle/Android SDK, no `androidx.lifecycle`/
+`kotlinx-coroutines-test` jars available locally either). Standalone `kotlinc` compile of
+`NextTraining.kt` + `ProgramSchedule.kt` + entities/DAOs/`SeedData` — clean — and `NextTrainingTest.kt`:
+**10/10 pass**. `DashboardRepository.kt`'s full new two-stage `flatMapLatest` restructuring also
+compiled clean against the same stub scaffolding (Room stubs + real `kotlinx-coroutines-core`), so
+the repository-layer wiring (not just the pure calculator) is compile-verified this time, not just
+manually reviewed. `DashboardViewModel.kt`/`DashboardScreen.kt` (real `androidx.lifecycle`/Compose,
+same limitation as every prior gate's UI layer) verified by manual read-through — confirmed the
+sole `HeroCard(...)` call site was updated, no stale 2-arg signature left anywhere, no other
+`DashboardData`/`DashboardUiState` construction site needed updating (both new fields have safe
+defaults/are only ever constructed at their one real call site). Independent review pass in flight;
+findings, if any, land as a follow-up commit before this gate is reported done.
+
+### Push
+Pending independent review.
+
 ## Roadmap status
 
 All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
@@ -732,7 +792,9 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
    minimal patch, which also unlocks #3 (next-training list + completion %), #1 (program
    export/import via the Android share sheet), #8 (muscle-group workload chart), #9 (exercise-type
    distribution) — none of those 4 are built yet, only the foundation they need.
-6. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
+6. ~~#3 Next-training list + completion %~~ — done, Gate 16 above (session-count-based completion,
+   not per-scheduled-day — see that gate's scope-boundary note). #1/#8/#9 remain unbuilt.
+7. Lower priority/optional: #12 (dashboard widget visibility toggles), #5 (muscle-group
    progress-bar list — explicitly not a silhouette illustration), #10 (calories burned — only
    ever an estimate).
 
