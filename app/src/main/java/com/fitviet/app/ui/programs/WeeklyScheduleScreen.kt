@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
+import com.fitviet.app.domain.ProgramScheduleDay
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
@@ -58,26 +60,41 @@ fun WeeklyScheduleScreen(
     ) {
         BackRow(onBack = onBack)
 
+        val program = uiState.program
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = stringResource(R.string.schedule_title), style = MaterialTheme.typography.headlineMedium)
-            if (uiState.program != null) {
-                Text(text = stringResource(R.string.schedule_subtitle), style = MaterialTheme.typography.bodySmall, color = TextMuted)
-            }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            WEEKLY_SCHEDULE.forEach { day ->
-                ScheduleRow(
-                    day = day,
-                    isToday = day.dayOfWeek == LocalDate.now().dayOfWeek,
-                    selected = day.dayOfWeek == uiState.selectedDay,
-                    onClick = { viewModel.selectDay(day.dayOfWeek) },
-                    onStartToday = onStartToday,
+            if (program != null) {
+                Text(
+                    text = stringResource(R.string.dashboard_hero_meta, program.sessionsPerWeek, program.level, program.equipment),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted,
                 )
             }
         }
 
-        ScheduleHintCard(selectedDay = uiState.selectedDay)
+        if (program != null) {
+            ActiveProgramRow(isActive = uiState.isActiveProgram, onSetActive = viewModel::setAsActiveProgram)
+        }
+
+        if (uiState.schedule.isEmpty()) {
+            if (!uiState.isLoading) {
+                Text(text = stringResource(R.string.schedule_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                uiState.schedule.forEach { day ->
+                    ScheduleRow(
+                        day = day,
+                        isToday = day.dayOfWeek == LocalDate.now().dayOfWeek,
+                        selected = day.dayOfWeek == uiState.selectedDay,
+                        onClick = { viewModel.selectDay(day.dayOfWeek) },
+                        onStartToday = onStartToday,
+                    )
+                }
+            }
+
+            ScheduleHintCard(schedule = uiState.schedule, selectedDay = uiState.selectedDay)
+        }
     }
 }
 
@@ -100,8 +117,27 @@ private fun BackRow(onBack: () -> Unit) {
 }
 
 @Composable
+private fun ActiveProgramRow(isActive: Boolean, onSetActive: () -> Unit) {
+    if (isActive) {
+        Text(text = stringResource(R.string.schedule_active_badge), style = MaterialTheme.typography.labelLarge, color = Accent)
+    } else {
+        Box(
+            modifier = Modifier
+                .heightIn(min = Dimens.MinTouchTarget)
+                .clip(MaterialTheme.shapes.small)
+                .border(1.dp, Accent, MaterialTheme.shapes.small)
+                .clickable(onClick = onSetActive)
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(text = stringResource(R.string.schedule_set_active), style = MaterialTheme.typography.labelLarge, color = Accent)
+        }
+    }
+}
+
+@Composable
 private fun ScheduleRow(
-    day: ScheduleDay,
+    day: ProgramScheduleDay,
     isToday: Boolean,
     selected: Boolean,
     onClick: () -> Unit,
@@ -111,7 +147,7 @@ private fun ScheduleRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(if (selected) AccentSurfaceSelected else if (day.isRest) DeepSurface1 else SurfaceCard)
+            .background(if (selected) AccentSurfaceSelected else if (day.isRestDay) DeepSurface1 else SurfaceCard)
             .border(
                 width = if (selected) Dimens.SelectedBorderWidth else Dimens.IdleBorderWidth,
                 color = if (selected) Accent else CardBorder,
@@ -125,17 +161,17 @@ private fun ScheduleRow(
         Text(
             text = stringResource(day.dayOfWeek.shortLabelRes()),
             style = MaterialTheme.typography.titleSmall.copy(fontFamily = Anton),
-            color = if (day.isRest) TextFaintAlt else Accent,
+            color = if (day.isRestDay) TextFaintAlt else Accent,
             modifier = Modifier.size(width = 26.dp, height = 20.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = stringResource(day.titleRes),
+                    text = day.titleVi,
                     style = MaterialTheme.typography.titleSmall,
-                    color = if (day.isRest) TextMuted else TextPrimary,
+                    color = if (day.isRestDay) TextMuted else TextPrimary,
                 )
-                if (isToday && !day.isRest) {
+                if (isToday && !day.isRestDay) {
                     Box(
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.extraSmall)
@@ -146,35 +182,41 @@ private fun ScheduleRow(
                     }
                 }
             }
-            Text(text = stringResource(day.subRes), style = MaterialTheme.typography.labelMedium, color = TextMuted)
+            if (!day.isRestDay) {
+                Text(
+                    text = day.exercises.joinToString(", ") { it.nameVi },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextMuted,
+                )
+            } else {
+                Text(text = stringResource(R.string.schedule_rest_sub), style = MaterialTheme.typography.labelMedium, color = TextMuted)
+            }
         }
-        if (isToday && !day.isRest) {
+        if (isToday && !day.isRestDay) {
             Text(
                 text = stringResource(R.string.schedule_start_today),
                 style = MaterialTheme.typography.labelLarge,
                 color = Accent,
                 modifier = Modifier.clickable(onClick = onStartToday),
             )
-        } else {
-            day.exerciseCount?.let {
-                Text(text = stringResource(R.string.schedule_exercise_count, it), style = MaterialTheme.typography.labelMedium, color = TextMuted)
-            }
+        } else if (!day.isRestDay) {
+            Text(text = stringResource(R.string.schedule_exercise_count, day.exercises.size), style = MaterialTheme.typography.labelMedium, color = TextMuted)
         }
     }
 }
 
 @Composable
-private fun ScheduleHintCard(selectedDay: DayOfWeek) {
-    val day = WEEKLY_SCHEDULE.first { it.dayOfWeek == selectedDay }
-    val text = if (day.isRest) {
-        stringResource(R.string.schedule_hint_rest)
+private fun ScheduleHintCard(schedule: List<ProgramScheduleDay>, selectedDay: DayOfWeek) {
+    val day = schedule.firstOrNull { it.dayOfWeek == selectedDay } ?: return
+    val text = if (day.isRestDay) {
+        stringResource(R.string.schedule_hint_rest, stringResource(day.dayOfWeek.shortLabelRes()))
     } else {
         stringResource(
             R.string.schedule_hint_day,
             stringResource(day.dayOfWeek.shortLabelRes()),
-            stringResource(day.titleRes),
-            stringResource(day.subRes),
-            stringResource(R.string.schedule_exercise_count, day.exerciseCount ?: 0),
+            day.titleVi,
+            day.exercises.joinToString(", ") { it.nameVi },
+            stringResource(R.string.schedule_exercise_count, day.exercises.size),
         )
     }
     Box(

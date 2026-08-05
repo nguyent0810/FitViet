@@ -20,4 +20,9 @@ data class ExerciseEntity(
     val suggestedRepsMin: Int,
     val suggestedRepsMax: Int,
     val suggestedRestSeconds: Int,
+    /** Stable classification codes ([com.fitviet.app.domain.MuscleGroup]/[com.fitviet.app.domain.MovementType]
+     * `.name`), distinct from the free-text [primaryMuscle] display string above — for future
+     * charts that need to group reliably regardless of locale/copy. */
+    val muscleGroupCode: String,
+    val movementType: String,
 )

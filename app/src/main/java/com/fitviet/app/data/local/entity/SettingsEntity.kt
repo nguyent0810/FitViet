@@ -1,10 +1,23 @@
 package com.fitviet.app.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /** Single-row table (id is always [SINGLETON_ID]) holding app settings and onboarding selections. */
-@Entity(tableName = "settings")
+@Entity(
+    tableName = "settings",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProgramEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["activeProgramId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
+    indices = [Index("activeProgramId")],
+)
 data class SettingsEntity(
     @PrimaryKey val id: Int = SINGLETON_ID,
     val languageIsEnglish: Boolean = false,
@@ -17,6 +30,9 @@ data class SettingsEntity(
     val selectedSplit: Int = 0,
     /** Set once, when onboarding completes — powers 1i's "N tuần đồng hành" (weeks with the app). */
     val onboardingCompletedAtEpochDay: Long? = null,
+    /** The program the user has chosen as "current" (2b's "Đặt làm giáo án hiện tại"). Null before
+     * any explicit choice — the dashboard falls back to the first seeded program in that case. */
+    val activeProgramId: Long? = null,
 ) {
     companion object {
         const val SINGLETON_ID = 0

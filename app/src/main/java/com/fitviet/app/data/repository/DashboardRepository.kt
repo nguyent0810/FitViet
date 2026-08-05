@@ -3,6 +3,7 @@ package com.fitviet.app.data.repository
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
 import com.fitviet.app.data.local.dao.ProgramDao
+import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.CompletedSession
@@ -30,6 +31,7 @@ class DashboardRepository(
     private val mealDao: MealDao,
     private val programDao: ProgramDao,
     private val measurementDao: MeasurementDao,
+    private val settingsDao: SettingsDao,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observe(): Flow<DashboardData> {
@@ -43,7 +45,8 @@ class DashboardRepository(
                 mealDao.observeForDay(today.toEpochDay()),
                 programDao.observeAll(),
                 measurementDao.observeLatest(),
-            ) { sessions, meals, programs, latestMeasurement ->
+                settingsDao.observe(),
+            ) { sessions, meals, programs, latestMeasurement, settings ->
                 val completedSessions = sessions.mapNotNull { session ->
                     val completedAt = session.completedAt ?: return@mapNotNull null
                     CompletedSession(
@@ -52,10 +55,13 @@ class DashboardRepository(
                     )
                 }
                 val stats = DashboardStatsCalculator.compute(completedSessions, today)
+                // Falls back to the first seeded program until the user explicitly picks one on
+                // 2b (see ProgramRepository.setActiveProgram) — matches the pre-Gate-15 default.
+                val featuredProgram = programs.firstOrNull { it.id == settings?.activeProgramId } ?: programs.firstOrNull()
                 DashboardData(
                     stats = stats,
                     kcalToday = meals.sumOf { it.kcal },
-                    featuredProgram = programs.firstOrNull(),
+                    featuredProgram = featuredProgram,
                     recommendation = RecommendationCalculator.compute(
                         today = today,
                         last7Days = stats.last7Days,

@@ -109,26 +109,15 @@
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Your weekly schedule</string>
-    <string name="schedule_subtitle">Push–Pull–Legs variant · chest &amp; arm priority · 6 sessions/week</string>
     <string name="schedule_today_badge">TODAY</string>
     <string name="schedule_start_today">Start ›</string>
-    <string name="schedule_hint_rest">Sun · Recovery day — light walk, stretching, 15 min</string>
+    <string name="schedule_hint_rest">%1$s · Recovery day — light walk, stretching, 15 min</string>
     <string name="schedule_hint_day">%1$s · %2$s — %3$s · %4$s</string>
-    <string name="schedule_day_push1_title">Push 1</string>
-    <string name="schedule_day_push1_sub">Chest priority + shoulders + triceps</string>
-    <string name="schedule_day_pull1_title">Pull 1</string>
-    <string name="schedule_day_pull1_sub">Back priority + biceps</string>
-    <string name="schedule_day_legs1_title">Legs 1</string>
-    <string name="schedule_day_legs1_sub">Quads, hamstrings, glutes, calves</string>
-    <string name="schedule_day_push2_title">Push 2</string>
-    <string name="schedule_day_push2_sub">Shoulders / upper chest + triceps</string>
-    <string name="schedule_day_pull2_title">Pull 2</string>
-    <string name="schedule_day_pull2_sub">Back thickness + biceps</string>
-    <string name="schedule_day_legs2_title">Legs 2</string>
-    <string name="schedule_day_legs2_sub">Glute priority + core</string>
-    <string name="schedule_day_rest_title">Recovery day</string>
-    <string name="schedule_day_rest_sub">Light walk, stretching</string>
+    <string name="schedule_rest_sub">Light walk, stretching</string>
     <string name="schedule_exercise_count">%1$d exercises</string>
+    <string name="schedule_set_active">Set as current program</string>
+    <string name="schedule_active_badge">✓ Your current program</string>
+    <string name="schedule_empty">No detailed schedule for this program yet</string>
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Restart</string>

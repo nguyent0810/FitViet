@@ -109,26 +109,15 @@
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Lịch tuần của bạn</string>
-    <string name="schedule_subtitle">Push–Pull–Legs biến thể · ưu tiên ngực &amp; tay · 6 buổi/tuần</string>
     <string name="schedule_today_badge">HÔM NAY</string>
     <string name="schedule_start_today">Bắt đầu ›</string>
-    <string name="schedule_hint_rest">CN · Nghỉ phục hồi — đi bộ nhẹ, giãn cơ 15 phút</string>
+    <string name="schedule_hint_rest">%1$s · Nghỉ phục hồi — đi bộ nhẹ, giãn cơ 15 phút</string>
     <string name="schedule_hint_day">%1$s · %2$s — %3$s · %4$s</string>
-    <string name="schedule_day_push1_title">Push 1</string>
-    <string name="schedule_day_push1_sub">Ngực ưu tiên + vai + tay sau</string>
-    <string name="schedule_day_pull1_title">Pull 1</string>
-    <string name="schedule_day_pull1_sub">Xô ưu tiên + tay trước</string>
-    <string name="schedule_day_legs1_title">Legs 1</string>
-    <string name="schedule_day_legs1_sub">Đùi trước, đùi sau, mông, bắp chân</string>
-    <string name="schedule_day_push2_title">Push 2</string>
-    <string name="schedule_day_push2_sub">Vai / ngực trên + tay sau</string>
-    <string name="schedule_day_pull2_title">Pull 2</string>
-    <string name="schedule_day_pull2_sub">Lưng dày + tay trước</string>
-    <string name="schedule_day_legs2_title">Legs 2</string>
-    <string name="schedule_day_legs2_sub">Mông ưu tiên + core</string>
-    <string name="schedule_day_rest_title">Nghỉ phục hồi</string>
-    <string name="schedule_day_rest_sub">Đi bộ nhẹ, giãn cơ</string>
+    <string name="schedule_rest_sub">Đi bộ nhẹ, giãn cơ</string>
     <string name="schedule_exercise_count">%1$d bài</string>
+    <string name="schedule_set_active">Đặt làm giáo án hiện tại</string>
+    <string name="schedule_active_badge">✓ Giáo án hiện tại của bạn</string>
+    <string name="schedule_empty">Chưa có lịch chi tiết cho giáo án này</string>
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Làm lại</string>

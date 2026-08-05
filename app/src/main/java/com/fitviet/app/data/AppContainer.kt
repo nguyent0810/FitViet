@@ -26,7 +26,13 @@ class AppContainer(context: Context) {
 
     val database: FitVietDatabase = FitVietDatabase.getInstance(context)
     val onboardingRepository = OnboardingRepository(database.settingsDao())
-    val programRepository = ProgramRepository(database.programDao())
+    val programRepository = ProgramRepository(
+        programDao = database.programDao(),
+        programDayDao = database.programDayDao(),
+        programExerciseDao = database.programExerciseDao(),
+        exerciseDao = database.exerciseDao(),
+        settingsDao = database.settingsDao(),
+    )
     val exerciseRepository = RoomExerciseRepository(database.exerciseDao())
     val workoutRepository = RoomWorkoutRepository(database.workoutSessionDao(), database.setLogDao())
     val dashboardRepository = DashboardRepository(
@@ -34,6 +40,7 @@ class AppContainer(context: Context) {
         mealDao = database.mealDao(),
         programDao = database.programDao(),
         measurementDao = database.measurementDao(),
+        settingsDao = database.settingsDao(),
     )
     val diaryRepository = DiaryRepository(
         workoutSessionDao = database.workoutSessionDao(),

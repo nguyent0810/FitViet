@@ -4,6 +4,8 @@ import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import com.fitviet.app.domain.MovementType
+import com.fitviet.app.domain.MuscleGroup
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -86,6 +88,8 @@ class WorkoutViewModelTest {
         suggestedRepsMin = 8,
         suggestedRepsMax = 8,
         suggestedRestSeconds = 60,
+        muscleGroupCode = MuscleGroup.CHEST.name,
+        movementType = MovementType.COMPOUND.name,
     )
 
     private val testExercises = listOf(

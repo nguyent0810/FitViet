@@ -7,6 +7,8 @@ import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
+import com.fitviet.app.domain.MovementType
+import com.fitviet.app.domain.MuscleGroup
 
 /** Stable lookup keys for exercises the workout flow (Gate 4) references by name — see WorkoutPlanSeed. */
 object SeedExerciseNames {
@@ -80,6 +82,8 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
+            muscleGroupCode = MuscleGroup.CHEST.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.SHOULDER_PRESS,
@@ -98,6 +102,8 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
+            muscleGroupCode = MuscleGroup.SHOULDERS.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         // Superset pair (2c demo): "↓ không nghỉ ↓" between A1/A2, matching the prototype's
         // Cable fly (15kg×12, Ngực) + Lateral raise (8kg×15, Vai giữa). The prototype's 2c canvas
@@ -120,6 +126,8 @@ object SeedData {
             suggestedRepsMin = 12,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
+            muscleGroupCode = MuscleGroup.CHEST.name,
+            movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LATERAL_RAISE,
@@ -138,6 +146,8 @@ object SeedData {
             suggestedRepsMin = 12,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
+            muscleGroupCode = MuscleGroup.SHOULDERS.name,
+            movementType = MovementType.ISOLATION.name,
         ),
         // Gate 9 — library expansion covering the muscle groups 1c/1e's original 4 exercises left
         // untouched (legs, back, arms, core). Not part of the fixed Gate 4 workout demo plan; these
@@ -161,6 +171,8 @@ object SeedData {
             suggestedRepsMin = 6,
             suggestedRepsMax = 10,
             suggestedRestSeconds = 120,
+            muscleGroupCode = MuscleGroup.LEGS.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.DEADLIFT,
@@ -179,6 +191,8 @@ object SeedData {
             suggestedRepsMin = 5,
             suggestedRepsMax = 8,
             suggestedRestSeconds = 150,
+            muscleGroupCode = MuscleGroup.BACK.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LAT_PULLDOWN,
@@ -197,6 +211,8 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
+            muscleGroupCode = MuscleGroup.BACK.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.BENT_OVER_ROW,
@@ -215,6 +231,8 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
+            muscleGroupCode = MuscleGroup.BACK.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.BARBELL_CURL,
@@ -233,6 +251,8 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 60,
+            muscleGroupCode = MuscleGroup.ARMS.name,
+            movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.TRICEPS_PUSHDOWN,
@@ -251,6 +271,8 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
+            muscleGroupCode = MuscleGroup.ARMS.name,
+            movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LEG_PRESS,
@@ -269,6 +291,8 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 90,
+            muscleGroupCode = MuscleGroup.LEGS.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LUNGE,
@@ -287,6 +311,8 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 75,
+            muscleGroupCode = MuscleGroup.LEGS.name,
+            movementType = MovementType.COMPOUND.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.CRUNCH,
@@ -305,6 +331,8 @@ object SeedData {
             suggestedRepsMin = 15,
             suggestedRepsMax = 20,
             suggestedRestSeconds = 45,
+            muscleGroupCode = MuscleGroup.CORE.name,
+            movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.PUSHUP,
@@ -323,6 +351,162 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
+            muscleGroupCode = MuscleGroup.CHEST.name,
+            movementType = MovementType.COMPOUND.name,
+        ),
+    )
+
+    /** One exercise target within a [ProgramDaySeed] — resolved to a real [ExerciseEntity] id by
+     * [exerciseName] (a [SeedExerciseNames] constant) at seed time, same name-lookup pattern
+     * [com.fitviet.app.ui.workout.WorkoutPlanSeed] already uses for the fixed workout demo. */
+    data class ProgramExerciseSeed(val exerciseName: String, val targetSets: Int, val targetRepsMin: Int, val targetRepsMax: Int)
+
+    /** One calendar-weekday slot (ISO 1=Monday..7=Sunday) in a program's weekly schedule (2b). */
+    data class ProgramDaySeed(
+        val dayOfWeek: Int,
+        val titleVi: String,
+        val isRestDay: Boolean = false,
+        val exercises: List<ProgramExerciseSeed> = emptyList(),
+    )
+
+    /**
+     * Real per-program weekly schedules (Gate 15) — index-aligned with [programs], so
+     * `programSchedules[i]` is the schedule for `programs[i]`. Replaces 2b's previous
+     * one-size-fits-all static PPL reference week (see PROGRESS.md, Gate 3's "no per-day exercise
+     * assignment exists yet" scope note, now closed).
+     *
+     * Program 2 ("Giảm mỡ 30 ngày tại nhà") is honestly constrained by this library's content: it's
+     * the only no-equipment program, and this library only has 2 bodyweight exercises (Pushup,
+     * Crunch) — its schedule reuses that pair at two intensities rather than inventing exercises
+     * the library doesn't have. Expanding the bodyweight/no-equipment section of the library would
+     * make this richer; not done here since that's a content-library task, not a data-model one.
+     */
+    val programSchedules: List<List<ProgramDaySeed>> = listOf(
+        // Program 1: Tăng cơ toàn thân 8 tuần — 4 sessions/week, gym equipment, upper/lower split.
+        listOf(
+            ProgramDaySeed(
+                dayOfWeek = 1,
+                titleVi = "Ngực & Vai",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 4, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.CABLE_FLY, 3, 12, 15),
+                    ProgramExerciseSeed(SeedExerciseNames.SHOULDER_PRESS, 3, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.LATERAL_RAISE, 3, 12, 15),
+                ),
+            ),
+            ProgramDaySeed(
+                dayOfWeek = 2,
+                titleVi = "Lưng & Tay",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.LAT_PULLDOWN, 4, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.BENT_OVER_ROW, 3, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.BARBELL_CURL, 3, 10, 12),
+                    ProgramExerciseSeed(SeedExerciseNames.TRICEPS_PUSHDOWN, 3, 12, 15),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 3, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(
+                dayOfWeek = 4,
+                titleVi = "Chân",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.SQUAT, 4, 6, 8),
+                    ProgramExerciseSeed(SeedExerciseNames.LEG_PRESS, 3, 10, 12),
+                    ProgramExerciseSeed(SeedExerciseNames.LUNGE, 3, 10, 12),
+                ),
+            ),
+            ProgramDaySeed(
+                dayOfWeek = 5,
+                titleVi = "Toàn thân",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.DEADLIFT, 3, 5, 6),
+                    ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 3, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.BENT_OVER_ROW, 3, 8, 10),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 6, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(dayOfWeek = 7, titleVi = "Nghỉ", isRestDay = true),
+        ),
+        // Program 2: Giảm mỡ 30 ngày tại nhà — 5 sessions/week, no equipment (see doc comment above).
+        listOf(
+            ProgramDaySeed(
+                dayOfWeek = 1,
+                titleVi = "Toàn thân nhẹ",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 3, 8, 12),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20),
+                ),
+            ),
+            ProgramDaySeed(
+                dayOfWeek = 2,
+                titleVi = "Toàn thân nhẹ",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 3, 8, 12),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 3, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(
+                dayOfWeek = 4,
+                titleVi = "Tăng cường",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 4, 10, 15),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 4, 20, 25),
+                ),
+            ),
+            ProgramDaySeed(
+                dayOfWeek = 5,
+                titleVi = "Tăng cường",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 4, 10, 15),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 4, 20, 25),
+                ),
+            ),
+            ProgramDaySeed(
+                dayOfWeek = 6,
+                titleVi = "Toàn thân nhẹ",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 3, 8, 12),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 7, titleVi = "Nghỉ", isRestDay = true),
+        ),
+        // Program 3: Sức mạnh cơ bản 5×5 — 3 sessions/week, classic A/B alternation (StrongLifts-style):
+        // squat every session, alternating bench/row (A) with overhead press/deadlift (B). Deadlift
+        // is 1×5, not 5×5 — matches the well-known real-world convention for this program style.
+        listOf(
+            ProgramDaySeed(
+                dayOfWeek = 1,
+                titleVi = "Buổi A",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.SQUAT, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.BENT_OVER_ROW, 5, 5, 5),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 2, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(
+                dayOfWeek = 3,
+                titleVi = "Buổi B",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.SQUAT, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.SHOULDER_PRESS, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.DEADLIFT, 1, 5, 5),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 4, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(
+                dayOfWeek = 5,
+                titleVi = "Buổi A",
+                exercises = listOf(
+                    ProgramExerciseSeed(SeedExerciseNames.SQUAT, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 5, 5, 5),
+                    ProgramExerciseSeed(SeedExerciseNames.BENT_OVER_ROW, 5, 5, 5),
+                ),
+            ),
+            ProgramDaySeed(dayOfWeek = 6, titleVi = "Nghỉ", isRestDay = true),
+            ProgramDaySeed(dayOfWeek = 7, titleVi = "Nghỉ", isRestDay = true),
         ),
     )
 
