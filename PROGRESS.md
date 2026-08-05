@@ -529,6 +529,56 @@ Reviewed and fixed per above, pushed to `origin/master` (`f827ca2`).
 Feature #6: motivational recommendation cards (rule-based/transparent), continuing the same
 gate-by-gate workflow.
 
+## Gate 13 — Motivational recommendation card (Dashboard)
+
+Feature #6 from the roadmap discussion above.
+
+### What was built
+- `domain/Recommendation.kt` — a sealed `Recommendation` (`ComeBackReminder`,
+  `StreakPraise(streakDays)`, `MeasurementReminder(daysSinceLastCheckIn)`, `GenericTip(tipIndex)`)
+  plus `RecommendationCalculator.compute(today, last7Days, streakDays, lastMeasurementDate)` — a
+  fully transparent, fixed priority order over a few deterministic signals, **not** ML/black-box
+  scoring (matches the app's established "transparent, not a promise" style, e.g. Gate 10's
+  workout time-budget estimator): (1) no completed session anywhere in the last 7 days → come-back
+  reminder; (2) streak ≥ 3 days → streak praise; (3) no measurement check-in in ≥ 14 days, or ever
+  → update reminder; (4) otherwise → a rotating generic fitness tip, deterministic by date (not
+  random) so it's stable all day and reproducible in tests. `RecommendationCalculatorTest.kt` — 9
+  tests covering each rule, the priority ordering, exact-threshold boundaries, and tip-index
+  determinism/day-to-day rotation.
+- `data/local/dao/MeasurementDao.kt` — added `observeLatest(): Flow<MeasurementEntity?>`
+  (`LIMIT 1`), a cheaper single-row query than pulling the full history just for one date.
+- `data/repository/DashboardRepository.kt` — gained a `MeasurementDao` dependency; `observe()`'s
+  `combine()` grew from 3 to 4 flows; `DashboardData` gained a `recommendation` field computed
+  from the same `stats.last7Days`/`stats.streakDays` already produced earlier in the same combine
+  block, plus the latest measurement's date. `AppContainer` wiring updated.
+- `ui/dashboard/{DashboardViewModel,DashboardScreen}.kt` — `DashboardUiState.recommendation` is
+  nullable (defaults to `null`, so the card simply doesn't render before the first real emission
+  rather than flashing an arbitrary placeholder tip). New `RecommendationCard` composable (styled
+  like the existing `AccentSurfaceSelected`/`AccentBorder` card convention, e.g. Diary's
+  `DayHintCard`) renders between the hero card and the stat tiles.
+- 12 new string resources in both locale files: title, 3 rule-specific messages, and 8 generic
+  tips (basic, evidence-based fitness advice — warm-up, sleep, hydration, progressive overload,
+  protein, muscle-group rest, logging sessions, technique over load).
+
+### Codex review
+Found one real, **compiler-verified** bug: the new English strings had unescaped apostrophes
+(`"Today's tip"`, `"It's been..."`, `"let's..."`), which fails Android resource compilation.
+Notably, this review reproduced the failure with a direct `aapt2 compile` against a locally
+available Android SDK — the first review in this project's history where a real
+resource/toolchain check (not just static code reading) caught something. Fixed by escaping to
+`\'`; re-verified independently afterward by running the same `aapt2 compile` — clean, exit 0.
+Everything else — `weight()` scoping, the 4-flow `combine()` parameter order, the exhaustive
+sealed-class `when`, the 8 generic-tip resources matching `GENERIC_TIP_COUNT`, `Long.mod()`
+non-negative semantics, the single `DashboardRepository` construction site — checked out clean on
+the first pass.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/master` (`48e2754`).
+
+### Next
+Feature #11: measurement history/polish (edit/delete, a per-measurement history view), continuing
+the same gate-by-gate workflow.
+
 ## Roadmap status
 
 All 12 spec screens (1a–1i, 2a–2c) are built and merged into `master`, plus real per-app
@@ -545,7 +595,7 @@ feature-roadmap priority order (Gate 11 above is the first of that sequence).
 **Feature-roadmap priority order** (user-approved, continuing gate-by-gate):
 1. ~~#7 Weight history chart~~ — done, Gate 11 above.
 2. ~~#4 Monthly workout calendar (history-only)~~ — done, Gate 12 above.
-3. #6 Motivational recommendation cards (rule-based/transparent).
+3. ~~#6 Motivational recommendation cards (rule-based/transparent)~~ — done, Gate 13 above.
 4. #11 Measurement history/polish (edit/delete, per-measurement history view).
 5. #2 Fix "current program" (needs a small persisted program-enrollment concept — Dashboard
    currently just shows `programs.firstOrNull()`).
