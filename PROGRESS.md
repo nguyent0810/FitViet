@@ -1368,3 +1368,17 @@ Same as prior gates: 24 downloads verified, `aapt2 compile --dir` clean on all 2
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 32 (Chest) next.
+
+## Gate 32 — Exercise library expansion: Chest (7/9 gates)
+
+### What was built
+13 new CHEST exercises (the original 14 already had 3: Bench Press, Cable Fly, Pushup). Six bench-press-angle variants (incline/decline/flat × barbell/dumbbell/machine), two fly variants (flat/incline dumbbell), Butterfly, chest-focused Dips, two pushup variants (wide, incline), and cable flyes.
+
+### Codex review
+One round. No structural issues — confirmed the six press-angle variants are meaningfully distinct (real bench-angle/equipment differences, not padding), confirmed `CHEST_DIPS` vs Gate 29's `TRICEPS_DIPS` are genuinely differentiated (forward lean/open elbows/chest-primary vs. upright torso/tucked elbows/triceps-primary), confirmed `Incline Dumbbell Flyes` correctly preserved the source dataset's own (slightly unusual) COMPOUND classification rather than assuming ISOLATION from the name. One real medium-severity finding: the new `CHEST_PUSHUP_WIDE` was indistinguishable from the already-seeded plain `PUSHUP`, because that original Gate-1 exercise's own instructions already said "hands wider than shoulder-width" — the two variants gave literally the same defining cue. Fixed by editing the original `PUSHUP`'s hand-placement instruction to the conventional shoulder-width default, correctly differentiating it from the new wide-grip variant (a content-only text edit, safe since `PUSHUP`'s `nameVi` constant — referenced by the fixed demo plan and program schedules — was untouched).
+
+### Verification
+Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 258 files, count/duplicate checks clean (129 exercises / 129 photo entries / 129 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 33 (Back) next.

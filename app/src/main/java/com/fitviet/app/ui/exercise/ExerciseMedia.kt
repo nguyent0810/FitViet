@@ -171,6 +171,20 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.ABS_CRUNCH_MACHINE to listOf(R.drawable.ab_crunch_machine_0, R.drawable.ab_crunch_machine_1),
     SeedExerciseNames.ABS_DECLINE_CRUNCH to listOf(R.drawable.decline_crunch_0, R.drawable.decline_crunch_1),
     SeedExerciseNames.ABS_DEAD_BUG to listOf(R.drawable.dead_bug_0, R.drawable.dead_bug_1),
+    // Gate 32 — Chest library expansion
+    SeedExerciseNames.CHEST_INCLINE_BARBELL_BENCH_PRESS to listOf(R.drawable.incline_barbell_bench_press_0, R.drawable.incline_barbell_bench_press_1),
+    SeedExerciseNames.CHEST_DECLINE_BARBELL_BENCH_PRESS to listOf(R.drawable.decline_barbell_bench_press_0, R.drawable.decline_barbell_bench_press_1),
+    SeedExerciseNames.CHEST_DUMBBELL_BENCH_PRESS to listOf(R.drawable.dumbbell_bench_press_0, R.drawable.dumbbell_bench_press_1),
+    SeedExerciseNames.CHEST_INCLINE_DUMBBELL_PRESS to listOf(R.drawable.incline_dumbbell_press_0, R.drawable.incline_dumbbell_press_1),
+    SeedExerciseNames.CHEST_DECLINE_DUMBBELL_PRESS to listOf(R.drawable.decline_dumbbell_bench_press_0, R.drawable.decline_dumbbell_bench_press_1),
+    SeedExerciseNames.CHEST_DUMBBELL_FLYES to listOf(R.drawable.dumbbell_flyes_0, R.drawable.dumbbell_flyes_1),
+    SeedExerciseNames.CHEST_INCLINE_DUMBBELL_FLYES to listOf(R.drawable.incline_dumbbell_flyes_0, R.drawable.incline_dumbbell_flyes_1),
+    SeedExerciseNames.CHEST_MACHINE_BENCH_PRESS to listOf(R.drawable.machine_bench_press_0, R.drawable.machine_bench_press_1),
+    SeedExerciseNames.CHEST_BUTTERFLY to listOf(R.drawable.butterfly_0, R.drawable.butterfly_1),
+    SeedExerciseNames.CHEST_DIPS to listOf(R.drawable.dips_chest_version_0, R.drawable.dips_chest_version_1),
+    SeedExerciseNames.CHEST_PUSHUP_WIDE to listOf(R.drawable.pushup_wide_0, R.drawable.pushup_wide_1),
+    SeedExerciseNames.CHEST_INCLINE_PUSHUP to listOf(R.drawable.incline_pushup_0, R.drawable.incline_pushup_1),
+    SeedExerciseNames.CHEST_FLAT_CABLE_FLYES to listOf(R.drawable.flat_bench_cable_flyes_0, R.drawable.flat_bench_cable_flyes_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()

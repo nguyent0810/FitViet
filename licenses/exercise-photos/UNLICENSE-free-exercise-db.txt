@@ -124,6 +124,20 @@ Files used (app/src/main/res/drawable-nodpi/):
   ab_crunch_machine_0.jpg, ab_crunch_machine_1.jpg       <- exercises/Ab_Crunch_Machine/{0,1}.jpg
   decline_crunch_0.jpg, decline_crunch_1.jpg             <- exercises/Decline_Crunch/{0,1}.jpg
   dead_bug_0.jpg, dead_bug_1.jpg                         <- exercises/Dead_Bug/{0,1}.jpg
+  -- Gate 32 additions (Chest) --
+  incline_barbell_bench_press_0.jpg, incline_barbell_bench_press_1.jpg <- exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/{0,1}.jpg
+  decline_barbell_bench_press_0.jpg, decline_barbell_bench_press_1.jpg <- exercises/Decline_Barbell_Bench_Press/{0,1}.jpg
+  dumbbell_bench_press_0.jpg, dumbbell_bench_press_1.jpg <- exercises/Dumbbell_Bench_Press/{0,1}.jpg
+  incline_dumbbell_press_0.jpg, incline_dumbbell_press_1.jpg <- exercises/Incline_Dumbbell_Press/{0,1}.jpg
+  decline_dumbbell_bench_press_0.jpg, decline_dumbbell_bench_press_1.jpg <- exercises/Decline_Dumbbell_Bench_Press/{0,1}.jpg
+  dumbbell_flyes_0.jpg, dumbbell_flyes_1.jpg             <- exercises/Dumbbell_Flyes/{0,1}.jpg
+  incline_dumbbell_flyes_0.jpg, incline_dumbbell_flyes_1.jpg <- exercises/Incline_Dumbbell_Flyes/{0,1}.jpg
+  machine_bench_press_0.jpg, machine_bench_press_1.jpg   <- exercises/Machine_Bench_Press/{0,1}.jpg
+  butterfly_0.jpg, butterfly_1.jpg                       <- exercises/Butterfly/{0,1}.jpg
+  dips_chest_version_0.jpg, dips_chest_version_1.jpg     <- exercises/Dips_-_Chest_Version/{0,1}.jpg
+  pushup_wide_0.jpg, pushup_wide_1.jpg                   <- exercises/Push-Up_Wide/{0,1}.jpg
+  incline_pushup_0.jpg, incline_pushup_1.jpg             <- exercises/Incline_Push-Up/{0,1}.jpg
+  flat_bench_cable_flyes_0.jpg, flat_bench_cable_flyes_1.jpg <- exercises/Flat_Bench_Cable_Flyes/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 
