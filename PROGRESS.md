@@ -2293,5 +2293,41 @@ Confirmed all `ExerciseEntity(...)` construction sites elsewhere in the repo (`W
 `ProgramScheduleCalculatorTest.kt`) use named arguments, so the new field's default value doesn't
 require updating them.
 
+### Independent review (background agent, general-purpose) — code CLEAN, methodology follow-up applied
+Independently re-ran the full compile + all 10 tests for real — confirmed. Every code-correctness
+claim verified true: the validator's edge cases, the schema/DB/converter reasoning, and — going
+further than a spot-check — a full programmatic audit of all 155 real entries against the claimed
+rule (0 mismatches on the exclusion set, 0 mismatches on the formula, 0 remainder-split issues).
+**Verdict: code CLEAN, no fixes needed.**
+
+The review also gave independent judgment (explicitly not a pass/fail item) on the authoring
+methodology, and pushed back fairly: keying the split purely on `(movementType, secondaryMuscleCount)`
+means any two exercises sharing those two coarse buckets get a byte-identical percentage split
+regardless of which specific muscles are involved — e.g. every COMPOUND/2-secondary exercise
+(bench press, shoulder press, lat pulldown, hip thrust, etc.) originally rendered the literal same
+`[55, 23, 22]`. The review's assessment: this is meaningfully better than a literal positional
+fallback (the two axes are real, pre-curated, exercise-relevant fields, not array index) and is
+honestly disclosed, but for exercises sharing a bucket the "authored" value adds no information
+beyond what the pre-existing fields already implied — only the binary hide/show decision reflects
+real per-exercise judgment, not the numeric splits themselves. It recommended hand-correcting the
+highest-visibility "big lift" exercises with real biomechanical judgment before treating the
+dataset as fully authored, rather than leaving everything on the formula.
+
+**Applied**: hand-replaced the formula-derived values for the 9 flagship compound lifts a user is
+most likely to actually look at — Barbell Squat, Barbell Deadlift, Wide-Grip Lat Pulldown, Bent
+Over Barbell Row, Barbell Bench Press, Barbell Shoulder Press, Pullups, Romanian Deadlift, and
+Barbell Hip Thrust — with genuine biomechanically-reasoned splits (each with an inline comment
+explaining the specific reasoning, e.g. hip thrust's glute dominance pushed to 70% rather than the
+formula's flat 55%, RDL's hamstring emphasis versus the conventional deadlift's flatter
+glute/hamstring/erector split). All 9 still validate cleanly (`OK (10 tests)` re-run after the
+change) and were chosen specifically because they're the exercises most likely to actually be
+opened via Gate 45's UI card, not an arbitrary sample. The remaining ~112 non-empty exercises stay
+on the documented formula — hand-tuning all 121 individually was judged out of proportion for this
+follow-up (the review itself only asked for "the highest-visibility exercises," not the full set);
+if a future gate wants to expand hand-authoring further, the same inline-comment convention used
+here should be followed. Also carrying the review's framing note forward into Gate 45: the UI
+caption there should say something like "estimated by movement pattern" rather than a bare
+"editorial estimate" that implies more individual scrutiny went into every value than genuinely did.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.

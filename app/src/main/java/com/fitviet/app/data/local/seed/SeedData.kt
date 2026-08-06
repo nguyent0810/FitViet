@@ -232,7 +232,10 @@ object SeedData {
             gifAsset = "barbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai trước", "Tay sau"),
-            involvementPercents = listOf(55, 23, 22),
+            // Hand-authored (Gate 44 review follow-up): chest is the prime mover, triceps
+            // contribute heavily especially through lockout (more than front delts), front delts
+            // assist throughout but less than triceps.
+            involvementPercents = listOf(55, 20, 25),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, mắt dưới thanh đòn, chân đặt chắc xuống sàn.",
@@ -330,7 +333,10 @@ object SeedData {
             gifAsset = "barbell-squat.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
-            involvementPercents = listOf(50, 17, 17, 16),
+            // Hand-authored (Gate 44 review follow-up), not the movement-type/count formula:
+            // knee-extension-dominant, glutes are the major hip-extension co-mover, hamstrings
+            // assist as hip extensors/knee stabilizers, calves are a minor ankle stabilizer.
+            involvementPercents = listOf(45, 25, 20, 10),
             equipment = "Tạ đòn + giá đỡ",
             instructions = listOf(
                 "Đặt đòn tạ sau gáy trên giá đỡ, bước ra với chân rộng bằng vai, mũi chân hơi mở.",
@@ -352,7 +358,11 @@ object SeedData {
             gifAsset = "barbell-deadlift.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Lưng giữa"),
-            involvementPercents = listOf(50, 17, 17, 16),
+            // Hand-authored (Gate 44 review follow-up): a conventional deadlift's real prime
+            // movers are the hip extensors (glutes/hamstrings) working with the erectors as an
+            // isometric stabilizer, not a single dominant mover — hence the flatter split here
+            // than the formula's 50/17/17/16 would have produced.
+            involvementPercents = listOf(30, 30, 25, 15),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng trước đòn tạ, chân rộng bằng vai, cúi người nắm đòn với lưng thẳng, ngực ưỡn.",
@@ -374,7 +384,9 @@ object SeedData {
             gifAsset = "lat-pulldown.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Vai"),
-            involvementPercents = listOf(55, 23, 22),
+            // Hand-authored (Gate 44 review follow-up): lats are the clear prime mover, biceps
+            // assist substantially through elbow flexion, shoulders are a minor stabilizer.
+            involvementPercents = listOf(65, 25, 10),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi vào máy, nắm thanh kéo rộng hơn vai, ngả người ra sau nhẹ khoảng 30 độ.",
@@ -396,7 +408,10 @@ object SeedData {
             gifAsset = "bent-over-row.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Tay trước", "Xô", "Vai"),
-            involvementPercents = listOf(50, 17, 17, 16),
+            // Hand-authored (Gate 44 review follow-up): mid-back and lats share the pulling load
+            // heavily in a bent-over row (lats given more than the formula's flat 17% would),
+            // biceps assist the pull, rear delts are a minor stabilizer.
+            involvementPercents = listOf(40, 20, 30, 10),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Gập gối nhẹ, cúi người từ hông tới khi lưng gần song song sàn, đòn tạ treo trước người.",
@@ -554,7 +569,10 @@ object SeedData {
             gifAsset = "barbell-hip-thrust.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau", "Bắp chân"),
-            involvementPercents = listOf(55, 23, 22),
+            // Hand-authored (Gate 44 review follow-up): hip thrusts are the most glute-isolated
+            // compound movement in this library — glutes dominate far more than the formula's
+            // 55% would suggest, hamstrings assist, calves are a minor stabilizer.
+            involvementPercents = listOf(70, 25, 5),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Ngồi trên sàn, lưng trên tựa vào mép ghế, đặt thanh đòn tạ ngang qua hông (lót đệm để giảm đau).",
@@ -2258,7 +2276,10 @@ object SeedData {
             gifAsset = "barbell-shoulder-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Ngực", "Tay sau"),
-            involvementPercents = listOf(55, 23, 22),
+            // Hand-authored (Gate 44 review follow-up): an overhead press is deltoid-dominant;
+            // triceps contribute meaningfully through lockout, upper chest assists only modestly
+            // in the initial drive.
+            involvementPercents = listOf(55, 15, 30),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Ngồi trên ghế có tựa lưng, nắm tạ đòn rộng hơn vai, lòng bàn tay hướng ra trước.",
@@ -3107,7 +3128,10 @@ object SeedData {
             gifAsset = "pullups.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Lưng giữa"),
-            involvementPercents = listOf(55, 23, 22),
+            // Hand-authored (Gate 44 review follow-up): lats dominate the vertical pull, biceps
+            // assist substantially, mid-back contributes at the top of the pull but less than
+            // the lats/biceps here.
+            involvementPercents = listOf(60, 25, 15),
             equipment = "Xà đơn",
             instructions = listOf(
                 "Nắm xà rộng hơn vai, lòng bàn tay hướng ra trước, treo người với tay duỗi thẳng, ngực ưỡn.",
@@ -3526,7 +3550,10 @@ object SeedData {
             gifAsset = "romanian-deadlift.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Lưng dưới"),
-            involvementPercents = listOf(50, 17, 17, 16),
+            // Hand-authored (Gate 44 review follow-up): an RDL is a hip-hinge that isolates the
+            // hamstrings more than a conventional deadlift, glutes are a strong secondary hip
+            // extensor, lower back holds isometric tension, calves are only a minor stabilizer.
+            involvementPercents = listOf(50, 5, 30, 15),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm tạ đòn rộng hơn vai một chút, lòng bàn tay úp xuống, gối hơi gập.",
