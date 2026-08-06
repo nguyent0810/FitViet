@@ -2749,3 +2749,51 @@ rename to `.groupings` could have silently broken. Both `strings.xml`/`values-en
 parsed as valid XML (`xml.etree.ElementTree`). `FitVietNavHost.kt` needed no change — the new
 `ProgramRepository` methods reuse the already-injected `container.programRepository`, no new
 `WorkoutPreviewViewModel.Factory` constructor parameter.
+
+### Independent review (background agent, general-purpose) — FIXES-NEEDED → fixed, now CLEAN
+Independently re-copied the source tree fresh and re-ran the standalone compile + `JUnitCore` pass
+itself, reproducing `OK (20 tests)`. Hand-traced the `buildBlocks()` → `resolveGroupings()`
+extraction against every case (empty, lone item, valid pair, 3-way malformed, non-adjacent
+same-group pair) and confirmed it's provably behavior-preserving — only the loop body moved, no
+logic changed. Confirmed both `ProgramRepository` implementers got the two new methods, confirmed
+`WorkoutPreviewUiState.items` has zero remaining references anywhere in the tree, confirmed the DB
+version comment trail and the reused `superset_*` string resource names. Found two real issues:
+- **MEDIUM, fixed**: `SupersetExerciseCard` clipped/bordered itself with `MaterialTheme.shapes.medium`
+  (14dp) while the `ExerciseMediaBox` nested directly inside it (via `PreviewExerciseContent`)
+  always self-clips with the hardcoded `shapes.large` (18dp) — every other card on this screen
+  (the plain `PreviewExerciseCard`, `PreviewSupersetCard`'s own outer wrapper, `SupersetHintCard`)
+  correctly uses `shapes.large` so its border coincides invisibly with the media box's; only this
+  one new composable used a mismatched radius, which would have painted a visible double-border
+  notch at both top corners of every superset-pair exercise card. Fixed by changing
+  `SupersetExerciseCard` to `shapes.large`, matching the media box and every sibling card, with a
+  comment explaining why the two must agree.
+- **LOW, fixed**: `dismissSupersetHint()` flips the in-memory flag synchronously, then persists via
+  a plain `viewModelScope.launch { programRepository.dismissSupersetHint() }` — if the user backs
+  out of the preview screen fast enough after tapping dismiss, `viewModelScope` cancellation could
+  interrupt the write mid-flight, silently losing the persisted flag even though the in-memory
+  flip already happened (the hint would then reappear once on the next visit). Fixed by wrapping
+  the persist call in `withContext(NonCancellable) { ... }`, so an already-launched write finishes
+  even after the surrounding scope receives a cancellation signal.
+- Two additional points were raised as informational/pre-existing, not requiring a fix: `Preview
+  ExerciseContent`'s `badge = null` path renders a `Row` wrapping a `Column` rather than the old
+  `PreviewExerciseCard`'s bare `Column` — functionally/visually identical for a single child, just
+  a different (not wrong) node shape; and `FitVietDatabase.kt`'s version-comment trail has a
+  pre-existing gap at 2→3 (predates every gate in this session, not introduced here).
+Re-verified after fixes: standalone compile still clean, `JUnitCore` still `OK (20 tests)` (the
+fixes only touched Compose-layer/coroutine-scheduling code with no unit-test surface, so the
+existing domain-layer test suite re-passing is the confirmation that nothing else regressed).
+
+### Push
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+---
+
+## Gates 35–48: complete
+
+This closes out `docs/GATE_35_48_PLAN.md` — every gate from 35 through 48 has been implemented,
+independently reviewed (background adversarial agent per gate, real findings fixed, clean verdicts
+recorded in full above), and pushed to `claude/routines-code-session-n62xmx`. Summary of what each
+gate covered is in its own section above; nothing in the plan's "Gate breakdown" table remains
+unimplemented, and everything the plan explicitly marked "Out of scope for Gates 35-48" (WorkManager
+notification scheduling, real app-wide locale/unit-conversion i18n, superset support in the program
+JSON transfer format) remains genuinely untouched, matching the plan's own documented boundaries.

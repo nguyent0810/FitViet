@@ -7,11 +7,13 @@ import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class WorkoutPreviewUiState(
     val isLoading: Boolean = true,
@@ -54,7 +56,10 @@ class WorkoutPreviewViewModel(
 
     fun dismissSupersetHint() {
         _uiState.value = _uiState.value.copy(showSupersetHint = false)
-        viewModelScope.launch { programRepository.dismissSupersetHint() }
+        // NonCancellable: without it, backing out of this screen right after tapping dismiss
+        // would cancel viewModelScope mid-write, losing the persisted flag even though the
+        // in-memory flip above already happened — the hint would silently reappear next visit.
+        viewModelScope.launch { withContext(NonCancellable) { programRepository.dismissSupersetHint() } }
     }
 
     class Factory(

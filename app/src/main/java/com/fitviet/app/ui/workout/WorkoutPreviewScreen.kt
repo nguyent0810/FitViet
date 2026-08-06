@@ -164,9 +164,12 @@ private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
+            // Must match ExerciseMediaBox's own hardcoded `shapes.large` (inside
+            // PreviewExerciseContent) — a mismatched radius here would leave the media box's own
+            // corner border visible poking out past this card's border.
+            .clip(MaterialTheme.shapes.large)
             .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.medium),
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
         PreviewExerciseContent(item = item, badge = badge)
     }
