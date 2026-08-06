@@ -379,4 +379,20 @@
     <string name="settings_reset_confirm_body">Toàn bộ buổi tập, số đo cơ thể, nhật ký ăn uống và cài đặt cá nhân sẽ bị xoá vĩnh viễn. Giáo án, bài tập và thực phẩm mẫu sẽ được giữ lại. Bạn sẽ quay lại màn hình thiết lập ban đầu.</string>
     <string name="settings_reset_confirm_yes">Đặt lại</string>
     <string name="settings_reset_confirm_cancel">Huỷ</string>
+
+    <!-- ui/reminders — RemindersScreen (Gate 38, persists/renders only — nothing fires yet) -->
+    <string name="reminders_title">Nhắc nhở tập luyện</string>
+    <string name="reminders_empty">Chưa có nhắc nhở nào. Thêm một nhắc nhở để bắt đầu.</string>
+    <string name="reminders_add_button">+ Thêm nhắc nhở</string>
+    <string name="reminders_state_on">Bật</string>
+    <string name="reminders_state_off">Tắt</string>
+    <string name="reminders_state_snoozed">Đã hoãn</string>
+    <string name="reminders_change_time">Đổi giờ</string>
+    <string name="reminders_snooze">Hoãn hôm nay</string>
+    <string name="reminders_unsnooze">Bỏ hoãn</string>
+    <string name="reminders_delete">Xoá</string>
+    <string name="reminders_time_sheet_title">Đổi giờ nhắc</string>
+    <string name="reminders_time_sheet_hour">Giờ</string>
+    <string name="reminders_time_sheet_minute">Phút</string>
+    <string name="reminders_time_sheet_save">Lưu</string>
 </resources>

@@ -41,7 +41,12 @@ import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onResetComplete: () -> Unit) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    onBack: () -> Unit,
+    onResetComplete: () -> Unit,
+    onOpenReminders: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // See SettingsViewModel's class doc: an explicit imperative nav call, not the reactive
@@ -78,7 +83,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBack: () -> Unit, onResetComp
         AccountSection(settings = uiState.settings, viewModel = viewModel)
 
         SectionLabel(text = stringResource(R.string.settings_section_notifications))
-        NotificationsSection()
+        NotificationsSection(onOpenReminders = onOpenReminders)
 
         SectionLabel(text = stringResource(R.string.settings_section_display))
         DisplaySection(settings = uiState.settings, viewModel = viewModel)
@@ -152,7 +157,7 @@ private fun AccountSection(settings: SettingsEntity, viewModel: SettingsViewMode
 }
 
 @Composable
-private fun NotificationsSection() {
+private fun NotificationsSection(onOpenReminders: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,13 +165,10 @@ private fun NotificationsSection() {
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
-        // Static row this gate (Gate 37) — same "row exists before its destination does" precedent
-        // as the original "Sao lưu dữ liệu" row. Gate 38 builds the real reminders list/route and
-        // flips this to a real onClick, matching the plan's own staged sequencing.
         SettingsRow(
             label = stringResource(R.string.settings_reminders_row),
             value = stringResource(R.string.settings_reminders_value),
-            onClick = null,
+            onClick = onOpenReminders,
             showDivider = false,
         )
     }

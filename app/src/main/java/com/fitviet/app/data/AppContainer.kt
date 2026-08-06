@@ -11,6 +11,7 @@ import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
 import com.fitviet.app.data.repository.RoomExerciseRepository
+import com.fitviet.app.data.repository.RemindersRepository
 import com.fitviet.app.data.repository.RoomProgramRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
 import com.fitviet.app.data.repository.SettingsRepository
@@ -67,6 +68,7 @@ class AppContainer(context: Context) {
         measurementDao = database.measurementDao(),
         settingsDao = database.settingsDao(),
     )
+    val remindersRepository = RemindersRepository(database.reminderDao())
 
     /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a
      * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather

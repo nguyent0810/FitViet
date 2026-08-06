@@ -46,6 +46,9 @@ sealed class FitVietDestination(val route: String) {
     /** Feature #6 (Gate 37) — reached from Profile's "Cài đặt ›" row. */
     data object Settings : FitVietDestination("settings")
 
+    /** Feature #5 (Gate 38) — reached from Settings' "Nhắc nhở tập luyện" row. */
+    data object Reminders : FitVietDestination("settings/reminders")
+
     /** Exercise library by difficulty level + a static food reference (Gate 25). */
     data object Handbook : FitVietDestination("handbook")
 }

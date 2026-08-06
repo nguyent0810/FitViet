@@ -1,0 +1,24 @@
+package com.fitviet.app.data.local.dao
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import com.fitviet.app.data.local.entity.ReminderEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ReminderDao {
+    @Query("SELECT * FROM reminders ORDER BY hour, minute, id")
+    fun observeAll(): Flow<List<ReminderEntity>>
+
+    @Insert
+    suspend fun insert(reminder: ReminderEntity): Long
+
+    @Update
+    suspend fun update(reminder: ReminderEntity)
+
+    @Delete
+    suspend fun delete(reminder: ReminderEntity)
+}

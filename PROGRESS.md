@@ -1629,3 +1629,76 @@ compile against real (not stubbed-away) `@Query` annotations. The `popUpTo(...).
 unverifiable without a real device/emulator — flagging this explicitly for the independent review
 to scrutinize hardest, since a wrong `popUpTo` target is exactly the kind of bug that only shows up
 at runtime.
+
+**Independent review pass** — **clean**, no bugs found. Gave the navigation-reset sequence the
+scrutiny asked for: confirmed `Settings` is only reachable after `onboardingCompleted == true`
+(so `NavHost`'s `startDestination` was necessarily built as `Home.route`, never the onboarding
+graph), confirmed `Home` can never be evicted from the bottom of the stack by anything else
+(`BottomNavBar`'s own `popUpTo` always uses `saveState = true`, never `inclusive`), and — most
+usefully — pointed out this gate's `popUpTo(startDestination){inclusive=true}` + fresh `navigate()`
+is structurally the *exact same idiom*, run in the opposite direction, as the already-shipped
+`SplitScreen.onContinue` transition (`navigate(Home.route) { popUpTo(ONBOARDING_GRAPH_ROUTE)
+{inclusive=true} }`) — not a novel risk. Also confirmed the reset transaction's scope claim by
+grepping every `DELETE FROM` statement in the diff (only `measurements`/`meals`/`workout_sessions`
+— nothing else). One non-blocking efficiency note: `SettingsViewModel` sources `settings` from the
+broader `ProfileRepository.observe()` (which also carries measurement/weight-history data this
+screen discards) rather than a narrower `settingsDao.observe()`-only stream — wasteful recomposition
+on unrelated measurement changes, not a correctness issue, left as-is.
+
+### Push
+Reviewed, no fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 38 — Reminders list: data + UI, no scheduling (feature #5)
+
+### What was built
+- `Converters.kt` gained `fromIntList`/`toIntList` — a second JSON-array `List<Int>` converter pair
+  alongside the existing `List<String>` one (mismatch #5 from the plan: `daysOfWeek` is stored this
+  way, not as `Set<DayOfWeek>` directly, reusing the established encoding pattern rather than a new
+  bespoke one). Room distinguishes the two converter pairs by their compile-time-resolved generic
+  type, even though `List<Int>`/`List<String>` erase identically at the JVM level.
+- `data/local/entity/ReminderEntity.kt` (new) — `hour`/`minute`/`daysOfWeek: List<Int>` (sorted ISO
+  weekday values, empty ≠ "every day," it's a genuinely inert reminder until a day is picked, same
+  "explicit over inferred" convention this app already follows elsewhere)/`enabled`/
+  `snoozedUntilEpochDay: Long?`. `data/local/dao/ReminderDao.kt` (new). `FitVietDatabase` version
+  bumped `6 → 7` (new `reminders` table).
+- `data/repository/RemindersRepository.kt` (new) — thin CRUD wrapper; `addReminder()` seeds a new
+  row with Mon-Fri pre-selected rather than `ReminderEntity()`'s own no-days default, since a
+  freshly-added reminder with zero days highlighted would read as broken on first touch.
+- `ui/reminders/{RemindersScreen,RemindersViewModel}.kt` (new) — a card per reminder: time (Anton,
+  large), a tap-to-toggle state pill (Bật/Tắt/Đã hoãn — **the "three row states" this gate's spec
+  item asks for**), 7 day-circle toggles (T2..CN, reusing `util/shortLabelRes`), and 3 text actions
+  (Đổi giờ / Hoãn hôm nay·Bỏ hoãn / Xoá). "Đổi giờ" opens a `ModalBottomSheet` with hand-built
+  hour/minute +/- steppers (matching `WorkoutStraightScreens.kt`'s existing stepper visual pattern,
+  reimplemented locally since the original is file-private — no Material `TimePicker`/`TimeInput`,
+  per the plan's explicit instruction). "+ Thêm nhắc nhở" appends a new default reminder.
+- `ui/settings/SettingsScreen.kt`'s "Nhắc nhở tập luyện" row (static since Gate 37) is now real —
+  `onClick` navigates to the new route.
+- New route `FitVietDestination.Reminders` ("settings/reminders"), reached from Settings.
+- New strings (vi + en): `reminders_title`, `reminders_empty`, `reminders_add_button`,
+  `reminders_state_{on,off,snoozed}`, `reminders_change_time`, `reminders_{snooze,unsnooze}`,
+  `reminders_delete`, `reminders_time_sheet_{title,hour,minute,save}`.
+
+### Scope boundary (stated plainly, per the plan's own instruction not to imply a working feature)
+**Nothing in this gate ever fires a notification.** There is no `WorkManager` job, no notification
+channel, no boot-reschedule receiver — none of that exists anywhere in this app yet. This gate
+persists and renders reminder state correctly (time, days, enabled, snooze), full stop. A reminder
+set for "07:00, T2-T6, Bật" will sit in the database looking exactly like an active reminder and
+never once notify the user. Building the real scheduler is a distinct, not-yet-scoped gate.
+Similarly, "snooze" has no scheduler to ever clear it automatically — it's a manual toggle the user
+sets and unsets themselves, not a real "skip just the next occurrence" mechanism yet.
+
+### Verification
+Standalone `kotlinc` compile of the full domain + data layer (all entities/DAOs including the new
+`ReminderEntity`/`ReminderDao`, the two new `Converters` methods, `RemindersRepository`, plus
+`ProfileRepository`/`SettingsRepository`/`DashboardRepository` to confirm nothing else regressed) —
+clean, no errors, against the `FitVietDatabase`/`withTransaction` stub (this pass also needed a new
+hand-written `@TypeConverter` annotation stub — added to the shared stub file this session reuses
+across gates). `RemindersScreen.kt`/`RemindersViewModel.kt`/`SettingsScreen.kt`/`FitVietNavHost.kt`
+(real `androidx.lifecycle`/Compose/Navigation) verified by manual read-through — confirmed
+`remember(reminder.id) { mutableIntStateOf(...) }` correctly resets the time sheet's local
+hour/minute draft when it reopens for a *different* reminder (not stale from whichever reminder was
+last edited), no stray `androidx.compose.foundation.layout.weight` import, both
+`strings.xml`/`values-en/strings.xml` well-formed XML with every new key present in both.
+
+### Push
+Pending independent review.

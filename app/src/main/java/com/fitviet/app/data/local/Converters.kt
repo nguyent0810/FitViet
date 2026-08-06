@@ -18,4 +18,23 @@ class Converters {
         val array = JSONArray(value)
         return List(array.length()) { array.getString(it) }
     }
+
+    /** Same JSON-array approach as [fromStringList]/[toStringList] — used by
+     * [com.fitviet.app.data.local.entity.ReminderEntity.daysOfWeek] (Gate 38) instead of a bespoke
+     * bitmask/CSV encoding. Distinguished from the `List<String>` pair above by Room's compile-time
+     * type resolution (exact declared generic type, not JVM-erased signature), so both converter
+     * pairs coexist safely despite `List<Int>`/`List<String>` erasing identically at the JVM level. */
+    @TypeConverter
+    fun fromIntList(value: List<Int>): String {
+        val array = JSONArray()
+        value.forEach(array::put)
+        return array.toString()
+    }
+
+    @TypeConverter
+    fun toIntList(value: String): List<Int> {
+        if (value.isEmpty()) return emptyList()
+        val array = JSONArray(value)
+        return List(array.length()) { array.getInt(it) }
+    }
 }

@@ -47,6 +47,8 @@ import com.fitviet.app.ui.programs.ProgramsListScreen
 import com.fitviet.app.ui.programs.ProgramsViewModel
 import com.fitviet.app.ui.programs.WeeklyScheduleScreen
 import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
+import com.fitviet.app.ui.reminders.RemindersScreen
+import com.fitviet.app.ui.reminders.RemindersViewModel
 import com.fitviet.app.ui.settings.SettingsScreen
 import com.fitviet.app.ui.settings.SettingsViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
@@ -213,7 +215,12 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             launchSingleTop = true
                         }
                     },
+                    onOpenReminders = { navController.navigate(FitVietDestination.Reminders.route) },
                 )
+            }
+            composable(FitVietDestination.Reminders.route) {
+                val viewModel: RemindersViewModel = viewModel(factory = RemindersViewModel.Factory(container.remindersRepository))
+                RemindersScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
                 route = FitVietDestination.ExerciseDetail.route,

@@ -376,4 +376,20 @@
     <string name="settings_reset_confirm_body">All workouts, body measurements, food log entries, and personal settings will be permanently deleted. Programs, exercises, and sample foods are kept. You\'ll be returned to the initial setup screen.</string>
     <string name="settings_reset_confirm_yes">Reset</string>
     <string name="settings_reset_confirm_cancel">Cancel</string>
+
+    <!-- ui/reminders — RemindersScreen (Gate 38, persists/renders only — nothing fires yet) -->
+    <string name="reminders_title">Workout reminders</string>
+    <string name="reminders_empty">No reminders yet. Add one to get started.</string>
+    <string name="reminders_add_button">+ Add reminder</string>
+    <string name="reminders_state_on">On</string>
+    <string name="reminders_state_off">Off</string>
+    <string name="reminders_state_snoozed">Snoozed</string>
+    <string name="reminders_change_time">Change time</string>
+    <string name="reminders_snooze">Snooze today</string>
+    <string name="reminders_unsnooze">Unsnooze</string>
+    <string name="reminders_delete">Delete</string>
+    <string name="reminders_time_sheet_title">Change reminder time</string>
+    <string name="reminders_time_sheet_hour">Hour</string>
+    <string name="reminders_time_sheet_minute">Minute</string>
+    <string name="reminders_time_sheet_save">Save</string>
 </resources>

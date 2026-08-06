@@ -13,6 +13,7 @@ import com.fitviet.app.data.local.dao.MeasurementDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
+import com.fitviet.app.data.local.dao.ReminderDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
@@ -24,6 +25,7 @@ import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramDayEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.ProgramExerciseEntity
+import com.fitviet.app.data.local.entity.ReminderEntity
 import com.fitviet.app.data.local.entity.SetLogEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
@@ -41,6 +43,7 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
         SettingsEntity::class,
         CommunityPostEntity::class,
         FoodEntity::class,
+        ReminderEntity::class,
     ],
     // Bump this on every schema change, pre-release — see fallbackToDestructiveMigration() below.
     // Gate 15 raised this from 1 to 2 (new program_days/program_exercises tables, new columns on
@@ -58,7 +61,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // `exercises` (same rationale as Gate 23 — a device already running an earlier version needs a
     // forced recreate to pick up the new column at all, Room won't add it in place).
     // Gate 35 raised this from 5 to 6: new `displayName`/`avatarId` columns on `settings`.
-    version = 6,
+    // Gate 38 raised this from 6 to 7: new `reminders` table.
+    version = 7,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -74,6 +78,7 @@ abstract class FitVietDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
     abstract fun communityPostDao(): CommunityPostDao
     abstract fun foodDao(): FoodDao
+    abstract fun reminderDao(): ReminderDao
 
     companion object {
         @Volatile private var instance: FitVietDatabase? = null
