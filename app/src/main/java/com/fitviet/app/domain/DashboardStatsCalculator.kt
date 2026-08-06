@@ -32,8 +32,10 @@ object DashboardStatsCalculator {
     /**
      * Consecutive trained days counting back from today if today already has a session,
      * otherwise from yesterday — so an not-yet-done today doesn't zero out an active streak.
+     * Not private: [com.fitviet.app.data.repository.WorkoutRepository.getCurrentStreakDays]
+     * (Gate 40) reuses this directly rather than re-deriving the same rule.
      */
-    private fun currentStreak(trainedDates: Set<LocalDate>, today: LocalDate): Int {
+    fun currentStreak(trainedDates: Set<LocalDate>, today: LocalDate): Int {
         var cursor = if (today in trainedDates) today else today.minusDays(1)
         var streak = 0
         while (cursor in trainedDates) {

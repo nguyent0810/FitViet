@@ -63,7 +63,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 35 raised this from 5 to 6: new `displayName`/`avatarId` columns on `settings`.
     // Gate 38 raised this from 6 to 7: new `reminders` table.
     // Gate 39 raised this from 7 to 8: new `selectedDaysPerWeek` column on `settings`.
-    version = 8,
+    // Gate 40 raised this from 8 to 9: 5 new nullable workout-share columns on `community_posts`.
+    version = 9,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

@@ -8,6 +8,9 @@ object CommunityPostType {
     const val SHARE = 0
     const val QA = 1
     const val PROGRESS = 2
+    /** Feature #4 (Gate 40) — a real post created from a finished [com.fitviet.app.ui.workout.WorkoutViewModel]
+     * session, distinct from [SHARE]'s generic seeded freeform posts. Populates the 5 columns below. */
+    const val WORKOUT_SHARE = 3
 }
 
 /**
@@ -32,4 +35,13 @@ data class CommunityPostEntity(
     val baseLikeCount: Int,
     val likedByUser: Boolean = false,
     val commentCount: Int,
+    /** [WORKOUT_SHARE]-only columns below, null for every other [postType]. [programTitle] is
+     * separately nullable even on a share post — an ad-hoc duration-picker session has no program
+     * at all (mismatch #4 in the gate plan), so "no program" and "not a share post" are both
+     * legitimately null, not conflated into one flag. */
+    val programTitle: String? = null,
+    val dayLabel: String? = null,
+    val durationSeconds: Int? = null,
+    val totalVolumeKg: Double? = null,
+    val streakDays: Int? = null,
 )

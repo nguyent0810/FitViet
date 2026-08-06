@@ -59,7 +59,7 @@ class AppContainer(context: Context) {
         settingsDao = database.settingsDao(),
         measurementDao = database.measurementDao(),
     )
-    val communityRepository = CommunityRepository(database.communityPostDao())
+    val communityRepository = CommunityRepository(database.communityPostDao(), database.settingsDao())
     val handbookRepository = HandbookRepository(database.exerciseDao(), database.foodDao())
     val settingsRepository = SettingsRepository(
         database = database,

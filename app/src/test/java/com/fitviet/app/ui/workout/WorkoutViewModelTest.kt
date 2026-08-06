@@ -1,8 +1,14 @@
 package com.fitviet.app.ui.workout
 
+import com.fitviet.app.data.local.dao.CommunityPostDao
+import com.fitviet.app.data.local.dao.SettingsDao
+import com.fitviet.app.data.local.entity.CommunityPostEntity
+import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
+import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
+import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.data.repository.ProgramRepository
@@ -85,6 +91,34 @@ class WorkoutViewModelTest {
         // No test needs a real "personal best" signal — a fixed null keeps every program-day test
         // deterministic on ProgramDayWorkoutPlanner.DEFAULT_RECOMMENDED_WEIGHT_KG.
         override suspend fun getRecommendedWeight(exerciseId: Long): Double? = null
+
+        // No test asserts on a specific streak number today — a fixed 0 keeps every
+        // finishSession()-reaching test deterministic without needing real completed-session dates.
+        var streakDaysToReturn = 0
+        override suspend fun getCurrentStreakDays(today: LocalDate): Int = streakDaysToReturn
+    }
+
+    /** Fakes the two Dao dependencies a real [CommunityRepository] is constructed with below — its
+     * own logic (author-identity lookup, post construction) runs unmodified in tests, only the Room
+     * layer underneath it is faked. */
+    private class FakeSettingsDao(private var settings: SettingsEntity = SettingsEntity()) : SettingsDao {
+        override fun observe(): Flow<SettingsEntity?> = flowOf(settings)
+        override suspend fun get(): SettingsEntity? = settings
+        override suspend fun upsert(settings: SettingsEntity) {
+            this.settings = settings
+        }
+    }
+
+    private class FakeCommunityPostDao : CommunityPostDao {
+        val inserted = mutableListOf<CommunityPostEntity>()
+        override fun observeAll(): Flow<List<CommunityPostEntity>> = flowOf(emptyList())
+        override suspend fun count(): Int = 0
+        override suspend fun insertAll(posts: List<CommunityPostEntity>) {}
+        override suspend fun insert(post: CommunityPostEntity): Long {
+            inserted += post
+            return inserted.size.toLong()
+        }
+        override suspend fun setLiked(id: Long, liked: Boolean) {}
     }
 
     /** [schedules] maps programId -> its schedule; empty/missing means "no schedule for this
@@ -133,10 +167,12 @@ class WorkoutViewModelTest {
     private inner class Harness(startSession: Boolean = true) {
         val clock = FakeClock()
         val workoutRepository = FakeWorkoutRepository()
+        val communityPostDao = FakeCommunityPostDao()
         val viewModel = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
             programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
             databaseReady = CompletableDeferred(Unit),
             elapsedRealtimeMillis = clock::now,
         )
@@ -319,6 +355,50 @@ class WorkoutViewModelTest {
         assertTrue(h.workoutRepository.completedVolumeKg!! > 0.0)
     }
 
+    // ---- Gate 40: workout-share ----
+
+    @Test
+    fun `finishing a session computes and stores the streak from the workout repository`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.workoutRepository.streakDaysToReturn = 5
+        advanceThroughEntireSession(h)
+
+        assertEquals(5, h.viewModel.uiState.value.sessionStreakDays)
+    }
+
+    @Test
+    fun `sharing a finished session creates a real community post from the session summary`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.workoutRepository.streakDaysToReturn = 3
+        advanceThroughEntireSession(h)
+        val state = h.viewModel.uiState.value
+
+        h.viewModel.shareToCommunity()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, h.communityPostDao.inserted.size)
+        val post = h.communityPostDao.inserted.single()
+        assertEquals(CommunityPostType.WORKOUT_SHARE, post.postType)
+        assertEquals(state.dayLabel, post.dayLabel)
+        assertEquals(state.sessionElapsedSeconds, post.durationSeconds)
+        assertEquals(state.sessionTotalVolumeKg, post.totalVolumeKg)
+        assertEquals(3, post.streakDays)
+        assertTrue(h.viewModel.uiState.value.sessionShared)
+    }
+
+    @Test
+    fun `sharing twice only creates one community post`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        h.viewModel.shareToCommunity()
+        testDispatcher.scheduler.runCurrent()
+        h.viewModel.shareToCommunity()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, h.communityPostDao.inserted.size)
+    }
+
     @Test
     fun `superset completing A moves to B with B's planned values, no rest between them`() = runTest(testDispatcher) {
         val h = Harness()
@@ -447,6 +527,7 @@ class WorkoutViewModelTest {
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
             programRepository = programRepository,
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             databaseReady = CompletableDeferred(Unit),
             programId = 42L,
         )
@@ -470,6 +551,7 @@ class WorkoutViewModelTest {
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
             programRepository = FakeProgramRepository(), // no schedule for programId 99 at all
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             databaseReady = CompletableDeferred(Unit),
             programId = 99L,
         )

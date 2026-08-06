@@ -164,6 +164,8 @@
     <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
     <string name="workout_session_finished_note">New PRs will be saved to your diary</string>
     <string name="workout_back_to_home">Back to home</string>
+    <string name="workout_share_button">Share to Community</string>
+    <string name="workout_share_button_done">Shared ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
     <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->

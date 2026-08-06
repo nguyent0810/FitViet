@@ -90,7 +90,7 @@ fun WorkoutScreen(
                 )
             }
             WorkoutPhase.SupersetBlockDone -> SupersetBlockDoneContent(uiState = uiState, viewModel = viewModel)
-            WorkoutPhase.SessionFinished -> SessionFinishedContent(uiState = uiState, onBackToHome = onFinishToHome)
+            WorkoutPhase.SessionFinished -> SessionFinishedContent(uiState = uiState, onBackToHome = onFinishToHome, onShare = viewModel::shareToCommunity)
         }
     }
 

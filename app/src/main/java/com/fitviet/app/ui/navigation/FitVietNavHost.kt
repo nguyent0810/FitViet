@@ -276,6 +276,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         container.exerciseRepository,
                         container.workoutRepository,
                         container.programRepository,
+                        container.communityRepository,
                         container.databaseReady,
                         programId,
                     ),

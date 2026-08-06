@@ -1818,3 +1818,111 @@ convention, left unchanged.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 40 — Workout-share: data + creation (feature #4a)
+
+### What was built
+- `data/local/entity/CommunityPostEntity.kt` — new `CommunityPostType.WORKOUT_SHARE = 3`, distinct
+  from the pre-existing generic `SHARE` seeded-post type. 5 new nullable columns: `programTitle`,
+  `dayLabel`, `durationSeconds`, `totalVolumeKg`, `streakDays` — all null for every other post type,
+  and `programTitle` stays nullable even on a share post (mismatch #4: an ad-hoc duration-picker
+  session has no program at all). `FitVietDatabase` version 8 → 9.
+- `data/local/dao/CommunityPostDao.kt` — added `insert(post): Long`, the first single-post insert
+  path this DAO has ever had (previously only bulk `insertAll` for the one-time seeder).
+- `data/repository/CommunityRepository.kt` — now takes `SettingsDao` too; new `shareWorkout(...)`
+  builds a real `WORKOUT_SHARE` post using the persisted `displayName`/avatar-initial (Gate 35) as
+  the author, so a shared post looks like it came from the actual signed-in user, not a placeholder.
+- `domain/DashboardStatsCalculator.currentStreak` — widened from `private` to public so a second
+  streak definition doesn't have to be invented for this gate; reused as-is.
+- `data/repository/WorkoutRepository.kt` — new `getCurrentStreakDays(today): Int`, implemented by
+  reading completed sessions once (`observeCompleted().first()`) and delegating to
+  `DashboardStatsCalculator.currentStreak`, so the share card's streak always matches Dashboard's.
+- `ui/workout/WorkoutViewModel.kt` — new `communityRepository` constructor param; `WorkoutUiState`
+  gained `programTitle`, `sessionStreakDays`, `sessionShared`. `startProgramDaySession` now also
+  fetches `programRepository.getById(programId)?.titleVi` and threads it into state (mismatch #4:
+  fetched once here, not re-derived from the session row later, since that row never gets a
+  `programTitle` column at all). New `shareToCommunity()` action, guarded by `sessionShared` against
+  a double-tap creating two posts.
+- `ui/workout/SessionFinishedContent.kt` — new `onShare` param and a `ShareToCommunityButton`
+  (outlined while unshared, matching the app's established secondary-action style from
+  `RemindersScreen`'s "+ Thêm nhắc nhở"; flips to a filled, inert "Đã chia sẻ ✓" state once shared).
+- `ui/workout/WorkoutScreen.kt` — wired `onShare = viewModel::shareToCommunity`.
+- `data/AppContainer.kt` — `CommunityRepository` construction now also passes `database.settingsDao()`.
+- `ui/navigation/FitVietNavHost.kt` — `WorkoutViewModel.Factory` call site passes `container.communityRepository`.
+- New strings (vi + en): `workout_share_button`, `workout_share_button_done`.
+- `app/src/test/.../WorkoutViewModelTest.kt` — added `FakeSettingsDao`/`FakeCommunityPostDao` (fake
+  only the Room layer; the real `CommunityRepository` runs unmodified against them), a
+  `streakDaysToReturn` knob on `FakeWorkoutRepository`, and 3 new tests: streak gets computed and
+  stored at finish time, sharing creates a post whose fields match the session summary exactly, and
+  sharing twice only ever creates one post. All 3 pre-existing `WorkoutViewModel(...)` construction
+  sites updated for the new required `communityRepository` parameter.
+
+### Scope boundary
+Per the plan's own split (item 4 → Gate 40 data+creation / Gate 41 feed rendering): **no feed
+rendering changes this gate.** `CommunityScreen.kt`'s `PostCard` is untouched, so a share created
+right now renders through the existing generic body-text card (using the fixed caption
+`shareWorkout` writes into `bodyText`) until Gate 41 adds a dedicated `WorkoutSharePostCard` that
+actually reads the 5 new structured columns.
+
+### Scope decisions
+- **`finishSession()` now awaits the DB write before flipping to `SessionFinished`, instead of the
+  old fire-and-forget write + synchronous phase change.** This was necessary for correctness, not
+  just style: `getCurrentStreakDays` has to run *after* `completeSession` has actually landed, or a
+  share made right after arriving at the finished screen could read yesterday's streak instead of
+  today's freshly-completed session. The tradeoff is a small new latency window on the block-done
+  screen (StraightBlockDone/SupersetBlockDone) before the transition to Finished, gated on two Room
+  round-trips — normally sub-millisecond, but worth flagging explicitly for review since it changes
+  the timing/failure characteristics of a previously fire-and-forget write. Also worth the reviewer's
+  attention: since `advanceToNextBlock()` is still `debounced` but phase doesn't leave
+  `StraightBlockDone`/`SupersetBlockDone` until this coroutine resolves, a second tap arriving after
+  the 350ms debounce window but before the coroutine finishes would re-run `finishSession()` a second
+  time — `completeSession` re-writing the same already-completed row and a redundant streak query are
+  both harmless no-ops, but I want this reasoned through independently, not just asserted safe here.
+- **Author identity on a shared post is fetched fresh from `SettingsDao` inside `CommunityRepository`,
+  not passed in from `WorkoutViewModel`.** Keeps "what does a post from the current user look like"
+  as `CommunityRepository`'s own responsibility (it already owns post construction) rather than
+  spreading identity-resolution logic across two layers; `WorkoutViewModel` only had to gain one new
+  repository dependency instead of two (`ProfileRepository` too).
+- **`bodyText` still gets a real (if generic) caption** (`"Vừa hoàn thành buổi tập \"$dayLabel\"!"`)
+  even though Gate 41's card won't use it — matches this app's existing "seeded content is hardcoded
+  Vietnamese, not run through string resources" convention (confirmed against `SeedData.kt`'s
+  existing `CommunityPostEntity` rows) and means the post degrades reasonably if ever rendered by
+  generic UI before Gate 41 lands, rather than showing an empty body.
+
+### Verification
+Standalone `kotlinc` compile of `CommunityPostEntity.kt`, `CommunityPostDao.kt`,
+`CommunityRepository.kt`, `WorkoutRepository.kt`, `DashboardStatsCalculator.kt`/`DashboardStats.kt`,
+plus supporting entities/DAOs (`SettingsEntity`, `ProgramEntity`, `WorkoutSessionEntity`,
+`SetLogEntity`, `ExerciseEntity`, `SetLogDao`, `WorkoutSessionDao`, `SettingsDao`) and
+`ui/workout/WorkoutModels.kt` (for `LoggedSet`) — clean, no errors, against the shared Room stubs.
+
+**Methodology correction found and fixed this gate**: the standalone-compile classpath used since
+Gate 35 was missing `kotlin-stdlib` on the actual *source* compile classpath (only the compiler
+tool's own JVM classpath had it) — every file compiled through Gate 39 happened not to call any
+plain `kotlin.collections`/`kotlin.text` extension function (`.filter`, `.map`, `.trim`, `.fold`,
+etc.), so this went unnoticed. Gate 40 is the first gate to hit it (`DashboardStatsCalculator`'s
+`.filter`/`.fold`/`.groupingBy`, `WorkoutRepository`'s `.mapNotNull`, `CommunityRepository`'s
+`.trim`) — confirmed by isolating to a minimal 2-file repro that failed with "unresolved reference"
+on basic stdlib functions, then fixed by adding `kotlin-stdlib-2.0.21.jar` explicitly to the `-cp`
+argument passed to `K2JVMCompiler` for the sources being compiled. Documented in
+`scratchpad/kotlinc-check/README_RECIPE.txt` for every gate from here on. Earlier gates' clean
+results aren't invalidated (their files never exercised the gap), but this recipe should be used for
+any future re-verification of them too.
+
+`WorkoutViewModel.kt`/`SessionFinishedContent.kt`/`WorkoutScreen.kt`/`WorkoutViewModelTest.kt` (real
+`androidx.lifecycle`/Compose/JUnit+coroutines-test — not standalone-compilable without a much larger
+stub investment than this session has made for any prior gate, so kept to the same manual-read-through
+split used throughout) verified by careful manual trace: `startProgramDaySession`'s new
+`programTitle` fetch only runs in the program-day path (ad-hoc sessions correctly stay null);
+`shareToCommunity`'s `sessionShared` guard is checked before any repository call, not after;
+`ShareToCommunityButton`'s `.then(if (shared) Modifier else Modifier.clickable(...))` correctly
+removes the click handler entirely once shared (not just visually, so there's truly nothing left to
+double-tap); all 3 pre-existing direct `WorkoutViewModel(...)` test construction sites and the
+`Harness` class updated consistently for the new constructor parameter; the 3 new tests' assertions
+were hand-traced against `shareWorkout`'s exact field mapping (`programTitle`→`programTitle`,
+`dayLabel`→`dayLabel`, `durationSeconds`←`sessionElapsedSeconds`, `totalVolumeKg`←
+`sessionTotalVolumeKg`, `streakDays`←`sessionStreakDays`) to confirm no field is silently swapped or
+dropped. Both `strings.xml`/`values-en/strings.xml` parsed as valid XML.
+
+### Push
+Pending independent review.

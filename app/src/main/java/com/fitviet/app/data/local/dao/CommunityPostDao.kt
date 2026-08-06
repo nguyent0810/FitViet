@@ -17,6 +17,9 @@ interface CommunityPostDao {
     @Insert
     suspend fun insertAll(posts: List<CommunityPostEntity>)
 
+    @Insert
+    suspend fun insert(post: CommunityPostEntity): Long
+
     @Query("UPDATE community_posts SET likedByUser = :liked WHERE id = :id")
     suspend fun setLiked(id: Long, liked: Boolean)
 }

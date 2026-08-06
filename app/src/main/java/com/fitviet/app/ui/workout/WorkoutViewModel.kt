@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import java.time.LocalDate
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -46,6 +48,16 @@ data class WorkoutUiState(
     val sessionElapsedSeconds: Int = 0,
     val sessionTotalVolumeKg: Double = 0.0,
     val sessionTotalSets: Int = 0,
+    /** Feature #4 (Gate 40) — the program this session came from, null for an ad-hoc
+     * duration-picker session (mismatch #4: not every session has a program at all). Only
+     * meaningful once [phase] reaches [WorkoutPhase.SessionFinished]; used for the share card. */
+    val programTitle: String? = null,
+    /** Computed once at session-finish time (see `finishSession()`), not observed live — matches
+     * Dashboard's own streak definition via [com.fitviet.app.domain.DashboardStatsCalculator]. */
+    val sessionStreakDays: Int = 0,
+    /** Guards the "share to Community" action against a double-tap creating two posts — reset per
+     * session since each new session is a fresh [WorkoutUiState]. */
+    val sessionShared: Boolean = false,
 ) {
     val currentBlock: WorkoutBlockPlan? get() = blocks.getOrNull(currentBlockIndex)
 }
@@ -54,6 +66,7 @@ class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
     private val programRepository: ProgramRepository,
+    private val communityRepository: CommunityRepository,
     private val databaseReady: Deferred<Unit>,
     // Set when entered from WorkoutPreview's "Begin workout" (Gate 24) — the session is then built
     // from this program's real schedule for today instead of the generic duration-picker flow.
@@ -101,9 +114,13 @@ class WorkoutViewModel(
                 showDurationPicker()
                 return@launch
             }
+            // Fetched here (not re-derived from the session row later) per the gate plan's mismatch
+            // #4 — WorkoutSessionEntity has no programTitle column, and completeSession() never
+            // writes programId either, so this is the only point that actually has it.
+            val programTitle = programRepository.getById(programId)?.titleVi
             sessionId = workoutRepository.startSession(dayLabel = resolved.titleVi, startedAtMillis = System.currentTimeMillis())
             _uiState.value = resetForBlock(
-                WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi),
+                WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi, programTitle = programTitle),
                 0,
                 blocks.firstOrNull(),
             )
@@ -360,6 +377,10 @@ class WorkoutViewModel(
         null -> state.copy(phase = WorkoutPhase.SessionFinished)
     }
 
+    /** Awaits [WorkoutRepository.completeSession] before reading the streak (rather than the old
+     * fire-and-forget write + immediate synchronous phase flip) so `getCurrentStreakDays` sees
+     * today's just-completed session already persisted — otherwise a share created right after
+     * landing on [WorkoutPhase.SessionFinished] could read yesterday's streak instead of today's. */
     private fun finishSession() {
         elapsedJob?.cancel()
         val state = _uiState.value
@@ -370,8 +391,27 @@ class WorkoutViewModel(
                 totalVolumeKg = state.sessionTotalVolumeKg,
                 durationSeconds = state.sessionElapsedSeconds,
             )
+            val streakDays = workoutRepository.getCurrentStreakDays(LocalDate.now())
+            _uiState.update { it.copy(phase = WorkoutPhase.SessionFinished, sessionStreakDays = streakDays) }
         }
-        _uiState.update { it.copy(phase = WorkoutPhase.SessionFinished) }
+    }
+
+    /** Feature #4 (Gate 40) — creates a real workout-share Community post (via
+     * [CommunityRepository.shareWorkout]) from this session's already-computed summary. The
+     * [WorkoutUiState.sessionShared] check (rather than
+     * [debounced], which is keyed off a real-time clock unsuited to a one-shot terminal action)
+     * stops a fast double-tap from creating two posts. */
+    fun shareToCommunity() = viewModelScope.launch {
+        val state = _uiState.value
+        if (state.sessionShared) return@launch
+        communityRepository.shareWorkout(
+            programTitle = state.programTitle,
+            dayLabel = state.dayLabel,
+            durationSeconds = state.sessionElapsedSeconds,
+            totalVolumeKg = state.sessionTotalVolumeKg,
+            streakDays = state.sessionStreakDays,
+        )
+        _uiState.update { it.copy(sessionShared = true) }
     }
 
     private fun persistSet(set: LoggedSet) {
@@ -418,11 +458,12 @@ class WorkoutViewModel(
         private val exerciseRepository: ExerciseRepository,
         private val workoutRepository: WorkoutRepository,
         private val programRepository: ProgramRepository,
+        private val communityRepository: CommunityRepository,
         private val databaseReady: Deferred<Unit>,
         private val programId: Long? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            WorkoutViewModel(exerciseRepository, workoutRepository, programRepository, databaseReady, programId) as T
+            WorkoutViewModel(exerciseRepository, workoutRepository, programRepository, communityRepository, databaseReady, programId) as T
     }
 }
