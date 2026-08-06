@@ -72,6 +72,7 @@ fun ProgramsListScreen(
     var importMessage by remember { mutableStateOf<String?>(null) }
     val readErrorText = stringResource(R.string.programs_import_read_error)
     val invalidFormatText = stringResource(R.string.programs_import_invalid)
+    val failedText = stringResource(R.string.programs_import_failed)
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
@@ -92,6 +93,7 @@ fun ProgramsListScreen(
                         )
                     }
                     ImportProgramResult.InvalidFormat -> invalidFormatText
+                    ImportProgramResult.Failed -> failedText
                 }
             }
         }

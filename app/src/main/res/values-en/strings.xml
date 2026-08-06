@@ -117,6 +117,7 @@
     <string name="programs_import_success_with_skipped">Imported program \"%1$s\" (%2$d exercises not in your library were skipped).</string>
     <string name="programs_import_invalid">This file isn\'t a valid FitViet program export.</string>
     <string name="programs_import_read_error">Couldn\'t read the selected file.</string>
+    <string name="programs_import_failed">Import failed, please try again.</string>
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Your weekly schedule</string>
@@ -289,7 +290,7 @@
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
     <string name="profile_widgets_title">Dashboard widgets</string>
-    <string name="profile_widget_recommendation">Today's tip</string>
+    <string name="profile_widget_recommendation">Today\'s tip</string>
     <string name="profile_widget_muscle_balance">Muscle balance</string>
     <string name="profile_widget_nutrition">Nutrition</string>
     <string name="profile_donate_title">100% free app</string>

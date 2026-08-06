@@ -75,4 +75,54 @@ class ProgramTransferTest {
         val data = sample.copy(days = emptyList())
         assertEquals(data, ProgramTransfer.decode(ProgramTransfer.encode(data)))
     }
+
+    @Test
+    fun `decode rejects a non-positive durationWeeks or sessionsPerWeek`() {
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(durationWeeks = 0))))
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(sessionsPerWeek = -1))))
+    }
+
+    @Test
+    fun `decode rejects blank program, day, or exercise names`() {
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(titleVi = "  "))))
+        assertNull(
+            ProgramTransfer.decode(
+                ProgramTransfer.encode(sample.copy(days = listOf(sample.days[0].copy(titleVi = ""), sample.days[1]))),
+            ),
+        )
+        val blankExerciseName = sample.days[0].copy(exercises = sample.days[0].exercises.map { it.copy(nameVi = " ") })
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(days = listOf(blankExerciseName, sample.days[1])))))
+    }
+
+    @Test
+    fun `decode rejects non-positive or inverted set-rep targets`() {
+        val zeroSets = sample.days[0].copy(exercises = sample.days[0].exercises.map { it.copy(targetSets = 0) })
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(days = listOf(zeroSets, sample.days[1])))))
+
+        val invertedReps = sample.days[0].copy(exercises = sample.days[0].exercises.map { it.copy(targetRepsMin = 12, targetRepsMax = 8) })
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(days = listOf(invertedReps, sample.days[1])))))
+    }
+
+    @Test
+    fun `decode rejects a training day with no exercises`() {
+        val emptyTrainingDay = sample.days[0].copy(exercises = emptyList())
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(days = listOf(emptyTrainingDay, sample.days[1])))))
+    }
+
+    @Test
+    fun `decode rejects a rest day with exercises`() {
+        val restDayWithExercises = sample.days[1].copy(exercises = sample.days[0].exercises)
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(days = listOf(sample.days[0], restDayWithExercises)))))
+    }
+
+    @Test
+    fun `a well-formed sample still round-trips under the new validation rules`() {
+        // Pure domain-layer check only -- this doesn't exercise ProgramRepository.exportProgram()
+        // itself (this project doesn't Room-test repositories). The actual guarantee that a real
+        // export can never violate these rules -- specifically, that an imported training day
+        // can't end up with zero resolved exercises after unmatched names are dropped -- lives in
+        // ProgramRepository.importTransaction(), which drops a training day entirely rather than
+        // inserting one with no exercises; see that function's own doc comment.
+        assertEquals(sample, ProgramTransfer.decode(ProgramTransfer.encode(sample)))
+    }
 }

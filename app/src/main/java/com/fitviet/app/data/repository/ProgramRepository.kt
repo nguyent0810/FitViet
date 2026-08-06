@@ -17,6 +17,7 @@ import com.fitviet.app.domain.ProgramTransfer
 import com.fitviet.app.domain.ProgramTransferData
 import com.fitviet.app.domain.ProgramTransferDay
 import com.fitviet.app.domain.ProgramTransferExercise
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -31,6 +32,10 @@ sealed interface ImportProgramResult {
      * program note). */
     data class Success(val programId: Long, val titleVi: String, val skippedExerciseNames: List<String>) : ImportProgramResult
     data object InvalidFormat : ImportProgramResult
+    /** An otherwise-valid file failed partway through the database write (e.g. a disk/storage
+     * error) — the transaction guarantees nothing was left half-inserted, but the user still needs
+     * to be told the import didn't happen rather than the app silently crashing. */
+    data object Failed : ImportProgramResult
 }
 
 class ProgramRepository(
@@ -62,12 +67,12 @@ class ProgramRepository(
     }
 
     /** Serializes a program's real weekly schedule to a shareable JSON string (feature #1). Null
-     * if the program doesn't exist or its schedule hasn't been seeded/built yet — same "empty
-     * until backfilled" state [observeSchedule] already documents. */
+     * only if the program itself doesn't exist — a program with no schedule rows yet (not seeded,
+     * or a zero-day program from [importProgram]) still exports as a valid empty-days JSON rather
+     * than being a permanent dead end that can never be shared. */
     suspend fun exportProgram(programId: Long): String? {
         val program = programDao.getById(programId) ?: return null
         val schedule = observeSchedule(programId).first()
-        if (schedule.isEmpty()) return null
         return ProgramTransfer.encode(
             ProgramTransferData(
                 titleVi = program.titleVi,
@@ -102,9 +107,22 @@ class ProgramRepository(
         val data = ProgramTransfer.decode(json) ?: return ImportProgramResult.InvalidFormat
         val skipped = mutableListOf<String>()
         // All-or-nothing: a decode()-validated file can still fail partway through (e.g. a Room
-        // constraint this method doesn't itself check) — without a transaction that would leave an
-        // orphaned half-imported program with no error surfaced to the user.
-        val programId = database.withTransaction {
+        // constraint this method doesn't itself check, or a disk/storage error) — the transaction
+        // guarantees no orphaned half-imported program, and the try/catch converts that failure
+        // into a result the UI can show instead of an uncaught exception crashing the coroutine
+        // that launched this suspend call.
+        val programId = try {
+            importTransaction(data, skipped)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return ImportProgramResult.Failed
+        }
+        return ImportProgramResult.Success(programId, data.titleVi, skipped.distinct())
+    }
+
+    private suspend fun importTransaction(data: ProgramTransferData, skipped: MutableList<String>): Long =
+        database.withTransaction {
             val exercisesByName = exerciseDao.getAllOnce().associateBy { it.nameVi }
             val programId = programDao.insert(
                 ProgramEntity(
@@ -118,36 +136,44 @@ class ProgramRepository(
                 ),
             )
             data.days.forEach { day ->
-                val dayId = programDayDao.insert(
-                    ProgramDayEntity(
-                        programId = programId,
-                        dayOfWeek = day.dayOfWeek,
-                        titleVi = day.titleVi,
-                        isRestDay = day.isRestDay,
-                    ),
-                )
-                val programExercises = day.exercises.mapIndexedNotNull { index, transferExercise ->
+                val resolvedExercises = day.exercises.mapNotNull { transferExercise ->
                     val exercise = exercisesByName[transferExercise.nameVi]
                     if (exercise == null) {
                         skipped += transferExercise.nameVi
                         null
                     } else {
-                        ProgramExerciseEntity(
-                            programDayId = dayId,
-                            exerciseId = exercise.id,
-                            orderIndex = index,
-                            targetSets = transferExercise.targetSets,
-                            targetRepsMin = transferExercise.targetRepsMin,
-                            targetRepsMax = transferExercise.targetRepsMax,
-                        )
+                        transferExercise to exercise
                     }
                 }
-                if (programExercises.isNotEmpty()) {
-                    programExerciseDao.insertAll(programExercises)
+                // A training day whose every exercise failed name-resolution has nothing left to
+                // schedule — drop the whole day rather than insert an empty training day. Keeps
+                // "every non-rest day has >=1 exercise" true for any program this import can
+                // produce, matching what ProgramTransfer.decode() requires of a re-exported file.
+                if (day.isRestDay || resolvedExercises.isNotEmpty()) {
+                    val dayId = programDayDao.insert(
+                        ProgramDayEntity(
+                            programId = programId,
+                            dayOfWeek = day.dayOfWeek,
+                            titleVi = day.titleVi,
+                            isRestDay = day.isRestDay,
+                        ),
+                    )
+                    if (resolvedExercises.isNotEmpty()) {
+                        programExerciseDao.insertAll(
+                            resolvedExercises.mapIndexed { index, (transferExercise, exercise) ->
+                                ProgramExerciseEntity(
+                                    programDayId = dayId,
+                                    exerciseId = exercise.id,
+                                    orderIndex = index,
+                                    targetSets = transferExercise.targetSets,
+                                    targetRepsMin = transferExercise.targetRepsMin,
+                                    targetRepsMax = transferExercise.targetRepsMax,
+                                )
+                            },
+                        )
+                    }
                 }
             }
             programId
         }
-        return ImportProgramResult.Success(programId, data.titleVi, skipped.distinct())
-    }
 }

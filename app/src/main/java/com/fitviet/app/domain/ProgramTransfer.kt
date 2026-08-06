@@ -82,10 +82,16 @@ object ProgramTransfer {
 
     /**
      * Returns null for anything that isn't a well-formed FitViet program export: invalid JSON,
-     * missing/wrong-typed fields, a missing/mismatched [FORMAT_TAG], or a `dayOfWeek` outside
-     * 1..7 (would otherwise crash later at `DayOfWeek.of()` inside
-     * [ProgramScheduleCalculator.build] once the bad row reached the schedule screen). Catches
-     * broadly on purpose — this parses arbitrary external content, not internal app state.
+     * missing/wrong-typed fields, a missing/mismatched [FORMAT_TAG], a `dayOfWeek` outside 1..7
+     * (would otherwise crash later at `DayOfWeek.of()` inside [ProgramScheduleCalculator.build]
+     * once the bad row reached the schedule screen), a duplicate `dayOfWeek` (would violate
+     * `ProgramDayEntity`'s unique `(programId, dayOfWeek)` index mid-import), or content that
+     * decodes structurally but is nonsensical — non-positive `durationWeeks`/`sessionsPerWeek`,
+     * blank names, non-positive `targetSets`/`targetRepsMin`, `targetRepsMin > targetRepsMax`, a
+     * training day with no exercises, or a rest day with exercises. Not rejected: a program with
+     * zero days — a legitimate empty schedule (see `ProgramRepository.exportProgram`'s doc
+     * comment), just not a useful one until edited. Catches broadly on purpose — this parses
+     * arbitrary external content, not internal app state.
      */
     fun decode(json: String): ProgramTransferData? = try {
         val root = JSONObject(json)
@@ -113,20 +119,39 @@ object ProgramTransfer {
                     )
                 }
             }
+            val titleVi = root.getString("titleVi")
+            val durationWeeks = root.getInt("durationWeeks")
+            val sessionsPerWeek = root.getInt("sessionsPerWeek")
+            val level = root.getString("level")
+            val equipment = root.getString("equipment")
+
             val dayOfWeekValues = days.map { it.dayOfWeek }
-            if (dayOfWeekValues.any { it !in 1..7 } || dayOfWeekValues.size != dayOfWeekValues.distinct().size) {
-                // Out-of-range values would crash later at DayOfWeek.of(); duplicates would violate
-                // ProgramDayEntity's unique (programId, dayOfWeek) index mid-import.
-                null
-            } else {
+            val isValid = dayOfWeekValues.all { it in 1..7 } &&
+                dayOfWeekValues.size == dayOfWeekValues.distinct().size &&
+                titleVi.isNotBlank() && level.isNotBlank() && equipment.isNotBlank() &&
+                durationWeeks > 0 && sessionsPerWeek > 0 &&
+                days.all { day ->
+                    day.titleVi.isNotBlank() &&
+                        (if (day.isRestDay) day.exercises.isEmpty() else day.exercises.isNotEmpty()) &&
+                        day.exercises.all { exercise ->
+                            exercise.nameVi.isNotBlank() &&
+                                exercise.targetSets > 0 &&
+                                exercise.targetRepsMin > 0 &&
+                                exercise.targetRepsMin <= exercise.targetRepsMax
+                        }
+                }
+
+            if (isValid) {
                 ProgramTransferData(
-                    titleVi = root.getString("titleVi"),
-                    durationWeeks = root.getInt("durationWeeks"),
-                    sessionsPerWeek = root.getInt("sessionsPerWeek"),
-                    level = root.getString("level"),
-                    equipment = root.getString("equipment"),
+                    titleVi = titleVi,
+                    durationWeeks = durationWeeks,
+                    sessionsPerWeek = sessionsPerWeek,
+                    level = level,
+                    equipment = equipment,
                     days = days,
                 )
+            } else {
+                null
             }
         }
     } catch (e: Exception) {

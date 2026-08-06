@@ -117,6 +117,7 @@
     <string name="programs_import_success_with_skipped">Đã nhập giáo án \"%1$s\" (%2$d bài tập không có trong thư viện đã bị bỏ qua).</string>
     <string name="programs_import_invalid">Tệp không đúng định dạng giáo án FitViet.</string>
     <string name="programs_import_read_error">Không đọc được tệp đã chọn.</string>
+    <string name="programs_import_failed">Nhập giáo án thất bại, vui lòng thử lại.</string>
 
     <!-- 2b Weekly schedule -->
     <string name="schedule_title">Lịch tuần của bạn</string>

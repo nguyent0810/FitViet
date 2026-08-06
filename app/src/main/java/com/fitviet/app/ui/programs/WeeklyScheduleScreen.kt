@@ -69,7 +69,7 @@ fun WeeklyScheduleScreen(
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             BackRow(onBack = onBack)
-            if (uiState.schedule.isNotEmpty()) {
+            if (program != null) {
                 ExportButton(
                     onClick = {
                         scope.launch {
