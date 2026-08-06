@@ -37,6 +37,8 @@ import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
+import com.fitviet.app.domain.StatsRange
+import com.fitviet.app.ui.common.RangePills
 import com.fitviet.app.ui.profile.MonogramAvatar
 import com.fitviet.app.ui.profile.avatarInitial
 import com.fitviet.app.ui.theme.Accent
@@ -56,6 +58,7 @@ import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatCompactKg
 import com.fitviet.app.util.formatVi
+import com.fitviet.app.util.isoWeekNumber
 import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.longLabelRes
 import com.fitviet.app.util.shortLabelRes
@@ -97,11 +100,17 @@ fun DashboardScreen(
             sessionsThisWeek = uiState.stats.sessionsThisWeek,
             volumeThisWeekKg = uiState.stats.volumeThisWeekKg,
         )
+        // Feature #7 (Gate 43) — sits above both cards per the plan; only WeeklyVolumeCard's
+        // series actually changes with the range. MuscleBalanceCard stays a "this week" snapshot
+        // (it has no series concept, and the plan's range-bucketed-series wording is specific to
+        // the volume chart) — see PROGRESS.md's Gate 43 scope-decision note for the full reasoning.
+        RangePills(options = DASHBOARD_RANGES, selected = uiState.selectedRange, onSelect = viewModel::selectRange)
         if (uiState.showMuscleBalanceCard) {
             MuscleBalanceCard(workload = uiState.muscleGroupWorkloadThisWeek)
         }
         WeeklyVolumeCard(
-            last7Days = uiState.stats.last7Days,
+            range = uiState.selectedRange,
+            series = uiState.rangeSeries,
             selectedIndex = uiState.selectedDayIndex,
             onSelectDay = viewModel::selectDay,
             onOpenDiary = onOpenDiary,
@@ -352,15 +361,37 @@ private fun StatTile(value: String, label: String, modifier: Modifier = Modifier
     }
 }
 
+private val DASHBOARD_RANGES = listOf(
+    StatsRange.WEEK to R.string.dashboard_range_week,
+    StatsRange.MONTH to R.string.dashboard_range_month,
+    StatsRange.ALL to R.string.dashboard_range_all,
+)
+
+/** Feature #7 (Gate 43) — [range]'s bucket label: per-day for WEEK (unchanged from before this
+ * gate), per-week-number for MONTH/ALL, matching Diary's own week-bucket chart's convention
+ * (`R.string.diary_week_label` + [isoWeekNumber]) rather than inventing a new label style. */
+@Composable
+private fun barLabel(range: StatsRange, entry: DayVolume): String = if (range == StatsRange.WEEK) {
+    stringResource(entry.date.dayOfWeek.shortLabelRes())
+} else {
+    stringResource(R.string.diary_week_label, entry.date.isoWeekNumber())
+}
+
 @Composable
 private fun WeeklyVolumeCard(
-    last7Days: List<DayVolume>,
+    range: StatsRange,
+    series: List<DayVolume>,
     selectedIndex: Int,
     onSelectDay: (Int) -> Unit,
     onOpenDiary: () -> Unit,
 ) {
-    val selected = last7Days.getOrNull(selectedIndex)
-    val maxVolume = last7Days.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 1.0
+    val selected = series.getOrNull(selectedIndex)
+    val maxVolume = series.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 1.0
+    val titleRes = when (range) {
+        StatsRange.WEEK -> R.string.dashboard_weekly_volume_title
+        StatsRange.MONTH -> R.string.dashboard_volume_title_month
+        StatsRange.ALL -> R.string.dashboard_volume_title_all
+    }
 
     Column(
         modifier = Modifier
@@ -375,12 +406,11 @@ private fun WeeklyVolumeCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = stringResource(R.string.dashboard_weekly_volume_title), style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(titleRes), style = MaterialTheme.typography.titleSmall)
             if (selected != null) {
-                val dayLabel = stringResource(selected.date.dayOfWeek.shortLabelRes())
                 val restLabel = stringResource(R.string.dashboard_bar_rest)
                 val valueLabel = if (selected.volumeKg <= 0.0) restLabel else "${formatVi(selected.volumeKg)} kg"
-                Text(text = "$dayLabel · $valueLabel", style = MaterialTheme.typography.titleSmall, color = Accent)
+                Text(text = "${barLabel(range, selected)} · $valueLabel", style = MaterialTheme.typography.titleSmall, color = Accent)
             }
         }
         Row(
@@ -390,8 +420,8 @@ private fun WeeklyVolumeCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
-            last7Days.forEachIndexed { index, day ->
-                val fraction = if (day.volumeKg <= 0.0) 0.08f else (day.volumeKg / maxVolume).toFloat().coerceIn(0.15f, 1f)
+            series.forEachIndexed { index, entry ->
+                val fraction = if (entry.volumeKg <= 0.0) 0.08f else (entry.volumeKg / maxVolume).toFloat().coerceIn(0.15f, 1f)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -404,9 +434,9 @@ private fun WeeklyVolumeCard(
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            last7Days.forEach { day ->
+            series.forEach { entry ->
                 Text(
-                    text = stringResource(day.date.dayOfWeek.shortLabelRes()),
+                    text = barLabel(range, entry),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,

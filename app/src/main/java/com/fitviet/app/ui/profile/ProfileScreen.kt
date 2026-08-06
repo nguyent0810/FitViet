@@ -39,6 +39,7 @@ import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.domain.MeasurementDeltas
 import com.fitviet.app.domain.WeightHistoryRange
 import com.fitviet.app.domain.WeightPoint
+import com.fitviet.app.ui.common.RangePills
 import com.fitviet.app.ui.common.SettingsRow
 import com.fitviet.app.ui.onboarding.GOAL_OPTIONS
 import com.fitviet.app.ui.onboarding.LEVEL_OPTIONS
@@ -51,8 +52,6 @@ import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
@@ -313,27 +312,7 @@ private fun WeightHistoryCard(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(text = stringResource(R.string.profile_weight_history_title), style = MaterialTheme.typography.titleSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            WEIGHT_HISTORY_RANGES.forEach { (candidate, labelRes) ->
-                val selected = candidate == range
-                Box(
-                    modifier = Modifier
-                        .heightIn(min = 44.dp)
-                        .clip(PillShape)
-                        .background(if (selected) Accent else SurfaceCard)
-                        .border(1.dp, if (selected) Accent else CardBorder, PillShape)
-                        .clickable { onRangeSelect(candidate) }
-                        .padding(horizontal = 14.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (selected) OnAccent else TextMuted,
-                    )
-                }
-            }
-        }
+        RangePills(options = WEIGHT_HISTORY_RANGES, selected = range, onSelect = onRangeSelect)
         if (points.size < 2) {
             Text(
                 text = stringResource(R.string.profile_weight_history_empty),

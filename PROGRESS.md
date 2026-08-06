@@ -2094,3 +2094,97 @@ bar sizes, not a correctness issue).
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 43 — Time-range pills on Dashboard (feature #7)
+
+### What was built
+- `domain/WeeklyBucketing.kt` (new) — the Monday-start weekly-bucketing logic extracted out of
+  what used to be `DiaryStatsCalculator`'s own private implementation (mismatch #7: a shared,
+  screen-agnostic utility both calculators call, not `DashboardStatsCalculator` calling into
+  `DiaryStatsCalculator` directly). `WeekVolume` moved here too (same package, no import churn).
+- `domain/DiaryStatsCalculator.kt` — now a one-line thin wrapper over `WeeklyBucketing.lastNWeeks`,
+  same public signature/default (`weeks = 4`), zero behavior change — verified by the pre-existing
+  `DiaryStatsCalculatorTest.kt` passing unmodified.
+- `domain/StatsRange.kt` (new) — `enum class StatsRange { WEEK, MONTH, ALL }`.
+- `domain/DashboardStatsCalculator.kt` — `last7Days` extracted into a private helper (reused by both
+  `compute()` and the new function below, `compute()`'s own output unchanged); new
+  `rangeSeries(sessions, today, range): List<DayVolume>` — WEEK reuses `last7Days`'s daily
+  granularity, MONTH/ALL switch to `WeeklyBucketing`'s weekly granularity (4 weeks / 12 weeks
+  respectively), returned as the same `DayVolume` shape either way (`date` means "the day" for WEEK,
+  "the week's Monday" for MONTH/ALL) so the UI has one series shape to render regardless of range.
+- `ui/common/RangePills.kt` (new) — a generic `RangePills<T>(options: List<Pair<T, Int>>, selected,
+  onSelect)`, extracting the pill-row visual that had already been hand-copied once before (Profile's
+  weight-history range row) before this gate needed a third copy for Dashboard's time-range row.
+- `data/repository/DashboardRepository.kt` — `DashboardData` (and the two intermediate pipeline
+  stages, `Stage1Data`/`BaseDashboardData`) gained `today`/`completedSessions` fields, threaded
+  straight through with no new computation — lets `DashboardViewModel` derive range series
+  client-side via `DashboardStatsCalculator.rangeSeries` without a second, duplicate DB subscription.
+- `ui/dashboard/DashboardViewModel.kt` — new `selectedRange: StatsRange` state + `selectRange(range)`
+  action; `selectedDayIndex` reworked from a plain persisted `Int` into `explicitDayIndex: Int?`
+  (`null` = "no explicit tap yet for this range" → falls back to the series' last/most-recent bar).
+  `selectRange()` clears `explicitDayIndex` back to `null`, which is exactly "resets selected bar
+  index on range change" — switching range now always lands on the newest bar of the new series
+  rather than carrying over a numeric index that might be out-of-bounds or point at the wrong bar
+  for a series of a different length.
+- `ui/dashboard/DashboardScreen.kt` — `RangePills` row placed above `MuscleBalanceCard`/
+  `WeeklyVolumeCard` (per the plan). `WeeklyVolumeCard` reworked to take `range`/`series` instead of
+  a fixed `last7Days`; its title switches between 3 strings per range; its per-bar label switches
+  between day-of-week (WEEK) and week-number (MONTH/ALL, reusing Diary's own `diary_week_label` +
+  `isoWeekNumber()` convention rather than inventing a new label style).
+- `util/VietnameseDate.kt` — `isoWeekNumber()` extension moved here from a private duplicate in
+  `DiaryScreen.kt`, now shared by both Diary's and Dashboard's week-bucket charts.
+- `ui/profile/ProfileScreen.kt` — `WeightHistoryCard`'s inline pill row replaced with a call to the
+  new shared `RangePills`, mechanical extraction with no behavior change.
+- New strings (vi + en): `dashboard_volume_title_month`, `dashboard_volume_title_all`,
+  `dashboard_range_week`, `dashboard_range_month`, `dashboard_range_all`.
+- `domain/DashboardStatsCalculatorTest.kt` — 4 new tests for `rangeSeries`: WEEK matches
+  `compute()`'s `last7Days` exactly, MONTH returns 4 weekly buckets ending at the current week, ALL
+  returns 12, and MONTH's bucketing matches `WeeklyBucketing.lastNWeeks` called directly (confirming
+  the two code paths genuinely agree, not just producing superficially-similar output).
+
+### Scope decisions
+- **Only `WeeklyVolumeCard`'s series is range-aware — `MuscleBalanceCard` stays a "this week"
+  snapshot.** The plan's exact wording is "range-bucketed series in `DashboardStatsCalculator`" and
+  "`StatsRangeRow` above `MuscleBalanceCard`/`WeeklyVolumeCard`" — read literally, the row's
+  *position* is above both cards, but only the volume chart has a "series" concept to range-bucket
+  at all; `MuscleBalanceCard` renders a fixed-shape 6-muscle-group snapshot with no equivalent
+  wider-window computation in scope. Making it range-aware too would mean restructuring
+  `DashboardRepository`'s `WorkoutCompositionCalculator.muscleGroupWorkload(since = ...)` call to
+  react to a second piece of UI state threaded back into the repository's Flow pipeline — a
+  materially larger, riskier change the plan doesn't explicitly ask for. Left untouched.
+- **"ALL" is a documented 12-week cap, not literally unbounded/all-time history.** A genuinely
+  unbounded window would grow the bar chart (and its per-bar week-number labels) without limit for
+  a long-lived install — 12 weeks (~3 months) was picked as a reasonable "long view" bound and
+  stated plainly in a code comment rather than implying true full history the UI copy doesn't
+  actually promise ("Khối lượng theo tuần" / "Volume by week" — deliberately doesn't state a number).
+- **Only Profile's weight-history pill row was migrated onto the new shared `RangePills`; Programs'
+  filter chips were left as their own copy.** Programs' chips use a wrapping `FlowRow` for a
+  variable-length, index-based option list — a genuinely different layout requirement, not just a
+  visual variant of the same pattern — so retrofitting it onto a component designed for a small
+  fixed non-wrapping option set would have forced an awkward generalization for no real benefit to
+  this gate's actual goal (the Dashboard time-range row).
+
+### Verification
+Standalone `kotlinc` compile of `WeeklyBucketing.kt`/`StatsRange.kt`/`DiaryStatsCalculator.kt`/
+`DashboardStatsCalculator.kt`/`DashboardStats.kt` — clean, no errors, against the kotlin-stdlib-
+inclusive recipe from Gate 40. `DashboardStatsCalculatorTest.kt` (11 tests, 4 new) and the
+unmodified `DiaryStatsCalculatorTest.kt` (2 tests) standalone-compiled together AND actually run via
+`JUnitCore`: `OK (13 tests)`, all genuinely passing — confirms the `DiaryStatsCalculator` refactor
+is truly behavior-preserving, not just plausible-looking.
+
+`DashboardRepository.kt`/`DashboardViewModel.kt`/`DashboardScreen.kt`/`ProfileScreen.kt`/
+`DiaryScreen.kt`/`RangePills.kt` (real Room Flow pipeline/`androidx.lifecycle`/Compose — kept to
+this session's established manual-read-through split for these layers) verified by careful trace:
+`today`/`completedSessions` threaded through all 3 pipeline stages
+(`Stage1Data`→`BaseDashboardData`→`DashboardData`) with no stage dropping either field; grepped for
+every `DashboardData(`/`DashboardViewModel(`/`DashboardRepository(` construction site across
+`app/src` (main + test) and confirmed the one production call site was the only one needing
+updates (no test constructs these directly). `explicitDayIndex ?: series.lastIndex.coerceAtLeast(0)`
+hand-traced for WEEK (7 bars → index 6), MONTH (4 bars → index 3), ALL (12 bars → index 11) — each
+range change correctly re-lands on that range's own newest bar. Confirmed `DiaryScreen.kt`'s
+`WeekFields` import was safe to remove (its only use was the now-relocated `isoWeekNumber()`) and no
+other file in the repo referenced the old private duplicate. Both `strings.xml`/
+`values-en/strings.xml` parsed as valid XML.
+
+### Push
+Pending independent review.

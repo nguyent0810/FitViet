@@ -35,6 +35,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 data class DashboardData(
+    val today: LocalDate,
+    /** Feature #7 (Gate 43) — the raw completed-session list [stats] was computed from, threaded
+     * through so [com.fitviet.app.ui.dashboard.DashboardViewModel] can derive range-selectable
+     * series client-side via [DashboardStatsCalculator.rangeSeries] without a second DB
+     * subscription duplicating [com.fitviet.app.data.local.dao.WorkoutSessionDao.observeCompleted]. */
+    val completedSessions: List<CompletedSession>,
     val stats: DashboardStats,
     val kcalToday: Int,
     val featuredProgram: ProgramEntity?,
@@ -66,6 +72,7 @@ data class DashboardData(
  * so the chained `.combine()` below can destructure it without a multi-level positional-tuple trace. */
 private data class Stage1Data(
     val today: LocalDate,
+    val completedSessions: List<CompletedSession>,
     val stats: DashboardStats,
     val kcalToday: Int,
     val featuredProgram: ProgramEntity?,
@@ -78,6 +85,7 @@ private data class Stage1Data(
  * until this stage's own `combine{}` runs (hence the second [Flow.flatMapLatest] stage below). */
 private data class BaseDashboardData(
     val today: LocalDate,
+    val completedSessions: List<CompletedSession>,
     val stats: DashboardStats,
     val kcalToday: Int,
     val featuredProgram: ProgramEntity?,
@@ -128,6 +136,7 @@ class DashboardRepository(
                 val featuredProgram = programs.firstOrNull { it.id == settings?.activeProgramId } ?: programs.firstOrNull()
                 Stage1Data(
                     today = today,
+                    completedSessions = completedSessions,
                     stats = stats,
                     kcalToday = meals.sumOf { it.kcal },
                     featuredProgram = featuredProgram,
@@ -154,6 +163,7 @@ class DashboardRepository(
                 }
                 BaseDashboardData(
                     today = stage1.today,
+                    completedSessions = stage1.completedSessions,
                     stats = stage1.stats,
                     kcalToday = stage1.kcalToday,
                     featuredProgram = stage1.featuredProgram,
@@ -183,6 +193,8 @@ class DashboardRepository(
             }
             scheduleFlow.map { schedule ->
                 DashboardData(
+                    today = base.today,
+                    completedSessions = base.completedSessions,
                     stats = base.stats,
                     kcalToday = base.kcalToday,
                     featuredProgram = program,

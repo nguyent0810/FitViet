@@ -91,4 +91,47 @@ class DashboardStatsCalculatorTest {
 
         assertEquals(3, stats.streakDays)
     }
+
+    // ---- Gate 43: rangeSeries ----
+
+    @Test
+    fun `WEEK range series is identical to compute()'s last7Days`() {
+        val sessions = listOf(CompletedSession(today, 40.0), CompletedSession(today.minusDays(3), 20.0))
+
+        val series = DashboardStatsCalculator.rangeSeries(sessions, today, StatsRange.WEEK)
+        val fromCompute = DashboardStatsCalculator.compute(sessions, today).last7Days
+
+        assertEquals(fromCompute, series)
+    }
+
+    @Test
+    fun `MONTH range returns 4 weekly buckets, oldest first, ending with the current week`() {
+        val series = DashboardStatsCalculator.rangeSeries(emptyList(), today, StatsRange.MONTH)
+
+        assertEquals(4, series.size)
+        assertEquals(today.with(java.time.DayOfWeek.MONDAY).minusWeeks(3), series.first().date)
+        assertEquals(today.with(java.time.DayOfWeek.MONDAY), series.last().date)
+    }
+
+    @Test
+    fun `ALL range returns 12 weekly buckets`() {
+        val series = DashboardStatsCalculator.rangeSeries(emptyList(), today, StatsRange.ALL)
+
+        assertEquals(12, series.size)
+        assertEquals(today.with(java.time.DayOfWeek.MONDAY).minusWeeks(11), series.first().date)
+    }
+
+    @Test
+    fun `MONTH and ALL bucket sessions into their matching week, matching WeeklyBucketing directly`() {
+        val thisMonday = today.with(java.time.DayOfWeek.MONDAY)
+        val sessions = listOf(
+            CompletedSession(thisMonday, 100.0),
+            CompletedSession(thisMonday.minusWeeks(2), 50.0),
+        )
+
+        val monthSeries = DashboardStatsCalculator.rangeSeries(sessions, today, StatsRange.MONTH)
+        val expected = WeeklyBucketing.lastNWeeks(sessions, today, weeks = 4)
+
+        assertEquals(expected.map { it.weekStart to it.volumeKg }, monthSeries.map { it.date to it.volumeKg })
+    }
 }

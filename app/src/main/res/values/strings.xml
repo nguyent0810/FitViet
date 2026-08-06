@@ -78,6 +78,11 @@
     <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>
     <string name="dashboard_stat_volume_this_week">Tổng kg tuần</string>
     <string name="dashboard_weekly_volume_title">Khối lượng 7 ngày</string>
+    <string name="dashboard_volume_title_month">Khối lượng 4 tuần gần nhất</string>
+    <string name="dashboard_volume_title_all">Khối lượng theo tuần</string>
+    <string name="dashboard_range_week">Tuần</string>
+    <string name="dashboard_range_month">Tháng</string>
+    <string name="dashboard_range_all">Tất cả</string>
     <string name="dashboard_bar_rest">Nghỉ</string>
     <string name="dashboard_muscle_balance_title">Cân bằng nhóm cơ tuần này</string>
     <string name="dashboard_muscle_balance_empty">Chưa có buổi tập nào tuần này</string>

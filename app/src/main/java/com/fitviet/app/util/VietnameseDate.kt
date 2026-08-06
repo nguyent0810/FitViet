@@ -3,7 +3,9 @@ package com.fitviet.app.util
 import androidx.annotation.StringRes
 import com.fitviet.app.R
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.Month
+import java.time.temporal.WeekFields
 
 /** Short day label (T2..CN) used on the dashboard's 7-day chart and the weekly schedule rows. */
 @StringRes
@@ -28,6 +30,11 @@ fun DayOfWeek.longLabelRes(): Int = when (this) {
     DayOfWeek.SATURDAY -> R.string.day_long_sat
     DayOfWeek.SUNDAY -> R.string.day_long_sun
 }
+
+/** ISO week-of-year number, e.g. for the "T.32"/"W32" week-bucket labels on the Diary and (Gate
+ * 43) Dashboard weekly-volume charts. Moved here from a private duplicate in `DiaryScreen.kt` when
+ * Dashboard needed the exact same label for its own week-bucketed range views. */
+fun LocalDate.isoWeekNumber(): Int = this.get(WeekFields.ISO.weekOfWeekBasedYear())
 
 /** Month label ("Tháng 8" / "August") used by the workout calendar's month header. */
 @StringRes

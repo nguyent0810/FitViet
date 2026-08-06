@@ -78,6 +78,11 @@
     <string name="dashboard_stat_sessions_this_week">Sessions this week</string>
     <string name="dashboard_stat_volume_this_week">Total kg this week</string>
     <string name="dashboard_weekly_volume_title">7-day volume</string>
+    <string name="dashboard_volume_title_month">Volume, last 4 weeks</string>
+    <string name="dashboard_volume_title_all">Volume by week</string>
+    <string name="dashboard_range_week">Week</string>
+    <string name="dashboard_range_month">Month</string>
+    <string name="dashboard_range_all">All</string>
     <string name="dashboard_bar_rest">Rest</string>
     <string name="dashboard_muscle_balance_title">Muscle balance this week</string>
     <string name="dashboard_muscle_balance_empty">No sessions yet this week</string>

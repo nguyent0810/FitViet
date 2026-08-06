@@ -51,12 +51,12 @@ import com.fitviet.app.ui.theme.TextFaintAlt
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatVi
+import com.fitviet.app.util.isoWeekNumber
 import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.shortLabelRes
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.temporal.WeekFields
 
 @Composable
 fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: () -> Unit) {
@@ -264,8 +264,6 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
         }
     }
 }
-
-private fun LocalDate.isoWeekNumber(): Int = this.get(WeekFields.ISO.weekOfWeekBasedYear())
 
 @Composable
 private fun MuscleGroupWorkloadCard(workload: List<MuscleGroupWorkload>) {
