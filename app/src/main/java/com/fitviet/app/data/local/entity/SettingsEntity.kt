@@ -28,6 +28,10 @@ data class SettingsEntity(
     val selectedGoal: Int = 0,
     val selectedLevel: Int = 0,
     val selectedSplit: Int = 0,
+    /** Feature #3 (Gate 39) — days/week chosen on the split step, 2..6. Drives the "GỢI Ý" badge
+     * on [com.fitviet.app.ui.onboarding.SplitScreen]'s split cards via
+     * [com.fitviet.app.ui.onboarding.SplitOption.recommendedFor]. */
+    val selectedDaysPerWeek: Int = 3,
     /** Set once, when onboarding completes — powers 1i's "N tuần đồng hành" (weeks with the app). */
     val onboardingCompletedAtEpochDay: Long? = null,
     /** The program the user has chosen as "current" (2b's "Đặt làm giáo án hiện tại"). Null before

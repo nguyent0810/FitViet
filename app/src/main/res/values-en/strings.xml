@@ -30,6 +30,7 @@
 
     <!-- 2a Onboarding — training split -->
     <string name="split_title">How do you want to split your training?</string>
+    <string name="split_days_label">Days per week</string>
     <string name="split_subtitle_prefix">Suggested for the sessions/week you picked: </string>
     <string name="split_subtitle_days">%1$d sessions</string>
     <string name="split_recommended_badge">SUGGESTED</string>

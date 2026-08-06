@@ -30,6 +30,7 @@
 
     <!-- 2a Onboarding — training split -->
     <string name="split_title">Bạn muốn chia lịch tập thế nào?</string>
+    <string name="split_days_label">Số buổi mỗi tuần</string>
     <string name="split_subtitle_prefix">Gợi ý theo số buổi/tuần bạn đã chọn:\u0020</string>
     <string name="split_subtitle_days">%1$d buổi</string>
     <string name="split_recommended_badge">GỢI Ý</string>

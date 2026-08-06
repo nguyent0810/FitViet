@@ -17,6 +17,7 @@ data class OnboardingUiState(
     val selectedGoal: Int = 0,
     val selectedLevel: Int = 0,
     val selectedSplit: Int = 0,
+    val selectedDaysPerWeek: Int = 3,
 )
 
 class OnboardingViewModel(private val repository: OnboardingRepository) : ViewModel() {
@@ -36,6 +37,7 @@ class OnboardingViewModel(private val repository: OnboardingRepository) : ViewMo
                         selectedGoal = saved.selectedGoal,
                         selectedLevel = saved.selectedLevel,
                         selectedSplit = saved.selectedSplit,
+                        selectedDaysPerWeek = saved.selectedDaysPerWeek,
                     )
                 }
             }
@@ -48,6 +50,8 @@ class OnboardingViewModel(private val repository: OnboardingRepository) : ViewMo
 
     fun selectSplit(index: Int) = updateSelection { it.copy(selectedSplit = index) }
 
+    fun selectDaysPerWeek(days: Int) = updateSelection { it.copy(selectedDaysPerWeek = days) }
+
     /**
      * Marks onboarding done — call and await from the UI before navigating past 2a, so the write
      * can't be cancelled by the graph-scoped ViewModel being cleared right after navigation.
@@ -55,7 +59,7 @@ class OnboardingViewModel(private val repository: OnboardingRepository) : ViewMo
     suspend fun completeOnboarding() {
         writeMutex.withLock {
             val state = _uiState.value
-            repository.completeOnboarding(state.selectedGoal, state.selectedLevel, state.selectedSplit)
+            repository.completeOnboarding(state.selectedGoal, state.selectedLevel, state.selectedSplit, state.selectedDaysPerWeek)
         }
     }
 
@@ -66,7 +70,7 @@ class OnboardingViewModel(private val repository: OnboardingRepository) : ViewMo
                 // Re-read the freshest state at write time, not what was current when this
                 // coroutine was launched — keeps out-of-order writes from reverting a later tap.
                 val state = _uiState.value
-                repository.saveSelections(state.selectedGoal, state.selectedLevel, state.selectedSplit)
+                repository.saveSelections(state.selectedGoal, state.selectedLevel, state.selectedSplit, state.selectedDaysPerWeek)
             }
         }
     }

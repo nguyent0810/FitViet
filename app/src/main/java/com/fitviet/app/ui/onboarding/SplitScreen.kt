@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,7 +31,7 @@ import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 
-private const val SUGGESTED_DAYS_PER_WEEK = 6
+private val DAYS_PER_WEEK_OPTIONS = 2..6
 
 // Prototype gaps for this screen: 16px between sections, 9px between split cards (README §2a).
 private val SECTION_GAP = 16.dp
@@ -57,24 +58,44 @@ fun SplitScreen(
         ) {
             OnboardingProgressBar(totalSteps = 3, filledCount = 2)
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.split_title),
+                style = MaterialTheme.typography.headlineLarge,
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = stringResource(R.string.split_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                )
-                val subtitlePrefix = stringResource(R.string.split_subtitle_prefix)
-                val subtitleDays = stringResource(R.string.split_subtitle_days, SUGGESTED_DAYS_PER_WEEK)
-                Text(
-                    text = buildAnnotatedString {
-                        append(subtitlePrefix)
-                        withStyle(SpanStyle(color = Accent, fontWeight = FontWeight.Bold)) {
-                            append(subtitleDays)
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.split_days_label),
+                    style = MaterialTheme.typography.labelLarge,
                     color = TextMuted,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    DAYS_PER_WEEK_OPTIONS.forEach { days ->
+                        LevelChip(
+                            label = days.toString(),
+                            selected = uiState.selectedDaysPerWeek == days,
+                            onClick = { viewModel.selectDaysPerWeek(days) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
             }
+
+            val subtitlePrefix = stringResource(R.string.split_subtitle_prefix)
+            val subtitleDays = stringResource(R.string.split_subtitle_days, uiState.selectedDaysPerWeek)
+            Text(
+                text = buildAnnotatedString {
+                    append(subtitlePrefix)
+                    withStyle(SpanStyle(color = Accent, fontWeight = FontWeight.Bold)) {
+                        append(subtitleDays)
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+            )
 
             Column(verticalArrangement = Arrangement.spacedBy(SPLIT_CARD_GAP)) {
                 SPLIT_OPTIONS.forEachIndexed { index, option ->
@@ -82,7 +103,7 @@ fun SplitScreen(
                         title = stringResource(option.titleRes),
                         subtitle = stringResource(option.subRes),
                         selected = uiState.selectedSplit == index,
-                        recommended = option.recommended,
+                        recommended = uiState.selectedDaysPerWeek in option.recommendedFor,
                         onClick = { viewModel.selectSplit(index) },
                         horizontalPadding = 16.dp,
                         verticalPadding = 14.dp,

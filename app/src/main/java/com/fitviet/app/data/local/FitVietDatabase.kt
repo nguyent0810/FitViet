@@ -62,7 +62,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // forced recreate to pick up the new column at all, Room won't add it in place).
     // Gate 35 raised this from 5 to 6: new `displayName`/`avatarId` columns on `settings`.
     // Gate 38 raised this from 6 to 7: new `reminders` table.
-    version = 7,
+    // Gate 39 raised this from 7 to 8: new `selectedDaysPerWeek` column on `settings`.
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

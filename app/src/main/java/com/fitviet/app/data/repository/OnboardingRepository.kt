@@ -14,19 +14,22 @@ class OnboardingRepository(private val settingsDao: SettingsDao) {
 
     suspend fun getSelections(): SettingsEntity = settingsDao.get() ?: SettingsEntity()
 
-    suspend fun saveSelections(goal: Int, level: Int, split: Int) {
+    suspend fun saveSelections(goal: Int, level: Int, split: Int, daysPerWeek: Int) {
         val current = settingsDao.get() ?: SettingsEntity()
-        settingsDao.upsert(current.copy(selectedGoal = goal, selectedLevel = level, selectedSplit = split))
+        settingsDao.upsert(
+            current.copy(selectedGoal = goal, selectedLevel = level, selectedSplit = split, selectedDaysPerWeek = daysPerWeek),
+        )
     }
 
     /** Atomically writes the final selections and marks onboarding done in one write. */
-    suspend fun completeOnboarding(goal: Int, level: Int, split: Int) {
+    suspend fun completeOnboarding(goal: Int, level: Int, split: Int, daysPerWeek: Int) {
         val current = settingsDao.get() ?: SettingsEntity()
         settingsDao.upsert(
             current.copy(
                 selectedGoal = goal,
                 selectedLevel = level,
                 selectedSplit = split,
+                selectedDaysPerWeek = daysPerWeek,
                 onboardingCompleted = true,
                 // Don't overwrite on a later re-completion (e.g. redoing onboarding) if already set.
                 onboardingCompletedAtEpochDay = current.onboardingCompletedAtEpochDay ?: LocalDate.now().toEpochDay(),

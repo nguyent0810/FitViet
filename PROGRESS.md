@@ -1735,3 +1735,63 @@ the 4 new keys present in both.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 39 — Days-per-week selector in onboarding (feature #3)
+
+### What was built
+- `ui/onboarding/SplitScreen.kt` — removed the hardcoded `SUGGESTED_DAYS_PER_WEEK = 6` constant.
+  Added a new `DaysPerWeekRow`-equivalent section between the title and the (now-dynamic) subtitle:
+  a "Số buổi mỗi tuần" label + a `Row` of 5 `LevelChip`s for 2..6, reusing the exact chip primitive
+  `GoalLevelScreen.kt` already uses for the level selector (no new chip component needed). The
+  subtitle now interpolates `uiState.selectedDaysPerWeek` instead of the old constant, so "Gợi ý
+  theo số buổi/tuần bạn đã chọn: N buổi" reflects the user's live pick.
+- `OnboardingOptions.kt` — `SplitOption.recommended: Boolean` → `recommendedFor: Set<Int>`. Each
+  split's `SelectionCard` now shows the "GỢI Ý" badge when `uiState.selectedDaysPerWeek in
+  option.recommendedFor`, replacing the old single-option "PPL is always recommended" behavior.
+- `OnboardingViewModel.kt` — `selectedDaysPerWeek: Int = 3` added to `OnboardingUiState`;
+  `selectDaysPerWeek(days)` added following the exact `selectGoal/selectLevel/selectSplit` →
+  `updateSelection {}` → Mutex-guarded `repository.saveSelections(...)` pattern already established
+  (Gate 2's out-of-order-write guard applies unchanged — no new synchronization logic needed).
+- `SettingsEntity.kt` — new `selectedDaysPerWeek: Int = 3` column. `FitVietDatabase` version 7 → 8.
+- `OnboardingRepository.kt` — `saveSelections`/`completeOnboarding` both gained a `daysPerWeek`
+  parameter, threaded through to the `SettingsEntity` write in both.
+- New strings (vi + en): `split_days_label`.
+
+### Scope decisions
+- **Per-split day-count mappings.** Three of the five splits state their target day count directly
+  in their existing subtitle copy, so those were mechanical: PPL → `{3, 6}` ("hợp 3 hoặc 6
+  buổi/tuần"), Upper-Lower → `{4}` ("mỗi nhóm cơ 2 lần/tuần với 4 buổi"), Full body → `{2, 3}` ("hợp
+  người mới, 2–3 buổi/tuần"). The other two don't state a count in their copy, so I made a judgment
+  call, documented inline as code comments: the paired-muscle split (chest+triceps / back+biceps)
+  → `{4, 5}` (same frequency band as Upper-Lower, since it's the same "two workout types alternating"
+  shape); classic Bro split (1-2 muscle groups/day, needs more distinct days to cover the whole body)
+  → `{5, 6}`. Every day count 2-6 has at least one recommended split, so the badge is never absent
+  regardless of which pill the user taps.
+- **Default `selectedDaysPerWeek = 3`.** No day count was previously persisted at all (the old
+  subtitle was a hardcoded display-only constant, never written to `SettingsEntity`), so this is a
+  genuinely new default, not a migration of prior state. Picked 3 as a moderate beginner-friendly
+  starting point that also happens to make the pre-selected split (PPL, index 0) show as recommended
+  on first load, matching the pre-existing "first option pre-selected" convention this screen and
+  `GoalLevelScreen` already follow for goal/level/split.
+- **Selector placement.** The plan doc doesn't fix exact position, only "add `DaysPerWeekRow` (pills
+  2-6)." Placed between the title and subtitle rather than below the split cards, since the subtitle
+  text itself says "Gợi ý theo số buổi/tuần bạn đã chọn" (recommendation based on the days/week you
+  *already* chose) — the pills have to be answered before that sentence makes sense chronologically.
+
+### Verification
+Standalone `kotlinc` compile of `SettingsEntity.kt` + `ProgramEntity.kt` (needed for the
+`SettingsEntity` foreign-key annotation reference) + `SettingsDao.kt` + `OnboardingRepository.kt`
+against the shared Room annotation stubs plus `kotlinx-coroutines-core-jvm-1.6.4.jar` off
+`/opt/gradle-8.14.3/lib` — clean, no errors. `OnboardingViewModel.kt`/`SplitScreen.kt`/
+`OnboardingOptions.kt` (real `androidx.lifecycle`/Compose) verified by manual read-through:
+`selectDaysPerWeek` mirrors `selectSplit` field-for-field including the Mutex-guarded write;
+`DAYS_PER_WEEK_OPTIONS = 2..6` iterated with `LevelChip`'s existing `Modifier.weight(1f)` usage
+inside a `Row` (same call shape as `GoalLevelScreen.kt`'s `LEVEL_OPTIONS` loop); no leftover
+reference to the removed `SUGGESTED_DAYS_PER_WEEK` constant anywhere in the file. Confirmed no other
+caller of `SplitOption.recommended`/`OnboardingRepository.saveSelections`/`completeOnboarding`
+exists outside `SplitScreen.kt`/`OnboardingViewModel.kt` (grepped the full `app/src` tree, including
+`app/src/test`, which has no onboarding-related tests to update). Both `strings.xml`/
+`values-en/strings.xml` parsed as valid XML via `xml.etree.ElementTree`.
+
+### Push
+Pending independent review.
