@@ -1160,3 +1160,35 @@ just not perfectly bisectable by commit boundary for this one spot.
 ### Where to pick up
 Read this file top-to-bottom (or at minimum this handoff + the last few gates) before starting new
 work — it's the single source of truth for what's built, what's deliberately deferred, and why.
+
+## Merging Gates 16–19 into master
+
+Same precedent as "Merging Gates 6–10 into master" above: a session with real `codex` access
+checked this branch out specifically to give it an adversarial second look before merging, since
+the session that built Gates 16–19 had no `codex` access at all (its environment blocked
+`api.openai.com`) and had to self-review with a general-purpose-agent stand-in instead. This was
+the first time any of this code got a real `codex` review.
+
+Three review rounds, each finding real, fixable issues — not a rubber-stamp:
+
+**Round 1:**
+| # | Issue | Fix |
+|---|---|---|
+| 1 (High, `aapt2`-verified) | `values-en/strings.xml`'s new `profile_widget_recommendation` string ("Today's tip") had an unescaped apostrophe — fails Android resource compilation, the same bug class Gate 13 hit | Escaped |
+| 2 (Medium) | `ProgramTransfer.decode()` accepted structurally-valid but nonsensical imported program data (non-positive `durationWeeks`/`sessionsPerWeek`/`targetSets`/`targetRepsMin`, `targetRepsMin > targetRepsMax`, blank names, a training day with no exercises, a rest day with exercises) | Added a comprehensive `isValid` check — deliberately *not* rejecting zero-day programs, since an existing test explicitly asserts that's a legitimate empty schedule, not garbage. 6 new test cases. |
+| 3 (Medium) | `ProgramRepository.exportProgram()` returned null for any empty-schedule program, which combined with "zero-day import must succeed" meant an imported empty program became a permanent dead end that could never be re-exported | Only returns null when the program itself doesn't exist |
+| 4 (Low) | `importProgram()`'s `database.withTransaction{}` had no exception handling — an unexpected Room/storage failure would crash the coroutine uncaught | Extracted the transaction into `importTransaction()`, wrapped in try/catch, new `ImportProgramResult.Failed` surfaced to the UI |
+
+**Round 2** (re-reviewing round 1's own fixes):
+| # | Issue | Fix |
+|---|---|---|
+| 5 (Medium) | `WeeklyScheduleScreen`'s export button was still gated on `schedule.isNotEmpty()`, so fix #3 never actually reached the UI for a zero-day program | Gated on `program != null` instead |
+| 6 (Medium) | `importTransaction()` could still insert a training day with zero exercise rows if every exercise on it failed name-resolution against the local library — producing a DB state that a later re-export + re-decode would reject under fix #2's new rules | Resolve exercises before deciding whether to insert the day; a training day with zero resolved exercises is now dropped entirely, not inserted empty |
+| 7 (Low) | `catch (e: Exception)` in `importProgram()` also swallowed `CancellationException`, breaking structured concurrency | Added an explicit `catch (e: CancellationException) { throw e }` before it |
+| 8 (Low) | A stale KDoc on `exportScheduleText()` still described the old null-on-empty-schedule behavior | Corrected |
+
+**Round 3**: independently re-verified all 8 fixes against several hand-traced scenarios (full/partial/zero exercise name-resolution, rest days, cancellation catch-ordering) — no further findings, confirmed ready to merge.
+
+### Push
+Fixes committed and pushed to `origin/claude/routines-code-session-n62xmx`, then fast-forward-merged
+into `master` (no divergence — `master` was exactly the merge-base, so no merge commit was needed).
