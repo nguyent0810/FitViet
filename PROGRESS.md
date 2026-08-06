@@ -2186,5 +2186,21 @@ range change correctly re-lands on that range's own newest bar. Confirmed `Diary
 other file in the repo referenced the old private duplicate. Both `strings.xml`/
 `values-en/strings.xml` parsed as valid XML.
 
+### Independent review (background agent, general-purpose) — CLEAN
+The largest/riskiest gate so far (a Room Flow pipeline change, a ViewModel state redesign, and a
+cross-screen shared-component extraction) came back clean under a genuinely adversarial pass.
+Independently re-ran the domain compile and both test files for real — `OK (13 tests)` — and
+specifically targeted the two areas flagged as riskiest: diffed `DashboardData`/`Stage1Data`/
+`BaseDashboardData`'s 3 construction sites and confirmed `today`/`completedSessions` are required
+(non-defaulted) params threaded through with no sneaky default masking a dropped field, and traced
+the exact `completedSessions` variable to confirm `stats` and the threaded field come from the same
+list, not two independently-computed ones; and hand-traced `explicitDayIndex`'s reset-on-range-
+change behavior plus the `lastIndex` fallback for all 3 ranges (WEEK→6, MONTH→3, ALL→11), confirming
+`selectRange()` genuinely clears the explicit tap rather than leaving a stale index. Also
+independently confirmed the `DiaryStatsCalculator` refactor is byte-for-byte behavior-preserving,
+the `RangePills<T>` generic call sites type-check correctly at both locations, the Profile retrofit
+dropped no visual/interaction behavior, and both scope-decision claims (MuscleBalanceCard untouched,
+Programs' FilterChips not in the diff at all). Zero findings at any severity.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
