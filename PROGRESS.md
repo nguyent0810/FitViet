@@ -1340,3 +1340,17 @@ Same as prior gates: 50 downloads verified, `aapt2 compile --dir` clean before a
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 30 (Deltoids) next.
+
+## Gate 30 — Exercise library expansion: Deltoids (5/9 gates)
+
+### What was built
+13 new DELTOIDS exercises (previously had only 2: Shoulder Press and Lateral Raise from the original seed set). Includes 4 overhead-press compound variants, several isolation raise/fly movements, Face Pull, Upright Row, and Push Press. The source dataset had a completely empty `instructions` array for Push Press — wrote its 3-step description entirely from general strength-training knowledge (dip-drive leg power assisting an overhead press), flagged explicitly to codex for accuracy verification.
+
+### Codex review
+One round. Confirmed the authored Push Press description was accurate and its ADVANCED/low-rep/long-rest classification appropriate. Confirmed (via a repo-wide grep, not just trust) that Push Press — which appeared in both the Deltoids and Functional buckets of the original curated shortlist — exists exactly once, correctly reserved for this gate and deliberately left out of Gate 27's Functional additions. One real medium-severity finding: Seated Barbell Military Press's behind-the-neck lowering is a genuine, well-known shoulder-impingement risk for lifters without adequate mobility, and labeling it plain INTERMEDIATE understated that. Fixed by reclassifying it ADVANCED and adding an explicit mobility caveat + stop-if-it-hurts cue to the instructions, rather than rewriting it to a front press (which would have duplicated the already-added Barbell Shoulder Press).
+
+### Verification
+Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 208 files, count/duplicate checks clean (104 exercises / 104 photo entries / 104 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 31 (Abs) next.

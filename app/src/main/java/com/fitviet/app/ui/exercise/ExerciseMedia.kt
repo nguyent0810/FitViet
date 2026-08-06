@@ -144,6 +144,20 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.TRICEPS_CLOSE_GRIP_DUMBBELL_PRESS to listOf(R.drawable.close_grip_dumbbell_press_0, R.drawable.close_grip_dumbbell_press_1),
     SeedExerciseNames.TRICEPS_MACHINE_EXTENSION to listOf(R.drawable.machine_triceps_extension_0, R.drawable.machine_triceps_extension_1),
     SeedExerciseNames.TRICEPS_DIP_MACHINE to listOf(R.drawable.dip_machine_0, R.drawable.dip_machine_1),
+    // Gate 30 — Deltoids library expansion
+    SeedExerciseNames.DELT_BARBELL_SHOULDER_PRESS to listOf(R.drawable.barbell_shoulder_press_0, R.drawable.barbell_shoulder_press_1),
+    SeedExerciseNames.DELT_STANDING_MILITARY_PRESS to listOf(R.drawable.standing_military_press_0, R.drawable.standing_military_press_1),
+    SeedExerciseNames.DELT_ARNOLD_PRESS to listOf(R.drawable.arnold_dumbbell_press_0, R.drawable.arnold_dumbbell_press_1),
+    SeedExerciseNames.DELT_SEATED_MILITARY_PRESS to listOf(R.drawable.seated_barbell_military_press_0, R.drawable.seated_barbell_military_press_1),
+    SeedExerciseNames.DELT_FRONT_DUMBBELL_RAISE to listOf(R.drawable.front_dumbbell_raise_0, R.drawable.front_dumbbell_raise_1),
+    SeedExerciseNames.DELT_REVERSE_FLYES to listOf(R.drawable.reverse_flyes_0, R.drawable.reverse_flyes_1),
+    SeedExerciseNames.DELT_CABLE_REAR_FLY to listOf(R.drawable.cable_rear_delt_fly_0, R.drawable.cable_rear_delt_fly_1),
+    SeedExerciseNames.DELT_FACE_PULL to listOf(R.drawable.face_pull_0, R.drawable.face_pull_1),
+    SeedExerciseNames.DELT_UPRIGHT_ROW to listOf(R.drawable.upright_barbell_row_0, R.drawable.upright_barbell_row_1),
+    SeedExerciseNames.DELT_CABLE_SHOULDER_PRESS to listOf(R.drawable.cable_shoulder_press_0, R.drawable.cable_shoulder_press_1),
+    SeedExerciseNames.DELT_FRONT_CABLE_RAISE to listOf(R.drawable.front_cable_raise_0, R.drawable.front_cable_raise_1),
+    SeedExerciseNames.DELT_SEATED_LATERAL_RAISE to listOf(R.drawable.seated_side_lateral_raise_0, R.drawable.seated_side_lateral_raise_1),
+    SeedExerciseNames.DELT_PUSH_PRESS to listOf(R.drawable.push_press_0, R.drawable.push_press_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()

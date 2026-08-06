@@ -97,6 +97,20 @@ Files used (app/src/main/res/drawable-nodpi/):
   machine_triceps_extension_0.jpg, machine_triceps_extension_1.jpg <- exercises/Machine_Triceps_Extension/{0,1}.jpg
   dip_machine_0.jpg, dip_machine_1.jpg                   <- exercises/Dip_Machine/{0,1}.jpg
   -- (Parallel_Bar_Dip was downloaded then dropped: near-duplicate of Dips_-_Triceps_Version, see Gate 29 codex review) --
+  -- Gate 30 additions (Deltoids) --
+  barbell_shoulder_press_0.jpg, barbell_shoulder_press_1.jpg <- exercises/Barbell_Shoulder_Press/{0,1}.jpg
+  standing_military_press_0.jpg, standing_military_press_1.jpg <- exercises/Standing_Military_Press/{0,1}.jpg
+  arnold_dumbbell_press_0.jpg, arnold_dumbbell_press_1.jpg <- exercises/Arnold_Dumbbell_Press/{0,1}.jpg
+  seated_barbell_military_press_0.jpg, seated_barbell_military_press_1.jpg <- exercises/Seated_Barbell_Military_Press/{0,1}.jpg
+  front_dumbbell_raise_0.jpg, front_dumbbell_raise_1.jpg <- exercises/Front_Dumbbell_Raise/{0,1}.jpg
+  reverse_flyes_0.jpg, reverse_flyes_1.jpg               <- exercises/Reverse_Flyes/{0,1}.jpg
+  cable_rear_delt_fly_0.jpg, cable_rear_delt_fly_1.jpg   <- exercises/Cable_Rear_Delt_Fly/{0,1}.jpg
+  face_pull_0.jpg, face_pull_1.jpg                       <- exercises/Face_Pull/{0,1}.jpg
+  upright_barbell_row_0.jpg, upright_barbell_row_1.jpg   <- exercises/Upright_Barbell_Row/{0,1}.jpg
+  cable_shoulder_press_0.jpg, cable_shoulder_press_1.jpg <- exercises/Cable_Shoulder_Press/{0,1}.jpg
+  front_cable_raise_0.jpg, front_cable_raise_1.jpg       <- exercises/Front_Cable_Raise/{0,1}.jpg
+  seated_side_lateral_raise_0.jpg, seated_side_lateral_raise_1.jpg <- exercises/Seated_Side_Lateral_Raise/{0,1}.jpg
+  push_press_0.jpg, push_press_1.jpg                     <- exercises/Push_Press/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 
