@@ -1793,5 +1793,28 @@ exists outside `SplitScreen.kt`/`OnboardingViewModel.kt` (grepped the full `app/
 `app/src/test`, which has no onboarding-related tests to update). Both `strings.xml`/
 `values-en/strings.xml` parsed as valid XML via `xml.etree.ElementTree`.
 
+### Independent review (background agent, general-purpose)
+Standalone compile of `SettingsEntity.kt`/`ProgramEntity.kt`/`SettingsDao.kt`/
+`OnboardingRepository.kt` re-run independently — clean. Re-verified: `selectDaysPerWeek` matches
+`selectGoal/selectLevel/selectSplit` shape exactly, both directions (init restore-from-DB and the
+Mutex-guarded write) correctly wired for the new field; grepped all of `app/src` (main + test) and
+confirmed `OnboardingRepository.saveSelections`/`completeOnboarding`'s new 4th parameter has no
+caller outside `OnboardingViewModel.kt`; `Modifier.weight(1f)` on the day-count `LevelChip`s
+resolves correctly via `RowScope` (lexically inside the `Row {}` lambda); `SUGGESTED_DAYS_PER_WEEK`
+fully removed, no leftover references in code; `LevelChip` has exactly one definition, reused
+identically by three screens, no competing local copy; all three copy-justified `recommendedFor`
+sets (PPL, Upper-Lower, Full body) verified to match their subtitle strings' literal text; day
+coverage 2-6 independently recomputed and confirmed complete; schema bump verified exactly 7→8, no
+stray `Migration` class; both strings.xml files valid XML with the new key present, `%1$d`
+placeholder unchanged. **Verdict: CLEAN**, zero code-correctness findings.
+
+One product/content note (not a code defect): the chest+back paired split's `recommendedFor = {4,
+5}` — a judgment call not stated in that split's copy — was flagged as arguable, since the copy's
+"tiết kiệm thời gian" (saves time) framing could equally suggest lower frequency, not just the
+4-day band borrowed from Upper-Lower's reasoning. Incorporated: widened to `{3, 4, 5}` so the range
+covers both readings instead of picking one exclusively, with the reasoning recorded in a code
+comment on `SPLIT_OPTIONS`. Bro split's `{5, 6}` was independently endorsed as standard fitness
+convention, left unchanged.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
