@@ -5,11 +5,16 @@ import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.SetLogEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.domain.DashboardStatsCalculator
+import com.fitviet.app.domain.ExerciseHistoryCalculator
+import com.fitviet.app.domain.ExerciseHistoryEntry
+import com.fitviet.app.domain.LoggedSetPoint
 import com.fitviet.app.ui.workout.LoggedSet
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 interface WorkoutRepository {
     suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long
@@ -30,6 +35,10 @@ interface WorkoutRepository {
      * second, potentially-diverging definition. One-shot (not observed) since it's only read once,
      * right after [completeSession] lands, at session-finish time. */
     suspend fun getCurrentStreakDays(today: LocalDate): Int
+
+    /** Feature #10 (Gate 46) — per-exercise progress history, newest first, one entry per date
+     * logged (that date's heaviest set). Backs Exercise Detail's "Tiến bộ" tab. */
+    fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>>
 }
 
 class RoomWorkoutRepository(
@@ -68,5 +77,19 @@ class RoomWorkoutRepository(
         workoutSessionDao.update(
             session.copy(completedAt = completedAtMillis, totalVolumeKg = totalVolumeKg, durationSeconds = durationSeconds),
         )
+    }
+
+    override fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>> {
+        val zone = ZoneId.systemDefault()
+        return setLogDao.observeHistoryForExercise(exerciseId).map { rows ->
+            val points = rows.map { row ->
+                LoggedSetPoint(
+                    date = Instant.ofEpochMilli(row.completedAt).atZone(zone).toLocalDate(),
+                    weightKg = row.weightKg,
+                    reps = row.reps,
+                )
+            }
+            ExerciseHistoryCalculator.bestSetPerDate(points)
+        }
     }
 }

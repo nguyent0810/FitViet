@@ -14,6 +14,7 @@ import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import com.fitviet.app.domain.ExerciseDifficulty
+import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.domain.ProgramScheduleDay
@@ -97,6 +98,10 @@ class WorkoutViewModelTest {
         // finishSession()-reaching test deterministic without needing real completed-session dates.
         var streakDaysToReturn = 0
         override suspend fun getCurrentStreakDays(today: LocalDate): Int = streakDaysToReturn
+
+        // Nothing in this test file exercises Exercise Detail's "Tiến bộ" tab — a fixed empty flow
+        // keeps this fake minimal rather than tracking per-exercise history nobody here reads.
+        override fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>> = flowOf(emptyList())
     }
 
     /** Fakes the two Dao dependencies a real [CommunityRepository] is constructed with below — its

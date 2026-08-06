@@ -23,6 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -48,6 +52,7 @@ import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextFaint
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.util.formatWeight
 
 @Composable
 fun ExerciseDetailScreen(viewModel: ExerciseDetailViewModel, onBack: () -> Unit) {
@@ -79,15 +84,39 @@ fun ExerciseDetailScreen(viewModel: ExerciseDetailViewModel, onBack: () -> Unit)
             }
         } else {
             uiState.exercise?.let { exercise ->
-                ExerciseDetailContent(exercise = exercise, isAdded = uiState.isAdded, onToggleAdded = viewModel::toggleAdded)
+                ExerciseDetailContent(
+                    exercise = exercise,
+                    history = uiState.history,
+                    isAdded = uiState.isAdded,
+                    onToggleAdded = viewModel::toggleAdded,
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+private enum class ExerciseDetailTab { HOW_TO, MUSCLES, PROGRESS }
+
 @Composable
-private fun ExerciseDetailContent(exercise: ExerciseEntity, isAdded: Boolean, onToggleAdded: () -> Unit) {
+private fun ExerciseDetailTab.label(): String = stringResource(
+    when (this) {
+        ExerciseDetailTab.HOW_TO -> R.string.exercise_tab_howto
+        ExerciseDetailTab.MUSCLES -> R.string.exercise_tab_muscles
+        ExerciseDetailTab.PROGRESS -> R.string.exercise_tab_progress
+    },
+)
+
+@Composable
+private fun ExerciseDetailContent(
+    exercise: ExerciseEntity,
+    history: List<ExerciseHistoryEntry>,
+    isAdded: Boolean,
+    onToggleAdded: () -> Unit,
+) {
+    // Feature #10 (Gate 46) — plain underline tabs, not Material TabRow/pills, per the plan.
+    // rememberSaveable (not remember) so the selected tab survives a config change, e.g. rotation.
+    var selectedTab by rememberSaveable { mutableStateOf(ExerciseDetailTab.HOW_TO) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -103,52 +132,12 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, isAdded: Boolean, on
                 Text(text = exercise.nameEn, style = MaterialTheme.typography.bodySmall, color = TextFaint)
             }
 
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MuscleChip(text = exercise.primaryMuscle, highlighted = true)
-                exercise.secondaryMuscles.forEach { MuscleChip(text = it, highlighted = false) }
-                MuscleChip(text = exercise.equipment, highlighted = false)
-            }
+            ExerciseDetailTabRow(selected = selectedTab, onSelect = { selectedTab = it })
 
-            MuscleInvolvementCard(exercise = exercise)
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.large)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(text = stringResource(R.string.exercise_instructions_title), style = MaterialTheme.typography.titleSmall)
-                exercise.instructions.forEachIndexed { index, step ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = (index + 1).toString(),
-                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
-                            color = Accent,
-                        )
-                        Text(text = step, style = MaterialTheme.typography.bodyMedium, color = TextMuted, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SuggestedTile(
-                    value = stringResource(R.string.exercise_sets_range, exercise.suggestedSetsMin, exercise.suggestedSetsMax),
-                    label = stringResource(R.string.exercise_tile_sets),
-                    modifier = Modifier.weight(1f),
-                )
-                SuggestedTile(
-                    value = stringResource(R.string.exercise_sets_range, exercise.suggestedRepsMin, exercise.suggestedRepsMax),
-                    label = stringResource(R.string.exercise_tile_reps),
-                    modifier = Modifier.weight(1f),
-                )
-                SuggestedTile(
-                    value = stringResource(R.string.exercise_rest_seconds, exercise.suggestedRestSeconds),
-                    label = stringResource(R.string.exercise_tile_rest),
-                    modifier = Modifier.weight(1f),
-                )
+            when (selectedTab) {
+                ExerciseDetailTab.HOW_TO -> HowToTabContent(exercise)
+                ExerciseDetailTab.MUSCLES -> MusclesTabContent(exercise)
+                ExerciseDetailTab.PROGRESS -> ProgressTabContent(history)
             }
         }
 
@@ -169,6 +158,149 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, isAdded: Boolean, on
                 color = if (isAdded) Accent else OnAccent,
             )
         }
+    }
+}
+
+@Composable
+private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (ExerciseDetailTab) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        ExerciseDetailTab.entries.forEach { tab ->
+            val isSelected = tab == selected
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSelect(tab) }
+                    .padding(vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = tab.label(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) Accent else TextMuted,
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .fillMaxWidth(0.6f)
+                        .height(2.dp)
+                        .background(if (isSelected) Accent else Color.Transparent),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HowToTabContent(exercise: ExerciseEntity) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        MuscleChip(text = exercise.equipment, highlighted = false)
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.large)
+                .background(SurfaceCard)
+                .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(text = stringResource(R.string.exercise_instructions_title), style = MaterialTheme.typography.titleSmall)
+            exercise.instructions.forEachIndexed { index, step ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = (index + 1).toString(),
+                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
+                        color = Accent,
+                    )
+                    Text(text = step, style = MaterialTheme.typography.bodyMedium, color = TextMuted, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SuggestedTile(
+                value = stringResource(R.string.exercise_sets_range, exercise.suggestedSetsMin, exercise.suggestedSetsMax),
+                label = stringResource(R.string.exercise_tile_sets),
+                modifier = Modifier.weight(1f),
+            )
+            SuggestedTile(
+                value = stringResource(R.string.exercise_sets_range, exercise.suggestedRepsMin, exercise.suggestedRepsMax),
+                label = stringResource(R.string.exercise_tile_reps),
+                modifier = Modifier.weight(1f),
+            )
+            SuggestedTile(
+                value = stringResource(R.string.exercise_rest_seconds, exercise.suggestedRestSeconds),
+                label = stringResource(R.string.exercise_tile_rest),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+/** Feature #10 (Gate 46) — muscle chips render unconditionally (they only ever depend on
+ * [ExerciseEntity.primaryMuscle]/`secondaryMuscles`, always present), so this tab is never blank
+ * even for exercises where Gate 44's `involvementPercents` is empty (cardio/stretching/functional
+ * movements) — the chips are the "falls back to existing primary/secondary muscle text" the plan
+ * asks for, and [MuscleInvolvementCard] simply adds nothing below them in that case. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MusclesTabContent(exercise: ExerciseEntity) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MuscleChip(text = exercise.primaryMuscle, highlighted = true)
+            exercise.secondaryMuscles.forEach { MuscleChip(text = it, highlighted = false) }
+        }
+        MuscleInvolvementCard(exercise = exercise)
+    }
+}
+
+/** Feature #10 (Gate 46) — [history] is already reduced to one entry per date (that date's
+ * heaviest set, newest first) by [com.fitviet.app.domain.ExerciseHistoryCalculator]; this just
+ * renders it as a plain date/value row list, matching this app's existing history-list convention
+ * (`MeasurementHistoryRow` in `ui/profile/MeasurementHistorySheet.kt`) rather than a chart — no
+ * chart library or hand-rolled `Canvas` drawing exists anywhere else in this codebase for a
+ * time-series like this one. */
+@Composable
+private fun ProgressTabContent(history: List<ExerciseHistoryEntry>) {
+    if (history.isEmpty()) {
+        Text(
+            text = stringResource(R.string.exercise_progress_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextMuted,
+            modifier = Modifier.padding(vertical = 24.dp),
+        )
+        return
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        history.forEach { entry -> ProgressHistoryRow(entry) }
+    }
+}
+
+@Composable
+private fun ProgressHistoryRow(entry: ExerciseHistoryEntry) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "${entry.date.dayOfMonth}/${entry.date.monthValue}/${entry.date.year}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextPrimary,
+        )
+        Text(
+            text = "${formatWeight(entry.weightKg)} kg × ${stringResource(R.string.exercise_progress_reps, entry.reps)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextMuted,
+        )
     }
 }
 

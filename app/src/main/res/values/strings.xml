@@ -222,6 +222,11 @@
     <string name="exercise_rest_seconds">%1$ds</string>
     <string name="exercise_involvement_title">Mức độ tham gia cơ</string>
     <string name="exercise_involvement_caption">Ước tính theo dạng vận động, không phải số đo thực tế trên từng người.</string>
+    <string name="exercise_tab_howto">Cách tập</string>
+    <string name="exercise_tab_muscles">Nhóm cơ</string>
+    <string name="exercise_tab_progress">Tiến bộ</string>
+    <string name="exercise_progress_empty">Chưa có lịch sử tập cho bài này. Hoàn thành một buổi tập để bắt đầu theo dõi.</string>
+    <string name="exercise_progress_reps">%1$d reps</string>
 
     <!-- 1f Diary & stats -->
     <string name="diary_title">Nhật ký tập luyện</string>

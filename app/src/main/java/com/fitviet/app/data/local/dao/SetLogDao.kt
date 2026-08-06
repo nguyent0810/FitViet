@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 
 data class PersonalBestRow(val exerciseId: Long, val nameVi: String, val maxWeightKg: Double)
 
+data class SetHistoryRow(val completedAt: Long, val weightKg: Double, val reps: Int)
+
 /** One completed set joined to its exercise's stable classification codes — feeds
  * [com.fitviet.app.domain.WorkoutCompositionCalculator] (features #8/#9). */
 data class SetBreakdownRow(
@@ -52,6 +54,22 @@ interface SetLogDao {
         """,
     )
     fun observeCompletedSetBreakdown(): Flow<List<SetBreakdownRow>>
+
+    /** Feature #10 (Gate 46) — every completed set for one exercise, across all sessions. Unlike
+     * [observePersonalBests] (global, cross-exercise, row-count-limited, `MAX(weightKg)` only —
+     * no per-set/per-date detail), this is scoped to a single [exerciseId] and returns every
+     * logged set so [com.fitviet.app.domain.ExerciseHistoryCalculator] can reduce it client-side.
+     * Backs Exercise Detail's "Tiến bộ" tab. */
+    @Query(
+        """
+        SELECT w.completedAt AS completedAt, s.weightKg AS weightKg, s.reps AS reps
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.exerciseId = :exerciseId AND s.isDone = 1 AND w.completedAt IS NOT NULL
+        ORDER BY w.completedAt DESC
+        """,
+    )
+    fun observeHistoryForExercise(exerciseId: Long): Flow<List<SetHistoryRow>>
 
     @Insert
     suspend fun insert(setLog: SetLogEntity): Long

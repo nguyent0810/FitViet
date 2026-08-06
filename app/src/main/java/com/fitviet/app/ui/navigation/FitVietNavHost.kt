@@ -228,7 +228,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             ) { backStackEntry ->
                 val exerciseId = backStackEntry.arguments?.getLong(FitVietDestination.ExerciseDetail.ARG_EXERCISE_ID) ?: 0L
                 val viewModel: ExerciseDetailViewModel = viewModel(
-                    factory = ExerciseDetailViewModel.Factory(exerciseId, container.exerciseRepository),
+                    factory = ExerciseDetailViewModel.Factory(exerciseId, container.exerciseRepository, container.workoutRepository),
                 )
                 ExerciseDetailScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }

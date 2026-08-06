@@ -222,6 +222,11 @@
     <string name="exercise_rest_seconds">%1$ds</string>
     <string name="exercise_involvement_title">Muscle involvement</string>
     <string name="exercise_involvement_caption">Estimated by movement pattern, not a per-person measurement.</string>
+    <string name="exercise_tab_howto">How to</string>
+    <string name="exercise_tab_muscles">Muscles</string>
+    <string name="exercise_tab_progress">Progress</string>
+    <string name="exercise_progress_empty">No workout history for this exercise yet. Complete a session to start tracking.</string>
+    <string name="exercise_progress_reps">%1$d reps</string>
 
     <!-- 1f Diary & stats -->
     <string name="diary_title">Training diary</string>

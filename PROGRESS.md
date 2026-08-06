@@ -2396,3 +2396,92 @@ than overclaiming per-exercise scrutiny. Zero findings at any severity beyond tw
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 46 — Tabs on Exercise Detail screen (feature #10)
+
+### What was built
+- `ui/exercise/ExerciseDetailScreen.kt` — the single scroll split into 3 plain underline tabs
+  (Cách tập / Nhóm cơ / Tiến bộ), selected via `rememberSaveable` (survives rotation) — a `Row` of
+  label + 2dp colored underline per tab, not Material `TabRow`/pills, per the plan. Existing
+  content redistributed rather than duplicated: **Cách tập** = equipment chip + the Instructions
+  card + the sets/reps/rest tile row; **Nhóm cơ** = the primary/secondary muscle `FlowRow` chips +
+  Gate 45's `MuscleInvolvementCard`; **Tiến bộ** = the new set-log history list (below). Header
+  (media, title, name) and the "Thêm vào buổi tập" button stay outside the tabs, always visible.
+- `data/local/dao/SetLogDao.kt` — new `observeHistoryForExercise(exerciseId): Flow<List<SetHistoryRow>>`
+  (mismatch #9: `observePersonalBests` is a global cross-exercise `GROUP BY`/row-limited query with
+  no `exerciseId` filter and no per-set detail, genuinely couldn't be reused here). Follows this
+  DAO's own established raw-`@Query`-with-`INNER JOIN` convention (same shape as
+  `observeCompletedSetBreakdown`) — joins `set_logs`→`workout_sessions` for the date, filters to one
+  exercise, completed sets only, newest first.
+- `domain/ExerciseHistoryCalculator.kt` (new) — `bestSetPerDate(sets): List<ExerciseHistoryEntry>`,
+  pure and unit-tested: collapses potentially-multiple sets logged on the same date down to that
+  date's heaviest set (ties broken by more reps) — the same "heaviest weight logged" signal this
+  app already uses for personal-best/recommended-weight elsewhere, not an average or a full set log.
+- `data/repository/WorkoutRepository.kt` — new `observeHistoryForExercise(exerciseId): Flow<List<ExerciseHistoryEntry>>`
+  on the interface + `RoomWorkoutRepository` impl, converting `SetHistoryRow.completedAt` (epoch
+  millis) to `LocalDate` via the same `Instant.ofEpochMilli(...).atZone(zone).toLocalDate()` idiom
+  every other repository in this app already uses, then reducing through
+  `ExerciseHistoryCalculator.bestSetPerDate`.
+- `ui/exercise/ExerciseDetailViewModel.kt` — reworked from a single one-shot fetch into
+  `combine(flow { emit(repository.getById(exerciseId)) }, workoutRepository.observeHistoryForExercise(exerciseId),
+  isAdded) { ... }.stateIn(...)`, matching the `combine`+`stateIn` shape every other ViewModel in
+  this codebase already uses (rather than a novel manual `.collect{}` loop) — the one-shot fetch is
+  wrapped in `flow {}` so it composes into the same `combine` call; `combine` tolerates that source
+  completing after its single emission, using its last value for later combinations. New
+  `workoutRepository: WorkoutRepository` constructor param + `Factory` param.
+- `ui/navigation/FitVietNavHost.kt` — `ExerciseDetailViewModel.Factory` call site passes
+  `container.workoutRepository` (already existed in `AppContainer`, no new repository needed there).
+- `app/src/test/.../WorkoutViewModelTest.kt` — `FakeWorkoutRepository` gained
+  `observeHistoryForExercise` (fixed empty flow; nothing in this test file exercises the Progress
+  tab, so a minimal fake is enough rather than tracking fake history data nobody reads).
+- `domain/ExerciseHistoryCalculatorTest.kt` (new) — 5 cases: empty input, a single set, multiple
+  same-date sets collapsing to the heaviest, a weight tie broken by reps, and multiple dates
+  sorted newest-first.
+- New strings (vi + en): `exercise_tab_howto`, `exercise_tab_muscles`, `exercise_tab_progress`,
+  `exercise_progress_empty`, `exercise_progress_reps`.
+
+### Scope decisions
+- **"Falls back to existing primary/secondary muscle text" is satisfied structurally, not
+  conditionally.** The Nhóm cơ tab's muscle chips (`FlowRow` of `MuscleChip`s) render unconditionally
+  — they only ever depend on `primaryMuscle`/`secondaryMuscles`, which are always present — so the
+  tab is never blank for a cardio/stretching/functional exercise whose `involvementPercents` is
+  empty; `MuscleInvolvementCard` (Gate 45) just adds nothing below the chips in that case, exactly
+  as the plan describes, with no extra conditional logic needed in this gate.
+- **History is a plain date/value row list, not a chart.** Grepped the whole `ui/` tree for any
+  existing chart/`Canvas`-drawing pattern for a time series — none exists anywhere in this app; the
+  established convention for "list of past values over time" is a plain row list
+  (`MeasurementHistoryRow` in `ui/profile/MeasurementHistorySheet.kt` is the closest precedent:
+  date left, value(s) right, inside a `SurfaceCard`). Followed that rather than introducing this
+  app's first hand-rolled chart just for this one tab.
+- **One history entry per date (heaviest set that date), not one row per individual set.** A
+  session can log several sets of the same exercise; showing every one would clutter a quick
+  progress scan. Collapsing to "the day's best effort" matches how this app already defines
+  "personal best"/"recommended weight" elsewhere (heaviest weight logged, not an average), so the
+  Progress tab's definition of progress is consistent with the rest of the app rather than
+  introducing a third, different notion of "best."
+
+### Verification
+Standalone `kotlinc` compile of `domain/ExerciseHistoryCalculator.kt` +
+`ExerciseHistoryCalculatorTest.kt` — clean, compiled AND **actually run** via `JUnitCore`:
+`OK (5 tests)`, all genuinely passing. Separately, standalone compile of the updated
+`data/local/dao/SetLogDao.kt` + `data/repository/WorkoutRepository.kt` (with their full entity
+dependency chain: `SetLogEntity`, `WorkoutSessionEntity`, `ProgramEntity`, `ExerciseEntity`,
+`WorkoutSessionDao`, plus `DashboardStatsCalculator`/`WeeklyBucketing`/`StatsRange` since
+`WorkoutRepository.kt` already depended on `DashboardStatsCalculator`) — clean, confirming the new
+DAO query and repository method are valid Kotlin/Room against the shared annotation stubs.
+
+`ExerciseDetailScreen.kt`/`ExerciseDetailViewModel.kt`/`FitVietNavHost.kt`/`WorkoutViewModelTest.kt`
+(real `androidx.lifecycle`/Compose/JUnit+coroutines-test — kept to this session's established
+manual-read-through split for these layers) verified by careful trace: `ExerciseDetailTab.entries`
+usage matches this codebase's existing convention (`ExerciseDifficulty.entries`,
+`AvatarStyle.entries` already used elsewhere, confirming the Kotlin version supports it); the
+`combine`'s one-shot-`flow{}`-plus-two-ongoing-sources shape traced to confirm it emits correctly
+once all 3 sources have emitted at least once, with `isLoading` transitioning to `false` at that
+point exactly as the old one-shot version did; grepped the whole `app/src` tree for every
+`WorkoutRepository` interface implementer (`RoomWorkoutRepository`, `FakeWorkoutRepository`) and
+confirmed both were updated, no third implementer missed. Both `strings.xml`/`values-en/strings.xml`
+parsed as valid XML. No `FitVietDatabase` version bump needed this gate — a new DAO query method,
+no new entity/table/column.
+
+### Push
+Pending independent review.
