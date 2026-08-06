@@ -1354,3 +1354,17 @@ Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 2
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 31 (Abs) next.
+
+## Gate 31 — Exercise library expansion: Abs (6/9 gates)
+
+### What was built
+12 new ABS exercises (the original 14 already had one — Crunch — this gate's 12 are all distinct, non-duplicate movements). Two are static holds (Plank, Side Bridge) using the established reps=1 pattern; the other 10 are genuine rep-based movements. Hanging Leg Raise is the gate's only ADVANCED entry (source `level: expert`). Side Bridge had an empty source `instructions` array (same situation as Gate 30's Push Press) — wrote its 3-step description from general knowledge as a standard side plank.
+
+### Codex review
+One round. No blocking findings; confirmed the Side Bridge description matches the real upstream entry's metadata (static force, beginner, abdominals primary/shoulders secondary) despite having no source text, confirmed the hold-vs-rep modeling split was exactly right (only Plank/Side Bridge use reps=1), confirmed Hanging Leg Raise's ADVANCED classification. One low-severity catch: Sit-Up's instructions had users clasp hands behind the head (neck-pulling risk) where Crunch/Decline Crunch already use safer "hands resting beside the head, don't interlace" wording — fixed to match that existing safer precedent.
+
+### Verification
+Same as prior gates: 24 downloads verified, `aapt2 compile --dir` clean on all 232 files, count/duplicate checks clean (116 exercises / 116 photo entries / 116 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 32 (Chest) next.

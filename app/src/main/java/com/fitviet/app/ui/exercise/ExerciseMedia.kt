@@ -158,6 +158,19 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.DELT_FRONT_CABLE_RAISE to listOf(R.drawable.front_cable_raise_0, R.drawable.front_cable_raise_1),
     SeedExerciseNames.DELT_SEATED_LATERAL_RAISE to listOf(R.drawable.seated_side_lateral_raise_0, R.drawable.seated_side_lateral_raise_1),
     SeedExerciseNames.DELT_PUSH_PRESS to listOf(R.drawable.push_press_0, R.drawable.push_press_1),
+    // Gate 31 — Abs library expansion
+    SeedExerciseNames.ABS_SITUP to listOf(R.drawable.situp_0, R.drawable.situp_1),
+    SeedExerciseNames.ABS_REVERSE_CRUNCH to listOf(R.drawable.reverse_crunch_0, R.drawable.reverse_crunch_1),
+    SeedExerciseNames.ABS_CABLE_CRUNCH to listOf(R.drawable.cable_crunch_0, R.drawable.cable_crunch_1),
+    SeedExerciseNames.ABS_PLANK to listOf(R.drawable.plank_0, R.drawable.plank_1),
+    SeedExerciseNames.ABS_SIDE_BRIDGE to listOf(R.drawable.side_bridge_0, R.drawable.side_bridge_1),
+    SeedExerciseNames.ABS_RUSSIAN_TWIST to listOf(R.drawable.russian_twist_0, R.drawable.russian_twist_1),
+    SeedExerciseNames.ABS_AIR_BIKE to listOf(R.drawable.air_bike_0, R.drawable.air_bike_1),
+    SeedExerciseNames.ABS_HANGING_LEG_RAISE to listOf(R.drawable.hanging_leg_raise_0, R.drawable.hanging_leg_raise_1),
+    SeedExerciseNames.ABS_AB_ROLLER to listOf(R.drawable.ab_roller_0, R.drawable.ab_roller_1),
+    SeedExerciseNames.ABS_CRUNCH_MACHINE to listOf(R.drawable.ab_crunch_machine_0, R.drawable.ab_crunch_machine_1),
+    SeedExerciseNames.ABS_DECLINE_CRUNCH to listOf(R.drawable.decline_crunch_0, R.drawable.decline_crunch_1),
+    SeedExerciseNames.ABS_DEAD_BUG to listOf(R.drawable.dead_bug_0, R.drawable.dead_bug_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()

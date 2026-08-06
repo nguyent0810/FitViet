@@ -111,6 +111,19 @@ Files used (app/src/main/res/drawable-nodpi/):
   front_cable_raise_0.jpg, front_cable_raise_1.jpg       <- exercises/Front_Cable_Raise/{0,1}.jpg
   seated_side_lateral_raise_0.jpg, seated_side_lateral_raise_1.jpg <- exercises/Seated_Side_Lateral_Raise/{0,1}.jpg
   push_press_0.jpg, push_press_1.jpg                     <- exercises/Push_Press/{0,1}.jpg
+  -- Gate 31 additions (Abs) --
+  situp_0.jpg, situp_1.jpg                               <- exercises/Sit-Up/{0,1}.jpg
+  reverse_crunch_0.jpg, reverse_crunch_1.jpg             <- exercises/Reverse_Crunch/{0,1}.jpg
+  cable_crunch_0.jpg, cable_crunch_1.jpg                 <- exercises/Cable_Crunch/{0,1}.jpg
+  plank_0.jpg, plank_1.jpg                               <- exercises/Plank/{0,1}.jpg
+  side_bridge_0.jpg, side_bridge_1.jpg                   <- exercises/Side_Bridge/{0,1}.jpg
+  russian_twist_0.jpg, russian_twist_1.jpg               <- exercises/Russian_Twist/{0,1}.jpg
+  air_bike_0.jpg, air_bike_1.jpg                         <- exercises/Air_Bike/{0,1}.jpg
+  hanging_leg_raise_0.jpg, hanging_leg_raise_1.jpg       <- exercises/Hanging_Leg_Raise/{0,1}.jpg
+  ab_roller_0.jpg, ab_roller_1.jpg                       <- exercises/Ab_Roller/{0,1}.jpg
+  ab_crunch_machine_0.jpg, ab_crunch_machine_1.jpg       <- exercises/Ab_Crunch_Machine/{0,1}.jpg
+  decline_crunch_0.jpg, decline_crunch_1.jpg             <- exercises/Decline_Crunch/{0,1}.jpg
+  dead_bug_0.jpg, dead_bug_1.jpg                         <- exercises/Dead_Bug/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 
