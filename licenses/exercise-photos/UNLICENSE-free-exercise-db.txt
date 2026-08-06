@@ -57,6 +57,20 @@ Files used (app/src/main/res/drawable-nodpi/):
   trail_running_walking_0.jpg, trail_running_walking_1.jpg <- exercises/Trail_Running_Walking/{0,1}.jpg
   prowler_sprint_0.jpg, prowler_sprint_1.jpg             <- exercises/Prowler_Sprint/{0,1}.jpg
   step_mill_0.jpg, step_mill_1.jpg                       <- exercises/Step_Mill/{0,1}.jpg
+  -- Gate 28 additions (Stretching) --
+  hamstring_stretch_0.jpg, hamstring_stretch_1.jpg       <- exercises/Hamstring_Stretch/{0,1}.jpg
+  quad_stretch_0.jpg, quad_stretch_1.jpg                 <- exercises/Quad_Stretch/{0,1}.jpg
+  calf_stretch_wall_0.jpg, calf_stretch_wall_1.jpg       <- exercises/Calf_Stretch_Hands_Against_Wall/{0,1}.jpg
+  standing_lateral_stretch_0.jpg, standing_lateral_stretch_1.jpg <- exercises/Standing_Lateral_Stretch/{0,1}.jpg
+  childs_pose_0.jpg, childs_pose_1.jpg                   <- exercises/Childs_Pose/{0,1}.jpg
+  cat_stretch_0.jpg, cat_stretch_1.jpg                   <- exercises/Cat_Stretch/{0,1}.jpg
+  shoulder_stretch_0.jpg, shoulder_stretch_1.jpg         <- exercises/Shoulder_Stretch/{0,1}.jpg
+  triceps_stretch_0.jpg, triceps_stretch_1.jpg           <- exercises/Triceps_Stretch/{0,1}.jpg
+  chest_front_shoulder_stretch_0.jpg, chest_front_shoulder_stretch_1.jpg <- exercises/Chest_And_Front_Of_Shoulder_Stretch/{0,1}.jpg
+  groin_back_stretch_0.jpg, groin_back_stretch_1.jpg     <- exercises/Groin_and_Back_Stretch/{0,1}.jpg
+  worlds_greatest_stretch_0.jpg, worlds_greatest_stretch_1.jpg <- exercises/Worlds_Greatest_Stretch/{0,1}.jpg
+  upper_back_stretch_0.jpg, upper_back_stretch_1.jpg     <- exercises/Upper_Back_Stretch/{0,1}.jpg
+  seated_calf_stretch_0.jpg, seated_calf_stretch_1.jpg   <- exercises/Seated_Calf_Stretch/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

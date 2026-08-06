@@ -1312,3 +1312,17 @@ Same as Gate 26: all 42 downloads verified (HTTP 200, non-trivial size), `aapt2 
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 28 (Stretching) next.
+
+## Gate 28 — Exercise library expansion: Stretching (3/9 gates)
+
+### What was built
+13 new STRETCHING exercises (previously at zero). Two source instructions (Shoulder Stretch, Upper Back Stretch) were only a single thin English sentence each — wrote fuller, technically-correct 3-step Vietnamese descriptions of these two well-known standard stretches from general fitness knowledge rather than translating an inadequate source, flagged explicitly to codex for verification. Extended the reps=1 "one hold" pattern (Gates 26/27) to 12 of 13 static holds; the 13th (Groin and Back Stretch) is genuinely dynamic per its own source instructions ("repeat 10-20 times") and correctly uses real rep counts instead.
+
+### Codex review
+One round — no findings. Verified all 13 name/photo/entity linkages, confirmed the one dynamic-vs-static rep-modeling split was correct (not swapped), confirmed the two supplemented stretch descriptions are accurate standard technique, confirmed the deliberate `2..2` (not `2..3`) set count on two exercises reads as intentional rather than a typo.
+
+### Verification
+Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 134 files, count/duplicate checks clean (67 exercises / 67 photo entries / 67 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 29 (Biceps + Triceps) next.

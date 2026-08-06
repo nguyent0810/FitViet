@@ -105,6 +105,20 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.CARDIO_TRAIL_RUN to listOf(R.drawable.trail_running_walking_0, R.drawable.trail_running_walking_1),
     SeedExerciseNames.CARDIO_PROWLER_SPRINT to listOf(R.drawable.prowler_sprint_0, R.drawable.prowler_sprint_1),
     SeedExerciseNames.CARDIO_STEP_MILL to listOf(R.drawable.step_mill_0, R.drawable.step_mill_1),
+    // Gate 28 — Stretching library expansion
+    SeedExerciseNames.STRETCH_HAMSTRING to listOf(R.drawable.hamstring_stretch_0, R.drawable.hamstring_stretch_1),
+    SeedExerciseNames.STRETCH_QUAD to listOf(R.drawable.quad_stretch_0, R.drawable.quad_stretch_1),
+    SeedExerciseNames.STRETCH_CALF_WALL to listOf(R.drawable.calf_stretch_wall_0, R.drawable.calf_stretch_wall_1),
+    SeedExerciseNames.STRETCH_STANDING_LATERAL to listOf(R.drawable.standing_lateral_stretch_0, R.drawable.standing_lateral_stretch_1),
+    SeedExerciseNames.STRETCH_CHILDS_POSE to listOf(R.drawable.childs_pose_0, R.drawable.childs_pose_1),
+    SeedExerciseNames.STRETCH_CAT to listOf(R.drawable.cat_stretch_0, R.drawable.cat_stretch_1),
+    SeedExerciseNames.STRETCH_SHOULDER to listOf(R.drawable.shoulder_stretch_0, R.drawable.shoulder_stretch_1),
+    SeedExerciseNames.STRETCH_TRICEPS to listOf(R.drawable.triceps_stretch_0, R.drawable.triceps_stretch_1),
+    SeedExerciseNames.STRETCH_CHEST_FRONT_SHOULDER to listOf(R.drawable.chest_front_shoulder_stretch_0, R.drawable.chest_front_shoulder_stretch_1),
+    SeedExerciseNames.STRETCH_GROIN_BACK to listOf(R.drawable.groin_back_stretch_0, R.drawable.groin_back_stretch_1),
+    SeedExerciseNames.STRETCH_WORLDS_GREATEST to listOf(R.drawable.worlds_greatest_stretch_0, R.drawable.worlds_greatest_stretch_1),
+    SeedExerciseNames.STRETCH_UPPER_BACK to listOf(R.drawable.upper_back_stretch_0, R.drawable.upper_back_stretch_1),
+    SeedExerciseNames.STRETCH_SEATED_CALF to listOf(R.drawable.seated_calf_stretch_0, R.drawable.seated_calf_stretch_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()
