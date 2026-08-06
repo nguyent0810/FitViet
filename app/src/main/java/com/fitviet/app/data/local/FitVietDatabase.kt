@@ -68,7 +68,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 38's List<Int> Converters pair — no new converter needed).
     // Gate 47 raised this from 10 to 11: new nullable `supersetGroup` column on
     // `program_exercises`.
-    version = 11,
+    // Gate 48 raised this from 11 to 12: new `hasSeenSupersetHint` column on `settings`.
+    version = 12,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

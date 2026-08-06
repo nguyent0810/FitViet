@@ -166,6 +166,10 @@
     <string name="workout_preview_title">Bài tập hôm nay</string>
     <string name="workout_preview_summary">%1$d hiệp × %2$d–%3$d lần × %4$s kg</string>
     <string name="workout_preview_empty">Chưa có bài tập nào cho hôm nay.</string>
+    <!-- Superset grouping preview (Gate 48) -->
+    <string name="workout_preview_superset_hint_title">2 bài liên tiếp là gì?</string>
+    <string name="workout_preview_superset_hint_body">Một cặp superset nghĩa là bạn tập 2 bài này liên tiếp, không nghỉ giữa chừng — chỉ nghỉ sau khi xong cả hai.</string>
+    <string name="workout_preview_superset_hint_dismiss">Đã hiểu</string>
     <string name="workout_session_finished_title">BUỔI TẬP\nHOÀN THÀNH</string>
     <string name="workout_session_finished_note">PR mới sẽ được lưu vào nhật ký của bạn</string>
     <string name="workout_back_to_home">Về trang chủ</string>

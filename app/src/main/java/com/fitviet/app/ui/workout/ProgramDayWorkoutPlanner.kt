@@ -22,6 +22,17 @@ data class ProgramDayWorkoutItem(
 
 data class ResolvedProgramDay(val titleVi: String, val items: List<ProgramDayWorkoutItem>)
 
+/** How [resolveGroupings] resolved a run of [ProgramDayWorkoutItem]s — a [Paired] entry is exactly
+ * the shape [ProgramDayWorkoutPlanner.buildBlocks] turns into a [WorkoutBlockPlan.Superset]; a
+ * [Solo] entry (including every item from a malformed grouping) is what it turns into a
+ * [WorkoutBlockPlan.Straight]. Exposed as its own type so a non-session consumer (the "day
+ * exercise list" preview screen, Gate 48) can render the exact same resolved pairing without
+ * re-deriving the adjacency rule itself. */
+sealed class ResolvedGrouping {
+    data class Solo(val item: ProgramDayWorkoutItem) : ResolvedGrouping()
+    data class Paired(val first: ProgramDayWorkoutItem, val second: ProgramDayWorkoutItem) : ResolvedGrouping()
+}
+
 /**
  * Resolves a program's schedule for *today* into display/session-ready data, and builds a
  * [WorkoutBlockPlan] session from it — the Gate 24 counterpart to [WorkoutPlanSeed]/
@@ -65,33 +76,38 @@ object ProgramDayWorkoutPlanner {
         return ResolvedProgramDay(titleVi = today.titleVi, items = items)
     }
 
-    /** Collapses each item's rep *range* to a single concrete rep count (its midpoint) — a live
-     * session logs one rep target per set, unlike the preview screen, which shows the full range.
-     *
-     * A non-null [ProgramDayWorkoutItem.supersetGroup] only becomes a [WorkoutBlockPlan.Superset]
+    /** A non-null [ProgramDayWorkoutItem.supersetGroup] only resolves to a [ResolvedGrouping.Paired]
      * when exactly two items in [items] share it AND they're adjacent — any other shape (a lone
      * item with a group value, three-or-more sharing one, or two matching items that aren't next
-     * to each other) degrades every affected item back to its own [WorkoutBlockPlan.Straight]
-     * rather than dropping it, since a malformed grouping shouldn't be able to silently remove an
-     * exercise from the session. */
-    fun buildBlocks(items: List<ProgramDayWorkoutItem>): List<WorkoutBlockPlan> {
+     * to each other) resolves every affected item to its own [ResolvedGrouping.Solo] rather than
+     * dropping it, since a malformed grouping shouldn't be able to silently remove an exercise. */
+    fun resolveGroupings(items: List<ProgramDayWorkoutItem>): List<ResolvedGrouping> {
         val groupSizes = items.mapNotNull { it.supersetGroup }.groupingBy { it }.eachCount()
 
-        val blocks = mutableListOf<WorkoutBlockPlan>()
+        val groupings = mutableListOf<ResolvedGrouping>()
         var i = 0
         while (i < items.size) {
             val item = items[i]
             val group = item.supersetGroup
             val next = items.getOrNull(i + 1)?.takeIf { group != null && groupSizes[group] == 2 && it.supersetGroup == group }
             if (next != null) {
-                blocks += toSupersetBlock(item, next)
+                groupings += ResolvedGrouping.Paired(item, next)
                 i += 2
             } else {
-                blocks += toStraightBlock(item)
+                groupings += ResolvedGrouping.Solo(item)
                 i += 1
             }
         }
-        return blocks
+        return groupings
+    }
+
+    /** Collapses each item's rep *range* to a single concrete rep count (its midpoint) — a live
+     * session logs one rep target per set, unlike the preview screen, which shows the full range. */
+    fun buildBlocks(items: List<ProgramDayWorkoutItem>): List<WorkoutBlockPlan> = resolveGroupings(items).map { grouping ->
+        when (grouping) {
+            is ResolvedGrouping.Solo -> toStraightBlock(grouping.item)
+            is ResolvedGrouping.Paired -> toSupersetBlock(grouping.first, grouping.second)
+        }
     }
 
     private fun midpointReps(min: Int, max: Int) = ((min + max) / 2).coerceAtLeast(1)

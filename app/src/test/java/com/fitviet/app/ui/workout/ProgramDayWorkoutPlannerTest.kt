@@ -159,4 +159,46 @@ class ProgramDayWorkoutPlannerTest {
         assertEquals(2, result.size)
         assertTrue(result.all { it is WorkoutBlockPlan.Superset })
     }
+
+    // ---- Gate 48: resolveGroupings() is the shared primitive buildBlocks() and the preview
+    // screen both consume, so it gets its own direct coverage rather than only being exercised
+    // indirectly through buildBlocks()'s assertions above. ----
+
+    @Test
+    fun `resolveGroupings resolves a valid adjacent pair to Paired, preserving item identity`() {
+        val a = item(1, "A", supersetGroup = "X")
+        val b = item(2, "B", supersetGroup = "X")
+
+        val result = ProgramDayWorkoutPlanner.resolveGroupings(listOf(a, b))
+
+        assertEquals(listOf(ResolvedGrouping.Paired(a, b)), result)
+    }
+
+    @Test
+    fun `resolveGroupings resolves everything else to Solo, in original order`() {
+        val a = item(1, "A")
+        val b = item(2, "B", supersetGroup = "X")
+        val c = item(3, "C", supersetGroup = "X")
+        val d = item(4, "D", supersetGroup = "X")
+
+        val result = ProgramDayWorkoutPlanner.resolveGroupings(listOf(a, b, c, d))
+
+        assertEquals(listOf(ResolvedGrouping.Solo(a), ResolvedGrouping.Solo(b), ResolvedGrouping.Solo(c), ResolvedGrouping.Solo(d)), result)
+    }
+
+    @Test
+    fun `buildBlocks is exactly resolveGroupings mapped to Straight or Superset, same order`() {
+        val items = listOf(
+            item(1, "Bench"),
+            item(2, "CableFly", supersetGroup = "X"),
+            item(3, "LateralRaise", supersetGroup = "X"),
+        )
+
+        val groupings = ProgramDayWorkoutPlanner.resolveGroupings(items)
+        val blocks = ProgramDayWorkoutPlanner.buildBlocks(items)
+
+        assertEquals(groupings.size, blocks.size)
+        assertTrue(groupings[0] is ResolvedGrouping.Solo && blocks[0] is WorkoutBlockPlan.Straight)
+        assertTrue(groupings[1] is ResolvedGrouping.Paired && blocks[1] is WorkoutBlockPlan.Superset)
+    }
 }

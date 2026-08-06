@@ -51,6 +51,12 @@ interface ProgramRepository {
 
     suspend fun setActiveProgram(programId: Long)
 
+    /** Feature #11b (Gate 48) — whether the "day exercise list" preview screen's first-run
+     * superset explainer card has already been dismissed. */
+    fun observeHasSeenSupersetHint(): Flow<Boolean>
+
+    suspend fun dismissSupersetHint()
+
     /** Serializes a program's real weekly schedule to a shareable JSON string (feature #1). Null
      * only if the program itself doesn't exist — a program with no schedule rows yet (not seeded,
      * or a zero-day program from [importProgram]) still exports as a valid empty-days JSON rather
@@ -88,6 +94,13 @@ class RoomProgramRepository(
     override suspend fun setActiveProgram(programId: Long) {
         val current = settingsDao.get() ?: SettingsEntity()
         settingsDao.upsert(current.copy(activeProgramId = programId))
+    }
+
+    override fun observeHasSeenSupersetHint(): Flow<Boolean> = settingsDao.observe().map { it?.hasSeenSupersetHint ?: false }
+
+    override suspend fun dismissSupersetHint() {
+        val current = settingsDao.get() ?: SettingsEntity()
+        settingsDao.upsert(current.copy(hasSeenSupersetHint = true))
     }
 
     override suspend fun exportProgram(programId: Long): String? {

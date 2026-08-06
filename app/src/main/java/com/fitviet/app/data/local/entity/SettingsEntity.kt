@@ -47,6 +47,9 @@ data class SettingsEntity(
      * hardcoded placeholder identity so a fresh/pre-migration install looks unchanged. */
     val displayName: String = "Minh Nguyễn",
     val avatarId: Int = 0,
+    /** Feature #11b (Gate 48) — flips true once the user has dismissed the "day exercise list"
+     * preview screen's first-run superset explainer card, so it doesn't show again. */
+    val hasSeenSupersetHint: Boolean = false,
 ) {
     companion object {
         const val SINGLETON_ID = 0

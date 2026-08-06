@@ -2649,3 +2649,103 @@ findings at any severity.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 48 — Superset grouping: preview UI (feature #11b)
+
+### What was built
+- `ui/workout/ProgramDayWorkoutPlanner.kt` — extracted Gate 47's `buildBlocks()` grouping/
+  degradation algorithm into a new public `resolveGroupings(items): List<ResolvedGrouping>`
+  (`ResolvedGrouping.Solo`/`Paired` sealed class), then rewrote `buildBlocks()` as
+  `resolveGroupings(items).map { ... }`. This means the preview screen renders **the exact same
+  resolved pairing** the live session will use — one algorithm, two consumers — rather than the
+  preview re-deriving the adjacency/degradation rule itself and risking the two views disagreeing
+  on what counts as a valid pair.
+- `data/local/entity/SettingsEntity.kt` — new `hasSeenSupersetHint: Boolean = false` column.
+- `data/local/FitVietDatabase.kt` — version 11 → 12 (new column on `settings`).
+- `data/repository/ProgramRepository.kt` — two new interface methods,
+  `observeHasSeenSupersetHint(): Flow<Boolean>` and `dismissSupersetHint()`, implemented on
+  `RoomProgramRepository` via the `settingsDao` it already held (no new constructor dependency).
+  Placed here rather than on a new/different repository since `ProgramRepository` already owns
+  other settings-backed program-preview state (`observeActiveProgramId`/`setActiveProgram`).
+- `ui/workout/WorkoutPreviewViewModel.kt` — `WorkoutPreviewUiState.items` replaced with
+  `groupings: List<ResolvedGrouping>` (built via `resolveGroupings()` right after
+  `resolveToday()`), plus `showSupersetHint: Boolean`. New `dismissSupersetHint()` method:
+  updates the in-memory state synchronously first, then persists via
+  `programRepository.dismissSupersetHint()` in a launched coroutine (instant UI feedback; the
+  persisted write finishing later is harmless since dismissal is idempotent).
+- `ui/workout/WorkoutPreviewScreen.kt`:
+  - `PreviewExerciseCard` (unchanged visual identity) and the new `PreviewSupersetCard` both
+    delegate to a shared `PreviewExerciseContent(item, badge)` — an ungrouped exercise renders
+    exactly as it did before this gate.
+  - `PreviewSupersetCard`: a `DeepSurface1`-background, `AccentBorder`-bordered outer card holding
+    the "2 BÀI LIÊN TIẾP" badge pill, the first exercise's own card with a 26dp "A1" badge, a
+    2dp-wide Accent connector (a short line, the "không nghỉ" caption, another short line), then
+    the second exercise's card with a 26dp "A2" badge. Reuses the live session's own
+    `superset_badge`/`superset_badge_a1`/`superset_badge_a2`/`superset_no_rest_note` string
+    resources rather than new near-duplicate strings, so the preview and the live session describe
+    the pairing identically. A1/A2 badge text uses `MaterialTheme.typography.labelMedium.copy(fontFamily = Anton)`,
+    matching this app's established "Anton for short numeral/label tiles" convention (`SummaryTile`,
+    `ExerciseDetailScreen`'s percentage labels) — the live session's own A1/A2 badges (in
+    `SupersetScreens.kt`) don't use Anton, but the plan explicitly calls for Anton labels here.
+  - New `SupersetHintCard` — an inline card in the scrollable content (not a floating tooltip, per
+    the plan), shown only when `uiState.showSupersetHint` is true: title + explainer body + a
+    trailing "Đã hiểu" (Got it) dismiss action, styled with the same `AccentSurfaceSelected`/
+    `AccentBorder` combination `SupersetScreens.kt` uses for an active/selected state.
+- `app/src/test/.../ui/workout/ProgramDayWorkoutPlannerTest.kt` — 3 new cases directly on
+  `resolveGroupings()`: a valid pair resolves to `Paired` with the original item instances intact,
+  every other shape resolves to `Solo` in original order, and `buildBlocks()` is confirmed to be
+  exactly `resolveGroupings()` mapped 1:1 to `Straight`/`Superset` in the same order (guards
+  against the two functions silently diverging in a future edit).
+- `app/src/test/.../ui/workout/WorkoutViewModelTest.kt` — `FakeProgramRepository` gained the two
+  new interface methods (fixed `false`/no-op — nothing in that test file exercises the preview
+  screen's hint state).
+- New strings (vi + en): `workout_preview_superset_hint_title`, `_body`, `_dismiss`.
+
+### Scope decisions
+- **The first-run hint only shows on a day that actually has a superset.** `showSupersetHint` is
+  `!hasSeenHint && groupings.any { it is ResolvedGrouping.Paired }` — showing an explainer for a
+  concept that isn't present on today's screen would be confusing, and per the plan the flag only
+  needs to track whether the user has *dismissed* it, not force it to appear regardless of
+  relevance. This is an interpretation of the plan (which doesn't explicitly address a no-superset
+  day), made explicit here rather than left implicit in the code.
+- **`WorkoutPreviewUiState.items` was removed, not kept alongside `groupings`.** Nothing else in
+  the app reads `WorkoutPreviewUiState.items` (confirmed by grep — `WorkoutPreviewScreen.kt` was
+  its only consumer, and no test file references `WorkoutPreviewViewModel`/`WorkoutPreviewUiState`
+  at all yet), so keeping a redundant flattened list around after `groupings` already carries the
+  same items would be dead surface area rather than a real compatibility need.
+- **The A1/A2 badge inside each `PreviewExerciseCard` sits next to the exercise name, not
+  overlaid on the media image.** Keeps `PreviewExerciseContent` a single shared layout for both
+  the plain and superset-member cases without a conditional media-box treatment, and matches how
+  `SupersetExerciseRow` (the live session's equivalent) already places its badge — leading the
+  content row, not overlaid on an image.
+
+### Verification
+Standalone `kotlinc` compile (52 files: all touched files plus their full transitive dependency
+set — every DAO/entity, the entire `domain/` package, `SeedData.kt`, `DatabaseSeeder.kt`,
+`ProgramRepository.kt`'s two new methods) — clean, zero errors, zero warnings, against the same
+fake `FitVietDatabase`/Room-stub/`json.jar` setup established in Gate 47.
+
+`ProgramDayWorkoutPlannerTest` + `ProgramScheduleCalculatorTest` **compiled and actually run** via
+`JUnitCore`: `OK (20 tests)` — the pre-existing 17 plus 3 new `resolveGroupings()`-specific cases,
+all genuinely passing (`resolveGroupings`/`ResolvedGrouping` have no Android/Compose dependency, so
+real execution was possible).
+
+`WorkoutPreviewViewModel.kt`/`WorkoutPreviewScreen.kt` (real `androidx.lifecycle`/Compose — kept to
+this session's established manual-read-through split for these layers) verified by careful trace:
+confirmed `resolveGroupings()` is called on `resolved?.items.orEmpty()` so a null/empty resolution
+still produces an empty `groupings` list (preserving the existing empty-state behavior) rather than
+throwing; confirmed `showSupersetHint`'s `!hasSeenHint && groupings.any { Paired }` guard reads
+`observeHasSeenSupersetHint().first()` once at load time (matching this ViewModel's existing
+one-shot-load-then-`_uiState.value = ...` shape, not a live `combine`, since nothing in this screen
+needs the hint-dismissed flag to update reactively while the screen is open); traced
+`PreviewSupersetCard`'s Compose tree by hand against `WorkoutPlanSeed`'s hardcoded superset demo
+and `SupersetScreens.kt`'s live-session equivalent to confirm string-resource reuse
+(`superset_badge`/`_a1`/`_a2`/`superset_no_rest_note`) is genuinely valid — same intended meaning,
+just a different Composable rendering them. Grepped the whole `app/src` tree for every
+`ProgramRepository` implementer (`RoomProgramRepository`, `WorkoutViewModelTest.kt`'s
+`FakeProgramRepository`) to confirm both got the two new interface methods, no third implementer
+missed, and confirmed no other file constructs `WorkoutPreviewUiState`/reads `.items` that the
+rename to `.groupings` could have silently broken. Both `strings.xml`/`values-en/strings.xml`
+parsed as valid XML (`xml.etree.ElementTree`). `FitVietNavHost.kt` needed no change — the new
+`ProgramRepository` methods reuse the already-injected `container.programRepository`, no new
+`WorkoutPreviewViewModel.Factory` constructor parameter.

@@ -146,6 +146,8 @@ class WorkoutViewModelTest {
         override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = flowOf(schedules[programId].orEmpty())
         override fun observeActiveProgramId(): Flow<Long?> = flowOf(null)
         override suspend fun setActiveProgram(programId: Long) {}
+        override fun observeHasSeenSupersetHint(): Flow<Boolean> = flowOf(false)
+        override suspend fun dismissSupersetHint() {}
         override suspend fun exportProgram(programId: Long): String? = null
         override suspend fun importProgram(json: String): ImportProgramResult = ImportProgramResult.Failed
     }

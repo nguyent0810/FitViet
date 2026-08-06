@@ -166,6 +166,10 @@
     <string name="workout_preview_title">Today\'s workout</string>
     <string name="workout_preview_summary">%1$d sets × %2$d–%3$d reps × %4$s kg</string>
     <string name="workout_preview_empty">No exercises scheduled for today.</string>
+    <!-- Superset grouping preview (Gate 48) -->
+    <string name="workout_preview_superset_hint_title">What\'s "back-to-back"?</string>
+    <string name="workout_preview_superset_hint_body">A superset pair means you do these 2 exercises back-to-back with no rest in between — you only rest after finishing both.</string>
+    <string name="workout_preview_superset_hint_dismiss">Got it</string>
     <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
     <string name="workout_session_finished_note">New PRs will be saved to your diary</string>
     <string name="workout_back_to_home">Back to home</string>
