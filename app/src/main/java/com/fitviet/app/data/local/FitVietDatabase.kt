@@ -64,7 +64,9 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 38 raised this from 6 to 7: new `reminders` table.
     // Gate 39 raised this from 7 to 8: new `selectedDaysPerWeek` column on `settings`.
     // Gate 40 raised this from 8 to 9: 5 new nullable workout-share columns on `community_posts`.
-    version = 9,
+    // Gate 44 raised this from 9 to 10: new `involvementPercents` column on `exercises` (reuses
+    // Gate 38's List<Int> Converters pair — no new converter needed).
+    version = 10,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

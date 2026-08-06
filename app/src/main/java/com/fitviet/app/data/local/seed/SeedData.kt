@@ -232,6 +232,7 @@ object SeedData {
             gifAsset = "barbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai trước", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, mắt dưới thanh đòn, chân đặt chắc xuống sàn.",
@@ -254,6 +255,7 @@ object SeedData {
             gifAsset = "db-shoulder-press.gif",
             primaryMuscle = "Vai trước · chính",
             secondaryMuscles = listOf("Vai giữa", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi thẳng lưng, tạ đơn ngang vai, lòng bàn tay hướng ra trước.",
@@ -279,6 +281,7 @@ object SeedData {
             gifAsset = "cable-fly.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai trước"),
+            involvementPercents = listOf(80, 20),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng giữa hai cột cáp, tay cầm ngang vai, khuỷu tay hơi gập.",
@@ -300,6 +303,7 @@ object SeedData {
             gifAsset = "lateral-raise.gif",
             primaryMuscle = "Vai giữa · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, tạ đơn hai bên hông, khuỷu tay hơi gập.",
@@ -326,6 +330,7 @@ object SeedData {
             gifAsset = "barbell-squat.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn + giá đỡ",
             instructions = listOf(
                 "Đặt đòn tạ sau gáy trên giá đỡ, bước ra với chân rộng bằng vai, mũi chân hơi mở.",
@@ -347,6 +352,7 @@ object SeedData {
             gifAsset = "barbell-deadlift.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Lưng giữa"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng trước đòn tạ, chân rộng bằng vai, cúi người nắm đòn với lưng thẳng, ngực ưỡn.",
@@ -368,6 +374,7 @@ object SeedData {
             gifAsset = "lat-pulldown.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi vào máy, nắm thanh kéo rộng hơn vai, ngả người ra sau nhẹ khoảng 30 độ.",
@@ -389,6 +396,7 @@ object SeedData {
             gifAsset = "bent-over-row.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Tay trước", "Xô", "Vai"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Gập gối nhẹ, cúi người từ hông tới khi lưng gần song song sàn, đòn tạ treo trước người.",
@@ -410,6 +418,7 @@ object SeedData {
             gifAsset = "barbell-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm đòn rộng bằng vai, lòng bàn tay hướng ra trước, khuỷu tay sát người.",
@@ -431,6 +440,7 @@ object SeedData {
             gifAsset = "triceps-pushdown.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng trước máy cáp, nắm thanh chữ V hoặc thanh thẳng, khuỷu tay sát người và cố định.",
@@ -452,6 +462,7 @@ object SeedData {
             gifAsset = "leg-press.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Máy đạp đùi",
             instructions = listOf(
                 "Ngồi vào máy, đặt chân lên bệ đạp rộng bằng vai, tháo chốt an toàn.",
@@ -473,6 +484,7 @@ object SeedData {
             gifAsset = "dumbbell-lunges.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau", "Bắp chân"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, mỗi tay cầm một tạ đơn, thân trên giữ thẳng.",
@@ -494,6 +506,7 @@ object SeedData {
             gifAsset = "crunches.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, gối gập, hai tay đặt nhẹ hai bên đầu, không đan tay sau gáy.",
@@ -515,6 +528,7 @@ object SeedData {
             gifAsset = "pushups.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Chống hai tay xuống sàn rộng bằng vai, thân người thẳng từ đầu đến gót chân.",
@@ -540,6 +554,7 @@ object SeedData {
             gifAsset = "barbell-hip-thrust.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau", "Bắp chân"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Ngồi trên sàn, lưng trên tựa vào mép ghế, đặt thanh đòn tạ ngang qua hông (lót đệm để giảm đau).",
@@ -561,6 +576,7 @@ object SeedData {
             gifAsset = "barbell-glute-bridge.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau", "Bắp chân"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Nằm ngửa trên sàn, đặt thanh đòn tạ ngang hông, gối gập, hai bàn chân đặt phẳng.",
@@ -582,6 +598,7 @@ object SeedData {
             gifAsset = "glute-kickback.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Quỳ trên sàn, hai tay chống thẳng dưới vai, gối tạo góc 90 độ, lưng thẳng.",
@@ -603,6 +620,7 @@ object SeedData {
             gifAsset = "single-leg-glute-bridge.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(80, 20),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, gối gập, bàn chân phẳng trên sàn, co một chân lên sát ngực.",
@@ -624,6 +642,7 @@ object SeedData {
             gifAsset = "butt-lift-bridge.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(80, 20),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, hai tay xuôi hai bên, gối gập, hai bàn chân rộng bằng vai.",
@@ -645,6 +664,7 @@ object SeedData {
             gifAsset = "physioball-hip-bridge.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Bóng tập",
             instructions = listOf(
                 "Tựa vùng vai lên bóng tập, hông không chạm sàn, hai bàn chân đặt phẳng rộng bằng vai.",
@@ -666,6 +686,7 @@ object SeedData {
             gifAsset = "one-legged-cable-kickback.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(80, 20),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Gắn dây cáp vào cổ chân, đứng đối diện máy cách khoảng 60cm, hai tay bám khung máy để giữ thăng bằng.",
@@ -687,6 +708,7 @@ object SeedData {
             gifAsset = "pull-through.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau", "Lưng dưới"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng quay lưng vào máy cáp thấp, hai chân đứng rộng hai bên dây cáp, nắm dây giữa hai chân.",
@@ -708,6 +730,7 @@ object SeedData {
             gifAsset = "step-up-with-knee-raise.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau", "Đùi trước"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Bục/ghế",
             instructions = listOf(
                 "Đứng đối diện bục hoặc ghế có độ cao phù hợp, hai chân chụm.",
@@ -729,6 +752,7 @@ object SeedData {
             gifAsset = "hip-extension-with-bands.gif",
             primaryMuscle = "Mông · chính",
             secondaryMuscles = listOf("Đùi sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Dây kháng lực",
             instructions = listOf(
                 "Cố định một đầu dây kháng lực vào cột thấp, đầu kia buộc vào cổ chân, đứng đối diện điểm cố định và bám cột để giữ thăng bằng.",
@@ -750,6 +774,7 @@ object SeedData {
             gifAsset = "cable-wrist-curl.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi trước máy cáp thấp gắn thanh thẳng, nắm thanh với lòng bàn tay ngửa lên, cẳng tay tựa lên đùi, cổ tay thả lỏng qua khỏi gối.",
@@ -771,6 +796,7 @@ object SeedData {
             gifAsset = "palms-up-barbell-wrist-curl.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Quỳ trước ghế phẳng, nắm thanh đòn tạ với lòng bàn tay ngửa lên, đặt cẳng tay tựa lên ghế, cổ tay thả lỏng qua mép ghế.",
@@ -792,6 +818,7 @@ object SeedData {
             gifAsset = "palms-down-wrist-curl.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Quỳ trước ghế phẳng, nắm thanh đòn tạ với lòng bàn tay úp xuống, đặt cẳng tay tựa lên ghế, cổ tay thả lỏng qua mép ghế.",
@@ -813,6 +840,7 @@ object SeedData {
             gifAsset = "seated-dumbbell-palms-up-wrist-curl.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi trên mép ghế, hai tay cầm tạ đơn với lòng bàn tay ngửa lên, cẳng tay tựa lên đùi, cổ tay thả lỏng qua đầu gối.",
@@ -834,6 +862,7 @@ object SeedData {
             gifAsset = "seated-dumbbell-palms-down-wrist-curl.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi trên mép ghế, hai tay cầm tạ đơn với lòng bàn tay úp xuống, cẳng tay tựa lên đùi, cổ tay thả lỏng qua đầu gối.",
@@ -855,6 +884,7 @@ object SeedData {
             gifAsset = "wrist-roller.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = listOf("Vai"),
+            involvementPercents = listOf(80, 20),
             equipment = "Dụng cụ cuốn cổ tay",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm thanh cuốn với lòng bàn tay úp xuống, nâng hai tay duỗi thẳng song song sàn.",
@@ -876,6 +906,7 @@ object SeedData {
             gifAsset = "plate-pinch.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Đĩa tạ",
             instructions = listOf(
                 "Chọn hai đĩa tạ mặt trơn, úp mặt trơn ra ngoài, ghép lại với nhau.",
@@ -899,6 +930,7 @@ object SeedData {
             gifAsset = "finger-curls.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm thanh đòn tạ với lòng bàn tay ngửa lên, rộng bằng vai.",
@@ -920,6 +952,7 @@ object SeedData {
             gifAsset = "rickshaw-carry.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = listOf("Bụng", "Mông", "Đùi sau", "Lưng dưới"),
+            involvementPercents = listOf(45, 14, 14, 14, 13),
             equipment = "Khung kéo tạ",
             instructions = listOf(
                 "Đứng giữa khung tạ đã có tải trọng phù hợp, nắm chặt hai tay cầm.",
@@ -944,6 +977,7 @@ object SeedData {
             gifAsset = "clean-and-jerk.gif",
             primaryMuscle = "Toàn thân · chính",
             secondaryMuscles = listOf("Vai", "Đùi trước", "Mông", "Lưng dưới"),
+            involvementPercents = emptyList(),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng trước thanh đòn tạ sát ống chân, nắm tạ rộng hơn vai, hạ hông thấp, lưng thẳng, ngực ưỡn.",
@@ -965,6 +999,7 @@ object SeedData {
             gifAsset = "clean.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Mông", "Lưng dưới", "Vai", "Cẳng tay"),
+            involvementPercents = emptyList(),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng trước thanh đòn tạ sát ống chân, nắm tạ rộng hơn vai, hạ hông thấp, lưng thẳng.",
@@ -986,6 +1021,7 @@ object SeedData {
             gifAsset = "snatch.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Tay trước", "Mông", "Đùi sau", "Lưng dưới", "Vai"),
+            involvementPercents = emptyList(),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng chân rộng bằng vai, nắm tạ rộng hơn vai, hạ hông xuống như ngồi ghế, lưng thẳng.",
@@ -1007,6 +1043,7 @@ object SeedData {
             gifAsset = "hang-clean.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Cẳng tay", "Mông", "Đùi sau", "Lưng dưới", "Vai"),
+            involvementPercents = emptyList(),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm tạ rộng bằng vai, hạ tạ xuống ngang giữa đùi, lưng thẳng và hơi ngả trước.",
@@ -1028,6 +1065,7 @@ object SeedData {
             gifAsset = "sled-push.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Ngực", "Mông", "Đùi sau", "Tay sau"),
+            involvementPercents = emptyList(),
             equipment = "Xe đẩy tạ",
             instructions = listOf(
                 "Đặt mức tạ phù hợp lên xe đẩy, vào tư thế thấp, hai tay nắm chặt tay cầm, tay duỗi thẳng.",
@@ -1049,6 +1087,7 @@ object SeedData {
             gifAsset = "tire-flip.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Ngực", "Cẳng tay", "Mông", "Đùi sau", "Lưng dưới", "Vai", "Tay sau"),
+            involvementPercents = emptyList(),
             equipment = "Lốp xe tải",
             instructions = listOf(
                 "Nắm chặt mép dưới lốp xe, đứng chân sau rộng, ngực áp sát lốp.",
@@ -1070,6 +1109,7 @@ object SeedData {
             gifAsset = "sandbag-load.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bụng", "Tay trước", "Bắp chân", "Cẳng tay", "Mông", "Đùi sau", "Lưng dưới", "Vai"),
+            involvementPercents = emptyList(),
             equipment = "Bao cát",
             instructions = listOf(
                 "Ôm bao cát sát người, luồn tay xuống dưới càng sâu càng tốt.",
@@ -1091,6 +1131,7 @@ object SeedData {
             gifAsset = "atlas-stones.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Bụng", "Tay trước", "Bắp chân", "Cẳng tay", "Mông", "Đùi sau", "Đùi trước"),
+            involvementPercents = emptyList(),
             equipment = "Đá tạ",
             instructions = listOf(
                 "Đứng trên đá tạ đặt giữa hai chân, gập hông ôm vòng tay quanh đá, luồn ngón tay xuống dưới đáy.",
@@ -1112,6 +1153,7 @@ object SeedData {
             gifAsset = "yoke-walk.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bụng", "Bắp chân", "Mông", "Đùi sau", "Lưng dưới"),
+            involvementPercents = emptyList(),
             equipment = "Giàn yoke",
             instructions = listOf(
                 "Đứng dưới giàn yoke, đặt khung lên sau vai, đầu nhìn thẳng, lưng ưỡn.",
@@ -1133,6 +1175,7 @@ object SeedData {
             gifAsset = "farmers-walk.gif",
             primaryMuscle = "Cẳng tay · chính",
             secondaryMuscles = listOf("Bụng", "Mông", "Đùi sau", "Lưng dưới", "Đùi trước"),
+            involvementPercents = emptyList(),
             equipment = "Tạ cầm tay nặng",
             instructions = listOf(
                 "Đứng giữa hai tạ nặng (tạ đơn, tạ ấm, hoặc thanh cầm chuyên dụng).",
@@ -1154,6 +1197,7 @@ object SeedData {
             gifAsset = "treadmill-run.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Máy chạy bộ",
             instructions = listOf(
                 "Bước lên máy, chọn chế độ chạy phù hợp hoặc chỉnh tốc độ/độ dốc thủ công.",
@@ -1175,6 +1219,7 @@ object SeedData {
             gifAsset = "treadmill-walk.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Máy chạy bộ",
             instructions = listOf(
                 "Bước lên máy, chọn chế độ đi bộ phù hợp hoặc chỉnh tốc độ/độ dốc thủ công.",
@@ -1196,6 +1241,7 @@ object SeedData {
             gifAsset = "stationary-bike.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Xe đạp tập",
             instructions = listOf(
                 "Ngồi lên xe, chỉnh yên xe vừa với chiều cao cơ thể.",
@@ -1217,6 +1263,7 @@ object SeedData {
             gifAsset = "elliptical-trainer.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Máy elliptical",
             instructions = listOf(
                 "Bước lên máy, đặt chân vào bàn đạp, chọn chế độ tập phù hợp.",
@@ -1238,6 +1285,7 @@ object SeedData {
             gifAsset = "rowing-stationary.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Tay trước", "Bắp chân", "Mông", "Đùi sau", "Lưng giữa"),
+            involvementPercents = emptyList(),
             equipment = "Máy chèo thuyền",
             instructions = listOf(
                 "Ngồi lên máy, đặt chân vào bàn đạp và cố định dây đai, gập người ra trước nắm tay cầm.",
@@ -1259,6 +1307,7 @@ object SeedData {
             gifAsset = "rope-jumping.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Dây nhảy",
             instructions = listOf(
                 "Cầm mỗi tay một đầu dây, đặt dây phía sau gót chân.",
@@ -1280,6 +1329,7 @@ object SeedData {
             gifAsset = "stairmaster.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Máy leo cầu thang",
             instructions = listOf(
                 "Bước lên máy, chọn chế độ tập phù hợp.",
@@ -1301,6 +1351,7 @@ object SeedData {
             gifAsset = "recumbent-bike.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Xe đạp nằm",
             instructions = listOf(
                 "Ngồi vào xe, chỉnh ghế phù hợp với chiều dài chân.",
@@ -1322,6 +1373,7 @@ object SeedData {
             gifAsset = "trail-running-walking.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Chọn giày phù hợp với địa hình, khởi động kỹ trước khi bắt đầu.",
@@ -1343,6 +1395,7 @@ object SeedData {
             gifAsset = "prowler-sprint.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Bắp chân", "Ngực", "Mông", "Đùi trước", "Vai"),
+            involvementPercents = emptyList(),
             equipment = "Xe đẩy tạ",
             instructions = listOf(
                 "Đặt mức tạ phù hợp lên xe đẩy, chọn tay cầm cao hoặc thấp tùy ý.",
@@ -1364,6 +1417,7 @@ object SeedData {
             gifAsset = "step-mill.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = emptyList(),
             equipment = "Máy leo cầu thang",
             instructions = listOf(
                 "Bước lên máy, chọn chế độ tập phù hợp, chú ý không vấp khi bậc thang di chuyển.",
@@ -1388,6 +1442,7 @@ object SeedData {
             gifAsset = "hamstring-stretch.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Dây/khăn hỗ trợ",
             instructions = listOf(
                 "Nằm ngửa, nâng một chân thẳng lên tạo góc 90 độ ở hông, chân còn lại duỗi thẳng trên sàn.",
@@ -1409,6 +1464,7 @@ object SeedData {
             gifAsset = "quad-stretch.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Dây/khăn hỗ trợ",
             instructions = listOf(
                 "Nằm nghiêng một bên, gập gối chân trên ra sau, vòng dây hoặc khăn qua mu bàn chân.",
@@ -1430,6 +1486,7 @@ object SeedData {
             gifAsset = "calf-stretch-wall.gif",
             primaryMuscle = "Bắp chân · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Đứng đối diện tường, một chân bước lên trước, chân sau duỗi thẳng.",
@@ -1451,6 +1508,7 @@ object SeedData {
             gifAsset = "standing-lateral-stretch.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Đứng hai chân rộng hơn hông, gối hơi chùng, tay phải đặt lên hông phải.",
@@ -1472,6 +1530,7 @@ object SeedData {
             gifAsset = "childs-pose.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Mông", "Lưng giữa"),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Quỳ trên sàn, hai tay chống phía trước, từ từ hạ mông ngồi lên gót chân.",
@@ -1493,6 +1552,7 @@ object SeedData {
             gifAsset = "cat-stretch.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Lưng giữa", "Cầu vai"),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Quỳ bốn điểm trên sàn (tay và gối), lưng thẳng tự nhiên.",
@@ -1514,6 +1574,7 @@ object SeedData {
             gifAsset = "shoulder-stretch.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Đứng hoặc ngồi thẳng lưng, đưa tay trái ngang qua trước ngực.",
@@ -1535,6 +1596,7 @@ object SeedData {
             gifAsset = "triceps-stretch.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Xô"),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Đứng hoặc ngồi thẳng lưng, đưa một tay ra sau đầu, khuỷu tay hướng lên trần.",
@@ -1556,6 +1618,7 @@ object SeedData {
             gifAsset = "chest-front-shoulder-stretch.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai"),
+            involvementPercents = emptyList(),
             equipment = "Gậy hoặc khăn dài",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm một cây gậy hoặc khăn dài, rộng hơn vai, lòng bàn tay úp xuống.",
@@ -1577,6 +1640,7 @@ object SeedData {
             gifAsset = "groin-back-stretch.gif",
             primaryMuscle = "Háng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Ngồi trên sàn, gập gối, hai bàn chân chạm nhau.",
@@ -1598,6 +1662,7 @@ object SeedData {
             gifAsset = "worlds-greatest-stretch.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi trước"),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Bước một chân lên trước thành tư thế lunge sâu, chân sau duỗi thẳng trên mũi chân, giữ 10-20 giây.",
@@ -1619,6 +1684,7 @@ object SeedData {
             gifAsset = "upper-back-stretch.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = emptyList(),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Đứng hoặc ngồi thẳng lưng, đan các ngón tay vào nhau, ngón cái hướng xuống.",
@@ -1640,6 +1706,7 @@ object SeedData {
             gifAsset = "seated-calf-stretch.gif",
             primaryMuscle = "Bắp chân · chính",
             secondaryMuscles = listOf("Đùi sau", "Lưng dưới"),
+            involvementPercents = emptyList(),
             equipment = "Dây/khăn hỗ trợ",
             instructions = listOf(
                 "Ngồi thẳng lưng trên thảm tập, gập một gối, bàn chân đặt trên sàn để giữ thăng bằng.",
@@ -1662,6 +1729,7 @@ object SeedData {
             gifAsset = "dumbbell-bicep-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đơn dọc thân, khuỷu tay sát người, lòng bàn tay hướng ra trước.",
@@ -1683,6 +1751,7 @@ object SeedData {
             gifAsset = "hammer-curls.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đơn dọc thân, lòng bàn tay hướng vào người (grip trung tính).",
@@ -1704,6 +1773,7 @@ object SeedData {
             gifAsset = "concentration-curls.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi trên ghế, chân mở rộng, tựa khuỷu tay vào mặt trong đùi cùng bên, cầm tạ đơn thả lỏng.",
@@ -1725,6 +1795,7 @@ object SeedData {
             gifAsset = "incline-dumbbell-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế nghiêng",
             instructions = listOf(
                 "Ngồi tựa lưng vào ghế nghiêng, hai tay cầm tạ đơn thả thẳng xuống, lòng bàn tay hướng ra trước.",
@@ -1746,6 +1817,7 @@ object SeedData {
             gifAsset = "preacher-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Ghế Scott + thanh EZ",
             instructions = listOf(
                 "Ngồi vào ghế Scott, tựa bắp tay trên và ngực vào đệm, cầm thanh EZ ngang vai.",
@@ -1767,6 +1839,7 @@ object SeedData {
             gifAsset = "ez-bar-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Thanh EZ",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm thanh EZ ở vị trí tay cầm ngoài, khuỷu tay sát người.",
@@ -1788,6 +1861,7 @@ object SeedData {
             gifAsset = "cable-hammer-curls.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp + dây thừng",
             instructions = listOf(
                 "Gắn dây thừng vào ròng rọc thấp, đứng cách máy khoảng 30cm, nắm dây với lòng bàn tay hướng vào nhau.",
@@ -1809,6 +1883,7 @@ object SeedData {
             gifAsset = "standing-biceps-cable-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng thẳng, cầm thanh cáp nối với ròng rọc thấp, rộng bằng vai, lòng bàn tay ngửa lên.",
@@ -1830,6 +1905,7 @@ object SeedData {
             gifAsset = "machine-bicep-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Chỉnh ghế phù hợp, tựa bắp tay trên vào đệm, nắm chặt tay cầm.",
@@ -1851,6 +1927,7 @@ object SeedData {
             gifAsset = "zottman-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đơn dọc thân, lòng bàn tay hướng vào nhau.",
@@ -1872,6 +1949,7 @@ object SeedData {
             gifAsset = "close-grip-ez-bar-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Thanh EZ",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm thanh EZ ở vị trí tay cầm trong hẹp, khuỷu tay sát người.",
@@ -1893,6 +1971,7 @@ object SeedData {
             gifAsset = "reverse-barbell-curl.gif",
             primaryMuscle = "Tay trước · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đòn rộng bằng vai, lòng bàn tay úp xuống, khuỷu tay sát người.",
@@ -1914,6 +1993,7 @@ object SeedData {
             gifAsset = "triceps-rope-pushdown.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp + dây thừng",
             instructions = listOf(
                 "Gắn dây thừng vào ròng rọc cao, đứng thẳng người hơi ngả nhẹ về trước, giữ bắp tay trên sát người.",
@@ -1935,6 +2015,7 @@ object SeedData {
             gifAsset = "close-grip-barbell-bench-press.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, nắm đòn tạ rộng bằng vai, nâng đòn khỏi giá, tay duỗi thẳng phía trên ngực.",
@@ -1956,6 +2037,7 @@ object SeedData {
             gifAsset = "ez-bar-skullcrusher.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Cẳng tay"),
+            involvementPercents = listOf(80, 20),
             equipment = "Thanh EZ + ghế",
             instructions = listOf(
                 "Nằm trên ghế, nắm thanh EZ tay hẹp, đưa tay thẳng vuông góc sàn phía trên trán.",
@@ -1977,6 +2059,7 @@ object SeedData {
             gifAsset = "triceps-overhead-rope-extension.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp + dây thừng",
             instructions = listOf(
                 "Gắn dây thừng vào ròng rọc thấp, quay lưng vào máy, đưa hai tay cầm dây ra sau đầu, khuỷu tay hướng lên.",
@@ -1998,6 +2081,7 @@ object SeedData {
             gifAsset = "bench-dips.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Ghế",
             instructions = listOf(
                 "Ngồi trên mép ghế, hai tay chống xuống mép ghế rộng bằng vai, chân duỗi thẳng ra trước.",
@@ -2019,6 +2103,7 @@ object SeedData {
             gifAsset = "dips-triceps-version.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Xà kép",
             instructions = listOf(
                 "Chống thẳng người trên xà kép, tay gần khóa thẳng, thân trên giữ thẳng đứng.",
@@ -2040,6 +2125,7 @@ object SeedData {
             gifAsset = "standing-dumbbell-triceps-extension.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay nâng một tạ đơn qua đầu, tay duỗi thẳng, lòng bàn tay hướng lên.",
@@ -2061,6 +2147,7 @@ object SeedData {
             gifAsset = "tricep-dumbbell-kickback.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Gập người về trước, lưng thẳng, hai tay cầm tạ đơn, bắp tay trên song song sàn, khuỷu tay gập 90 độ.",
@@ -2082,6 +2169,7 @@ object SeedData {
             gifAsset = "lying-dumbbell-tricep-extension.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(80, 10, 10),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, hai tay cầm tạ đơn duỗi thẳng vuông góc sàn phía trên ngực.",
@@ -2103,6 +2191,7 @@ object SeedData {
             gifAsset = "close-grip-dumbbell-press.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, hai tay ép sát cầm chung một tạ đơn dựng đứng phía trên ngực, tay duỗi thẳng.",
@@ -2124,6 +2213,7 @@ object SeedData {
             gifAsset = "machine-triceps-extension.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Chỉnh ghế phù hợp, tựa bắp tay trên vào đệm, nắm chặt tay cầm.",
@@ -2145,6 +2235,7 @@ object SeedData {
             gifAsset = "dip-machine.gif",
             primaryMuscle = "Tay sau · chính",
             secondaryMuscles = listOf("Ngực", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, chọn mức tạ, nắm chặt tay cầm, khuỷu tay ép sát người tạo góc 90 độ.",
@@ -2167,6 +2258,7 @@ object SeedData {
             gifAsset = "barbell-shoulder-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Ngực", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Ngồi trên ghế có tựa lưng, nắm tạ đòn rộng hơn vai, lòng bàn tay hướng ra trước.",
@@ -2188,6 +2280,7 @@ object SeedData {
             gifAsset = "standing-military-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Tay sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm tạ đòn rộng hơn vai, đặt tạ ngang xương đòn, chân rộng bằng vai.",
@@ -2209,6 +2302,7 @@ object SeedData {
             gifAsset = "arnold-dumbbell-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Tay sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi tựa lưng, hai tay cầm tạ đơn ngang ngực trên, lòng bàn tay hướng vào người, khuỷu tay gập.",
@@ -2230,6 +2324,7 @@ object SeedData {
             gifAsset = "seated-barbell-military-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Tay sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Tạ đòn + ghế",
             // Behind-the-neck lowering demands real shoulder mobility and carries a genuine
             // impingement risk for lifters without it — flagged in Gate 30's codex review. Kept as
@@ -2256,6 +2351,7 @@ object SeedData {
             gifAsset = "front-dumbbell-raise.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đơn trước đùi, lòng bàn tay hướng vào đùi.",
@@ -2277,6 +2373,7 @@ object SeedData {
             gifAsset = "reverse-flyes.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế nghiêng",
             instructions = listOf(
                 "Nằm sấp trên ghế nghiêng, ngực tựa vào đệm, hai tay cầm tạ đơn duỗi thẳng xuống dưới.",
@@ -2298,6 +2395,7 @@ object SeedData {
             gifAsset = "cable-rear-delt-fly.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Chỉnh ròng rọc ngang đầu, bắt chéo tay nắm dây cáp đối diện (tay phải nắm dây trái, tay trái nắm dây phải).",
@@ -2319,6 +2417,7 @@ object SeedData {
             gifAsset = "face-pull.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Lưng giữa"),
+            involvementPercents = listOf(65, 35),
             equipment = "Máy cáp + dây thừng",
             instructions = listOf(
                 "Đứng đối diện ròng rọc cao gắn dây thừng, nắm hai đầu dây, tay duỗi thẳng phía trước.",
@@ -2340,6 +2439,7 @@ object SeedData {
             gifAsset = "upright-barbell-row.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Cầu vai"),
+            involvementPercents = listOf(65, 35),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm tạ đòn hẹp hơn vai một chút, tạ tựa trước đùi, tay duỗi thẳng.",
@@ -2361,6 +2461,7 @@ object SeedData {
             gifAsset = "cable-shoulder-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Tay sau"),
+            involvementPercents = listOf(65, 35),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng giữa hai cột cáp thấp, nắm tay cầm ngang vai, lòng bàn tay hướng ra trước.",
@@ -2382,6 +2483,7 @@ object SeedData {
             gifAsset = "front-cable-raise.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Đứng quay lưng vào máy cáp thấp, nắm tay cầm một tay trước đùi, lòng bàn tay hướng vào đùi.",
@@ -2403,6 +2505,7 @@ object SeedData {
             gifAsset = "seated-side-lateral-raise.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Ngồi trên ghế, hai tay cầm tạ đơn thả thẳng hai bên, lòng bàn tay hướng vào người.",
@@ -2427,6 +2530,7 @@ object SeedData {
             gifAsset = "push-press.gif",
             primaryMuscle = "Vai · chính",
             secondaryMuscles = listOf("Đùi trước", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, đặt tạ đòn ngang vai trước, chân rộng bằng vai, khuỷu tay hướng ra trước.",
@@ -2449,6 +2553,7 @@ object SeedData {
             gifAsset = "situp.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, gối gập, cố định bàn chân dưới vật nặng hoặc nhờ người giữ, hai tay đặt nhẹ hai bên đầu, không đan tay kéo cổ.",
@@ -2470,6 +2575,7 @@ object SeedData {
             gifAsset = "reverse-crunch.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, hai tay xuôi hai bên lòng bàn tay úp sàn, nâng chân lên vuông góc sàn, đùi thẳng đứng.",
@@ -2491,6 +2597,7 @@ object SeedData {
             gifAsset = "cable-crunch.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp + dây thừng",
             instructions = listOf(
                 "Quỳ dưới ròng rọc cao gắn dây thừng, nắm dây kéo xuống hai bên mặt.",
@@ -2512,6 +2619,7 @@ object SeedData {
             gifAsset = "plank.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Chống người trên sàn bằng mũi chân và cẳng tay, khuỷu tay ngay dưới vai.",
@@ -2535,6 +2643,7 @@ object SeedData {
             gifAsset = "side-bridge.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = listOf("Vai"),
+            involvementPercents = listOf(80, 20),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm nghiêng, chống người lên bằng cẳng tay và mép ngoài bàn chân, khuỷu tay ngay dưới vai.",
@@ -2556,6 +2665,7 @@ object SeedData {
             gifAsset = "russian-twist.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = listOf("Lưng dưới"),
+            involvementPercents = listOf(65, 35),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Ngồi trên sàn, gối gập, nâng thân trên tạo góc V với đùi, hai tay đan vào nhau duỗi thẳng trước ngực.",
@@ -2577,6 +2687,7 @@ object SeedData {
             gifAsset = "air-bike.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, lưng dưới ép sát sàn, hai tay đặt nhẹ sau đầu, nâng vai lên khỏi sàn.",
@@ -2598,6 +2709,7 @@ object SeedData {
             gifAsset = "hanging-leg-raise.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Xà đơn",
             instructions = listOf(
                 "Treo người trên xà đơn, hai tay duỗi thẳng, chân duỗi thẳng xuống dưới.",
@@ -2619,6 +2731,7 @@ object SeedData {
             gifAsset = "ab-roller.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = listOf("Vai"),
+            involvementPercents = listOf(65, 35),
             equipment = "Bánh xe tập bụng",
             instructions = listOf(
                 "Quỳ trên sàn, hai tay cầm bánh xe tập bụng, đặt trước gối.",
@@ -2640,6 +2753,7 @@ object SeedData {
             gifAsset = "ab-crunch-machine.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt chân dưới đệm giữ, nắm tay cầm phía trên, khuỷu tay tựa đệm góc 90 độ.",
@@ -2661,6 +2775,7 @@ object SeedData {
             gifAsset = "decline-crunch.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Ghế dốc",
             instructions = listOf(
                 "Cố định chân ở cuối ghế dốc, nằm xuống, hai tay đặt nhẹ hai bên đầu, không đan sau gáy.",
@@ -2682,6 +2797,7 @@ object SeedData {
             gifAsset = "dead-bug.gif",
             primaryMuscle = "Bụng · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Nằm ngửa, hai tay duỗi thẳng lên trần, gối và hông gập 90 độ.",
@@ -2704,6 +2820,7 @@ object SeedData {
             gifAsset = "incline-barbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + ghế nghiêng",
             instructions = listOf(
                 "Nằm trên ghế nghiêng, nắm đòn tạ rộng vừa phải tạo góc 90 độ ở khuỷu tay, nâng đòn khỏi giá.",
@@ -2725,6 +2842,7 @@ object SeedData {
             gifAsset = "decline-barbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + ghế dốc",
             instructions = listOf(
                 "Cố định chân ở cuối ghế dốc, nằm xuống, nắm đòn tạ rộng vừa phải, nâng đòn khỏi giá.",
@@ -2746,6 +2864,7 @@ object SeedData {
             gifAsset = "dumbbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, hai tay cầm tạ đơn ngang ngực, lòng bàn tay hướng ra trước, khuỷu tay tạo góc 90 độ.",
@@ -2767,6 +2886,7 @@ object SeedData {
             gifAsset = "incline-dumbbell-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế nghiêng",
             instructions = listOf(
                 "Nằm trên ghế nghiêng, hai tay cầm tạ đơn ngang vai, lòng bàn tay hướng ra trước.",
@@ -2788,6 +2908,7 @@ object SeedData {
             gifAsset = "decline-dumbbell-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế dốc",
             instructions = listOf(
                 "Cố định chân ở cuối ghế dốc, nằm xuống, hai tay cầm tạ đơn ngang vai, lòng bàn tay hướng ra trước.",
@@ -2809,6 +2930,7 @@ object SeedData {
             gifAsset = "dumbbell-flyes.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Nằm trên ghế, hai tay cầm tạ đơn nâng thẳng trên ngực, lòng bàn tay hướng vào nhau, khuỷu tay hơi gập.",
@@ -2830,6 +2952,7 @@ object SeedData {
             gifAsset = "incline-dumbbell-flyes.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai"),
+            involvementPercents = listOf(65, 35),
             equipment = "Tạ đơn + ghế nghiêng",
             instructions = listOf(
                 "Nằm trên ghế nghiêng dưới 30 độ, hai tay cầm tạ đơn nâng thẳng trên đầu, khuỷu tay hơi gập.",
@@ -2851,6 +2974,7 @@ object SeedData {
             gifAsset = "machine-bench-press.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, chọn mức tạ, nắm tay cầm với lòng bàn tay úp xuống, khuỷu tay ngang vai.",
@@ -2872,6 +2996,7 @@ object SeedData {
             gifAsset = "butterfly.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, lưng tựa phẳng vào đệm, nắm tay cầm với bắp tay trên song song sàn.",
@@ -2893,6 +3018,7 @@ object SeedData {
             gifAsset = "dips-chest-version.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Xà kép",
             instructions = listOf(
                 "Chống thẳng người trên xà kép, tay khóa thẳng, thân người nghiêng về trước khoảng 30 độ.",
@@ -2914,6 +3040,7 @@ object SeedData {
             gifAsset = "pushup-wide.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Bụng", "Vai", "Tay sau"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Không thiết bị",
             instructions = listOf(
                 "Chống hai tay rộng hơn vai, thân người thẳng từ đầu đến gót chân, khuỷu tay duỗi thẳng.",
@@ -2935,6 +3062,7 @@ object SeedData {
             gifAsset = "incline-pushup.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = listOf("Vai", "Tay sau"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Ghế/bục",
             instructions = listOf(
                 "Đứng đối diện ghế hoặc bục chắc chắn, đặt hai tay lên mép rộng hơn vai một chút.",
@@ -2956,6 +3084,7 @@ object SeedData {
             gifAsset = "flat-bench-cable-flyes.gif",
             primaryMuscle = "Ngực · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy cáp + ghế",
             instructions = listOf(
                 "Đặt ghế phẳng giữa hai ròng rọc thấp, nằm lên ghế sao cho ngực ngang hàng với ròng rọc.",
@@ -2978,6 +3107,7 @@ object SeedData {
             gifAsset = "pullups.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Lưng giữa"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Xà đơn",
             instructions = listOf(
                 "Nắm xà rộng hơn vai, lòng bàn tay hướng ra trước, treo người với tay duỗi thẳng, ngực ưỡn.",
@@ -2999,6 +3129,7 @@ object SeedData {
             gifAsset = "chinup.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Cẳng tay", "Lưng giữa"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Xà đơn",
             instructions = listOf(
                 "Nắm xà hẹp hơn vai, lòng bàn tay hướng vào người, treo người với tay duỗi thẳng.",
@@ -3020,6 +3151,7 @@ object SeedData {
             gifAsset = "one-arm-dumbbell-row.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đơn + ghế",
             instructions = listOf(
                 "Đặt một gối và một tay lên ghế phẳng, lưng thẳng song song sàn, tay còn lại cầm tạ đơn thả thẳng.",
@@ -3041,6 +3173,7 @@ object SeedData {
             gifAsset = "seated-cable-rows.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Vai"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi vào máy, đặt chân lên bệ đỡ, gối hơi gập, nắm tay cầm chữ V, tay duỗi thẳng.",
@@ -3062,6 +3195,7 @@ object SeedData {
             gifAsset = "t-bar-row.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Tay trước", "Xô"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Tạ đòn + tay cầm chữ T",
             instructions = listOf(
                 "Đứng trên thanh đòn tạ đã cố định một đầu, nắm tay cầm chữ T, đứng chân rộng, hông đẩy ra sau, ngực ưỡn.",
@@ -3083,6 +3217,7 @@ object SeedData {
             gifAsset = "close-grip-front-lat-pulldown.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Lưng giữa", "Vai"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi vào máy, chỉnh đệm gối vừa vặn, nắm thanh kéo hẹp hơn vai.",
@@ -3104,6 +3239,7 @@ object SeedData {
             gifAsset = "one-arm-lat-pulldown.gif",
             primaryMuscle = "Xô · chính",
             secondaryMuscles = listOf("Tay trước", "Lưng giữa"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy cáp",
             instructions = listOf(
                 "Ngồi vào máy, chỉnh đệm gối vừa vặn, nắm tay cầm một tay với lòng bàn tay úp.",
@@ -3125,6 +3261,7 @@ object SeedData {
             gifAsset = "barbell-shrug.gif",
             primaryMuscle = "Cầu vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, chân rộng bằng vai, hai tay cầm tạ đòn trước đùi, lòng bàn tay hướng vào đùi.",
@@ -3146,6 +3283,7 @@ object SeedData {
             gifAsset = "dumbbell-shrug.gif",
             primaryMuscle = "Cầu vai · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Tạ đơn",
             instructions = listOf(
                 "Đứng thẳng, hai tay cầm tạ đơn dọc thân, lòng bàn tay hướng vào người.",
@@ -3167,6 +3305,7 @@ object SeedData {
             gifAsset = "hyperextensions.gif",
             primaryMuscle = "Lưng dưới · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau"),
+            involvementPercents = listOf(80, 10, 10),
             equipment = "Ghế ưỡn lưng",
             instructions = listOf(
                 "Nằm sấp trên ghế ưỡn lưng, cố định cổ chân dưới đệm, hông tựa trên đệm trên, tay khoanh trước ngực.",
@@ -3188,6 +3327,7 @@ object SeedData {
             gifAsset = "rack-pulls.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Cẳng tay", "Mông", "Đùi sau", "Cầu vai"),
+            involvementPercents = listOf(45, 14, 14, 14, 13),
             equipment = "Tạ đòn + giá đỡ",
             instructions = listOf(
                 "Đặt thanh đòn tạ trên chốt giá đỡ ngang gối, đứng vào tư thế deadlift, chân dưới hông, lưng ưỡn.",
@@ -3209,6 +3349,7 @@ object SeedData {
             gifAsset = "inverted-row.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Xô"),
+            involvementPercents = listOf(65, 35),
             equipment = "Thanh đòn cố định",
             instructions = listOf(
                 "Đặt thanh đòn ngang hông trên giá đỡ, nắm thanh rộng hơn vai, treo người dưới thanh, thân thẳng, gót chân chạm sàn.",
@@ -3230,6 +3371,7 @@ object SeedData {
             gifAsset = "bent-over-one-arm-row.gif",
             primaryMuscle = "Lưng giữa · chính",
             secondaryMuscles = listOf("Tay trước", "Xô", "Lưng dưới", "Cầu vai"),
+            involvementPercents = listOf(45, 14, 14, 14, 13),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Cố định một đầu thanh đòn tạ vào góc tường, gập người ra trước gần song song sàn, gối hơi gập.",
@@ -3252,6 +3394,7 @@ object SeedData {
             gifAsset = "front-squat.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bụng", "Mông", "Đùi sau"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn + giá đỡ",
             instructions = listOf(
                 "Đặt thanh đòn tựa trên vai trước, tay giữ tạ bằng ngón tay theo kiểu clean grip, khuỷu tay nâng cao.",
@@ -3273,6 +3416,7 @@ object SeedData {
             gifAsset = "goblet-squat.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau", "Vai"),
+            involvementPercents = listOf(45, 14, 14, 14, 13),
             equipment = "Tạ ấm",
             instructions = listOf(
                 "Đứng thẳng, ôm tạ ấm sát ngực bằng hai tay, chân rộng bằng vai.",
@@ -3294,6 +3438,7 @@ object SeedData {
             gifAsset = "barbell-lunge.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Đùi sau"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn + giá đỡ",
             instructions = listOf(
                 "Đặt thanh đòn sau vai, nhấc tạ khỏi giá, đứng thẳng với chân rộng bằng hông.",
@@ -3315,6 +3460,7 @@ object SeedData {
             gifAsset = "leg-extensions.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt cẳng chân dưới đệm, gối tạo góc 90 độ, hai tay nắm tay cầm hai bên.",
@@ -3336,6 +3482,7 @@ object SeedData {
             gifAsset = "lying-leg-curls.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Nằm sấp trên máy, đặt đệm dưới bắp chân, hai tay nắm tay cầm, chân duỗi thẳng.",
@@ -3357,6 +3504,7 @@ object SeedData {
             gifAsset = "seated-leg-curl.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt bắp chân trên đệm, cố định đùi bằng đệm trên, nắm tay cầm hai bên.",
@@ -3378,6 +3526,7 @@ object SeedData {
             gifAsset = "romanian-deadlift.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông", "Lưng dưới"),
+            involvementPercents = listOf(50, 17, 17, 16),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng thẳng, nắm tạ đòn rộng hơn vai một chút, lòng bàn tay úp xuống, gối hơi gập.",
@@ -3399,6 +3548,7 @@ object SeedData {
             gifAsset = "sumo-deadlift.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Háng", "Mông", "Lưng dưới", "Đùi sau"),
+            involvementPercents = listOf(45, 14, 14, 14, 13),
             equipment = "Tạ đòn",
             instructions = listOf(
                 "Đứng chân rất rộng, mũi chân hướng ra ngoài, tạ đòn ngang giữa bàn chân, gập hông nắm tạ.",
@@ -3420,6 +3570,7 @@ object SeedData {
             gifAsset = "glute-ham-raise.gif",
             primaryMuscle = "Đùi sau · chính",
             secondaryMuscles = listOf("Bắp chân", "Mông"),
+            involvementPercents = listOf(55, 23, 22),
             equipment = "Máy GHR",
             instructions = listOf(
                 "Đặt chân vào giữa hai con lăn của máy, nằm sấp, gối ngay sau đệm.",
@@ -3441,6 +3592,7 @@ object SeedData {
             gifAsset = "standing-calf-raises.gif",
             primaryMuscle = "Bắp chân · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Đặt vai dưới đệm máy, mũi bàn chân đặt trên bệ, gót chân treo ngoài mép, đứng thẳng.",
@@ -3462,6 +3614,7 @@ object SeedData {
             gifAsset = "seated-calf-raise.gif",
             primaryMuscle = "Bắp chân · chính",
             secondaryMuscles = emptyList(),
+            involvementPercents = listOf(100),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt mũi bàn chân lên bệ, gót chân treo ngoài mép, đùi dưới đệm tì phía trên.",
@@ -3483,6 +3636,7 @@ object SeedData {
             gifAsset = "thigh-abductor.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông"),
+            involvementPercents = listOf(80, 20),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt chân vào đệm hai bên, nắm tay cầm, thân trên giữ cố định.",
@@ -3504,6 +3658,7 @@ object SeedData {
             gifAsset = "thigh-adductor.gif",
             primaryMuscle = "Đùi trước · chính",
             secondaryMuscles = listOf("Mông", "Đùi sau"),
+            involvementPercents = listOf(80, 10, 10),
             equipment = "Máy tập",
             instructions = listOf(
                 "Ngồi vào máy, đặt chân vào đệm hai bên, nắm tay cầm, thân trên giữ cố định.",

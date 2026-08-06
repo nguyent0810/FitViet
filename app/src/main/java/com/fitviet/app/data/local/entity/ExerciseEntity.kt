@@ -13,6 +13,13 @@ data class ExerciseEntity(
     val gifAsset: String,
     val primaryMuscle: String,
     val secondaryMuscles: List<String>,
+    /** Feature #9 (Gate 44) — editorial estimates of each displayed muscle's share of this
+     * exercise's effort, primary muscle first then [secondaryMuscles] in order. Empty is the
+     * explicit "hide the involvement card" signal (mismatch #8) for exercises where a clean
+     * per-muscle split would be misleading (pure cardio, stretching, loaded carries/strongman
+     * movements) — not an omission. See [com.fitviet.app.domain.MuscleInvolvement] for the
+     * validation contract every non-empty list here must satisfy. */
+    val involvementPercents: List<Int> = emptyList(),
     val equipment: String,
     val instructions: List<String>,
     val suggestedSetsMin: Int,

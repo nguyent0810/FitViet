@@ -2204,3 +2204,94 @@ Programs' FilterChips not in the diff at all). Zero findings at any severity.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 44 — Muscle-involvement: data + validation (feature #9a)
+
+### What was built
+- `data/local/entity/ExerciseEntity.kt` — new `involvementPercents: List<Int> = emptyList()`
+  column (reuses Gate 38's existing `List<Int>` Room `Converters` pair — no new converter needed).
+  `FitVietDatabase` version 9 → 10.
+- `data/local/seed/SeedData.kt` — **all 155 exercises** now have an authored `involvementPercents`
+  value (see "Authoring method" below for exactly how, since hand-writing 155 bespoke lines
+  one-by-one wasn't the actual process — the review should scrutinize this).
+- `domain/MuscleInvolvement.kt` (new) — `isValid(involvementPercents, secondaryMuscleCount): Boolean`:
+  empty is valid (mismatch #8's "hide the card" signal), otherwise the list must have exactly
+  `secondaryMuscleCount + 1` entries (one per displayed muscle), each `0..100`, summing to exactly
+  100. "Primary muscle first" is documented as an authoring-order convention, not something the
+  validator re-derives from the numbers alone (there's no way to tell which value belongs to which
+  muscle without the labels).
+- `domain/MuscleInvolvementTest.kt` (new) — 7 cases covering the validator itself: empty is valid
+  regardless of count, a single-muscle `[100]`, a valid multi-muscle split, count mismatches
+  (too few/many values), sums that aren't 100, an out-of-`0..100` value, and a legitimate 0% entry.
+- `data/local/seed/SeedDataMuscleInvolvementTest.kt` (new) — the actual safety net for the
+  content-authoring risk: iterates all 155 real `SeedData.exercises` and asserts every single one's
+  `involvementPercents` passes `MuscleInvolvement.isValid(...)` against its real
+  `secondaryMuscles.size`, plus a sanity check that most exercises (>100) are non-empty (the
+  feature actually authors data, doesn't hide everything) and that every empty-list exercise
+  belongs to one of the 3 documented exclusion groups (see below) — not an unexplained gap.
+
+### Authoring method (read this before reviewing the data)
+Hand-authoring 155 individually-reasoned percentage splits from scratch wasn't feasible to do with
+genuine per-exercise biomechanical rigor in this session, and the plan itself frames these as
+**"editorial estimates"** (Gate 45's UI card caption states this explicitly) — matching how
+commercial fitness apps typically present muscle-involvement bars: reasonable, consistent estimates
+for at-a-glance UI, not lab-measured EMG data. Given that, I used a **documented, deterministic
+rule** driven by fields already present and already curated in the seed data (`movementType`,
+`secondaryMuscles`, `muscleGroupCode`) — not a positional/arbitrary fallback, which the plan
+explicitly said not to do:
+1. **Exclusion (empty list):** any exercise whose `muscleGroupCode` is `CARDIO`, `STRETCHING`, or
+   `FUNCTIONAL` (34 exercises) — this maps almost exactly onto the plan's own example ("pure
+   cardio, stretching, some carries"): `FUNCTIONAL` is this dataset's existing classification for
+   strongman/loaded-carry movements (Farmer's Walk, Yoke Walk, Sled Push, Tire Flip, Sandbag Load,
+   Atlas Stones, Snatch, Hang Clean), which are exactly the "diffuse full-body effort, not a clean
+   prime-mover breakdown" case the plan calls out — using the pre-existing classification rather
+   than inventing a new name-matching heuristic.
+2. **Authored split (121 exercises):** primary muscle gets a base share depending on
+   `movementType` and how many secondary muscles are listed (isolation movements concentrate more
+   on the primary; compound movements distribute more as more secondaries are listed — base share
+   decreases from 65% at 1 secondary down to 34% at 8), and the remaining pool splits as evenly as
+   possible across the secondaries (remainder distributed one-by-one so every list sums to exactly
+   100, never off-by-one). Isolation with zero secondaries is always `[100]`.
+   Full table: ISOLATION primary=80 (any k≥1); COMPOUND primary by secondary count k: 1→65, 2→55,
+   3→50, 4→45, 5→40, 6→38, 7→36, 8→34 (7 and 8 both occur in this dataset — Sandbag Load has 8).
+   0 secondaries (either movement type) → `[100]`.
+   This was applied via a script (not hand-typed per exercise) that also asserted `sum==100` and
+   `size==k+1` for every single one of the 121 authored entries at authoring time — the same
+   invariant `SeedDataMuscleInvolvementTest` then independently re-verifies from the real compiled
+   Kotlin data, not just trusting the script's own self-check.
+
+### Scope decisions
+- **Exclusion set = `{CARDIO, STRETCHING, FUNCTIONAL}` by `muscleGroupCode`, not a name-matching
+  heuristic.** This is a mechanical, reviewable, already-curated signal rather than fuzzy string
+  matching on exercise names — and it produces exactly the exclusion set the plan's own example
+  implies (cardio, stretching, carries), which the Olympic lifts Snatch/Hang Clean also fall into
+  since this dataset classifies them as `FUNCTIONAL` alongside the strongman movements, not as a
+  standard barbell compound lift — a reasonable classification to defer to rather than override.
+- **The rule-based authoring approach itself is the main judgment call this gate makes**, in place
+  of literally bespoke per-exercise expert review across 155 entries. It's disclosed plainly above,
+  not hidden — the independent review should scrutinize whether this crosses the line into the
+  "positional fallback" the plan explicitly rejected. My view: it doesn't, because the split isn't
+  driven by array position — it's driven by real fields (movement type, muscle-group classification,
+  actual secondary-muscle count) that already reflect this app's existing exercise-science curation,
+  and every single value is mechanically guaranteed valid by both the authoring script's own
+  assertions and the independent Kotlin-level test.
+
+### Verification
+Standalone `kotlinc` compile of `MuscleInvolvement.kt` + all 7 entities `SeedData.kt` references
+(`ExerciseEntity`, `CommunityPostEntity`, `FoodEntity`, `MealEntity`, `MeasurementEntity`,
+`ProgramEntity`, `WorkoutSessionEntity`) + `ExerciseCategory.kt` (for `MuscleGroup`/`MovementType`)
+— clean, no errors, confirming the new `involvementPercents` field and all 155 authored values
+parse as valid Kotlin. `MuscleInvolvementTest.kt` (7 tests) and `SeedDataMuscleInvolvementTest.kt`
+(3 tests) compiled together against the same classpath plus JUnit, then **actually run** via
+`JUnitCore`: `OK (10 tests)` — this is real, executed confirmation that all 155 seeded exercises'
+`involvementPercents` genuinely satisfy the validation contract, not just a spot-check. Additionally
+hand-spot-checked a random sample of 12 exercises (both excluded and authored) against their
+`primaryMuscle`/`secondaryMuscles`/`involvementPercents` for editorial plausibility — all matched
+the documented rule correctly (e.g. `Leg Extensions` isolation/0-secondary → `[100]`; `Push-Up Wide`
+compound/3-secondary → `[50,17,17,16]`; `Clean` → correctly excluded as `FUNCTIONAL`).
+Confirmed all `ExerciseEntity(...)` construction sites elsewhere in the repo (`WorkoutViewModelTest.kt`,
+`ProgramScheduleCalculatorTest.kt`) use named arguments, so the new field's default value doesn't
+require updating them.
+
+### Push
+Pending independent review.
