@@ -358,4 +358,8 @@
     <string name="exercise_difficulty_beginner">Beginner</string>
     <string name="exercise_difficulty_intermediate">Intermediate</string>
     <string name="exercise_difficulty_advanced">Advanced</string>
+
+    <!-- ui/common — LockedListItem (Gate 36, ships unused by design) -->
+    <string name="locked_item_requires_upgrade">Requires upgrade</string>
+    <string name="locked_item_coming_soon">Coming soon</string>
 </resources>

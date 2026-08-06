@@ -361,4 +361,8 @@
     <string name="exercise_difficulty_beginner">Mới bắt đầu</string>
     <string name="exercise_difficulty_intermediate">Trung cấp</string>
     <string name="exercise_difficulty_advanced">Nâng cao</string>
+
+    <!-- ui/common — LockedListItem (Gate 36, ships unused by design) -->
+    <string name="locked_item_requires_upgrade">Cần nâng cấp</string>
+    <string name="locked_item_coming_soon">Sắp có</string>
 </resources>

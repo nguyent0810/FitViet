@@ -1498,3 +1498,36 @@ the deleted `PLACEHOLDER_USER_NAME`/`_INITIAL` constants anywhere in the tree (g
 `androidx.compose.foundation.layout.weight` import, both `strings.xml`/`values-en/strings.xml`
 well-formed XML, and every `SettingsEntity(...)` construction site in the codebase already uses the
 no-arg/named-arg form (safe against the two new trailing fields).
+
+## Gate 36 — LockedListItem primitive (feature #2, ships unused by design)
+
+### What was built
+- `ui/common/LockedListItem.kt` (new — first file in a new `ui/common/` package, established for
+  Gates 36/37/43's shared cross-screen primitives per the plan). `LockReason` enum
+  (`REQUIRES_UPGRADE`, `COMING_SOON`) + `LockedListItem(title, subtitle, reason)` — a disabled-look
+  list row (muted text, a 🔒 glyph prefix matching this app's existing convention of using plain
+  Unicode glyphs as icons rather than a drawable/icon-font dependency, e.g. Community's ♡/♥ like
+  toggle) with a pill tag naming the lock reason.
+- First use of `@Preview` anywhere in this codebase — `androidx.compose.ui.tooling.preview` and
+  `debugImplementation(libs.androidx.ui.tooling)` were already declared in `app/build.gradle.kts`
+  (unused until now), so no new dependency was needed. `LockedListItemPreview` renders both
+  `LockReason` variants stacked — the only way to "verify" this component at all in this gate, since
+  it ships with no real caller.
+- New strings (vi + en): `locked_item_requires_upgrade`, `locked_item_coming_soon`.
+
+### Scope decision (per the plan, restated here for this gate's own record)
+**Not wired to Donate, not wired to anything.** FitViet has no paid tier. Pointing
+`REQUIRES_UPGRADE` at the existing Donate flow would conflate voluntary support with a product
+entitlement that doesn't exist — this ships as a verified, reusable primitive for a real locked
+feature to adopt later, not integrated anywhere yet.
+
+### Verification
+No domain/data-layer changes this gate (pure UI primitive + 2 strings), so no standalone `kotlinc`
+compile applies here the way it does for repository/entity changes. Verified by manual read-through
+against every established Compose convention this codebase already enforces: no stray
+`androidx.compose.foundation.layout.weight` import (the `Column.weight(1f)` call is a direct `Row`
+child, correctly relying on the implicit `RowScope` receiver — grepped to confirm), `PillShape`/
+`CardBorder`/`SurfaceCard`/`TextMuted`/`TextFaint` all reused from the existing theme rather than
+inventing new tokens, `0xFF0D100E` in the `@Preview`'s `backgroundColor` matches `BackgroundPage`'s
+real value exactly (checked against `Color.kt`), both `strings.xml`/`values-en/strings.xml` new keys
+present and well-formed XML.
