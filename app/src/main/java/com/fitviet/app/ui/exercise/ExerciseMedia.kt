@@ -113,6 +113,12 @@ fun ExerciseMediaBox(exercise: ExerciseEntity, modifier: Modifier = Modifier, he
                     painter = painterResource(photos[index]),
                     contentDescription = exercise.nameVi,
                     contentScale = ContentScale.Crop,
+                    // The source photos (~850x567, a wide landscape framing) are almost always
+                    // wider-cropped than the box they're shown in, so Crop trims height. Default
+                    // Center alignment splits that trim evenly top+bottom, which cuts into the
+                    // subject's head/the top of the equipment — anchoring to the top instead keeps
+                    // that intact and trims only from the bottom (floor space), which loses less.
+                    alignment = Alignment.TopCenter,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

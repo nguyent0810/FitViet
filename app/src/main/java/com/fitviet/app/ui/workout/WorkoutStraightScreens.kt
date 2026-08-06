@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
@@ -48,7 +51,7 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
                 .padding(horizontal = Dimens.ScreenPaddingHorizontal),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ExerciseMediaBox(exercise = block.exercise, height = 140.dp)
+            ExerciseMediaBox(exercise = block.exercise, height = 180.dp)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 block.plannedSets.forEachIndexed { index, planned ->
                     val status = when {
@@ -107,48 +110,79 @@ private fun SetRow(
         SetRowStatus.PENDING -> R.string.workout_tag_pending
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(bg)
             .border(1.dp, border, MaterialTheme.shapes.medium)
             .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(
-            modifier = Modifier.size(26.dp).clip(CircleShape).background(badgeBg),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = if (status == SetRowStatus.DONE) "✓" else setNumber.toString(),
-                style = MaterialTheme.typography.labelLarge,
-                color = badgeColor,
-            )
+            Box(
+                modifier = Modifier.size(26.dp).clip(CircleShape).background(badgeBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = if (status == SetRowStatus.DONE) "✓" else setNumber.toString(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = badgeColor,
+                )
+            }
+            if (!editable) {
+                Text(
+                    text = stringResource(R.string.workout_set_kg_reps, formatWeight(weightKg), reps),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = textColor,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = TextFaint)
         }
         if (editable) {
-            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Stepper(label = "kg", value = formatWeight(weightKg), onDecrement = { onAdjustWeight(-2.5) }, onIncrement = { onAdjustWeight(2.5) })
-                Stepper(label = "reps", value = reps.toString(), onDecrement = { onAdjustReps(-1) }, onIncrement = { onAdjustReps(1) })
+            // A full-width row of its own — sharing this line with the badge/tag above (as it used
+            // to) left too little room for two steppers with 44dp touch targets, squeezing "8 reps"
+            // down to a couple of characters' width and wrapping it vertically.
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Stepper(
+                    label = "kg",
+                    value = formatWeight(weightKg),
+                    onDecrement = { onAdjustWeight(-2.5) },
+                    onIncrement = { onAdjustWeight(2.5) },
+                    modifier = Modifier.weight(1f),
+                )
+                Stepper(
+                    label = "reps",
+                    value = reps.toString(),
+                    onDecrement = { onAdjustReps(-1) },
+                    onIncrement = { onAdjustReps(1) },
+                    modifier = Modifier.weight(1f),
+                )
             }
-        } else {
-            Text(
-                text = stringResource(R.string.workout_set_kg_reps, formatWeight(weightKg), reps),
-                style = MaterialTheme.typography.titleSmall,
-                color = textColor,
-                modifier = Modifier.weight(1f),
-            )
         }
-        Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = TextFaint)
     }
 }
 
 @Composable
-private fun Stepper(label: String, value: String, onDecrement: () -> Unit, onIncrement: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun Stepper(label: String, value: String, onDecrement: () -> Unit, onIncrement: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         StepperButton(symbol = "–", onClick = onDecrement)
-        Text(text = "$value $label", style = MaterialTheme.typography.labelLarge, color = TextPrimary)
+        Text(
+            text = "$value $label",
+            style = MaterialTheme.typography.labelLarge,
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
         StepperButton(symbol = "+", onClick = onIncrement)
     }
 }

@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
 import com.fitviet.app.ui.theme.Accent
@@ -72,7 +74,7 @@ fun SupersetWorkContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
             style = MaterialTheme.typography.labelMedium,
             color = TextFaint,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            textAlign = TextAlign.Center,
         )
         SupersetExerciseRow(
             badge = stringResource(R.string.superset_badge_a2),
@@ -137,65 +139,94 @@ private fun SupersetExerciseRow(
     val tagRes = if (isActive) R.string.workout_tag_current else if (isDone) R.string.workout_tag_done else R.string.workout_tag_pending
     val tagColor = if (isActive) Accent else TextFaint
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(bg)
             .border(if (isActive) Dimens.SelectedBorderWidth else Dimens.IdleBorderWidth, border, MaterialTheme.shapes.medium)
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(
-            modifier = Modifier.size(26.dp).clip(MaterialTheme.shapes.extraSmall).background(badgeBg),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = badge, style = MaterialTheme.typography.labelMedium, color = badgeColor)
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = name, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-            if (isActive) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    SupersetStepper(value = formatWeight(editableWeightKg), unit = "kg", onDecrement = { onAdjustWeight(-2.5) }, onIncrement = { onAdjustWeight(2.5) })
-                    SupersetStepper(value = editableReps.toString(), unit = "reps", onDecrement = { onAdjustReps(-1) }, onIncrement = { onAdjustReps(1) })
+            Box(
+                modifier = Modifier.size(26.dp).clip(MaterialTheme.shapes.extraSmall).background(badgeBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = badge, style = MaterialTheme.typography.labelMedium, color = badgeColor)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = name, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                if (!isActive) {
+                    Text(
+                        text = stringResource(R.string.workout_set_kg_reps, formatWeight(plannedWeightKg), plannedReps) + " · $muscle",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextMuted,
+                    )
                 }
-            } else {
-                Text(
-                    text = stringResource(R.string.workout_set_kg_reps, formatWeight(plannedWeightKg), plannedReps) + " · $muscle",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextMuted,
+            }
+            Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = tagColor)
+        }
+        if (isActive) {
+            // A full-width row of its own — squeezing two steppers next to the badge/name/tag left
+            // too little room for their value text, wrapping e.g. "8 reps" down to a couple of
+            // characters' width (same fix as the straight-block SetRow's Stepper).
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                SupersetStepper(
+                    value = formatWeight(editableWeightKg),
+                    unit = "kg",
+                    onDecrement = { onAdjustWeight(-2.5) },
+                    onIncrement = { onAdjustWeight(2.5) },
+                    modifier = Modifier.weight(1f),
+                )
+                SupersetStepper(
+                    value = editableReps.toString(),
+                    unit = "reps",
+                    onDecrement = { onAdjustReps(-1) },
+                    onIncrement = { onAdjustReps(1) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
-        Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = tagColor)
     }
 }
 
 @Composable
-private fun SupersetStepper(value: String, unit: String, onDecrement: () -> Unit, onIncrement: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = "–",
-            style = MaterialTheme.typography.titleSmall,
-            color = Accent,
+private fun SupersetStepper(value: String, unit: String, onDecrement: () -> Unit, onIncrement: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Box(
             modifier = Modifier
+                .size(Dimens.MinTouchTarget)
                 .clip(CircleShape)
                 .background(DeepSurface2)
-                .clickable(onClick = onDecrement)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        )
-        Text(text = "$value $unit", style = MaterialTheme.typography.labelMedium, color = TextPrimary)
+                .clickable(onClick = onDecrement),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "–", style = MaterialTheme.typography.titleSmall, color = Accent)
+        }
         Text(
-            text = "+",
-            style = MaterialTheme.typography.titleSmall,
-            color = Accent,
+            text = "$value $unit",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
             modifier = Modifier
+                .size(Dimens.MinTouchTarget)
                 .clip(CircleShape)
                 .background(DeepSurface2)
-                .clickable(onClick = onIncrement)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        )
+                .clickable(onClick = onIncrement),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = "+", style = MaterialTheme.typography.titleSmall, color = Accent)
+        }
     }
 }
 
