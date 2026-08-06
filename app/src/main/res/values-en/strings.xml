@@ -220,6 +220,8 @@
     <string name="exercise_added">Added ✓ · Tap to remove</string>
     <string name="exercise_sets_range">%1$d–%2$d</string>
     <string name="exercise_rest_seconds">%1$ds</string>
+    <string name="exercise_involvement_title">Muscle involvement</string>
+    <string name="exercise_involvement_caption">Estimated by movement pattern, not a per-person measurement.</string>
 
     <!-- 1f Diary & stats -->
     <string name="diary_title">Training diary</string>

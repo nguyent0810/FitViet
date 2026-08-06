@@ -2331,3 +2331,55 @@ caption there should say something like "estimated by movement pattern" rather t
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 45 — Muscle-involvement: UI card (feature #9b)
+
+### What was built
+- `ui/exercise/ExerciseDetailScreen.kt` — new `MuscleInvolvementCard`, placed right after the
+  existing muscle/equipment chip row and before the Instructions card (chips = categorical, this
+  card = quantified detail on the same muscles, instructions after). Per muscle (primary first,
+  then `secondaryMuscles` in order — matching `involvementPercents`' authored order from Gate 44):
+  a truncating label, an 8dp progress bar, and an Anton-styled `"$percent%"` value. Colors descend
+  Accent → `MacroBarCarb` → `MacroBarFat` (this app's existing nutrition macro-bar palette, reused
+  rather than introducing new hues) for the first 3 muscles; a 4th+ muscle (up to 5 occur in the
+  real dataset) fades `MacroBarFat` further rather than repeating a color or breaking on an
+  unmapped index. **Hides entirely** (returns before rendering anything) when
+  `involvementPercents` is empty — Gate 44's deliberate "not every exercise gets a breakdown"
+  signal, not missing data, so no empty card or placeholder text ever shows.
+- Caption reads "Ước tính theo dạng vận động, không phải số đo thực tế trên từng người" ("Estimated
+  by movement pattern, not a per-person measurement") rather than a bare "editorial estimate" —
+  carrying forward Gate 44's independent review note that the numeric splits mostly come from a
+  documented formula (movement type + secondary-muscle count), not exercise-by-exercise scrutiny
+  for every one of the 121 authored entries, so the caption shouldn't imply more individual review
+  went into each value than genuinely did. The 9 hand-corrected flagship lifts from Gate 44's
+  review follow-up render through this exact same card with no special-casing needed.
+- New strings (vi + en): `exercise_involvement_title`, `exercise_involvement_caption`.
+
+### Scope decisions
+- **Card placed inline in the single scroll, not gated behind a tab.** Gate 46 (next) is what adds
+  the 3-tab split (Cách tập / Nhóm cơ / Tiến bộ) to this screen and moves this card into the "Nhóm
+  cơ" tab — this gate's job is only the card itself, working correctly in whatever layout currently
+  exists, per the plan's own gate breakdown.
+- **Bar color for a 5th muscle uses a computed alpha-faded `MacroBarFat`, not a new hue or a repeat.**
+  The plan only specifies 3 colors ("descending Accent→MacroBarCarb→MacroBarFat"), but the real
+  authored dataset can show up to 5 muscles (primary + up to 4 secondaries, confirmed by Gate 44's
+  independent review's full-dataset audit). Extending the same palette by fading its last color
+  keeps the "descending intensity" visual logic coherent past 3 entries instead of silently running
+  out of colors or introducing an unrelated hue.
+
+### Verification
+Pure Compose UI change (`MuscleInvolvementCard`/`InvolvementRow`/`involvementBarColor`), no
+domain/data-layer changes this gate — kept to this session's established manual-read-through split
+for Compose. Verified by careful trace: `muscleLabels.forEachIndexed` iterates
+`[primaryMuscle] + secondaryMuscles` in the exact order `involvementPercents` was authored in
+(Gate 44's data), so label/percentage/color always line up correctly per muscle, not shifted by one;
+`involvementBarColor`'s `when` covers every non-negative index with no fallthrough gap;
+`getOrElse(index) { 0 }` is a defensive-only guard (Gate 44's `SeedDataMuscleInvolvementTest`
+already mechanically proves every real entry's list length always matches `1 + secondaryMuscles.size`,
+so this fallback is never actually exercised on real data, only protects against a
+hypothetically-malformed future entry). Confirmed no test references `ExerciseDetailScreen`/
+`ExerciseDetailViewModel` that this change could regress. Both `strings.xml`/`values-en/strings.xml`
+parsed as valid XML.
+
+### Push
+Pending independent review.

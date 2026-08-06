@@ -220,6 +220,8 @@
     <string name="exercise_added">Đã thêm ✓ · Chạm để bỏ</string>
     <string name="exercise_sets_range">%1$d–%2$d</string>
     <string name="exercise_rest_seconds">%1$ds</string>
+    <string name="exercise_involvement_title">Mức độ tham gia cơ</string>
+    <string name="exercise_involvement_caption">Ước tính theo dạng vận động, không phải số đo thực tế trên từng người.</string>
 
     <!-- 1f Diary & stats -->
     <string name="diary_title">Nhật ký tập luyện</string>

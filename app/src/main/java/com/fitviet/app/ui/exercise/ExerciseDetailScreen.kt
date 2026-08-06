@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -26,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
@@ -36,6 +40,8 @@ import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
+import com.fitviet.app.ui.theme.MacroBarCarb
+import com.fitviet.app.ui.theme.MacroBarFat
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
@@ -102,6 +108,8 @@ private fun ExerciseDetailContent(exercise: ExerciseEntity, isAdded: Boolean, on
                 exercise.secondaryMuscles.forEach { MuscleChip(text = it, highlighted = false) }
                 MuscleChip(text = exercise.equipment, highlighted = false)
             }
+
+            MuscleInvolvementCard(exercise = exercise)
 
             Column(
                 modifier = Modifier
@@ -179,6 +187,84 @@ private fun MuscleChip(text: String, highlighted: Boolean) {
             color = if (highlighted) Accent else TextMuted,
         )
     }
+}
+
+/** Feature #9b (Gate 45) — renders Gate 44's validated `involvementPercents`; hides cleanly (no
+ * empty card, no placeholder) when the list is empty, which is the deliberate "not every exercise
+ * gets a breakdown" signal from that gate, not missing data. */
+@Composable
+private fun MuscleInvolvementCard(exercise: ExerciseEntity) {
+    if (exercise.involvementPercents.isEmpty()) return
+    val muscleLabels = listOf(exercise.primaryMuscle) + exercise.secondaryMuscles
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = stringResource(R.string.exercise_involvement_title), style = MaterialTheme.typography.titleSmall)
+        muscleLabels.forEachIndexed { index, label ->
+            val percent = exercise.involvementPercents.getOrElse(index) { 0 }
+            InvolvementRow(label = label, percent = percent, color = involvementBarColor(index))
+        }
+        Text(
+            text = stringResource(R.string.exercise_involvement_caption),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextFaint,
+        )
+    }
+}
+
+@Composable
+private fun InvolvementRow(label: String, percent: Int, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = TextMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(96.dp),
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(8.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(CardBorder),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth((percent / 100f).coerceIn(0f, 1f))
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(color),
+            )
+        }
+        Text(
+            text = "$percent%",
+            style = MaterialTheme.typography.titleSmall.copy(fontFamily = Anton),
+            color = color,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(44.dp),
+        )
+    }
+}
+
+/** Descending Accent→[MacroBarCarb]→[MacroBarFat], per the plan — this app's existing macro-bar
+ * palette, reused rather than introducing new hues (matches the single-accent-green convention
+ * established since Gate 35's avatar colors). No seeded exercise (post Gate-44's `FUNCTIONAL`
+ * exclusion) has more than 5 displayed muscles, but a 4th+ tier still degrades sensibly by fading
+ * [MacroBarFat] further rather than repeating a color or crashing on an unmapped index. */
+private fun involvementBarColor(index: Int): Color = when (index) {
+    0 -> Accent
+    1 -> MacroBarCarb
+    2 -> MacroBarFat
+    else -> MacroBarFat.copy(alpha = (1f - 0.15f * (index - 2)).coerceAtLeast(0.4f))
 }
 
 @Composable
