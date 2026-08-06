@@ -150,8 +150,15 @@
     <string name="workout_stat_volume">Tổng kg</string>
     <string name="workout_stat_time">Thời gian</string>
     <string name="workout_stat_kcal">Kcal (ước tính)</string>
+    <string name="workout_stat_reps">Lần</string>
+    <string name="workout_recommended_weight">Khối lượng gợi ý: %1$s kg</string>
     <string name="workout_next_exercise">Bài tiếp theo: %1$s →</string>
     <string name="workout_finish_session">Hoàn tất buổi tập</string>
+
+    <!-- Workout preview (Gate 24) -->
+    <string name="workout_preview_title">Bài tập hôm nay</string>
+    <string name="workout_preview_summary">%1$d hiệp × %2$d–%3$d lần × %4$s kg</string>
+    <string name="workout_preview_empty">Chưa có bài tập nào cho hôm nay.</string>
     <string name="workout_session_finished_title">BUỔI TẬP\nHOÀN THÀNH</string>
     <string name="workout_session_finished_note">PR mới sẽ được lưu vào nhật ký của bạn</string>
     <string name="workout_back_to_home">Về trang chủ</string>

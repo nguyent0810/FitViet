@@ -150,8 +150,15 @@
     <string name="workout_stat_volume">Total kg</string>
     <string name="workout_stat_time">Time</string>
     <string name="workout_stat_kcal">Kcal (est.)</string>
+    <string name="workout_stat_reps">Reps</string>
+    <string name="workout_recommended_weight">Recommended weight: %1$s kg</string>
     <string name="workout_next_exercise">Next: %1$s →</string>
     <string name="workout_finish_session">Finish workout</string>
+
+    <!-- Workout preview (Gate 24) -->
+    <string name="workout_preview_title">Today\'s workout</string>
+    <string name="workout_preview_summary">%1$d sets × %2$d–%3$d reps × %4$s kg</string>
+    <string name="workout_preview_empty">No exercises scheduled for today.</string>
     <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
     <string name="workout_session_finished_note">New PRs will be saved to your diary</string>
     <string name="workout_back_to_home">Back to home</string>

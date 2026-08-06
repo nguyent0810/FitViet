@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
+import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -43,15 +46,26 @@ import com.fitviet.app.util.formatWeight
 @Composable
 fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
     val block = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan ?: return
+    // "Recommended" always reflects this set's planned target, not the value being edited below —
+    // it stays a stable reference point while the user's own input can drift from it.
+    val plannedCurrent = block.plannedSets.getOrNull(uiState.currentSetIndex) ?: block.plannedSets.first()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             ExerciseMediaBox(exercise = block.exercise, height = 180.dp)
+            ExerciseNameBlock(exercise = block.exercise)
+            RecommendedWeightRow(
+                weightKg = plannedCurrent.weightKg,
+                reps = plannedCurrent.reps,
+                doneSets = uiState.loggedSetsThisExercise.size,
+                totalSets = block.plannedSets.size,
+            )
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 block.plannedSets.forEachIndexed { index, planned ->
                     val status = when {
@@ -78,6 +92,52 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
                 onClick = viewModel::completeCurrentSet,
             )
         }
+    }
+}
+
+@Composable
+private fun ExerciseNameBlock(exercise: ExerciseEntity) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(text = exercise.nameVi, style = MaterialTheme.typography.headlineSmall)
+        Text(text = exercise.nameEn, style = MaterialTheme.typography.bodySmall, color = TextFaint)
+    }
+}
+
+@Composable
+private fun RecommendedWeightRow(weightKg: Double, reps: Int, doneSets: Int, totalSets: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = stringResource(R.string.workout_recommended_weight, formatWeight(weightKg)),
+            style = MaterialTheme.typography.titleSmall,
+            color = TextPrimary,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ReadOnlyStatCircle(value = reps.toString(), label = stringResource(R.string.workout_stat_reps))
+            ReadOnlyStatCircle(value = "$doneSets/$totalSets", label = stringResource(R.string.workout_stat_sets))
+        }
+    }
+}
+
+@Composable
+private fun ReadOnlyStatCircle(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(DeepSurface2)
+                .border(1.dp, CardBorder, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = Accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted)
     }
 }
 

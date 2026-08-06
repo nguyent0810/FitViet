@@ -38,39 +38,59 @@ sealed interface ImportProgramResult {
     data object Failed : ImportProgramResult
 }
 
-class ProgramRepository(
+interface ProgramRepository {
+    fun observeAll(): Flow<List<ProgramEntity>>
+
+    suspend fun getById(id: Long): ProgramEntity?
+
+    /** Empty until [com.fitviet.app.data.local.seed.DatabaseSeeder] has backfilled this program's
+     * schedule rows — the UI falls back to an empty-state message in that case. */
+    fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>>
+
+    fun observeActiveProgramId(): Flow<Long?>
+
+    suspend fun setActiveProgram(programId: Long)
+
+    /** Serializes a program's real weekly schedule to a shareable JSON string (feature #1). Null
+     * only if the program itself doesn't exist — a program with no schedule rows yet (not seeded,
+     * or a zero-day program from [importProgram]) still exports as a valid empty-days JSON rather
+     * than being a permanent dead end that can never be shared. */
+    suspend fun exportProgram(programId: Long): String?
+
+    /** Parses a shared/picked file's text as a FitViet program export and inserts it as a brand
+     * new program (feature #1) — never overwrites an existing program, since there's no reliable
+     * cross-install identity to match against. Exercises are resolved by name against this
+     * device's own library; unmatched ones are dropped from their day (see [ImportProgramResult]). */
+    suspend fun importProgram(json: String): ImportProgramResult
+}
+
+class RoomProgramRepository(
     private val database: FitVietDatabase,
     private val programDao: ProgramDao,
     private val programDayDao: ProgramDayDao,
     private val programExerciseDao: ProgramExerciseDao,
     private val exerciseDao: ExerciseDao,
     private val settingsDao: SettingsDao,
-) {
-    fun observeAll(): Flow<List<ProgramEntity>> = programDao.observeAll()
+) : ProgramRepository {
+    override fun observeAll(): Flow<List<ProgramEntity>> = programDao.observeAll()
 
-    suspend fun getById(id: Long): ProgramEntity? = programDao.getById(id)
+    override suspend fun getById(id: Long): ProgramEntity? = programDao.getById(id)
 
-    /** Empty until [com.fitviet.app.data.local.seed.DatabaseSeeder] has backfilled this program's
-     * schedule rows — the UI falls back to an empty-state message in that case. */
-    fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = combine(
+    override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = combine(
         programDayDao.observeForProgram(programId),
         programExerciseDao.observeForProgram(programId),
         exerciseDao.observeAll(),
         ProgramScheduleCalculator::build,
     )
 
-    fun observeActiveProgramId(): Flow<Long?> = settingsDao.observe().map { it?.activeProgramId }
+    override fun observeActiveProgramId(): Flow<Long?> = settingsDao.observe().map { it?.activeProgramId }
 
-    suspend fun setActiveProgram(programId: Long) {
+    override suspend fun setActiveProgram(programId: Long) {
         val current = settingsDao.get() ?: SettingsEntity()
         settingsDao.upsert(current.copy(activeProgramId = programId))
     }
 
-    /** Serializes a program's real weekly schedule to a shareable JSON string (feature #1). Null
-     * only if the program itself doesn't exist — a program with no schedule rows yet (not seeded,
-     * or a zero-day program from [importProgram]) still exports as a valid empty-days JSON rather
-     * than being a permanent dead end that can never be shared. */
-    suspend fun exportProgram(programId: Long): String? {
+    override suspend fun exportProgram(programId: Long): String? {
         val program = programDao.getById(programId) ?: return null
         val schedule = observeSchedule(programId).first()
         return ProgramTransfer.encode(
@@ -99,11 +119,7 @@ class ProgramRepository(
         )
     }
 
-    /** Parses a shared/picked file's text as a FitViet program export and inserts it as a brand
-     * new program (feature #1) — never overwrites an existing program, since there's no reliable
-     * cross-install identity to match against. Exercises are resolved by name against this
-     * device's own library; unmatched ones are dropped from their day (see [ImportProgramResult]). */
-    suspend fun importProgram(json: String): ImportProgramResult {
+    override suspend fun importProgram(json: String): ImportProgramResult {
         val data = ProgramTransfer.decode(json) ?: return ImportProgramResult.InvalidFormat
         val skipped = mutableListOf<String>()
         // All-or-nothing: a decode()-validated file can still fail partway through (e.g. a Room

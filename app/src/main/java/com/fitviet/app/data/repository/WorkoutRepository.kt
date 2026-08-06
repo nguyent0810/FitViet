@@ -13,6 +13,12 @@ interface WorkoutRepository {
     suspend fun logSet(sessionId: Long, set: LoggedSet)
 
     suspend fun completeSession(sessionId: Long, completedAtMillis: Long, totalVolumeKg: Double, durationSeconds: Int)
+
+    /** The heaviest weight ever logged for this exercise across completed sets (any session), or
+     * null if it's never been logged — the "Recommended weight" shown on a program-day workout
+     * (Gate 24) is seeded from this, since it's the closest real signal to "what should I lift"
+     * this app already tracks. */
+    suspend fun getRecommendedWeight(exerciseId: Long): Double?
 }
 
 class RoomWorkoutRepository(
@@ -21,6 +27,8 @@ class RoomWorkoutRepository(
 ) : WorkoutRepository {
     override suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long =
         workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis))
+
+    override suspend fun getRecommendedWeight(exerciseId: Long): Double? = setLogDao.getPersonalBest(exerciseId)?.weightKg
 
     override suspend fun logSet(sessionId: Long, set: LoggedSet) {
         setLogDao.insert(

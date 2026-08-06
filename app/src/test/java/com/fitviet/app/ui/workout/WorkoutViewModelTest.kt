@@ -1,14 +1,22 @@
 package com.fitviet.app.ui.workout
 
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
 import com.fitviet.app.data.repository.ExerciseRepository
+import com.fitviet.app.data.repository.ImportProgramResult
+import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
+import com.fitviet.app.domain.ProgramScheduleDay
+import com.fitviet.app.domain.ProgramScheduleExercise
+import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -72,6 +80,22 @@ class WorkoutViewModelTest {
             completedVolumeKg = totalVolumeKg
             completedDurationSeconds = durationSeconds
         }
+
+        // No test needs a real "personal best" signal — a fixed null keeps every program-day test
+        // deterministic on ProgramDayWorkoutPlanner.DEFAULT_RECOMMENDED_WEIGHT_KG.
+        override suspend fun getRecommendedWeight(exerciseId: Long): Double? = null
+    }
+
+    /** [schedules] maps programId -> its schedule; empty/missing means "no schedule for this
+     * program", which [ProgramDayWorkoutPlanner.resolveToday] treats as nothing to preview/start. */
+    private class FakeProgramRepository(private val schedules: Map<Long, List<ProgramScheduleDay>> = emptyMap()) : ProgramRepository {
+        override fun observeAll(): Flow<List<ProgramEntity>> = flowOf(emptyList())
+        override suspend fun getById(id: Long): ProgramEntity? = null
+        override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = flowOf(schedules[programId].orEmpty())
+        override fun observeActiveProgramId(): Flow<Long?> = flowOf(null)
+        override suspend fun setActiveProgram(programId: Long) {}
+        override suspend fun exportProgram(programId: Long): String? = null
+        override suspend fun importProgram(json: String): ImportProgramResult = ImportProgramResult.Failed
     }
 
     private fun testExercise(id: Long, nameVi: String) = ExerciseEntity(
@@ -110,6 +134,7 @@ class WorkoutViewModelTest {
         val viewModel = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
+            programRepository = FakeProgramRepository(),
             databaseReady = CompletableDeferred(Unit),
             elapsedRealtimeMillis = clock::now,
         )
@@ -399,6 +424,56 @@ class WorkoutViewModelTest {
         assertEquals(0, state.currentBlockIndex)
         assertEquals(0, state.currentSetIndex)
         assertEquals(2L, h.workoutRepository.nextSessionId - 1) // a second session was started
+    }
+
+    // ---- Gate 24: program-day-driven session ----
+
+    private fun todaySchedule(exerciseId: Long, nameVi: String, sets: Int, repsMin: Int, repsMax: Int) = listOf(
+        ProgramScheduleDay(
+            dayOfWeek = LocalDate.now().dayOfWeek,
+            titleVi = "Ngày kiểm thử",
+            isRestDay = false,
+            exercises = listOf(ProgramScheduleExercise(exerciseId, nameVi, sets, repsMin, repsMax)),
+        ),
+    )
+
+    @Test
+    fun `a program-day session skips the picker and builds blocks from today's real schedule`() = runTest(testDispatcher) {
+        val programRepository = FakeProgramRepository(mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)))
+        val workoutRepository = FakeWorkoutRepository()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = workoutRepository,
+            programRepository = programRepository,
+            databaseReady = CompletableDeferred(Unit),
+            programId = 42L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        val state = vm.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals("Ngày kiểm thử", state.dayLabel)
+        assertEquals(1, state.blocks.size)
+        val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
+        assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
+        assertEquals(3, block.plannedSets.size)
+        assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
+        assertEquals(20.0, block.plannedSets.first().weightKg, 0.0) // no logged history -> default
+        assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
+    }
+
+    @Test
+    fun `a program with no schedule for today falls back to the duration picker`() = runTest(testDispatcher) {
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(), // no schedule for programId 99 at all
+            databaseReady = CompletableDeferred(Unit),
+            programId = 99L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.SelectingDuration, vm.uiState.value.phase)
     }
 
     /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block. */

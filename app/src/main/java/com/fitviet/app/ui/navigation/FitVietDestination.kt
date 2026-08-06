@@ -5,13 +5,28 @@ sealed class FitVietDestination(val route: String) {
     data object OnboardingSplit : FitVietDestination("onboarding/split")
     data object Home : FitVietDestination("home")
     data object Programs : FitVietDestination("programs")
-    data object Workout : FitVietDestination("workout")
     data object Nutrition : FitVietDestination("nutrition")
     data object Community : FitVietDestination("community")
+
+    /** [programId] is optional — absent for the free-standing entry points (bottom-nav FAB,
+     * dashboard "Start workout"), present when started from [WorkoutPreview]'s "Begin workout",
+     * in which case the session is built from that program's real schedule for today instead of
+     * the generic duration-picker flow. */
+    data object Workout : FitVietDestination("workout?programId={programId}") {
+        const val ARG_PROGRAM_ID = "programId"
+        fun createRoute(programId: Long? = null) = if (programId != null) "workout?programId=$programId" else "workout"
+    }
 
     data object ProgramSchedule : FitVietDestination("programs/{programId}/schedule") {
         const val ARG_PROGRAM_ID = "programId"
         fun createRoute(programId: Long) = "programs/$programId/schedule"
+    }
+
+    /** The "day exercise list" screen (Gate 24) shown after tapping today's row on the Weekly
+     * Schedule screen — always resolves to *today*, so it only needs [programId]. */
+    data object WorkoutPreview : FitVietDestination("workout_preview/{programId}") {
+        const val ARG_PROGRAM_ID = "programId"
+        fun createRoute(programId: Long) = "workout_preview/$programId"
     }
 
     data object ExerciseDetail : FitVietDestination("exercises/{exerciseId}") {

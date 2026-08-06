@@ -1233,3 +1233,25 @@ One `codex exec` round on the staged diff — no findings. Independently re-veri
 
 ### Push
 Committed and pushed directly to `master`.
+
+## Gate 24 — Workout entry flow redesign (day preview + recommended-weight logging screen)
+
+### What was built
+The user's request revealed a deeper pre-existing gap: tapping "today" on the Weekly Schedule screen already went straight into live logging, but that session was (and always had been) completely decoupled from the tapped program — `WorkoutViewModel` only ever built sessions from the fixed demo (`WorkoutPlanSeed`) or the duration-budget planner (`WorkoutTimeBudgetPlanner`), never from the program's real per-day `ProgramExerciseEntity` targets. Fixing the requested UX (day → preview list → "Begin workout" → logging with recommended weight/reps) required wiring that real connection first.
+
+- **New `ProgramDayWorkoutPlanner`** (`ui/workout/`): resolves a program's schedule for *today* into `ProgramDayWorkoutItem`s (real `ExerciseEntity` + target sets/rep-range + a recommended weight — the exercise's personal-best logged weight, or a `20.0kg` default with no history), and builds a `WorkoutBlockPlan` session from them (rep range collapsed to its midpoint per set; every program-day exercise is a straight block — confirmed `ProgramExerciseEntity` has no superset/pairing concept).
+- **New "day exercise list" preview screen** (`WorkoutPreviewScreen`/`WorkoutPreviewViewModel`, route `workout_preview/{programId}`): shows each of today's exercises (photo, name, "N sets × min–max reps × Xkg") before committing to a session; "Begin workout" only then navigates into live logging.
+- **`WorkoutViewModel`**: gained an optional `programId`. When set, `init` skips the duration-picker phase entirely (the program already determines every set) and starts logging directly from the resolved program day, falling back to the pre-existing generic picker if nothing resolves. The free-standing entry points (bottom-nav FAB, dashboard "Start workout") are unaffected — `programId` stays null there, same behavior as before this gate.
+- **Live logging screen** (`StraightLogContent`): now shows the exercise's Vietnamese name (large) + English name (small) below the photo, a "Recommended weight" line (the current set's planned target, not the value being edited — stays a stable reference), and two read-only stat circles (target reps, sets done/total) — all above the pre-existing, unmodified editable set list.
+- **`ProgramRepository` split into an interface + `RoomProgramRepository`** (matching the existing `ExerciseRepository`/`WorkoutRepository` pattern) so `WorkoutViewModel` could take it and remain unit-testable with a fake — the previous concrete final class couldn't be faked in a plain-JVM test.
+- **Nav**: `Workout`'s route became an optional-query-arg pattern (`workout?programId={programId}`, `createRoute(programId: Long? = null)`) so both the parameterless FAB/dashboard entry and the program-day entry (from the new preview screen) resolve to the same screen.
+
+### Codex review
+Two rounds. Round 1 (this gate's diff was explicitly reviewed more heavily than usual, flagged up front as the highest-risk change of the batch — a Nav Compose route restructuring plus a repository interface split plus core `WorkoutViewModel` changes, none of it compiler-verified since Gradle remains unreachable here) found one real, medium-severity issue: the redesigned `StraightLogContent`'s content column (now taller — photo, name block, recommended-weight/stat row, full set list) had no scroll, risking clipped/hidden set rows on smaller screens or 4+ set exercises. Fixed with `verticalScroll(rememberScrollState())`, the same pattern already proven on 5+ other screens in this codebase. Round 2 (scoped confirmation) — fix matches the established pattern exactly, nothing else flagged.
+
+Everything else passed on the first pass: the `ProgramRepository` interface split is override-complete everywhere, both `WorkoutViewModel.Factory` call sites use the new parameter order correctly, the optional-nav-arg pattern genuinely matches a bare `navigate("workout")` call (Android's documented default-argument behavior), the `showDurationPicker()` extraction avoids a self-cancellation bug from calling the job-owning function reentrantly, both `resetWorkout()` branches are correct, the planner's rep-midpoint math is correct across even/odd/equal ranges, and the untouched superset flow is unaffected (program sessions are straight-blocks-only).
+
+Two unit tests added to `WorkoutViewModelTest.kt` covering the new program-day path (skips picker, builds correct blocks; falls back to picker when nothing resolves). Codex noted the new planner logic itself has thinner direct coverage (ordering across multiple exercises, a real recorded-weight case, partially-unresolved exercises) — flagged as low-severity/non-blocking, not fixed this round; a reasonable next-session pickup if this area sees more churn.
+
+### Push
+Committed and pushed directly to `master`.

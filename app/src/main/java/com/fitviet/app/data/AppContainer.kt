@@ -9,8 +9,8 @@ import com.fitviet.app.data.repository.DiaryRepository
 import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
-import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.RoomExerciseRepository
+import com.fitviet.app.data.repository.RoomProgramRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -26,7 +26,7 @@ class AppContainer(context: Context) {
 
     val database: FitVietDatabase = FitVietDatabase.getInstance(context)
     val onboardingRepository = OnboardingRepository(database.settingsDao())
-    val programRepository = ProgramRepository(
+    val programRepository = RoomProgramRepository(
         database = database,
         programDao = database.programDao(),
         programDayDao = database.programDayDao(),

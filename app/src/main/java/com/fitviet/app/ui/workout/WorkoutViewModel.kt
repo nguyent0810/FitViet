@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.repository.ExerciseRepository
+import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -52,7 +53,12 @@ data class WorkoutUiState(
 class WorkoutViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
+    private val programRepository: ProgramRepository,
     private val databaseReady: Deferred<Unit>,
+    // Set when entered from WorkoutPreview's "Begin workout" (Gate 24) — the session is then built
+    // from this program's real schedule for today instead of the generic duration-picker flow.
+    // Null for the free-standing entry points (bottom-nav FAB, dashboard "Start workout").
+    private val programId: Long? = null,
     // Injectable so tests can supply a controllable fake — android.os.SystemClock is stubbed to a
     // constant 0 in plain JVM unit tests, which would make every debounced action a permanent no-op.
     private val elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
@@ -68,7 +74,41 @@ class WorkoutViewModel(
     private var lastActionAtMillis = 0L
 
     init {
-        loadExercisesAndShowDurationPicker()
+        loadInitialSession()
+    }
+
+    /** Entry point for both the initial load and "Làm lại" (Gate 24 added the [programId] branch;
+     * the pre-existing picker flow below is otherwise unchanged). */
+    private fun loadInitialSession() {
+        if (programId != null) {
+            startProgramDaySession(programId)
+        } else {
+            loadExercisesAndShowDurationPicker()
+        }
+    }
+
+    /** Resolves [programId]'s schedule for today and starts logging immediately — there's nothing
+     * for a duration picker to choose, the program already determines every set. Falls back to the
+     * generic picker if the program has no schedule/exercises for today rather than stranding the
+     * user on a blank screen (e.g. a program whose schedule hasn't finished seeding yet). */
+    private fun startProgramDaySession(programId: Long) {
+        sessionInitJob?.cancel()
+        sessionInitJob = viewModelScope.launch {
+            databaseReady.await()
+            val resolved = ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
+            val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
+            if (resolved == null || blocks.isEmpty()) {
+                showDurationPicker()
+                return@launch
+            }
+            sessionId = workoutRepository.startSession(dayLabel = resolved.titleVi, startedAtMillis = System.currentTimeMillis())
+            _uiState.value = resetForBlock(
+                WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi),
+                0,
+                blocks.firstOrNull(),
+            )
+            startElapsedTicker()
+        }
     }
 
     /**
@@ -93,9 +133,16 @@ class WorkoutViewModel(
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
-            loadedExercises = exerciseRepository.getAll()
-            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
+            showDurationPicker()
         }
+    }
+
+    /** Plain suspend helper (no job management of its own) so [startProgramDaySession] can fall
+     * back to it from inside its own already-launched job — calling [loadExercisesAndShowDurationPicker]
+     * directly there would cancel that very job via its own `sessionInitJob?.cancel()`. */
+    private suspend fun showDurationPicker() {
+        loadedExercises = exerciseRepository.getAll()
+        _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
     }
 
     /** [minutes] is `null` for "Không giới hạn" (the original curated demo session, unchanged
@@ -121,11 +168,21 @@ class WorkoutViewModel(
         }
     }
 
+    /** For a program-day session (Gate 24), "Làm lại" restarts that same day's session again
+     * rather than dropping to the generic picker, which this flow never shows in the first place.
+     * The two branches are kept explicit (rather than always routing through [loadInitialSession])
+     * so the pre-existing picker flow keeps resetting synchronously with no loading-state frame,
+     * exactly as it did before Gate 24. */
     fun resetWorkout() = debounced {
         restJob?.cancel()
         elapsedJob?.cancel()
         sessionInitJob?.cancel()
-        _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
+        if (programId != null) {
+            _uiState.value = WorkoutUiState()
+            startProgramDaySession(programId)
+        } else {
+            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
+        }
     }
 
     // ---- Straight block ----
@@ -360,10 +417,12 @@ class WorkoutViewModel(
     class Factory(
         private val exerciseRepository: ExerciseRepository,
         private val workoutRepository: WorkoutRepository,
+        private val programRepository: ProgramRepository,
         private val databaseReady: Deferred<Unit>,
+        private val programId: Long? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            WorkoutViewModel(exerciseRepository, workoutRepository, databaseReady) as T
+            WorkoutViewModel(exerciseRepository, workoutRepository, programRepository, databaseReady, programId) as T
     }
 }

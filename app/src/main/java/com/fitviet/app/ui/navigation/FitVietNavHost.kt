@@ -44,6 +44,8 @@ import com.fitviet.app.ui.programs.ProgramsViewModel
 import com.fitviet.app.ui.programs.WeeklyScheduleScreen
 import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
+import com.fitviet.app.ui.workout.WorkoutPreviewScreen
+import com.fitviet.app.ui.workout.WorkoutPreviewViewModel
 import com.fitviet.app.ui.workout.WorkoutScreen
 import com.fitviet.app.ui.workout.WorkoutViewModel
 import com.fitviet.app.util.LocaleController
@@ -90,7 +92,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             restoreState = true
                         }
                     },
-                    onFabClick = { navController.navigate(FitVietDestination.Workout.route) },
+                    onFabClick = { navController.navigate(FitVietDestination.Workout.createRoute()) },
                 )
             }
         },
@@ -138,7 +140,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(container.dashboardRepository))
                 DashboardScreen(
                     viewModel = viewModel,
-                    onStartWorkout = { navController.navigate(FitVietDestination.Workout.route) },
+                    onStartWorkout = { navController.navigate(FitVietDestination.Workout.createRoute()) },
                     onBrowsePrograms = {
                         navController.navigate(FitVietDestination.Programs.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -201,12 +203,42 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 WeeklyScheduleScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onStartToday = { navController.navigate(FitVietDestination.Workout.route) },
+                    onStartToday = { navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId)) },
                 )
             }
-            composable(FitVietDestination.Workout.route) {
+            composable(
+                route = FitVietDestination.WorkoutPreview.route,
+                arguments = listOf(navArgument(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val programId = backStackEntry.arguments?.getLong(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) ?: 0L
+                val viewModel: WorkoutPreviewViewModel = viewModel(
+                    factory = WorkoutPreviewViewModel.Factory(
+                        programId,
+                        container.programRepository,
+                        container.exerciseRepository,
+                        container.workoutRepository,
+                        container.databaseReady,
+                    ),
+                )
+                WorkoutPreviewScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onBeginWorkout = { navController.navigate(FitVietDestination.Workout.createRoute(programId)) },
+                )
+            }
+            composable(
+                route = FitVietDestination.Workout.route,
+                arguments = listOf(navArgument(FitVietDestination.Workout.ARG_PROGRAM_ID) { type = NavType.LongType; defaultValue = -1L }),
+            ) { backStackEntry ->
+                val programId = backStackEntry.arguments?.getLong(FitVietDestination.Workout.ARG_PROGRAM_ID)?.takeIf { it != -1L }
                 val viewModel: WorkoutViewModel = viewModel(
-                    factory = WorkoutViewModel.Factory(container.exerciseRepository, container.workoutRepository, container.databaseReady),
+                    factory = WorkoutViewModel.Factory(
+                        container.exerciseRepository,
+                        container.workoutRepository,
+                        container.programRepository,
+                        container.databaseReady,
+                        programId,
+                    ),
                 )
                 WorkoutScreen(
                     viewModel = viewModel,
