@@ -1499,6 +1499,22 @@ the deleted `PLACEHOLDER_USER_NAME`/`_INITIAL` constants anywhere in the tree (g
 well-formed XML, and every `SettingsEntity(...)` construction site in the codebase already uses the
 no-arg/named-arg form (safe against the two new trailing fields).
 
+**Independent review pass** — **clean**, no bugs found. It independently recompiled
+`SettingsEntity.kt`/`ProfileRepository.kt`/`DashboardRepository.kt` from a fresh worktree read (not
+trusting a cached compile) and used `javap` on the output to directly confirm `displayName`/
+`avatarId` really do survive the `Stage1Data → BaseDashboardData → DashboardData` chain rather than
+trusting the source read alone; verified `AvatarStyle.fromId`'s `entries.getOrNull(id) ?: Default`
+never throws in either direction (negative or too-large ids); traced `ProfileEditScreen.kt`'s
+`isLoaded` gating, the Save button's disabled-state modifier chaining, and the
+`LaunchedEffect(uiState.saved)` → `onBack()` ordering against `save()`'s actual write-then-flag
+sequence — all correct. One Low-severity, non-blocking note: the Save button had no guard against a
+fast double-tap launching two redundant (harmless but wasteful) `updateProfile` writes before
+navigating away. Fixed as a follow-up: `ProfileEditViewModel.save()` now also no-ops once
+`ProfileEditUiState.saved` is already `true`.
+
+### Push
+Reviewed and fixed per above, pushed to `origin/claude/routines-code-session-n62xmx`.
+
 ## Gate 36 — LockedListItem primitive (feature #2, ships unused by design)
 
 ### What was built
@@ -1531,3 +1547,11 @@ child, correctly relying on the implicit `RowScope` receiver — grepped to conf
 inventing new tokens, `0xFF0D100E` in the `@Preview`'s `backgroundColor` matches `BackgroundPage`'s
 real value exactly (checked against `Color.kt`), both `strings.xml`/`values-en/strings.xml` new keys
 present and well-formed XML.
+
+**Independent review pass** — **clean**, no bugs found. Independently confirmed `app/build.gradle.kts`
+genuinely already declares the `ui-tooling-preview`/`ui-tooling` dependencies (not a new one snuck
+in), confirmed the `0xFF0D100E` literal's Kotlin `Long`-widening rule is correct, and grepped to
+confirm `LockedListItem`/`LockReason` truly have zero callers anywhere else in the tree.
+
+### Push
+Reviewed, no fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.

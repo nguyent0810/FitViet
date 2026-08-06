@@ -23,4 +23,9 @@ interface WorkoutSessionDao {
 
     @Update
     suspend fun update(session: WorkoutSessionEntity)
+
+    /** Feature #6 (Gate 37) — the destructive "reset app data" settings action. Cascades to
+     * `set_logs` via [com.fitviet.app.data.local.entity.SetLogEntity]'s `ForeignKey.CASCADE`. */
+    @Query("DELETE FROM workout_sessions")
+    suspend fun deleteAll()
 }

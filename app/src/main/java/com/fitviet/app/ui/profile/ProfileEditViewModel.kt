@@ -48,9 +48,12 @@ class ProfileEditViewModel(private val repository: ProfileRepository) : ViewMode
 
     /** No-ops on a blank name (after trimming) rather than persisting an empty display name — the
      * Save button is disabled for that case too (see [ProfileEditScreen]), this is the same guard
-     * enforced on the ViewModel side in case that ever changes. */
+     * enforced on the ViewModel side in case that ever changes. Also no-ops once [ProfileEditUiState.saved]
+     * is already true, so a fast double-tap before the screen navigates away can't launch a second
+     * redundant write. */
     fun save() {
         val state = _uiState.value
+        if (state.saved) return
         val trimmedName = state.displayName.trim()
         if (trimmedName.isEmpty()) return
         viewModelScope.launch {
