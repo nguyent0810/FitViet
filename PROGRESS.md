@@ -2483,5 +2483,22 @@ confirmed both were updated, no third implementer missed. Both `strings.xml`/`va
 parsed as valid XML. No `FitVietDatabase` version bump needed this gate — a new DAO query method,
 no new entity/table/column.
 
+### Independent review (background agent, general-purpose) — CLEAN
+Specifically targeted the two places most likely to hide a subtle bug. For the `compareBy`
+tie-break comparator, independently confirmed Kotlin stdlib semantics (compare by the first
+selector, break ties with the second) and that the tie-break test genuinely exercises it (two sets,
+identical weight, different reps). For the `combine()`-with-a-completing-source question — whether
+wrapping the one-shot exercise fetch in `flow {}` and combining it with two ongoing sources could
+cause the whole `uiState` flow to silently stop updating once the one-shot source completes — the
+review didn't just reason abstractly, it **decompiled `kotlinx-coroutines-core-jvm-1.6.4.jar`'s
+actual `combineInternal` bytecode** and confirmed the result channel only closes once an
+`AtomicInteger` tracking non-completed sources reaches zero, i.e. only when *all* sources complete,
+not just one — so a one-shot source's last value is correctly retained and reused for every later
+combination. Also independently verified the SQL JOIN direction/column-alias-to-DTO-field matching
+in the new DAO query, diffed the full screen against its pre-Gate-46 version to confirm no old
+content was dropped (only relocated), and grepped for every `WorkoutRepository` implementer. Zero
+findings at any severity beyond one pre-existing (not introduced by this gate) untranslated-string
+house-style note.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
