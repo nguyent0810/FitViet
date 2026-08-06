@@ -3796,8 +3796,16 @@ object SeedData {
 
     /** One exercise target within a [ProgramDaySeed] — resolved to a real [ExerciseEntity] id by
      * [exerciseName] (a [SeedExerciseNames] constant) at seed time, same name-lookup pattern
-     * [com.fitviet.app.ui.workout.WorkoutPlanSeed] already uses for the fixed workout demo. */
-    data class ProgramExerciseSeed(val exerciseName: String, val targetSets: Int, val targetRepsMin: Int, val targetRepsMax: Int)
+     * [com.fitviet.app.ui.workout.WorkoutPlanSeed] already uses for the fixed workout demo.
+     * [supersetGroup] mirrors [com.fitviet.app.data.local.entity.ProgramExerciseEntity.supersetGroup]
+     * — left null (straight sets) unless deliberately hand-authored for a specific day. */
+    data class ProgramExerciseSeed(
+        val exerciseName: String,
+        val targetSets: Int,
+        val targetRepsMin: Int,
+        val targetRepsMax: Int,
+        val supersetGroup: String? = null,
+    )
 
     /** One calendar-weekday slot (ISO 1=Monday..7=Sunday) in a program's weekly schedule (2b). */
     data class ProgramDaySeed(
@@ -3825,11 +3833,16 @@ object SeedData {
             ProgramDaySeed(
                 dayOfWeek = 1,
                 titleVi = "Ngực & Vai",
+                // Compound presses first, then a hand-authored finishing superset (Gate 47) —
+                // Cable fly + Lateral raise, the same pairing as the no-program demo session
+                // (WorkoutPlanSeed), so both paths agree on what this pairing looks like. Adjacent
+                // and sharing a group value is what makes buildBlocks() treat them as one block;
+                // both already share targetSets/targetReps so no rounds are lost reconciling them.
                 exercises = listOf(
                     ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 4, 8, 10),
-                    ProgramExerciseSeed(SeedExerciseNames.CABLE_FLY, 3, 12, 15),
                     ProgramExerciseSeed(SeedExerciseNames.SHOULDER_PRESS, 3, 8, 10),
-                    ProgramExerciseSeed(SeedExerciseNames.LATERAL_RAISE, 3, 12, 15),
+                    ProgramExerciseSeed(SeedExerciseNames.CABLE_FLY, 3, 12, 15, supersetGroup = "A"),
+                    ProgramExerciseSeed(SeedExerciseNames.LATERAL_RAISE, 3, 12, 15, supersetGroup = "A"),
                 ),
             ),
             ProgramDaySeed(
@@ -3870,9 +3883,13 @@ object SeedData {
             ProgramDaySeed(
                 dayOfWeek = 1,
                 titleVi = "Toàn thân nhẹ",
+                // Hand-authored superset (Gate 47) — a bodyweight circuit pairing (upper push +
+                // core), deliberately left for this one session rather than every day sharing this
+                // pair, so the seed data shows a real straight-vs-superset contrast within the
+                // same program.
                 exercises = listOf(
-                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 3, 8, 12),
-                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20),
+                    ProgramExerciseSeed(SeedExerciseNames.PUSHUP, 3, 8, 12, supersetGroup = "A"),
+                    ProgramExerciseSeed(SeedExerciseNames.CRUNCH, 3, 15, 20, supersetGroup = "A"),
                 ),
             ),
             ProgramDaySeed(

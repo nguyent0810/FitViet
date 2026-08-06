@@ -16,6 +16,8 @@ data class ProgramDayWorkoutItem(
     val targetRepsMin: Int,
     val targetRepsMax: Int,
     val recommendedWeightKg: Double,
+    /** See [com.fitviet.app.data.local.entity.ProgramExerciseEntity.supersetGroup]. */
+    val supersetGroup: String? = null,
 )
 
 data class ResolvedProgramDay(val titleVi: String, val items: List<ProgramDayWorkoutItem>)
@@ -56,6 +58,7 @@ object ProgramDayWorkoutPlanner {
                 targetRepsMin = scheduleExercise.targetRepsMin,
                 targetRepsMax = scheduleExercise.targetRepsMax,
                 recommendedWeightKg = workoutRepository.getRecommendedWeight(exercise.id) ?: DEFAULT_RECOMMENDED_WEIGHT_KG,
+                supersetGroup = scheduleExercise.supersetGroup,
             )
         }
         if (items.isEmpty()) return null
@@ -63,14 +66,58 @@ object ProgramDayWorkoutPlanner {
     }
 
     /** Collapses each item's rep *range* to a single concrete rep count (its midpoint) — a live
-     * session logs one rep target per set, unlike the preview screen, which shows the full range. */
-    fun buildBlocks(items: List<ProgramDayWorkoutItem>): List<WorkoutBlockPlan> = items.map { item ->
-        val reps = ((item.targetRepsMin + item.targetRepsMax) / 2).coerceAtLeast(1)
-        WorkoutBlockPlan.Straight(
+     * session logs one rep target per set, unlike the preview screen, which shows the full range.
+     *
+     * A non-null [ProgramDayWorkoutItem.supersetGroup] only becomes a [WorkoutBlockPlan.Superset]
+     * when exactly two items in [items] share it AND they're adjacent — any other shape (a lone
+     * item with a group value, three-or-more sharing one, or two matching items that aren't next
+     * to each other) degrades every affected item back to its own [WorkoutBlockPlan.Straight]
+     * rather than dropping it, since a malformed grouping shouldn't be able to silently remove an
+     * exercise from the session. */
+    fun buildBlocks(items: List<ProgramDayWorkoutItem>): List<WorkoutBlockPlan> {
+        val groupSizes = items.mapNotNull { it.supersetGroup }.groupingBy { it }.eachCount()
+
+        val blocks = mutableListOf<WorkoutBlockPlan>()
+        var i = 0
+        while (i < items.size) {
+            val item = items[i]
+            val group = item.supersetGroup
+            val next = items.getOrNull(i + 1)?.takeIf { group != null && groupSizes[group] == 2 && it.supersetGroup == group }
+            if (next != null) {
+                blocks += toSupersetBlock(item, next)
+                i += 2
+            } else {
+                blocks += toStraightBlock(item)
+                i += 1
+            }
+        }
+        return blocks
+    }
+
+    private fun midpointReps(min: Int, max: Int) = ((min + max) / 2).coerceAtLeast(1)
+
+    private fun toStraightBlock(item: ProgramDayWorkoutItem): WorkoutBlockPlan.Straight {
+        val reps = midpointReps(item.targetRepsMin, item.targetRepsMax)
+        return WorkoutBlockPlan.Straight(
             StraightBlockPlan(
                 exercise = item.exercise,
                 plannedSets = List(item.targetSets.coerceAtLeast(1)) { PlannedSet(item.recommendedWeightKg, reps) },
             ),
         )
     }
+
+    /** [SupersetBlockPlan] has one shared `totalRounds` for both exercises (unlike straight
+     * blocks, which carry an independent [PlannedSet] list per set) — when the pair's authored
+     * `targetSets` disagree, the lower of the two wins so neither side is asked to perform a round
+     * the other wasn't planned for. */
+    private fun toSupersetBlock(a: ProgramDayWorkoutItem, b: ProgramDayWorkoutItem): WorkoutBlockPlan.Superset =
+        WorkoutBlockPlan.Superset(
+            SupersetBlockPlan(
+                exerciseA = a.exercise,
+                plannedA = PlannedSet(a.recommendedWeightKg, midpointReps(a.targetRepsMin, a.targetRepsMax)),
+                exerciseB = b.exercise,
+                plannedB = PlannedSet(b.recommendedWeightKg, midpointReps(b.targetRepsMin, b.targetRepsMax)),
+                totalRounds = minOf(a.targetSets, b.targetSets).coerceAtLeast(1),
+            ),
+        )
 }

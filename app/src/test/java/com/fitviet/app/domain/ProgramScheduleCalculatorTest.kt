@@ -102,4 +102,18 @@ class ProgramScheduleCalculatorTest {
 
         assertTrue(result.single().isRestDay)
     }
+
+    @Test
+    fun `supersetGroup passes through unchanged, including null`() {
+        val days = listOf(ProgramDayEntity(id = 1, programId = 1, dayOfWeek = 1, titleVi = "Mon"))
+        val exercises = listOf(exercise(10, "A"), exercise(20, "B"))
+        val programExercises = listOf(
+            ProgramExerciseEntity(programDayId = 1, exerciseId = 10, orderIndex = 0, targetSets = 3, targetRepsMin = 8, targetRepsMax = 12, supersetGroup = "A"),
+            ProgramExerciseEntity(programDayId = 1, exerciseId = 20, orderIndex = 1, targetSets = 3, targetRepsMin = 8, targetRepsMax = 12),
+        )
+
+        val result = ProgramScheduleCalculator.build(days, programExercises, exercises)
+
+        assertEquals(listOf("A", null), result.single().exercises.map { it.supersetGroup })
+    }
 }

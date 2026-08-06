@@ -2502,3 +2502,123 @@ house-style note.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 47 — Superset grouping: schema + planner (feature #11a)
+
+### What was built
+- `data/local/entity/ProgramExerciseEntity.kt` — new `supersetGroup: String? = null` column.
+  Null = straight sets; two rows in the same `programDayId` sharing the same non-null value form a
+  pair. Doc comment on the field states the degradation rule up front (mismatch #10: persisted at
+  the source-of-truth entity, not the transient `ProgramDayWorkoutItem`).
+- `data/local/FitVietDatabase.kt` — version 10 → 11 (new nullable column on `program_exercises`,
+  destructive-recreate per this project's established pre-release policy).
+- `domain/ProgramSchedule.kt` — `ProgramScheduleExercise.supersetGroup: String? = null` added and
+  threaded through `ProgramScheduleCalculator.build()`. This is the single join point both
+  `ProgramDayWorkoutPlanner.resolveToday()` (live session) and the Dashboard/`WorkoutPreview` path
+  (`ProgramRepository.observeSchedule`) already share, so both code paths see the same grouping
+  data with no separate plumbing — confirmed via the research pass before writing any code.
+- `ui/workout/ProgramDayWorkoutPlanner.kt`:
+  - `ProgramDayWorkoutItem.supersetGroup: String? = null` added, populated in `resolveToday()`
+    from `scheduleExercise.supersetGroup`.
+  - `buildBlocks()` rewritten from a flat `.map` (every item → its own `Straight` block) into a
+    left-to-right grouping pass. A `groupSizes` map (`supersetGroup` → count across the whole
+    list) is computed first; walking the list, two adjacent items pair into one
+    `WorkoutBlockPlan.Superset` only when their shared group's total size is exactly 2 **and**
+    they're adjacent — everything else (null, a lone item with a group value, 3+ items sharing a
+    group, two matching items that aren't next to each other) falls through to
+    `toStraightBlock()`, one block per item, nothing dropped.
+  - `toSupersetBlock()` reconciles the pair's independently-authored `targetSets` into
+    `SupersetBlockPlan`'s single shared `totalRounds` by taking the lower of the two (so neither
+    side is asked to perform a round the other wasn't planned for) — nothing in the existing model
+    did this reconciliation before, since the one prior superset was hand-typed with matching
+    values.
+- `data/local/seed/SeedData.kt` — `ProgramExerciseSeed.supersetGroup: String? = null` added, plus
+  two deliberately hand-authored pairings (not inferred):
+  - Program 1 ("Tăng cơ toàn thân 8 tuần"), Day 1 ("Ngực & Vai"): reordered so Cable fly + Lateral
+    raise are adjacent (was Bench/CableFly/ShoulderPress/LateralRaise, now
+    Bench/ShoulderPress/CableFly+LateralRaise), both tagged `supersetGroup = "A"` — the same pair,
+    same targetSets/targetReps, and the same finishing position as the existing no-program demo
+    session (`WorkoutPlanSeed.kt`'s hardcoded Cable fly + Lateral raise superset), so both paths
+    now agree on what this pairing looks like.
+  - Program 2 ("Giảm mỡ 30 ngày tại nhà"), Day 1 only (not all 5 structurally-identical bodyweight
+    days — see Scope decisions): Pushup + Crunch, `supersetGroup = "A"`, demonstrating a pairing in
+    the one no-equipment program too.
+- `data/local/seed/DatabaseSeeder.kt` — threads `exerciseSeed.supersetGroup` into the
+  `ProgramExerciseEntity(...)` it constructs per row.
+- `app/src/test/.../ui/workout/ProgramDayWorkoutPlannerTest.kt` (new) — 10 cases directly against
+  `buildBlocks()`: empty list, null group → straight, a valid adjacent pair → superset, a pair
+  that isn't the whole list, a lone item with a group value, three items sharing one group (none
+  dropped), two matching items that aren't adjacent (both degrade), mismatched `targetSets`
+  reconciling to the lower value, rep-range midpoint collapsing, and two independent groups each
+  pairing up correctly.
+- `app/src/test/.../domain/ProgramScheduleCalculatorTest.kt` — one new case confirming
+  `supersetGroup` (including `null`) passes through `ProgramScheduleCalculator.build()` unchanged.
+
+### Scope decisions
+- **Program import/export left untouched, deliberately.** Per the plan's explicit decision,
+  imported schedules must default to no grouping until the transfer format is extended (out of
+  scope for Gates 35-48). Confirmed via research before writing code: `ProgramTransferExercise`
+  has no `supersetGroup` field, `exportProgram()`/`ProgramTransfer.encode()`/`decode()` never
+  reference it, and `importTransaction()` constructs each `ProgramExerciseEntity` field-by-field —
+  so an imported row's `supersetGroup` is `null` purely because nothing sets it, with zero code
+  changes needed to guarantee that. Not touching `ProgramTransfer.kt` in this gate is what keeps
+  that guarantee true; extending the transfer format itself remains a future gate if wanted.
+- **`WorkoutPlanSeed.kt` (the no-program demo session) left untouched.** It's a separate call path
+  (free-standing exercise catalog, name-keyed, no program/day involved) that Gate 47 generalizes
+  the *concept* of, not a file that itself needed to change — confirmed via research before
+  implementing. The new Program 1 Day 1 seed pairing was deliberately made to match it exactly
+  (same two exercises, same sets/reps, same position after the compound presses) so both paths
+  present the same pairing consistently, without the demo file needing any code change.
+- **Only one of Program 2's five identical bodyweight days got the superset pairing.** All five
+  days in Program 2 share the exact same Pushup+Crunch exercise list, so pairing every one would
+  be mechanical repetition dressed up as five separate authoring decisions. Pairing exactly one
+  (Day 1) is a real, deliberate authoring choice and still gives the seed data a genuine
+  straight-vs-superset contrast within the same program, consistent with this session's Gate 44
+  precedent of bounded, proportionate hand-authoring rather than either skipping it or overdoing
+  uniform coverage.
+- **Superset groups are strictly pairs (size 2), matching `SupersetBlockPlan`'s fixed
+  `exerciseA`/`exerciseB` shape.** The plan itself specifies "exactly 2 consecutive members" as
+  the only valid grouping size, so no model change was needed to `SupersetBlockPlan` — a 3+-member
+  group is explicitly one of the malformed cases that degrades to straight sets per the plan's own
+  rule, not a shape this gate needed to support.
+- **Group-value strings are simple single letters (`"A"`), not globally unique identifiers.**
+  Grouping is resolved entirely within one already-day-scoped item list (`ProgramScheduleCalculator`
+  groups `program_exercises` rows by `programDayId` before any grouping logic runs, and
+  `resolveToday()` only ever resolves a single day at a time), so identical group values in two
+  different program days never interact — confirmed by tracing the full call chain from entity to
+  `buildBlocks()`. Using "A" also foreshadows Gate 48's planned A1/A2 label pattern.
+
+### Verification
+Standalone `kotlinc` compile (corrected stdlib-inclusive recipe) of the full changed/dependent set —
+`ProgramExerciseEntity.kt`, `ProgramSchedule.kt`, `ProgramDayWorkoutPlanner.kt`, `WorkoutModels.kt`,
+`ProgramRepository.kt`/`ExerciseRepository.kt`/`WorkoutRepository.kt`, `ProgramTransfer.kt`, every
+DAO/entity they transitively touch, the entire `domain/` package, and `SeedData.kt` (~3900 lines)
++ `DatabaseSeeder.kt` — clean, zero errors, zero warnings, against a fake `FitVietDatabase`
+stub (expanded this gate to cover all DAOs `DatabaseSeeder` calls) plus the existing
+`androidx.room` annotation stubs and a `json.jar` for `ProgramTransfer.kt`'s `org.json` usage
+(reused from Gate 17's verification setup).
+
+Both new/changed test files **compiled and actually run** via `JUnitCore`:
+`ProgramDayWorkoutPlannerTest` + `ProgramScheduleCalculatorTest` together — `OK (17 tests)`, all
+genuinely passing (no Android/Compose dependency in either, so real execution was possible, not
+just compilation).
+
+Beyond unit tests, wrote and ran a standalone end-to-end sanity program
+(`E2ECheck.kt`, scratch-only, not committed) that builds `ProgramExerciseEntity` rows matching the
+real seeded Program 1 Day 1 data verbatim, runs them through the actual
+`ProgramScheduleCalculator.build()` → `ProgramDayWorkoutPlanner.buildBlocks()` pipeline (the same
+two real functions the app calls, not a re-implementation), and asserts the result is exactly 3
+blocks with the 3rd being the Cable fly + Lateral raise superset at `totalRounds = 3`. Output:
+`Superset: Cable fly + Lateral raise rounds=3` / `E2E CHECK PASSED` — confirming the whole pipeline
+(not just `buildBlocks()` in isolation) produces a real superset block from the actual seed data
+shape, not just synthetic test fixtures.
+
+Grepped the whole `app/src` tree for every existing usage of `ProgramScheduleExercise`'s and
+`ProgramExerciseEntity`'s positional constructors (`WorkoutViewModelTest.kt`'s
+`todaySchedule()` helper, `ProgramScheduleCalculatorTest.kt`'s existing cases) to confirm the new
+trailing-default-parameter doesn't break any existing positional call site — it doesn't, since
+Kotlin allows omitting trailing parameters that have defaults in positional calls.
+`ProgramDayWorkoutPlanner.kt`/`SeedData.kt`/`DatabaseSeeder.kt` have no `androidx.lifecycle`/Compose
+dependency, so unlike ViewModel/Compose-layer gates this gate's changes were all standalone-
+verifiable — no manual-trace-only layer this time. No `strings.xml` changes this gate (no new
+user-facing text).

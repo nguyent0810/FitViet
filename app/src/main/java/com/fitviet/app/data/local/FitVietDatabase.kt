@@ -66,7 +66,9 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 40 raised this from 8 to 9: 5 new nullable workout-share columns on `community_posts`.
     // Gate 44 raised this from 9 to 10: new `involvementPercents` column on `exercises` (reuses
     // Gate 38's List<Int> Converters pair — no new converter needed).
-    version = 10,
+    // Gate 47 raised this from 10 to 11: new nullable `supersetGroup` column on
+    // `program_exercises`.
+    version = 11,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

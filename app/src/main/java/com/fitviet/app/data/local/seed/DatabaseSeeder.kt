@@ -102,6 +102,7 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
                         targetSets = exerciseSeed.targetSets,
                         targetRepsMin = exerciseSeed.targetRepsMin,
                         targetRepsMax = exerciseSeed.targetRepsMax,
+                        supersetGroup = exerciseSeed.supersetGroup,
                     )
                 }
                 if (programExercises.isNotEmpty()) database.programExerciseDao().insertAll(programExercises)

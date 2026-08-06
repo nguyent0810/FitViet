@@ -32,4 +32,11 @@ data class ProgramExerciseEntity(
     val targetSets: Int,
     val targetRepsMin: Int,
     val targetRepsMax: Int,
+    /** Null = straight sets. Two rows in the same [programDayId] sharing the same non-null value
+     * form a superset pair (Gate 47) — any other arrangement (a lone value, 3+ rows sharing one,
+     * or two matching rows that aren't adjacent by [orderIndex]) is treated as malformed and each
+     * row degrades back to straight sets rather than being dropped. Deliberately authored per
+     * program day, not inferred from muscle group, since real supersets commonly pair opposing or
+     * unrelated muscles. */
+    val supersetGroup: String? = null,
 )

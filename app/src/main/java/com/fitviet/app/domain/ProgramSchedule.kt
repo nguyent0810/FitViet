@@ -12,6 +12,8 @@ data class ProgramScheduleExercise(
     val targetSets: Int,
     val targetRepsMin: Int,
     val targetRepsMax: Int,
+    /** See [com.fitviet.app.data.local.entity.ProgramExerciseEntity.supersetGroup]. */
+    val supersetGroup: String? = null,
 )
 
 /** One calendar-weekday row of a program's real weekly schedule (2b), replacing the old static
@@ -48,6 +50,7 @@ object ProgramScheduleCalculator {
                         targetSets = programExercise.targetSets,
                         targetRepsMin = programExercise.targetRepsMin,
                         targetRepsMax = programExercise.targetRepsMax,
+                        supersetGroup = programExercise.supersetGroup,
                     )
                 }
             ProgramScheduleDay(
