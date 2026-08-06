@@ -8,6 +8,8 @@ package com.fitviet.app.domain
  * [com.fitviet.app.util.labelRes] for the display-label lookup) — this package is the app's pure,
  * Room/Compose-free domain layer, standalone-`kotlinc`-verified on every gate.
  */
-enum class MuscleGroup { CHEST, BACK, LEGS, SHOULDERS, ARMS, CORE }
+enum class MuscleGroup {
+    CHEST, BACK, LEGS, GLUTEUS, DELTOIDS, BICEPS, TRICEPS, FOREARM, ABS, FUNCTIONAL, CARDIO, STRETCHING
+}
 
 enum class MovementType { COMPOUND, ISOLATION }

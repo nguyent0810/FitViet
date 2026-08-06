@@ -314,7 +314,7 @@ private fun MuscleBalanceCard(workload: List<MuscleGroupWorkload>) {
                         color = TextBody,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.width(64.dp),
+                        modifier = Modifier.width(80.dp),
                     )
                     Box(
                         modifier = Modifier

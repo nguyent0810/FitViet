@@ -1211,3 +1211,25 @@ Gradle itself remains unreachable in this environment (no wrapper/installed `gra
 
 ### Push
 Committed and pushed directly to `master` (small, isolated, no schema/behavior risk to other features).
+
+## Gate 23 — Expand muscle-group taxonomy to 12 categories
+
+### What was built
+Expanded `MuscleGroup` (`domain/ExerciseCategory.kt`) from 6 values (CHEST, BACK, LEGS, SHOULDERS, ARMS, CORE) to 12, matching a reference competitor app's breakdown the user asked for: CHEST, BACK, LEGS, GLUTEUS, DELTOIDS, BICEPS, TRICEPS, FOREARM, ABS, FUNCTIONAL, CARDIO, STRETCHING. Confirmed via research first (storage is `muscleGroupCode: String` = `MuscleGroup.name`, no `TypeConverter`/ordinal, never serialized into program export/import JSON, `MovementType` is a genuinely separate axis and stayed untouched) before touching anything.
+- SHOULDERS → DELTOIDS, ARMS split into BICEPS/TRICEPS, CORE → ABS; 4 new categories (GLUTEUS, FOREARM, FUNCTIONAL, CARDIO, STRETCHING) added with zero exercises assigned yet — the workload chart already renders zero-set groups, so this is a no-op there until exercises use them.
+- `util/ExerciseLabels.kt`'s exhaustive `when` and both `strings.xml`/`values-en/strings.xml` updated for all 12 labels.
+- `SeedData.kt`: reassigned `muscleGroupCode` on the 5 affected exercises (shoulder press/lateral raise → DELTOIDS, barbell curl → BICEPS, triceps pushdown → TRICEPS, crunch → ABS).
+- `FitVietDatabase.kt`: version 3 → 4 (destructive-migration policy from Gate 15/19) — necessary because `DatabaseSeeder` never updates classification codes on already-seeded rows, only inserts missing-by-name exercises, so a real device that already seeded the old codes needed a forced wipe+reseed or those rows would silently drop out of the muscle-workload chart.
+- `DashboardScreen.kt`'s `MuscleBalanceCard` label column widened 64dp → 80dp for the longer new Vietnamese labels ("Chức năng", "Cẳng tay", "Tay trước"); already had `maxLines=1`+ellipsis so this was a soft improvement, not a fix for a hard bug. Diary's equivalent card needed no change (no fixed-width label there).
+
+### Verification
+No working Gradle in this environment (still unreachable — no wrapper, no installed `gradle`), so used the project's established fallback toolchain, but went further than a static read-through this time:
+- Standalone-compiled the pure domain package (`ExerciseCategory.kt` + `WorkoutComposition.kt`) plus `WorkoutCompositionCalculatorTest.kt` against a real `junit-4.13.2.jar` using Android Studio's bundled `kotlinc` — a genuine compiler run, not just codex reading the diff. Zero errors both times (main package alone, then with the test file added).
+- Compiled both `values/strings.xml` and `values-en/strings.xml` through the real `aapt2` binary — zero errors, confirming the new resource entries are valid and match every `R.string.muscle_group_*` reference used in code.
+- Full-codebase grep confirmed zero remaining references to the old `MuscleGroup.SHOULDERS`/`.ARMS`/`.CORE` constants anywhere (production or test code).
+
+### Codex review
+One `codex exec` round on the staged diff — no findings. Independently re-verified the same 5 seed reassignments, the exhaustive `labelRes()` mapping, the Room version-bump justification (confirmed `DatabaseSeeder`/`ExerciseDao` have no update-existing-row path), and that `DashboardScreen.kt`'s diff was exactly the one width change.
+
+### Push
+Committed and pushed directly to `master`.

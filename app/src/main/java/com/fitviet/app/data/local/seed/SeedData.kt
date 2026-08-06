@@ -102,7 +102,7 @@ object SeedData {
             suggestedRepsMin = 8,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 90,
-            muscleGroupCode = MuscleGroup.SHOULDERS.name,
+            muscleGroupCode = MuscleGroup.DELTOIDS.name,
             movementType = MovementType.COMPOUND.name,
         ),
         // Superset pair (2c demo): "↓ không nghỉ ↓" between A1/A2, matching the prototype's
@@ -146,7 +146,7 @@ object SeedData {
             suggestedRepsMin = 12,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
-            muscleGroupCode = MuscleGroup.SHOULDERS.name,
+            muscleGroupCode = MuscleGroup.DELTOIDS.name,
             movementType = MovementType.ISOLATION.name,
         ),
         // Gate 9 — library expansion covering the muscle groups 1c/1e's original 4 exercises left
@@ -251,7 +251,7 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 12,
             suggestedRestSeconds = 60,
-            muscleGroupCode = MuscleGroup.ARMS.name,
+            muscleGroupCode = MuscleGroup.BICEPS.name,
             movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
@@ -271,7 +271,7 @@ object SeedData {
             suggestedRepsMin = 10,
             suggestedRepsMax = 15,
             suggestedRestSeconds = 60,
-            muscleGroupCode = MuscleGroup.ARMS.name,
+            muscleGroupCode = MuscleGroup.TRICEPS.name,
             movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(
@@ -331,7 +331,7 @@ object SeedData {
             suggestedRepsMin = 15,
             suggestedRepsMax = 20,
             suggestedRestSeconds = 45,
-            muscleGroupCode = MuscleGroup.CORE.name,
+            muscleGroupCode = MuscleGroup.ABS.name,
             movementType = MovementType.ISOLATION.name,
         ),
         ExerciseEntity(

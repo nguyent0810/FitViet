@@ -46,7 +46,12 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // version bump or an explicit Migration. There are no shipped installs to preserve data for
     // yet, so destructive fallback (wipe + reseed from scratch) is the correct, simplest policy —
     // not a real Migration, which would be premature complexity pre-release.
-    version = 3,
+    // Gate 23 raised this from 3 to 4: the table shape didn't change, but MuscleGroup's enum
+    // constants were renamed/split (SHOULDERS->DELTOIDS, ARMS->BICEPS/TRICEPS, CORE->ABS) and
+    // exercises.muscleGroupCode stores the enum's raw name string with no TypeConverter — a device
+    // that already seeded the old codes needs a forced wipe+reseed or those rows would silently
+    // drop out of the muscle-workload chart (unrecognized codes are excluded, not migrated).
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

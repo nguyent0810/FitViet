@@ -9,7 +9,7 @@ class WorkoutCompositionCalculatorTest {
     private val since = LocalDate.of(2026, 7, 1)
 
     @Test
-    fun `muscleGroupWorkload returns all six groups with zero entries when there are no sets`() {
+    fun `muscleGroupWorkload returns all groups with zero entries when there are no sets`() {
         val result = WorkoutCompositionCalculator.muscleGroupWorkload(emptyList(), since)
         assertEquals(MuscleGroup.entries.size, result.size)
         assertEquals(MuscleGroup.entries.toList(), result.map { it.muscleGroup })
