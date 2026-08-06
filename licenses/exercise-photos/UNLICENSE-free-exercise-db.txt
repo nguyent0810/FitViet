@@ -138,6 +138,20 @@ Files used (app/src/main/res/drawable-nodpi/):
   pushup_wide_0.jpg, pushup_wide_1.jpg                   <- exercises/Push-Up_Wide/{0,1}.jpg
   incline_pushup_0.jpg, incline_pushup_1.jpg             <- exercises/Incline_Push-Up/{0,1}.jpg
   flat_bench_cable_flyes_0.jpg, flat_bench_cable_flyes_1.jpg <- exercises/Flat_Bench_Cable_Flyes/{0,1}.jpg
+  -- Gate 33 additions (Back) --
+  pullups_0.jpg, pullups_1.jpg                           <- exercises/Pullups/{0,1}.jpg
+  chinup_0.jpg, chinup_1.jpg                             <- exercises/Chin-Up/{0,1}.jpg
+  one_arm_dumbbell_row_0.jpg, one_arm_dumbbell_row_1.jpg <- exercises/One-Arm_Dumbbell_Row/{0,1}.jpg
+  seated_cable_rows_0.jpg, seated_cable_rows_1.jpg       <- exercises/Seated_Cable_Rows/{0,1}.jpg
+  t_bar_row_0.jpg, t_bar_row_1.jpg                       <- exercises/T-Bar_Row_with_Handle/{0,1}.jpg
+  close_grip_front_lat_pulldown_0.jpg, close_grip_front_lat_pulldown_1.jpg <- exercises/Close-Grip_Front_Lat_Pulldown/{0,1}.jpg
+  one_arm_lat_pulldown_0.jpg, one_arm_lat_pulldown_1.jpg <- exercises/One_Arm_Lat_Pulldown/{0,1}.jpg
+  barbell_shrug_0.jpg, barbell_shrug_1.jpg               <- exercises/Barbell_Shrug/{0,1}.jpg
+  dumbbell_shrug_0.jpg, dumbbell_shrug_1.jpg             <- exercises/Dumbbell_Shrug/{0,1}.jpg
+  hyperextensions_0.jpg, hyperextensions_1.jpg           <- exercises/Hyperextensions_Back_Extensions/{0,1}.jpg
+  rack_pulls_0.jpg, rack_pulls_1.jpg                     <- exercises/Rack_Pulls/{0,1}.jpg
+  inverted_row_0.jpg, inverted_row_1.jpg                 <- exercises/Inverted_Row/{0,1}.jpg
+  bent_over_one_arm_row_0.jpg, bent_over_one_arm_row_1.jpg <- exercises/Bent_Over_One-Arm_Long_Bar_Row/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

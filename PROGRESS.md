@@ -1382,3 +1382,17 @@ Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 2
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 33 (Back) next.
+
+## Gate 33 — Exercise library expansion: Back (8/9 gates)
+
+### What was built
+13 new BACK exercises (the original 14 already had 3: Deadlift, Lat Pulldown, Bent Over Row). Pullups/Chin-Up, three row variants (one-arm dumbbell, seated cable, T-bar), two more lat pulldown variants (close-grip, one-arm), shrugs (barbell/dumbbell), Hyperextensions, Rack Pulls, Inverted Row, and a landmine-style one-arm row.
+
+### Codex review
+One round. No high/medium findings. Specifically re-verified (given Gates 29/32 both had real near-duplicate findings) that `BACK_CLOSE_GRIP_LAT_PULLDOWN` is genuinely differentiated from the existing wide-grip `LAT_PULLDOWN` (explicit "hẹp hơn vai" vs "rộng hơn vai" in the instructions), and that `BACK_BENT_OVER_ONE_ARM_ROW` (landmine, one-arm) is genuinely distinct from the existing two-hand `BENT_OVER_ROW`. Also asked codex for independent judgment on classifying shrugs under BACK vs DELTOIDS given the 12-category taxonomy has no dedicated traps bucket — confirmed BACK is the better fit. One low-severity fix: `BACK_T_BAR_ROW` listed "Xô" (lats) as both primary and secondary muscle — corrected primary to "Lưng giữa" (middle back) per the source dataset's own classification, keeping lats as secondary.
+
+### Verification
+Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 284 files, count/duplicate checks clean (142 exercises / 142 photo entries / 142 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 34 (Legs) — the final gate of this expansion — next.

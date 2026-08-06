@@ -185,6 +185,20 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.CHEST_PUSHUP_WIDE to listOf(R.drawable.pushup_wide_0, R.drawable.pushup_wide_1),
     SeedExerciseNames.CHEST_INCLINE_PUSHUP to listOf(R.drawable.incline_pushup_0, R.drawable.incline_pushup_1),
     SeedExerciseNames.CHEST_FLAT_CABLE_FLYES to listOf(R.drawable.flat_bench_cable_flyes_0, R.drawable.flat_bench_cable_flyes_1),
+    // Gate 33 — Back library expansion
+    SeedExerciseNames.BACK_PULLUPS to listOf(R.drawable.pullups_0, R.drawable.pullups_1),
+    SeedExerciseNames.BACK_CHINUP to listOf(R.drawable.chinup_0, R.drawable.chinup_1),
+    SeedExerciseNames.BACK_ONE_ARM_DUMBBELL_ROW to listOf(R.drawable.one_arm_dumbbell_row_0, R.drawable.one_arm_dumbbell_row_1),
+    SeedExerciseNames.BACK_SEATED_CABLE_ROW to listOf(R.drawable.seated_cable_rows_0, R.drawable.seated_cable_rows_1),
+    SeedExerciseNames.BACK_T_BAR_ROW to listOf(R.drawable.t_bar_row_0, R.drawable.t_bar_row_1),
+    SeedExerciseNames.BACK_CLOSE_GRIP_LAT_PULLDOWN to listOf(R.drawable.close_grip_front_lat_pulldown_0, R.drawable.close_grip_front_lat_pulldown_1),
+    SeedExerciseNames.BACK_ONE_ARM_LAT_PULLDOWN to listOf(R.drawable.one_arm_lat_pulldown_0, R.drawable.one_arm_lat_pulldown_1),
+    SeedExerciseNames.BACK_BARBELL_SHRUG to listOf(R.drawable.barbell_shrug_0, R.drawable.barbell_shrug_1),
+    SeedExerciseNames.BACK_DUMBBELL_SHRUG to listOf(R.drawable.dumbbell_shrug_0, R.drawable.dumbbell_shrug_1),
+    SeedExerciseNames.BACK_HYPEREXTENSION to listOf(R.drawable.hyperextensions_0, R.drawable.hyperextensions_1),
+    SeedExerciseNames.BACK_RACK_PULLS to listOf(R.drawable.rack_pulls_0, R.drawable.rack_pulls_1),
+    SeedExerciseNames.BACK_INVERTED_ROW to listOf(R.drawable.inverted_row_0, R.drawable.inverted_row_1),
+    SeedExerciseNames.BACK_BENT_OVER_ONE_ARM_ROW to listOf(R.drawable.bent_over_one_arm_row_0, R.drawable.bent_over_one_arm_row_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()
