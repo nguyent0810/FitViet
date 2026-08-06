@@ -2622,3 +2622,30 @@ Kotlin allows omitting trailing parameters that have defaults in positional call
 dependency, so unlike ViewModel/Compose-layer gates this gate's changes were all standalone-
 verifiable — no manual-trace-only layer this time. No `strings.xml` changes this gate (no new
 user-facing text).
+
+### Independent review (background agent, general-purpose) — CLEAN
+Independently re-copied the source tree into a fresh scratch dir and re-ran the full standalone
+compile + `JUnitCore` pass itself rather than trusting the "OK (17 tests)" claim — confirmed clean
+compile and reproduced `OK (17 tests)`, cross-checking the 10+7 `@Test` count against the actual
+test files. Specifically hand-traced `buildBlocks()` against adversarial shapes beyond what the
+committed unit tests cover: a group split by an unrelated item in between (`[A, null, A]`) — both
+degrade to straight, no cross-pairing; two distinct groups interleaved (`[A, B, A, B]`) — all four
+degrade to straight; a group value reused across 4 items (`[A, A, A, A]`) — confirmed no off-by-one
+pairs the first two, since `groupSizes["A"] == 4 != 2`; confirmed `groupSizes` is computed once from
+the untouched original list before the mutation loop runs, not from partially-consumed state.
+Traced `totalRounds`'s `coerceAtLeast(1)` floor through to every downstream consumer
+(`WorkoutViewModel.kt`, the superset screens) and confirmed a degenerate 0/negative value is
+structurally unreachable. Verified the "imports default to no grouping" claim by absence, not by
+convention — grepped the whole repo for every `supersetGroup` occurrence and confirmed it's genuinely
+missing from `ProgramTransfer.kt`/`ProgramTransferExercise`/`exportProgram()`, and read
+`importTransaction()`'s literal `ProgramExerciseEntity(...)` call to confirm no argument sets it.
+Confirmed the DB version comment trail has no gaps or duplicates across all 8 prior bumps. Grepped
+every `ProgramExerciseEntity(`/`ProgramScheduleExercise(`/`ProgramDayWorkoutItem(` construction site
+in the whole app/src tree (main+test) to confirm nothing besides the intended files constructs
+them, and that `WorkoutViewModelTest.kt`'s existing 5-arg positional call is unaffected by the new
+trailing default parameter. Verified both hand-authored seed pairings are genuinely adjacent in
+list-literal order and neither day reuses a group letter across separate intended pairs. Zero
+findings at any severity.
+
+### Push
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
