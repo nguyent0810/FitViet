@@ -2032,5 +2032,18 @@ refactor (confirmed by diffing the extracted functions' bodies against the pre-e
 a single-module app (Kotlin `internal` is module-scoped, not package-scoped). Both `strings.xml`/
 `values-en/strings.xml` parsed as valid XML.
 
+### Independent review (background agent, general-purpose) — CLEAN
+Independently re-ran `CommunityFilterTest.kt` for real via `JUnitCore` (not just re-compiled) —
+`OK (4 tests)`, confirmed. Re-verified `formatVi`/`formatMinutesSeconds` overload resolution against
+`util/Formatting.kt`'s real signatures, the `internal` cross-package `SummaryTile` access against
+`settings.gradle.kts` (confirmed genuinely single-module, `include(":app")` only, so this is legal
+Kotlin visibility, not a missed compile error), and — the highest-value check — diffed
+`PostAuthorHeader`/`PostLikeCommentRow`'s extracted bodies against the pre-extraction inline code in
+`PostCard` and confirmed the refactor is a pure cut-and-paste with no dropped modifiers or
+reordering, so the 3 pre-existing post types (SHARE/QA/PROGRESS) render identically to before this
+gate. Cross-checked the plan's exact stat ordering (time / total kg / streak) and Gate 40's commit
+message confirming feed rendering was genuinely untouched before this gate. Zero findings at any
+severity.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
