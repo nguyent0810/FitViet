@@ -152,6 +152,20 @@ Files used (app/src/main/res/drawable-nodpi/):
   rack_pulls_0.jpg, rack_pulls_1.jpg                     <- exercises/Rack_Pulls/{0,1}.jpg
   inverted_row_0.jpg, inverted_row_1.jpg                 <- exercises/Inverted_Row/{0,1}.jpg
   bent_over_one_arm_row_0.jpg, bent_over_one_arm_row_1.jpg <- exercises/Bent_Over_One-Arm_Long_Bar_Row/{0,1}.jpg
+  -- Gate 34 additions (Legs, final gate of the expansion) --
+  front_squat_0.jpg, front_squat_1.jpg                   <- exercises/Front_Squat_Clean_Grip/{0,1}.jpg
+  goblet_squat_0.jpg, goblet_squat_1.jpg                 <- exercises/Goblet_Squat/{0,1}.jpg
+  barbell_lunge_0.jpg, barbell_lunge_1.jpg               <- exercises/Barbell_Lunge/{0,1}.jpg
+  leg_extensions_0.jpg, leg_extensions_1.jpg             <- exercises/Leg_Extensions/{0,1}.jpg
+  lying_leg_curls_0.jpg, lying_leg_curls_1.jpg           <- exercises/Lying_Leg_Curls/{0,1}.jpg
+  seated_leg_curl_0.jpg, seated_leg_curl_1.jpg           <- exercises/Seated_Leg_Curl/{0,1}.jpg
+  romanian_deadlift_0.jpg, romanian_deadlift_1.jpg       <- exercises/Romanian_Deadlift/{0,1}.jpg
+  sumo_deadlift_0.jpg, sumo_deadlift_1.jpg               <- exercises/Sumo_Deadlift/{0,1}.jpg
+  glute_ham_raise_0.jpg, glute_ham_raise_1.jpg           <- exercises/Glute_Ham_Raise/{0,1}.jpg
+  standing_calf_raises_0.jpg, standing_calf_raises_1.jpg <- exercises/Standing_Calf_Raises/{0,1}.jpg
+  seated_calf_raise_0.jpg, seated_calf_raise_1.jpg       <- exercises/Seated_Calf_Raise/{0,1}.jpg
+  thigh_abductor_0.jpg, thigh_abductor_1.jpg             <- exercises/Thigh_Abductor/{0,1}.jpg
+  thigh_adductor_0.jpg, thigh_adductor_1.jpg             <- exercises/Thigh_Adductor/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

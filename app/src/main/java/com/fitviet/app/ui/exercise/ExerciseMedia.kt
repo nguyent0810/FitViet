@@ -199,6 +199,20 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.BACK_RACK_PULLS to listOf(R.drawable.rack_pulls_0, R.drawable.rack_pulls_1),
     SeedExerciseNames.BACK_INVERTED_ROW to listOf(R.drawable.inverted_row_0, R.drawable.inverted_row_1),
     SeedExerciseNames.BACK_BENT_OVER_ONE_ARM_ROW to listOf(R.drawable.bent_over_one_arm_row_0, R.drawable.bent_over_one_arm_row_1),
+    // Gate 34 — Legs library expansion (final gate)
+    SeedExerciseNames.LEGS_FRONT_SQUAT to listOf(R.drawable.front_squat_0, R.drawable.front_squat_1),
+    SeedExerciseNames.LEGS_GOBLET_SQUAT to listOf(R.drawable.goblet_squat_0, R.drawable.goblet_squat_1),
+    SeedExerciseNames.LEGS_BARBELL_LUNGE to listOf(R.drawable.barbell_lunge_0, R.drawable.barbell_lunge_1),
+    SeedExerciseNames.LEGS_LEG_EXTENSIONS to listOf(R.drawable.leg_extensions_0, R.drawable.leg_extensions_1),
+    SeedExerciseNames.LEGS_LYING_LEG_CURL to listOf(R.drawable.lying_leg_curls_0, R.drawable.lying_leg_curls_1),
+    SeedExerciseNames.LEGS_SEATED_LEG_CURL to listOf(R.drawable.seated_leg_curl_0, R.drawable.seated_leg_curl_1),
+    SeedExerciseNames.LEGS_ROMANIAN_DEADLIFT to listOf(R.drawable.romanian_deadlift_0, R.drawable.romanian_deadlift_1),
+    SeedExerciseNames.LEGS_SUMO_DEADLIFT to listOf(R.drawable.sumo_deadlift_0, R.drawable.sumo_deadlift_1),
+    SeedExerciseNames.LEGS_GLUTE_HAM_RAISE to listOf(R.drawable.glute_ham_raise_0, R.drawable.glute_ham_raise_1),
+    SeedExerciseNames.LEGS_STANDING_CALF_RAISE to listOf(R.drawable.standing_calf_raises_0, R.drawable.standing_calf_raises_1),
+    SeedExerciseNames.LEGS_SEATED_CALF_RAISE to listOf(R.drawable.seated_calf_raise_0, R.drawable.seated_calf_raise_1),
+    SeedExerciseNames.LEGS_THIGH_ABDUCTOR to listOf(R.drawable.thigh_abductor_0, R.drawable.thigh_abductor_1),
+    SeedExerciseNames.LEGS_THIGH_ADDUCTOR to listOf(R.drawable.thigh_adductor_0, R.drawable.thigh_adductor_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()

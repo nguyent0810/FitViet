@@ -1396,3 +1396,29 @@ Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 2
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 34 (Legs) — the final gate of this expansion — next.
+
+## Gate 34 — Exercise library expansion: Legs (9/9, final gate)
+
+### What was built
+13 new LEGS exercises (the original 14 already had 3: Squat, Leg Press, Lunge). Front Squat, Goblet Squat, Barbell Lunge, Leg Extensions, Lying/Seated Leg Curl, Romanian Deadlift, Sumo Deadlift, Glute Ham Raise, Standing/Seated Calf Raise, Thigh Abductor/Adductor.
+
+### Codex review — final session-wide check
+One round, including an explicit request to cross-check the ENTIRE `SeedData.kt` file (not just this gate's diff), given every prior "high overlap risk" gate this session (26/29/32/33) had turned up at least one real duplicate or classification issue. Specifically re-verified: Front Squat vs. the existing back Squat (front-rack/clean-grip vs. back-rack, genuinely distinct), Barbell Lunge vs. the existing Dumbbell Lunge (bar-on-back stability difference, not just a swapped equipment noun), and all three deadlift-family exercises now in the library (conventional Deadlift, Romanian Deadlift, Sumo Deadlift) confirmed genuinely technique-distinct. Two low-severity notes: Romanian Deadlift's instructions didn't fully specify the bottom position (bar staying off the floor between reps) — fixed by adding that detail to remove ambiguity with the conventional deadlift; and FOREARM's final count (9) is the smallest of the 12 groups — not a defect, just a natural consequence of that muscle group having fewer genuinely distinct, well-known gym exercises available in the source dataset to curate from.
+
+### Final verification (whole 9-gate expansion)
+- All 26 downloads verified, `aapt2 compile --dir` clean on the complete 310-file `drawable-nodpi/` directory.
+- Exactly 155 `ExerciseEntity` blocks / 155 `EXERCISE_PHOTOS` entries / 155 `SeedExerciseNames` constants confirmed session-wide, zero duplicate Vietnamese names across the entire file.
+- Final per-muscle-group distribution (all 12 groups populated, up from 5 groups at zero before this project):
+
+| Group | Count | | Group | Count |
+|---|---:|---|---|---:|
+| Chest | 16 | | Forearm | 9 |
+| Back | 16 | | Abs | 13 |
+| Legs | 16 | | Functional | 10 |
+| Gluteus | 10 | | Cardio | 11 |
+| Deltoids | 15 | | Stretching | 13 |
+| Biceps | 13 | | **Total** | **155** |
+| Triceps | 13 | | | |
+
+### Push
+Committed and pushed directly to `master`. This closes the entire 9-gate exercise library expansion (Gates 26-34): 141 new exercises added (14 original + 141 = 155), all 12 muscle groups now have real coverage, every gate individually codex-reviewed with real findings caught and fixed (Gate 29's duplicate dip removed, Gate 30's behind-the-neck-press safety reclassification, Gate 31's neck-pull cue fix, Gate 32's duplicate wide-pushup fix, Gate 33's muscle-label correction, Gate 34's Romanian Deadlift clarification).
