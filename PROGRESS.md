@@ -1700,5 +1700,38 @@ hour/minute draft when it reopens for a *different* reminder (not stale from whi
 last edited), no stray `androidx.compose.foundation.layout.weight` import, both
 `strings.xml`/`values-en/strings.xml` well-formed XML with every new key present in both.
 
+### Independent review (background agent, general-purpose)
+Standalone `kotlinc` compile of `Converters.kt`/`ReminderEntity.kt`/`ReminderDao.kt`/
+`RemindersRepository.kt`/`FitVietDatabase.kt` together — clean. The review's main task was to
+settle the `List<Int>` vs `List<String>` `@TypeConverter` erasure question flagged as this gate's
+riskiest unknown: it `javap`'d the compiled `Converters.class` and confirmed the four converter
+methods compile to distinct JVM method names/signatures (Kotlin would refuse a platform-declaration
+clash otherwise), and that Room/KSP resolves converters against the compile-time-resolved generic
+field type, not the erased JVM signature — this is standard, well-established Room behavior, not a
+risk. Schema bump, day-toggle/sort logic, and the time-sheet's `remember(reminder.id)` draft-reset
+behavior on dismiss/reopen were all independently re-confirmed clean.
+
+Two Medium findings, both fixed:
+1. **Stale snooze on re-enable.** `toggleEnabled()` only flipped `enabled`, never
+   `snoozedUntilEpochDay` — disabling a snoozed reminder then re-enabling it landed the state pill
+   on "Đã hoãn" instead of "Bật," since the old snooze value was never cleared. Fixed: `toggleEnabled`
+   now also clears `snoozedUntilEpochDay`, making Off→On a full reset.
+2. **No delete confirmation.** `ReminderCard`'s "Xoá" action deleted immediately on tap, breaking
+   from this app's own established destructive-delete pattern (`MeasurementHistorySheet.kt`'s
+   `AlertDialog` confirm step before deleting a measurement) — a mis-tap next to "Đổi giờ"/"Hoãn"
+   permanently deleted the reminder with no undo. Fixed: `RemindersScreen` now stages the tapped
+   reminder in `pendingDelete` state and shows an `AlertDialog` (title/body/Xoá/Huỷ), mirroring
+   `MeasurementHistorySheet` exactly, before calling `viewModel.deleteReminder`. 4 new strings added
+   (vi + en): `reminders_delete_confirm_{title,body,yes,cancel}`.
+
+Also fixed the reported cosmetic nit: `AppContainer.kt`'s `RemindersRepository` import was out of
+alphabetical order (sat after `RoomExerciseRepository`) — reordered.
+
+Re-verified after fixes: `RemindersViewModel.kt`/`RemindersScreen.kt` re-read manually (real
+`androidx.lifecycle`/Compose, not standalone-compilable without the full Compose stub set per this
+session's established split) — the new `AlertDialog` wiring matches `MeasurementHistorySheet`'s
+proven pattern field-for-field; both `strings.xml`/`values-en/strings.xml` remain well-formed with
+the 4 new keys present in both.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.

@@ -14,13 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,6 +55,7 @@ import java.time.DayOfWeek
 @Composable
 fun RemindersScreen(viewModel: RemindersViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var pendingDelete by remember { mutableStateOf<ReminderEntity?>(null) }
 
     Column(
         modifier = Modifier
@@ -87,7 +91,7 @@ fun RemindersScreen(viewModel: RemindersViewModel, onBack: () -> Unit) {
                         onToggleSnooze = { viewModel.toggleSnooze(reminder) },
                         onToggleDay = { day -> viewModel.toggleDay(reminder, day) },
                         onChangeTimeClick = { viewModel.openTimeSheet(reminder) },
-                        onDelete = { viewModel.deleteReminder(reminder) },
+                        onDelete = { pendingDelete = reminder },
                     )
                 }
             }
@@ -108,6 +112,25 @@ fun RemindersScreen(viewModel: RemindersViewModel, onBack: () -> Unit) {
 
     uiState.editingReminder?.let { reminder ->
         TimeChangeSheet(reminder = reminder, onSave = viewModel::saveTime, onDismiss = viewModel::dismissTimeSheet)
+    }
+
+    val toDelete = pendingDelete
+    if (toDelete != null) {
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text(text = stringResource(R.string.reminders_delete_confirm_title)) },
+            text = { Text(text = stringResource(R.string.reminders_delete_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteReminder(toDelete); pendingDelete = null }) {
+                    Text(text = stringResource(R.string.reminders_delete_confirm_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) {
+                    Text(text = stringResource(R.string.reminders_delete_confirm_cancel))
+                }
+            },
+        )
     }
 }
 

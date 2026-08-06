@@ -32,8 +32,10 @@ class RemindersViewModel(private val repository: RemindersRepository) : ViewMode
 
     fun deleteReminder(reminder: ReminderEntity) = viewModelScope.launch { repository.delete(reminder) }
 
+    /** Disabling/re-enabling is a full reset — it also clears any snooze, otherwise re-enabling
+     * a snoozed reminder would silently land back on "Đã hoãn" instead of "Bật". */
     fun toggleEnabled(reminder: ReminderEntity) = viewModelScope.launch {
-        repository.update(reminder.copy(enabled = !reminder.enabled))
+        repository.update(reminder.copy(enabled = !reminder.enabled, snoozedUntilEpochDay = null))
     }
 
     /** Snoozing/un-snoozing is a manual toggle, not date-evaluated — see [ReminderEntity]'s doc

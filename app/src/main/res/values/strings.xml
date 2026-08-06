@@ -395,4 +395,8 @@
     <string name="reminders_time_sheet_hour">Giờ</string>
     <string name="reminders_time_sheet_minute">Phút</string>
     <string name="reminders_time_sheet_save">Lưu</string>
+    <string name="reminders_delete_confirm_title">Xoá nhắc nhở này?</string>
+    <string name="reminders_delete_confirm_body">Hành động này không thể hoàn tác.</string>
+    <string name="reminders_delete_confirm_yes">Xoá</string>
+    <string name="reminders_delete_confirm_cancel">Huỷ</string>
 </resources>

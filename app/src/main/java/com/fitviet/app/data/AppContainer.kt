@@ -10,8 +10,8 @@ import com.fitviet.app.data.repository.HandbookRepository
 import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
-import com.fitviet.app.data.repository.RoomExerciseRepository
 import com.fitviet.app.data.repository.RemindersRepository
+import com.fitviet.app.data.repository.RoomExerciseRepository
 import com.fitviet.app.data.repository.RoomProgramRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
 import com.fitviet.app.data.repository.SettingsRepository
