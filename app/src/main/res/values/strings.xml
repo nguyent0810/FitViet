@@ -346,7 +346,7 @@
 
     <!-- 1h Community -->
     <string name="community_title">Cộng đồng</string>
-    <string name="community_add_post">+ Đăng bài</string>
+    <string name="community_add_post">+ Chia sẻ buổi tập</string>
     <string name="community_tab_latest">Mới nhất</string>
     <string name="community_tab_qa">Hỏi đáp</string>
     <string name="community_tab_progress">Tiến bộ</string>

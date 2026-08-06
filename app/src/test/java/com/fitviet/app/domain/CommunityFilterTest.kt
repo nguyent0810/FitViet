@@ -21,11 +21,18 @@ class CommunityFilterTest {
         post(CommunityPostType.SHARE),
         post(CommunityPostType.QA),
         post(CommunityPostType.PROGRESS),
+        post(CommunityPostType.WORKOUT_SHARE),
     )
 
     @Test
     fun `tab 0 (Moi nhat) returns every post, including ones with no dedicated tab`() {
-        assertEquals(3, CommunityFilter.byTab(posts, tab = 0).size)
+        assertEquals(4, CommunityFilter.byTab(posts, tab = 0).size)
+    }
+
+    @Test
+    fun `workout-share posts (Gate 40-41) have no dedicated tab, same as generic share posts`() {
+        assertEquals(0, CommunityFilter.byTab(posts, tab = CommunityPostType.QA).count { it.postType == CommunityPostType.WORKOUT_SHARE })
+        assertEquals(0, CommunityFilter.byTab(posts, tab = CommunityPostType.PROGRESS).count { it.postType == CommunityPostType.WORKOUT_SHARE })
     }
 
     @Test

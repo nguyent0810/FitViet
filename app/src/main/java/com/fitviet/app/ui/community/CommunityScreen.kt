@@ -42,6 +42,9 @@ import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
 import com.fitviet.app.ui.theme.TextMuted
+import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.workout.SummaryTile
+import com.fitviet.app.util.formatMinutesSeconds
 import com.fitviet.app.util.formatVi
 
 private data class CommunityTab(val tab: Int, @StringRes val labelRes: Int)
@@ -70,13 +73,19 @@ fun CommunityScreen(viewModel: CommunityViewModel) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(text = stringResource(R.string.community_title), style = MaterialTheme.typography.headlineMedium)
-            // Static in the prototype too (no onClick on this label) — there's no real post-creation flow.
+            // Static (no onClick) — the real creation entry point is the "Chia sẻ lên Cộng đồng"
+            // button on the workout session-finished screen (Gate 40), not a composer reachable
+            // from here; this label just reflects what sharing now actually does.
             Text(text = stringResource(R.string.community_add_post), style = MaterialTheme.typography.labelLarge, color = Accent)
         }
         TabRow(selectedTab = uiState.selectedTab, onSelect = viewModel::selectTab)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             uiState.posts.forEach { post ->
-                PostCard(post = post, onLikeClick = { viewModel.toggleLike(post) })
+                if (post.postType == CommunityPostType.WORKOUT_SHARE) {
+                    WorkoutSharePostCard(post = post, onLikeClick = { viewModel.toggleLike(post) })
+                } else {
+                    PostCard(post = post, onLikeClick = { viewModel.toggleLike(post) })
+                }
             }
         }
     }
@@ -118,21 +127,7 @@ private fun PostCard(post: CommunityPostEntity, onLikeClick: () -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(AccentSurfaceSelected),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = post.authorInitial, style = MaterialTheme.typography.titleSmall, color = Accent)
-            }
-            Column {
-                Text(text = post.authorName, style = MaterialTheme.typography.titleSmall)
-                Text(text = post.timeLabel, style = MaterialTheme.typography.labelMedium, color = TextFaint)
-            }
-        }
+        PostAuthorHeader(post)
         Text(text = post.bodyText, style = MaterialTheme.typography.bodyMedium, color = TextBody)
         post.badgeText?.let { badge ->
             Box(
@@ -144,29 +139,102 @@ private fun PostCard(post: CommunityPostEntity, onLikeClick: () -> Unit) {
                 Text(text = badge, style = MaterialTheme.typography.labelSmall, color = Accent)
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            val likeCount = post.baseLikeCount + if (post.likedByUser) 1 else 0
-            Box(
-                modifier = Modifier.sizeIn(minWidth = 44.dp, minHeight = 44.dp).clickable(onClick = onLikeClick),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    text = "${if (post.likedByUser) "♥" else "♡"} ${formatVi(likeCount)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (post.likedByUser) Accent else TextFaint,
-                )
+        PostLikeCommentRow(post = post, onLikeClick = onLikeClick)
+    }
+}
+
+/** Feature #4b (Gate 41) — renders Gate 40's structured columns instead of freeform [CommunityPostEntity.bodyText].
+ * Reuses [PostAuthorHeader]/[PostLikeCommentRow] (identical across every post type) and
+ * [com.fitviet.app.ui.workout.SummaryTile] (the same Anton stat-tile primitive
+ * `SessionFinishedContent` uses), so a shared workout reads as a natural extension of the app's
+ * existing visual language rather than a bespoke one-off card. */
+@Composable
+private fun WorkoutSharePostCard(post: CommunityPostEntity, onLikeClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        PostAuthorHeader(post)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // No program (an ad-hoc session) -> the day label alone is the heading, not a
+            // fabricated program name — matches mismatch #4's "not every session has a program".
+            if (post.programTitle != null) {
+                Text(text = post.programTitle, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.labelMedium, color = TextMuted)
+            } else {
+                Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
             }
-            Text(
-                text = stringResource(
-                    if (post.postType == CommunityPostType.QA) R.string.community_replies else R.string.community_comments,
-                    post.commentCount,
-                ),
-                style = MaterialTheme.typography.labelMedium,
-                color = TextFaint,
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SummaryTile(
+                value = formatMinutesSeconds(post.durationSeconds ?: 0),
+                label = stringResource(R.string.workout_stat_time),
+                modifier = Modifier.weight(1f),
             )
-            if (post.hasBestAnswerMarker) {
-                Text(text = stringResource(R.string.community_best_answer), style = MaterialTheme.typography.labelMedium, color = Accent)
-            }
+            SummaryTile(
+                value = formatVi(post.totalVolumeKg ?: 0.0),
+                label = stringResource(R.string.workout_stat_volume),
+                modifier = Modifier.weight(1f),
+            )
+            SummaryTile(
+                value = formatVi(post.streakDays ?: 0),
+                label = stringResource(R.string.dashboard_stat_streak),
+                accent = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        PostLikeCommentRow(post = post, onLikeClick = onLikeClick)
+    }
+}
+
+@Composable
+private fun PostAuthorHeader(post: CommunityPostEntity) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(AccentSurfaceSelected),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = post.authorInitial, style = MaterialTheme.typography.titleSmall, color = Accent)
+        }
+        Column {
+            Text(text = post.authorName, style = MaterialTheme.typography.titleSmall)
+            Text(text = post.timeLabel, style = MaterialTheme.typography.labelMedium, color = TextFaint)
+        }
+    }
+}
+
+@Composable
+private fun PostLikeCommentRow(post: CommunityPostEntity, onLikeClick: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        val likeCount = post.baseLikeCount + if (post.likedByUser) 1 else 0
+        Box(
+            modifier = Modifier.sizeIn(minWidth = 44.dp, minHeight = 44.dp).clickable(onClick = onLikeClick),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(
+                text = "${if (post.likedByUser) "♥" else "♡"} ${formatVi(likeCount)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (post.likedByUser) Accent else TextFaint,
+            )
+        }
+        Text(
+            text = stringResource(
+                if (post.postType == CommunityPostType.QA) R.string.community_replies else R.string.community_comments,
+                post.commentCount,
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = TextFaint,
+        )
+        if (post.hasBestAnswerMarker) {
+            Text(text = stringResource(R.string.community_best_answer), style = MaterialTheme.typography.labelMedium, color = Accent)
         }
     }
 }

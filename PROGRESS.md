@@ -1977,3 +1977,60 @@ undetected."
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 41 — Workout-share: feed rendering (feature #4b)
+
+### What was built
+- `ui/community/CommunityScreen.kt` — new `WorkoutSharePostCard`, dispatched via
+  `if (post.postType == CommunityPostType.WORKOUT_SHARE)` in the feed loop instead of the generic
+  `PostCard`. Renders Gate 40's structured columns instead of freeform `bodyText`: author header
+  (unchanged), a program-title + day-label heading (falls back to day-label alone when
+  `programTitle` is null — an ad-hoc session genuinely has no program, per mismatch #4, so nothing
+  is fabricated), then 3 Anton stat tiles (time / total kg / streak) reusing
+  `ui/workout/SummaryTile` — the exact same primitive `SessionFinishedContent` uses, so a shared
+  workout reads as a natural extension of the app's existing visual language, not a bespoke card.
+  Streak tile reuses `dashboard_stat_streak` rather than a new label, for consistency with Dashboard.
+- Extracted `PostAuthorHeader`/`PostLikeCommentRow` out of the old monolithic `PostCard` so both
+  `PostCard` and the new `WorkoutSharePostCard` share the identical author/like/comment chrome
+  instead of duplicating it.
+- Header CTA label changed from "+ Đăng bài" to "+ Chia sẻ buổi tập" (vi) / "+ New post" to
+  "+ Share a workout" (en), per the plan. Still static/non-clickable, matching its pre-existing
+  behavior — the real creation entry point is Gate 40's share button on the session-finished screen,
+  not a composer reachable from this header; the doc comment was updated to say so plainly instead
+  of the now-stale "there's no real post-creation flow" comment (there is one now, just not here).
+- `domain/CommunityFilterTest.kt` — added a `WORKOUT_SHARE` post to the fixture list and 2 new test
+  cases: it appears under the "Mới nhất" (all) tab like the existing generic `SHARE` type, and it
+  never appears under either dedicated tab (Hỏi đáp / Tiến bộ) — confirms `CommunityFilter.byTab`
+  (untouched by this gate) already handles the new post type correctly with zero code changes there.
+
+### Scope decisions
+- **No new tab for workout shares.** The plan doesn't ask for one, and `CommunityFilter.byTab`'s
+  existing "tab 0 matches everything, tabs 1/2 match their exact postType" rule already places
+  `WORKOUT_SHARE` (like the pre-existing generic `SHARE`) under "Mới nhất" only — verified by test,
+  not just assumed.
+- **`SummaryTile` reused as-is** (`SurfaceCard` background + `CardBorder` outline) rather than a
+  distinct nested-tile treatment, even though the post card itself is also `SurfaceCard`-backed —
+  the 1dp border still delineates each tile, and reusing the identical primitive
+  `SessionFinishedContent` already uses was judged more valuable for visual consistency than
+  inventing a new "nested card" look for this one card type.
+
+### Verification
+Pure-domain change this gate (`CommunityFilter.byTab` itself untouched, only its test fixture
+extended) — `CommunityFilterTest.kt` has zero Android/Compose dependencies, so unlike every prior
+gate's tests it was standalone-compiled *and actually run* (not just compiled) via
+`org.junit.runner.JUnitCore`, against the corrected kotlin-stdlib-inclusive classpath recipe from
+Gate 40: `OK (4 tests)`, all passing for real, not just type-checked.
+
+`CommunityScreen.kt` (real Compose) verified by manual read-through: `WorkoutSharePostCard`'s nullable
+field handling (`post.durationSeconds ?: 0`, `post.totalVolumeKg ?: 0.0`, `post.streakDays ?: 0`,
+`post.dayLabel.orEmpty()`) matches each field's actual nullable type from `CommunityPostEntity`
+(Gate 40) with no type mismatches; `formatMinutesSeconds`/`formatVi` overloads called with the
+correct argument types (`Int`/`Double`/`Int` respectively); the extracted `PostAuthorHeader`/
+`PostLikeCommentRow` produce byte-for-byte the same Composable tree `PostCard` rendered before this
+refactor (confirmed by diffing the extracted functions' bodies against the pre-extraction original).
+`SummaryTile` is `internal` in `ui.workout` — confirmed accessible from `ui.community` since this is
+a single-module app (Kotlin `internal` is module-scoped, not package-scoped). Both `strings.xml`/
+`values-en/strings.xml` parsed as valid XML.
+
+### Push
+Pending independent review.
