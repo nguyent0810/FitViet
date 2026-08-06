@@ -397,21 +397,30 @@ class WorkoutViewModel(
     }
 
     /** Feature #4 (Gate 40) — creates a real workout-share Community post (via
-     * [CommunityRepository.shareWorkout]) from this session's already-computed summary. The
-     * [WorkoutUiState.sessionShared] check (rather than
-     * [debounced], which is keyed off a real-time clock unsuited to a one-shot terminal action)
-     * stops a fast double-tap from creating two posts. */
-    fun shareToCommunity() = viewModelScope.launch {
+     * [CommunityRepository.shareWorkout]) from this session's already-computed summary.
+     *
+     * The check-and-set for [WorkoutUiState.sessionShared] happens synchronously here, in the
+     * caller's own call frame, *before* [viewModelScope.launch] ever runs — not inside the
+     * launched coroutine after the suspending [CommunityRepository.shareWorkout] call. That
+     * ordering is load-bearing: an earlier version flipped the flag only after the suspending
+     * call returned, which left a real window open on real Android (where the DAO calls inside
+     * `shareWorkout` genuinely suspend) for a second rapid tap to also read `sessionShared ==
+     * false` and create a duplicate post — caught by independent review. Doing the check-and-set
+     * synchronously closes that window entirely, which a debounce (real-time-clock-based, used
+     * elsewhere in this file) only would have narrowed. */
+    fun shareToCommunity() {
         val state = _uiState.value
-        if (state.sessionShared) return@launch
-        communityRepository.shareWorkout(
-            programTitle = state.programTitle,
-            dayLabel = state.dayLabel,
-            durationSeconds = state.sessionElapsedSeconds,
-            totalVolumeKg = state.sessionTotalVolumeKg,
-            streakDays = state.sessionStreakDays,
-        )
+        if (state.sessionShared) return
         _uiState.update { it.copy(sessionShared = true) }
+        viewModelScope.launch {
+            communityRepository.shareWorkout(
+                programTitle = state.programTitle,
+                dayLabel = state.dayLabel,
+                durationSeconds = state.sessionElapsedSeconds,
+                totalVolumeKg = state.sessionTotalVolumeKg,
+                streakDays = state.sessionStreakDays,
+            )
+        }
     }
 
     private fun persistSet(set: LoggedSet) {

@@ -28,6 +28,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -115,6 +116,11 @@ class WorkoutViewModelTest {
         override suspend fun count(): Int = 0
         override suspend fun insertAll(posts: List<CommunityPostEntity>) {}
         override suspend fun insert(post: CommunityPostEntity): Long {
+            // A real suspension point (unlike a body with no `yield`/real I/O, which a
+            // TestDispatcher just runs to completion atomically) — needed so the "sharing twice"
+            // test below can actually exercise two shareToCommunity() coroutines interleaving,
+            // the exact scenario independent review found WorkoutViewModel wasn't guarding against.
+            yield()
             inserted += post
             return inserted.size.toLong()
         }
@@ -122,10 +128,16 @@ class WorkoutViewModelTest {
     }
 
     /** [schedules] maps programId -> its schedule; empty/missing means "no schedule for this
-     * program", which [ProgramDayWorkoutPlanner.resolveToday] treats as nothing to preview/start. */
-    private class FakeProgramRepository(private val schedules: Map<Long, List<ProgramScheduleDay>> = emptyMap()) : ProgramRepository {
+     * program", which [ProgramDayWorkoutPlanner.resolveToday] treats as nothing to preview/start.
+     * [programs] maps programId -> its full entity, for [getById] — previously always null
+     * regardless of id, which left Gate 40's `programTitle` threading with no way to be tested at
+     * all (independent review flagged this as a real coverage gap). */
+    private class FakeProgramRepository(
+        private val schedules: Map<Long, List<ProgramScheduleDay>> = emptyMap(),
+        private val programs: Map<Long, ProgramEntity> = emptyMap(),
+    ) : ProgramRepository {
         override fun observeAll(): Flow<List<ProgramEntity>> = flowOf(emptyList())
-        override suspend fun getById(id: Long): ProgramEntity? = null
+        override suspend fun getById(id: Long): ProgramEntity? = programs[id]
         override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = flowOf(schedules[programId].orEmpty())
         override fun observeActiveProgramId(): Flow<Long?> = flowOf(null)
         override suspend fun setActiveProgram(programId: Long) {}
@@ -150,6 +162,17 @@ class WorkoutViewModelTest {
         muscleGroupCode = MuscleGroup.CHEST.name,
         movementType = MovementType.COMPOUND.name,
         difficultyCode = ExerciseDifficulty.BEGINNER.name,
+    )
+
+    private fun testProgram(id: Long, titleVi: String) = ProgramEntity(
+        id = id,
+        titleVi = titleVi,
+        imageAsset = "test.png",
+        durationWeeks = 4,
+        sessionsPerWeek = 3,
+        level = "Mới bắt đầu",
+        equipment = "Phòng gym",
+        tags = emptyList(),
     )
 
     private val testExercises = listOf(
@@ -387,12 +410,17 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `sharing twice only creates one community post`() = runTest(testDispatcher) {
+    fun `sharing twice back-to-back before either coroutine resumes only creates one post`() = runTest(testDispatcher) {
         val h = Harness()
         advanceThroughEntireSession(h)
 
+        // Deliberately no scheduler.runCurrent() between these two calls — both shareToCommunity()
+        // invocations happen on this (single) calling thread before either launched coroutine has
+        // had a chance to run at all. FakeCommunityPostDao.insert's yield() then lets the two
+        // resulting coroutines genuinely interleave once the scheduler does run, reproducing the
+        // exact race independent review found: without a synchronous check-and-set in
+        // shareToCommunity() (fixed after that review), this would insert two posts.
         h.viewModel.shareToCommunity()
-        testDispatcher.scheduler.runCurrent()
         h.viewModel.shareToCommunity()
         testDispatcher.scheduler.runCurrent()
 
@@ -521,7 +549,10 @@ class WorkoutViewModelTest {
 
     @Test
     fun `a program-day session skips the picker and builds blocks from today's real schedule`() = runTest(testDispatcher) {
-        val programRepository = FakeProgramRepository(mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)))
+        val programRepository = FakeProgramRepository(
+            schedules = mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)),
+            programs = mapOf(42L to testProgram(42L, "Chương trình kiểm thử")),
+        )
         val workoutRepository = FakeWorkoutRepository()
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
@@ -536,6 +567,7 @@ class WorkoutViewModelTest {
         val state = vm.uiState.value
         assertEquals(WorkoutPhase.StraightLog, state.phase)
         assertEquals("Ngày kiểm thử", state.dayLabel)
+        assertEquals("Chương trình kiểm thử", state.programTitle)
         assertEquals(1, state.blocks.size)
         val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
         assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
@@ -543,6 +575,47 @@ class WorkoutViewModelTest {
         assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
         assertEquals(20.0, block.plannedSets.first().weightKg, 0.0) // no logged history -> default
         assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
+    }
+
+    @Test
+    fun `sharing a program-day session's post includes the program title`() = runTest(testDispatcher) {
+        val clock = FakeClock()
+        val programRepository = FakeProgramRepository(
+            schedules = mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)),
+            programs = mapOf(42L to testProgram(42L, "Chương trình kiểm thử")),
+        )
+        val communityPostDao = FakeCommunityPostDao()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = programRepository,
+            communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
+            databaseReady = CompletableDeferred(Unit),
+            programId = 42L,
+            elapsedRealtimeMillis = clock::now,
+        )
+        testDispatcher.scheduler.runCurrent()
+        fun tick() {
+            clock.advance()
+            testDispatcher.scheduler.runCurrent()
+        }
+        // One straight block with 3 planned sets — complete all 3, then finish the session.
+        repeat(2) {
+            vm.completeCurrentSet()
+            tick()
+            vm.skipRest()
+            tick()
+        }
+        vm.completeCurrentSet()
+        tick()
+        vm.advanceToNextBlock()
+        tick()
+        assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
+
+        vm.shareToCommunity()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals("Chương trình kiểm thử", communityPostDao.inserted.single().programTitle)
     }
 
     @Test

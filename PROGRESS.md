@@ -1924,5 +1924,56 @@ were hand-traced against `shareWorkout`'s exact field mapping (`programTitle`→
 `sessionTotalVolumeKg`, `streakDays`←`sessionStreakDays`) to confirm no field is silently swapped or
 dropped. Both `strings.xml`/`values-en/strings.xml` parsed as valid XML.
 
+### Independent review (background agent, general-purpose) — FIXES NEEDED, applied
+Standalone compile independently re-confirmed clean (and the reviewer first reproduced the
+kotlin-stdlib classpath bug on the *naive* recipe to verify that claim was real, not a fabricated
+excuse, before switching to the corrected one). Schema, wiring (`AppContainer`/`FitVietNavHost`
+positional argument order), the `finishSession()` double-invoke scenario, and the
+`ShareToCommunityButton` click-handler removal were all independently re-derived and confirmed
+correct — no changes needed there. The `finishSession()` double-invoke race (a second tap re-running
+`advanceToNextBlock()`/`finishSession()` before the first coroutine resolves) was traced through in
+detail and confirmed genuinely harmless (no completion-guard anywhere reads `completedAt` as a
+"don't touch again" signal, so a second `completeSession`/streak-query pair just redundantly
+converges on the same values) — left as-is, matching the plan's own PROGRESS.md write-up.
+
+**One real bug found and fixed — High: `shareToCommunity()` double-post race.** The original
+`viewModelScope.launch { val state = ...; if (state.sessionShared) return@launch; shareWorkout(...);
+update { sessionShared = true } }` read-and-later-wrote the guard flag *inside* the launched
+coroutine, both after the point where `communityRepository.shareWorkout(...)`'s real Room DAO calls
+would genuinely suspend on real Android. A second tap landing in that window would also read
+`sessionShared == false` and create a second real duplicate post. The review also correctly pointed
+out the existing "sharing twice" test couldn't have caught this: it called
+`testDispatcher.scheduler.runCurrent()` between the two `shareToCommunity()` calls, fully draining
+the first coroutine before the second was ever made — the exact interleaving that causes the bug
+never had a chance to occur in that test.
+
+**Fix**: `shareToCommunity()`'s guard check and `sessionShared = true` write now both happen
+synchronously in the caller's own call frame, *before* `viewModelScope.launch` is even entered — so
+there's no suspension point between the check and the set at all, closing the race window
+completely (stronger than the debounce pattern used elsewhere in this file, which the review noted
+was inconsistently *not* applied here despite protecting every other action from the identical
+double-tap shape).
+
+**Test fix**: `FakeCommunityPostDao.insert` now calls a real `yield()` before recording the insert —
+previously every fake `suspend fun` in this file ran to completion with no actual suspension point,
+which is why `TestDispatcher` could never interleave two coroutines regardless of call ordering. The
+"sharing twice" test was rewritten to call both `shareToCommunity()` invocations back-to-back with
+no `runCurrent()` in between (so neither coroutine has run at all when the second call is made),
+then a single `runCurrent()` — with the fix, still only 1 post; hand-verified by tracing that the
+pre-fix code would have produced 2 posts in this exact test shape once the fake could actually
+interleave (the guard read happens inside each coroutine, both would see `false` before either
+resumed past the `yield()`).
+
+**Also fixed — Medium: `programTitle` threading had zero test coverage**, since the pre-existing
+`FakeProgramRepository.getById` always returned `null` regardless of id, making it structurally
+impossible for any test to observe a populated `WorkoutUiState.programTitle` or a share post's
+`programTitle` column. `FakeProgramRepository` gained a `programs: Map<Long, ProgramEntity>` param
+(defaults to empty, so every prior test's behavior is unchanged); the existing program-day test now
+supplies a real program entity and asserts `state.programTitle`, and a new test
+(`sharing a program-day session's post includes the program title`) drives a full program-day
+session to `SessionFinished`, shares it, and asserts the persisted post's `programTitle` column
+matches — the one gap the review specifically flagged as "a future regression here... would pass CI
+undetected."
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
