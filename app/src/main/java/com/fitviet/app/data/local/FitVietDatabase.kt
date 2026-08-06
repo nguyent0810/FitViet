@@ -57,7 +57,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 25 raised this from 4 to 5: new `foods` table, plus a new `difficultyCode` column on
     // `exercises` (same rationale as Gate 23 — a device already running an earlier version needs a
     // forced recreate to pick up the new column at all, Room won't add it in place).
-    version = 5,
+    // Gate 35 raised this from 5 to 6: new `displayName`/`avatarId` columns on `settings`.
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

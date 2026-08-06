@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,7 +48,6 @@ import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.DeepSurface1
-import com.fitviet.app.ui.theme.DeepSurface2
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
@@ -65,13 +63,8 @@ import com.fitviet.app.util.kgToLb
 import java.time.LocalDate
 import kotlin.math.abs
 
-// No profile-editing screen exists in the 12-screen spec (same identity gap noted for the
-// dashboard's greeting since Gate 3) — a shared placeholder identity until a real one is built.
-private const val PLACEHOLDER_USER_NAME = "Minh Nguyễn"
-private const val PLACEHOLDER_USER_INITIAL = "M"
-
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
+fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onEditProfile: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -102,7 +95,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             }
             Text(text = stringResource(R.string.profile_back), style = MaterialTheme.typography.bodySmall, color = TextMuted)
         }
-        ProfileHeader(settings = uiState.settings)
+        ProfileHeader(settings = uiState.settings, onAvatarClick = onEditProfile)
         MeasurementsCard(
             deltas = uiState.deltas,
             weightKg = uiState.latestMeasurement?.weightKg,
@@ -119,7 +112,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
             useImperial = uiState.settings.useImperialUnits,
             onRangeSelect = viewModel::selectWeightHistoryRange,
         )
-        SettingsCard(settings = uiState.settings, viewModel = viewModel)
+        SettingsCard(settings = uiState.settings, viewModel = viewModel, onEditProfile = onEditProfile)
         DashboardWidgetsCard(settings = uiState.settings, viewModel = viewModel)
         DonateCard(donated = uiState.settings.hasDonated, onDonateClick = viewModel::toggleDonated)
     }
@@ -144,22 +137,20 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ProfileHeader(settings: SettingsEntity) {
+private fun ProfileHeader(settings: SettingsEntity, onAvatarClick: () -> Unit) {
     val goalTitle = stringResource(GOAL_OPTIONS[settings.selectedGoal].titleRes)
     val levelTitle = stringResource(LEVEL_OPTIONS[settings.selectedLevel])
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        Box(
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .background(DeepSurface2)
-                .border(2.dp, Accent, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = PLACEHOLDER_USER_INITIAL, style = MaterialTheme.typography.headlineSmall, color = Accent)
-        }
+        MonogramAvatar(
+            initial = avatarInitial(settings.displayName),
+            avatarId = settings.avatarId,
+            size = 60.dp,
+            style = MaterialTheme.typography.headlineSmall,
+            borderWidth = 2.dp,
+            modifier = Modifier.clickable(onClick = onAvatarClick),
+        )
         Column {
-            Text(text = PLACEHOLDER_USER_NAME, style = MaterialTheme.typography.headlineSmall)
+            Text(text = settings.displayName, style = MaterialTheme.typography.headlineSmall)
             Text(
                 text = stringResource(R.string.profile_meta, levelTitle, goalTitle),
                 style = MaterialTheme.typography.labelMedium,
@@ -401,7 +392,7 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
 private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthValue}"
 
 @Composable
-private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel) {
+private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel, onEditProfile: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -409,6 +400,11 @@ private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel) 
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
+        SettingsRow(
+            label = stringResource(R.string.profile_settings_edit_profile),
+            value = "›",
+            onClick = onEditProfile,
+        )
         SettingsRow(
             label = stringResource(R.string.profile_settings_language),
             value = stringResource(if (settings.languageIsEnglish) R.string.profile_lang_en else R.string.profile_lang_vi) + " ›",

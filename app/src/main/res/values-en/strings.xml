@@ -292,6 +292,12 @@
     <string name="profile_tile_chest_short">Chest</string>
     <string name="profile_tile_waist_short">Waist</string>
     <string name="profile_tile_arm_short">Arm</string>
+    <string name="profile_settings_edit_profile">Edit profile</string>
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_edit_name_label">Display name</string>
+    <string name="profile_edit_name_placeholder">Enter your name</string>
+    <string name="profile_edit_avatar_label">Choose an avatar</string>
+    <string name="profile_edit_save">Save changes</string>
     <string name="profile_settings_language">Language</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>

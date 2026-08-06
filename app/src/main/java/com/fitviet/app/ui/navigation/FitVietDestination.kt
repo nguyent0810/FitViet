@@ -40,6 +40,9 @@ sealed class FitVietDestination(val route: String) {
 
     data object Profile : FitVietDestination("profile")
 
+    /** Feature #1 (Gate 35) — reached from Profile's header avatar tap or its "Chỉnh sửa hồ sơ ›" row. */
+    data object ProfileEdit : FitVietDestination("profile/edit")
+
     /** Exercise library by difficulty level + a static food reference (Gate 25). */
     data object Handbook : FitVietDestination("handbook")
 }

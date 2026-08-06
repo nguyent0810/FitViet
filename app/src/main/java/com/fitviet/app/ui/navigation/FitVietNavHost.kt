@@ -39,6 +39,8 @@ import com.fitviet.app.ui.nutrition.NutritionViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
 import com.fitviet.app.ui.onboarding.SplitScreen
+import com.fitviet.app.ui.profile.ProfileEditScreen
+import com.fitviet.app.ui.profile.ProfileEditViewModel
 import com.fitviet.app.ui.profile.ProfileScreen
 import com.fitviet.app.ui.profile.ProfileViewModel
 import com.fitviet.app.ui.programs.ProgramsListScreen
@@ -182,7 +184,15 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             }
             composable(FitVietDestination.Profile.route) {
                 val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(container.profileRepository))
-                ProfileScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+                ProfileScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onEditProfile = { navController.navigate(FitVietDestination.ProfileEdit.route) },
+                )
+            }
+            composable(FitVietDestination.ProfileEdit.route) {
+                val viewModel: ProfileEditViewModel = viewModel(factory = ProfileEditViewModel.Factory(container.profileRepository))
+                ProfileEditScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
                 route = FitVietDestination.ExerciseDetail.route,

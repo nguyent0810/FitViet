@@ -29,6 +29,8 @@ data class DashboardUiState(
     val showRecommendationCard: Boolean = true,
     val showMuscleBalanceCard: Boolean = true,
     val showNutritionCard: Boolean = true,
+    val displayName: String = "",
+    val avatarId: Int = 0,
 )
 
 class DashboardViewModel(private val repository: DashboardRepository) : ViewModel() {
@@ -50,6 +52,8 @@ class DashboardViewModel(private val repository: DashboardRepository) : ViewMode
             showRecommendationCard = data.showRecommendationCard,
             showMuscleBalanceCard = data.showMuscleBalanceCard,
             showNutritionCard = data.showNutritionCard,
+            displayName = data.displayName,
+            avatarId = data.avatarId,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 

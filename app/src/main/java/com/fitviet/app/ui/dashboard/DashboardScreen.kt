@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +37,8 @@ import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
+import com.fitviet.app.ui.profile.MonogramAvatar
+import com.fitviet.app.ui.profile.avatarInitial
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -60,9 +61,6 @@ import com.fitviet.app.util.longLabelRes
 import com.fitviet.app.util.shortLabelRes
 import java.time.LocalDate
 
-// Placeholder until profile/settings (Gate 6) has a real, editable display name.
-private const val PLACEHOLDER_USER_NAME = "Minh"
-
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
@@ -84,7 +82,7 @@ fun DashboardScreen(
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
-        GreetingHeader(today = today, onAvatarClick = onOpenProfile)
+        GreetingHeader(today = today, displayName = uiState.displayName, avatarId = uiState.avatarId, onAvatarClick = onOpenProfile)
         HeroCard(
             program = uiState.featuredProgram,
             nextTraining = uiState.nextTraining,
@@ -115,7 +113,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun GreetingHeader(today: LocalDate, onAvatarClick: () -> Unit) {
+private fun GreetingHeader(today: LocalDate, displayName: String, avatarId: Int, onAvatarClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -133,30 +131,17 @@ private fun GreetingHeader(today: LocalDate, onAvatarClick: () -> Unit) {
                 color = TextMuted,
             )
             Text(
-                text = stringResource(R.string.dashboard_greeting, PLACEHOLDER_USER_NAME),
+                text = stringResource(R.string.dashboard_greeting, displayName),
                 style = MaterialTheme.typography.headlineMedium,
             )
         }
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .clickable(onClick = onAvatarClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(color = DeepSurface2, shape = CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = PLACEHOLDER_USER_NAME.take(1),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Accent,
-                )
-            }
-        }
+        MonogramAvatar(
+            initial = avatarInitial(displayName),
+            avatarId = avatarId,
+            size = 42.dp,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.clickable(onClick = onAvatarClick),
+        )
     }
 }
 

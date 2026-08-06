@@ -1422,3 +1422,79 @@ One round, including an explicit request to cross-check the ENTIRE `SeedData.kt`
 
 ### Push
 Committed and pushed directly to `master`. This closes the entire 9-gate exercise library expansion (Gates 26-34): 141 new exercises added (14 original + 141 = 155), all 12 muscle groups now have real coverage, every gate individually codex-reviewed with real findings caught and fixed (Gate 29's duplicate dip removed, Gate 30's behind-the-neck-press safety reclassification, Gate 31's neck-pull cue fix, Gate 32's duplicate wide-pushup fix, Gate 33's muscle-label correction, Gate 34's Romanian Deadlift clarification).
+
+## Session note — resuming from master at Gate 35
+
+Master had progressed to Gate 34 (155-exercise library complete) plus a planning-only commit
+(`docs/GATE_35_48_PLAN.md`) mapping the Tier 1/2 UI-handoff spec's 11 items to 14 gates (35-48).
+User asked to sync this branch to `master` and execute Gates 35-48 straight through, each reviewed.
+
+**Environment caveat, disclosed up front**: the spec files the plan document reads from
+(`UI Handoff/Tier 1 prototype review/BUILD_PROMPT.md` and its two `.dc.html` mockups) are not
+present in this git checkout — they exist only in whatever local environment authored the plan.
+`GATE_35_48_PLAN.md` itself is detailed enough (component names, exact behaviors, every
+spec-vs-codebase mismatch already resolved, every judgment call already decided) to implement from
+directly; where a visual detail isn't in the plan, these gates follow the app's own existing
+component/color/spacing vocabulary rather than guessing at the missing mockup. Flagging this rather
+than silently proceeding as if the mockups were consulted.
+
+Same workflow as every gate before it: no Android SDK/Gradle in this environment (`dl.google.com`
+blocked), `codex exec` unreachable (`api.openai.com` blocked) — standalone `kotlinc` compile of the
+domain/data layers + an independent `general-purpose`-agent adversarial review per gate, same as
+Gates 6-19.
+
+## Gate 35 — Profile edit: display name + monogram avatar (feature #1)
+
+### What was built
+- `SettingsEntity` gained `displayName: String = "Minh Nguyễn"` / `avatarId: Int = 0` — defaults
+  match the previous hardcoded placeholder identity exactly, so a fresh or destructively-migrated
+  install looks unchanged until the user actually edits it. `FitVietDatabase` bumped `version = 5 → 6`.
+- `ui/profile/ProfileAvatar.kt` (new) — `AvatarStyle` enum: 6 shape × background-tint combinations
+  (`CircleShape`/`RoundedCornerShape(14.dp)` × `DeepSurface2`/`AccentSurfaceSelected`/`DeepSurface1`
+  — all already-existing theme colors, deliberately not introducing new hues into this app's
+  monochrome-green-on-dark palette). Stored as a stable `Int` index (`avatarId`), never the enum
+  itself. `MonogramAvatar` composable + `avatarInitial(name)` helper.
+- `ui/profile/ProfileEditScreen.kt` + `ProfileEditViewModel.kt` (new) — large avatar preview, a
+  6-swatch avatar picker, a name text field (same `BasicTextField`/`SolidColor` cursor pattern
+  `ProgramsListScreen`'s search field already established), and a Save button (disabled/greyed when
+  the trimmed name is empty). `ProfileEditViewModel` is deliberately its own small ViewModel rather
+  than folded into `ProfileViewModel` — the edit screen holds local draft state the user can discard
+  by navigating back, which a continuously-observed `SettingsEntity` `Flow` would be awkward to
+  reconcile with (an unrelated settings write from another screen mid-edit would silently overwrite
+  the user's in-progress typing). Loads its initial draft via a new one-shot
+  `ProfileRepository.getSettings()`, not `observe()`.
+- `ProfileScreen.kt` — `ProfileHeader`'s hardcoded `PLACEHOLDER_USER_NAME`/`_INITIAL` replaced with
+  `settings.displayName`/`MonogramAvatar`; the avatar is now tappable (opens edit); a new
+  "Chỉnh sửa hồ sơ ›" row added at the top of `SettingsCard`.
+- `DashboardScreen.kt` — `GreetingHeader`'s separate hardcoded `PLACEHOLDER_USER_NAME` constant
+  (confirmed genuinely independent from Profile's, not shared) replaced the same way, threaded
+  through `DashboardRepository`/`DashboardViewModel` exactly like Gate 19's per-widget visibility
+  flags were (one more field on `Stage1Data`/`BaseDashboardData`/`DashboardData`/`DashboardUiState`).
+- New strings (vi + en): `profile_settings_edit_profile`, `profile_edit_title`,
+  `profile_edit_name_label`, `profile_edit_name_placeholder`, `profile_edit_avatar_label`,
+  `profile_edit_save`.
+- New route `FitVietDestination.ProfileEdit` ("profile/edit"), wired in `FitVietNavHost.kt` from
+  both Profile entry points (header avatar tap, settings row).
+
+### Scope decisions (documented, not defects)
+- **No photo upload.** This app has no server/storage for user-uploaded images and the plan itself
+  frames this as "shape×colour enum," not a photo picker — a monogram avatar (initial + a palette
+  choice) is the faithful, honest scope, not a shortcut.
+- **Avatar palette stays inside the app's existing theme colors.** Introducing new saturated hues
+  (blue/purple/orange swatches, as a typical avatar-picker might) would break with this app's
+  established single-accent dark palette; the 6 combinations reuse colors already used elsewhere for
+  cards/surfaces.
+
+### Verification
+Standalone `kotlinc` compile of the full domain + data layer (all entities/DAOs, `ProfileRepository`,
+`DashboardRepository` — including the new `Stage1Data`/`BaseDashboardData`/`DashboardData` fields) —
+clean, no errors, against a `FitVietDatabase`/`androidx.room.withTransaction` stub (same approach
+established in Gate 17). No pure-function domain logic was added this gate (a plain field-passthrough
++ a UI-only enum), so no new JUnit tests. `ProfileScreen.kt`/`ProfileEditScreen.kt`/
+`ProfileEditViewModel.kt`/`ProfileAvatar.kt`/`DashboardScreen.kt`/`DashboardViewModel.kt`/
+`DashboardRepository.kt`/`FitVietNavHost.kt` (real `androidx.lifecycle`/Compose/Navigation, no
+standalone compile possible) verified by manual read-through — confirmed no leftover reference to
+the deleted `PLACEHOLDER_USER_NAME`/`_INITIAL` constants anywhere in the tree (grepped), no stray
+`androidx.compose.foundation.layout.weight` import, both `strings.xml`/`values-en/strings.xml`
+well-formed XML, and every `SettingsEntity(...)` construction site in the codebase already uses the
+no-arg/named-arg form (safe against the two new trailing fields).

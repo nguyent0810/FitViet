@@ -295,6 +295,12 @@
     <string name="profile_tile_chest_short">Ngực</string>
     <string name="profile_tile_waist_short">Eo</string>
     <string name="profile_tile_arm_short">Tay</string>
+    <string name="profile_settings_edit_profile">Chỉnh sửa hồ sơ</string>
+    <string name="profile_edit_title">Chỉnh sửa hồ sơ</string>
+    <string name="profile_edit_name_label">Tên hiển thị</string>
+    <string name="profile_edit_name_placeholder">Nhập tên của bạn</string>
+    <string name="profile_edit_avatar_label">Chọn ảnh đại diện</string>
+    <string name="profile_edit_save">Lưu thay đổi</string>
     <string name="profile_settings_language">Ngôn ngữ</string>
     <string name="profile_lang_vi">Tiếng Việt</string>
     <string name="profile_lang_en">English</string>

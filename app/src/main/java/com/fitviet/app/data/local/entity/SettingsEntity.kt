@@ -38,6 +38,11 @@ data class SettingsEntity(
     val showRecommendationCard: Boolean = true,
     val showMuscleBalanceCard: Boolean = true,
     val showNutritionCard: Boolean = true,
+    /** Feature #1 (Gate 35) — the user's editable display name and chosen monogram avatar (an
+     * index into [com.fitviet.app.ui.profile.AvatarStyle.entries]). Defaults match the previous
+     * hardcoded placeholder identity so a fresh/pre-migration install looks unchanged. */
+    val displayName: String = "Minh Nguyễn",
+    val avatarId: Int = 0,
 ) {
     companion object {
         const val SINGLETON_ID = 0

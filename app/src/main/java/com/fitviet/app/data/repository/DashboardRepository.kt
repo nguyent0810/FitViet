@@ -54,6 +54,10 @@ data class DashboardData(
     val showRecommendationCard: Boolean,
     val showMuscleBalanceCard: Boolean,
     val showNutritionCard: Boolean,
+    /** Feature #1 (Gate 35) — the user's editable display name/avatar, read straight from
+     * [com.fitviet.app.data.local.entity.SettingsEntity]. */
+    val displayName: String,
+    val avatarId: Int,
 )
 
 /** Output of the first 5-source `combine{}` below — everything except the completed-set breakdown
@@ -82,6 +86,8 @@ private data class BaseDashboardData(
     val showRecommendationCard: Boolean,
     val showMuscleBalanceCard: Boolean,
     val showNutritionCard: Boolean,
+    val displayName: String,
+    val avatarId: Int,
 )
 
 class DashboardRepository(
@@ -159,6 +165,8 @@ class DashboardRepository(
                     showRecommendationCard = stage1.settings.showRecommendationCard,
                     showMuscleBalanceCard = stage1.settings.showMuscleBalanceCard,
                     showNutritionCard = stage1.settings.showNutritionCard,
+                    displayName = stage1.settings.displayName,
+                    avatarId = stage1.settings.avatarId,
                 )
             }
         }.flatMapLatest { base ->
@@ -185,6 +193,8 @@ class DashboardRepository(
                     showRecommendationCard = base.showRecommendationCard,
                     showMuscleBalanceCard = base.showMuscleBalanceCard,
                     showNutritionCard = base.showNutritionCard,
+                    displayName = base.displayName,
+                    avatarId = base.avatarId,
                 )
             }
         }

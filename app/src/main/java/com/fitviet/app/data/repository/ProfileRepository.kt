@@ -55,6 +55,16 @@ class ProfileRepository(
 
     suspend fun toggleShowNutritionCard() = updateSettings { it.copy(showNutritionCard = !it.showNutritionCard) }
 
+    /** One-shot read for [com.fitviet.app.ui.profile.ProfileEditViewModel]'s initial draft — that
+     * screen holds local edits the user can discard by navigating back, so it deliberately does
+     * NOT stay subscribed to [observe]'s continuous [SettingsEntity] `Flow` (a mid-edit emission
+     * would silently overwrite whatever the user was typing). */
+    suspend fun getSettings(): SettingsEntity = settingsDao.get() ?: SettingsEntity()
+
+    /** Feature #1 (Gate 35). [displayName] is assumed already validated/trimmed by the caller. */
+    suspend fun updateProfile(displayName: String, avatarId: Int) =
+        updateSettings { it.copy(displayName = displayName, avatarId = avatarId) }
+
     suspend fun addMeasurement(weightKg: Double?, chestCm: Double?, waistCm: Double?, armCm: Double?) {
         measurementDao.insert(
             MeasurementEntity(
