@@ -2081,5 +2081,16 @@ read-through: `DifficultyBadge` correctly placed between `ProgramTitleRow` and t
 present); no other test file references `ProgramsListScreen`/`ProgramsViewModel` that could be
 affected by this purely-additive change (grepped `app/src/test`, none found).
 
+### Independent review (background agent, general-purpose) — CLEAN
+Independently re-ran `ProgramDifficultyTest.kt` for real — `OK (5 tests)`, confirmed. Specifically
+targeted the two likeliest hiding spots for a subtle bug: byte-level comparison of every string
+literal across `ProgramDifficulty.kt`'s `when` branches, the test's assertions, and `SeedData.kt`'s
+3 real `level` values (exact match everywhere, no diacritic-encoding drift, no accidental
+`else -> null` fallthrough); and a hand-trace of the bar-fill `index < steps` logic across all 4
+possible `steps` values (0/1/2/3) confirming no off-by-one. Diffed the whole `ProgramsListScreen.kt`
+file and confirmed the change is purely additive — search, filters, import flow, and cover art
+untouched. Zero findings at any severity (one cosmetic nit about corner-radius visibility at small
+bar sizes, not a correctness issue).
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
