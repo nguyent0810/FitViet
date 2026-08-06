@@ -15,6 +15,26 @@ Files used (app/src/main/res/drawable-nodpi/):
   dumbbell_lunges_0.jpg, dumbbell_lunges_1.jpg           <- exercises/Dumbbell_Lunges/{0,1}.jpg
   crunches_0.jpg, crunches_1.jpg                         <- exercises/Crunches/{0,1}.jpg
   pushups_0.jpg, pushups_1.jpg                           <- exercises/Pushups/{0,1}.jpg
+  -- Gate 26 additions (Gluteus + Forearm) --
+  barbell_hip_thrust_0.jpg, barbell_hip_thrust_1.jpg     <- exercises/Barbell_Hip_Thrust/{0,1}.jpg
+  barbell_glute_bridge_0.jpg, barbell_glute_bridge_1.jpg <- exercises/Barbell_Glute_Bridge/{0,1}.jpg
+  glute_kickback_0.jpg, glute_kickback_1.jpg             <- exercises/Glute_Kickback/{0,1}.jpg
+  single_leg_glute_bridge_0.jpg, single_leg_glute_bridge_1.jpg <- exercises/Single_Leg_Glute_Bridge/{0,1}.jpg
+  butt_lift_bridge_0.jpg, butt_lift_bridge_1.jpg         <- exercises/Butt_Lift_Bridge/{0,1}.jpg
+  physioball_hip_bridge_0.jpg, physioball_hip_bridge_1.jpg <- exercises/Physioball_Hip_Bridge/{0,1}.jpg
+  one_legged_cable_kickback_0.jpg, one_legged_cable_kickback_1.jpg <- exercises/One-Legged_Cable_Kickback/{0,1}.jpg
+  pull_through_0.jpg, pull_through_1.jpg                 <- exercises/Pull_Through/{0,1}.jpg
+  step_up_with_knee_raise_0.jpg, step_up_with_knee_raise_1.jpg <- exercises/Step-up_with_Knee_Raise/{0,1}.jpg
+  hip_extension_with_bands_0.jpg, hip_extension_with_bands_1.jpg <- exercises/Hip_Extension_with_Bands/{0,1}.jpg
+  cable_wrist_curl_0.jpg, cable_wrist_curl_1.jpg         <- exercises/Cable_Wrist_Curl/{0,1}.jpg
+  palms_up_barbell_wrist_curl_0.jpg, palms_up_barbell_wrist_curl_1.jpg <- exercises/Palms-Up_Barbell_Wrist_Curl_Over_A_Bench/{0,1}.jpg
+  palms_down_wrist_curl_0.jpg, palms_down_wrist_curl_1.jpg <- exercises/Palms-Down_Wrist_Curl_Over_A_Bench/{0,1}.jpg
+  seated_dumbbell_palms_up_wrist_curl_0.jpg, seated_dumbbell_palms_up_wrist_curl_1.jpg <- exercises/Seated_Dumbbell_Palms-Up_Wrist_Curl/{0,1}.jpg
+  seated_dumbbell_palms_down_wrist_curl_0.jpg, seated_dumbbell_palms_down_wrist_curl_1.jpg <- exercises/Seated_Dumbbell_Palms-Down_Wrist_Curl/{0,1}.jpg
+  wrist_roller_0.jpg, wrist_roller_1.jpg                 <- exercises/Wrist_Roller/{0,1}.jpg
+  plate_pinch_0.jpg, plate_pinch_1.jpg                   <- exercises/Plate_Pinch/{0,1}.jpg
+  finger_curls_0.jpg, finger_curls_1.jpg                 <- exercises/Finger_Curls/{0,1}.jpg
+  rickshaw_carry_0.jpg, rickshaw_carry_1.jpg             <- exercises/Rickshaw_Carry/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

@@ -63,6 +63,26 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.LUNGE to listOf(R.drawable.dumbbell_lunges_0, R.drawable.dumbbell_lunges_1),
     SeedExerciseNames.CRUNCH to listOf(R.drawable.crunches_0, R.drawable.crunches_1),
     SeedExerciseNames.PUSHUP to listOf(R.drawable.pushups_0, R.drawable.pushups_1),
+    // Gate 26 — Gluteus + Forearm library expansion
+    SeedExerciseNames.GLUTE_BARBELL_HIP_THRUST to listOf(R.drawable.barbell_hip_thrust_0, R.drawable.barbell_hip_thrust_1),
+    SeedExerciseNames.GLUTE_BARBELL_BRIDGE to listOf(R.drawable.barbell_glute_bridge_0, R.drawable.barbell_glute_bridge_1),
+    SeedExerciseNames.GLUTE_KICKBACK to listOf(R.drawable.glute_kickback_0, R.drawable.glute_kickback_1),
+    SeedExerciseNames.GLUTE_SINGLE_LEG_BRIDGE to listOf(R.drawable.single_leg_glute_bridge_0, R.drawable.single_leg_glute_bridge_1),
+    SeedExerciseNames.GLUTE_BUTT_LIFT to listOf(R.drawable.butt_lift_bridge_0, R.drawable.butt_lift_bridge_1),
+    SeedExerciseNames.GLUTE_PHYSIOBALL_BRIDGE to listOf(R.drawable.physioball_hip_bridge_0, R.drawable.physioball_hip_bridge_1),
+    SeedExerciseNames.GLUTE_CABLE_KICKBACK to listOf(R.drawable.one_legged_cable_kickback_0, R.drawable.one_legged_cable_kickback_1),
+    SeedExerciseNames.GLUTE_PULL_THROUGH to listOf(R.drawable.pull_through_0, R.drawable.pull_through_1),
+    SeedExerciseNames.GLUTE_STEP_UP to listOf(R.drawable.step_up_with_knee_raise_0, R.drawable.step_up_with_knee_raise_1),
+    SeedExerciseNames.GLUTE_BAND_HIP_EXTENSION to listOf(R.drawable.hip_extension_with_bands_0, R.drawable.hip_extension_with_bands_1),
+    SeedExerciseNames.FOREARM_CABLE_WRIST_CURL to listOf(R.drawable.cable_wrist_curl_0, R.drawable.cable_wrist_curl_1),
+    SeedExerciseNames.FOREARM_BARBELL_WRIST_CURL_UP to listOf(R.drawable.palms_up_barbell_wrist_curl_0, R.drawable.palms_up_barbell_wrist_curl_1),
+    SeedExerciseNames.FOREARM_BARBELL_WRIST_CURL_DOWN to listOf(R.drawable.palms_down_wrist_curl_0, R.drawable.palms_down_wrist_curl_1),
+    SeedExerciseNames.FOREARM_DUMBBELL_WRIST_CURL_UP to listOf(R.drawable.seated_dumbbell_palms_up_wrist_curl_0, R.drawable.seated_dumbbell_palms_up_wrist_curl_1),
+    SeedExerciseNames.FOREARM_DUMBBELL_WRIST_CURL_DOWN to listOf(R.drawable.seated_dumbbell_palms_down_wrist_curl_0, R.drawable.seated_dumbbell_palms_down_wrist_curl_1),
+    SeedExerciseNames.FOREARM_WRIST_ROLLER to listOf(R.drawable.wrist_roller_0, R.drawable.wrist_roller_1),
+    SeedExerciseNames.FOREARM_PLATE_PINCH to listOf(R.drawable.plate_pinch_0, R.drawable.plate_pinch_1),
+    SeedExerciseNames.FOREARM_FINGER_CURLS to listOf(R.drawable.finger_curls_0, R.drawable.finger_curls_1),
+    SeedExerciseNames.FOREARM_RICKSHAW_CARRY to listOf(R.drawable.rickshaw_carry_0, R.drawable.rickshaw_carry_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()

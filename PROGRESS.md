@@ -1277,3 +1277,22 @@ Same toolchain as prior gates: standalone `kotlinc` on the domain package (clean
 
 ### Push
 Committed and pushed directly to `master`. This closes out every item from the user's original multi-part request (Gates 22-25): tag-color contrast, program cover art, the 12-category muscle taxonomy, the workout entry flow redesign, and the Handbook section.
+
+## Gate 26 — Exercise library expansion: Gluteus + Forearm (1/9 gates)
+
+### Context
+User asked to expand the exercise library significantly (previously only 14 exercises, with 5 of 12 muscle groups at zero coverage). Real numbers gathered before planning: fetched and locally parsed the full free-exercise-db catalog (873 exercises, all with 2 photos each, Unlicense/public domain) rather than trusting the repo's own README estimate. Given hand-authoring quality Vietnamese content for all 873 isn't realistic, user chose a curated path: a general-purpose agent selected ~144 non-redundant, well-known exercises across all 12 muscle groups from the real dataset (avoiding near-duplicates of the existing 14). Plan: 9 gates, one muscle group (or pair of small groups) at a time, same process as every prior gate — write content, download photos, wire in, codex review, push, continue automatically.
+
+### What was built
+19 new exercises: 10 for GLUTEUS, 9 for FOREARM (both previously at zero). For each: Vietnamese name, English name (from source), muscle/equipment descriptions, a 3-step Vietnamese "technique summary" (not literal translation, matching the existing 14's established style), suggested sets/reps/rest, `movementType` (mapped from the source's `mechanic` field), `difficultyCode` (mapped from the source's `level` field). Two hold/carry-style exercises (Plate Pinch, Rickshaw Carry) use `reps = 1` to represent "one full hold/carry" since the schema has no duration field — codex confirmed nothing downstream assumes reps > 1.
+
+Downloaded 38 real photos (2 per exercise) from `raw.githubusercontent.com/yuhonas/free-exercise-db` — same source/license as the existing 28 — verified all returned HTTP 200 and non-trivial size before wiring into `ExerciseMedia.kt`'s `EXERCISE_PHOTOS` map. License attribution file updated with the new source paths, matching the existing "Gate 9 additions" format precedent.
+
+### Verification
+Real `aapt2 compile --dir` on the entire `drawable-nodpi/` directory (66 files, old+new) — clean. Programmatic count checks: 33 exercises / 33 photo-map entries / 33 name constants, zero Vietnamese-name collisions.
+
+### Codex review
+One round — no findings. Codex additionally verified all 38 JPGs decode as valid, non-corrupt images (not just non-empty), confirmed movement/difficulty classifications against the upstream dataset's own fields, and confirmed the reps=1 modeling choice for hold/carry exercises doesn't break anything downstream (nothing in the app divides by rep count or assumes reps > 1).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 27 (Functional + Cardio) next, same process, no further check-in needed per the standing autonomous gate workflow.
