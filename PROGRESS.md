@@ -2381,5 +2381,18 @@ hypothetically-malformed future entry). Confirmed no test references `ExerciseDe
 `ExerciseDetailViewModel` that this change could regress. Both `strings.xml`/`values-en/strings.xml`
 parsed as valid XML.
 
+### Independent review (background agent, general-purpose) — CLEAN
+Specifically targeted the one place most likely to hide a subtle bug: cross-checked all 9 of Gate
+44's hand-authored flagship-lift inline comments (e.g. "triceps > front delts") against their
+actual positional `involvementPercents` values, confirming every stated muscle-by-muscle emphasis
+genuinely lines up with the right index — no mislabeling found. Also independently re-derived (by
+script, not trusted) two PROGRESS.md claims: the real max displayed-muscle count across all 155
+seed exercises is exactly 5 (primary + 4 secondaries), and all 121 non-empty `involvementPercents`
+entries are genuinely already in-range/summing-to-100, confirming the UI's `coerceIn` really is
+defense-in-depth rather than compensating for a real data bug. Confirmed the early-return for
+empty lists genuinely renders zero Composables (not an empty-but-present container) using a real
+`FUNCTIONAL`-excluded exercise, and that the revised caption text reads as honestly hedged rather
+than overclaiming per-exercise scrutiny. Zero findings at any severity beyond two cosmetic nits.
+
 ### Push
-Pending independent review.
+Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
