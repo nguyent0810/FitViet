@@ -1192,3 +1192,22 @@ Three review rounds, each finding real, fixable issues — not a rubber-stamp:
 ### Push
 Fixes committed and pushed to `origin/claude/routines-code-session-n62xmx`, then fast-forward-merged
 into `master` (no divergence — `master` was exactly the merge-base, so no merge commit was needed).
+
+## Gate 22 — Workout tag color contrast + program cover art
+
+### What was built
+Two small user-reported UI bugs, found via a real-device review against a competitor reference app screenshot:
+- **Workout status-tag color**: the straight-block `SetRow` (`WorkoutStraightScreens.kt`) hardcoded its status tag text ("Đang tập" / "Chờ" / "Hoàn thành") to a single `TextFaint` color regardless of DONE/CURRENT/PENDING status — no visual differentiation at all. Added a `tagColor` val (DONE → `TextMuted`, CURRENT → `Accent`, PENDING → `TextFaint`), mirroring the existing per-status `textColor`/`badgeColor` pattern already in the same function. (The superset variant already had 2-way tag-color differentiation and wasn't touched.)
+- **Program cover images**: `ProgramsListScreen.kt`'s program cards rendered literal placeholder text ("ảnh: fullbody-8-tuan.jpg") since `ProgramEntity.imageAsset` was never bound to a real image resource. Since this is a fully offline app with no image-download/licensing pipeline, replaced it with a procedurally-drawn cover instead of sourcing real photos: `ProgramCoverArt` picks one of 4 curated dark gradients deterministically from the program title's hash, and `ProgramCoverIcon` draws a simple Canvas glyph on top (barbell for "Tăng cơ"-tagged programs, flame for "Giảm mỡ"-tagged, ascending bar chart as default). `imageAsset` itself is untouched — still used for JSON program export/import.
+
+### Codex review — findings and resolution
+One `codex exec` round on the staged diff. No functional issues found; two low-severity cleanups:
+| # | Issue | Fix |
+|---|---|---|
+| 1 (Low) | Unused `DeepSurface2` import left over from an earlier gradient palette draft | Removed |
+| 2 (Low) | Barbell glyph's center-bar `drawLine` call didn't pass `stroke.cap`, so it silently used `drawLine`'s default cap instead of the `Stroke(cap = Round)` already constructed | Passed `cap = stroke.cap` explicitly |
+
+Gradle itself remains unreachable in this environment (no wrapper/installed `gradle`); codex confirmed no API incompatibilities against the project's Compose BOM via static read-through instead.
+
+### Push
+Committed and pushed directly to `master` (small, isolated, no schema/behavior risk to other features).

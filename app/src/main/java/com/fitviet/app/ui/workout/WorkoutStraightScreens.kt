@@ -109,6 +109,11 @@ private fun SetRow(
         SetRowStatus.CURRENT -> R.string.workout_tag_current
         SetRowStatus.PENDING -> R.string.workout_tag_pending
     }
+    val tagColor = when (status) {
+        SetRowStatus.DONE -> TextMuted
+        SetRowStatus.CURRENT -> Accent
+        SetRowStatus.PENDING -> TextFaint
+    }
 
     Column(
         modifier = Modifier
@@ -144,7 +149,7 @@ private fun SetRow(
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
-            Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = TextFaint)
+            Text(text = stringResource(tagRes), style = MaterialTheme.typography.labelMedium, color = tagColor)
         }
         if (editable) {
             // A full-width row of its own — sharing this line with the badge/tag above (as it used

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,7 +32,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -49,6 +56,8 @@ import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
+import com.fitviet.app.ui.theme.HeroGradientEnd
+import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
@@ -265,6 +274,102 @@ private fun FilterChips(selectedIndex: Int, onSelect: (Int) -> Unit) {
     }
 }
 
+/**
+ * Programs have no bundled cover photo (no backend, no image downloads) — this draws a deterministic
+ * gradient + glyph "cover" per program instead of the old placeholder text box that just printed the
+ * raw [ProgramEntity.imageAsset] filename (e.g. "ảnh: fullbody-8-tuan.jpg") with nothing behind it.
+ * Gradient and glyph are picked from [program.titleVi]'s hash, so the same program always renders the
+ * same cover, and glyph choice reads [program.tags] to hint at the program's focus (fat loss vs.
+ * strength) rather than being purely decorative.
+ */
+private val PROGRAM_COVER_GRADIENTS = listOf(
+    HeroGradientStart to HeroGradientEnd,
+    Color(0xFF1B2A20) to Color(0xFF0E1712),
+    Color(0xFF16241C) to Color(0xFF0B120D),
+    AccentSurfaceSelected to DeepSurface1,
+)
+
+private enum class ProgramCoverGlyph { FLAME, BARBELL, CHART }
+
+private fun glyphFor(program: ProgramEntity): ProgramCoverGlyph = when {
+    program.tags.contains("Giảm mỡ") -> ProgramCoverGlyph.FLAME
+    program.tags.contains("Tăng cơ") -> ProgramCoverGlyph.BARBELL
+    else -> ProgramCoverGlyph.CHART
+}
+
+@Composable
+private fun ProgramCoverArt(program: ProgramEntity, modifier: Modifier = Modifier) {
+    val gradient = remember(program.titleVi) {
+        val index = (program.titleVi.hashCode().let { if (it == Int.MIN_VALUE) 0 else kotlin.math.abs(it) }) % PROGRAM_COVER_GRADIENTS.size
+        PROGRAM_COVER_GRADIENTS[index]
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Brush.linearGradient(listOf(gradient.first, gradient.second))),
+        contentAlignment = Alignment.Center,
+    ) {
+        ProgramCoverIcon(glyph = glyphFor(program))
+    }
+}
+
+@Composable
+private fun ProgramCoverIcon(glyph: ProgramCoverGlyph) {
+    Canvas(modifier = Modifier.size(40.dp)) {
+        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
+        when (glyph) {
+            ProgramCoverGlyph.BARBELL -> {
+                val barY = size.height / 2f
+                drawLine(Accent, Offset(size.width * 0.22f, barY), Offset(size.width * 0.78f, barY), strokeWidth = stroke.width, cap = stroke.cap)
+                val plateHeight = size.height * 0.7f
+                val plateWidth = size.width * 0.12f
+                for (x in listOf(size.width * 0.14f, size.width * 0.86f)) {
+                    drawLine(
+                        Accent,
+                        Offset(x, barY - plateHeight / 2f),
+                        Offset(x, barY + plateHeight / 2f),
+                        strokeWidth = plateWidth,
+                        cap = StrokeCap.Round,
+                    )
+                }
+            }
+            ProgramCoverGlyph.FLAME -> {
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width * 0.5f, size.height * 0.05f)
+                    cubicTo(
+                        size.width * 0.85f, size.height * 0.4f,
+                        size.width * 0.65f, size.height * 0.55f,
+                        size.width * 0.5f, size.height * 0.95f,
+                    )
+                    cubicTo(
+                        size.width * 0.35f, size.height * 0.55f,
+                        size.width * 0.15f, size.height * 0.4f,
+                        size.width * 0.5f, size.height * 0.05f,
+                    )
+                    close()
+                }
+                drawPath(path, Accent)
+            }
+            ProgramCoverGlyph.CHART -> {
+                val barWidth = size.width * 0.16f
+                val gap = size.width * 0.1f
+                val heights = listOf(0.4f, 0.7f, 1.0f)
+                heights.forEachIndexed { index, fraction ->
+                    val barHeight = size.height * fraction
+                    val x = size.width * 0.12f + index * (barWidth + gap)
+                    drawLine(
+                        Accent,
+                        Offset(x, size.height),
+                        Offset(x, size.height - barHeight),
+                        strokeWidth = barWidth,
+                        cap = StrokeCap.Square,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
     Column(
@@ -275,19 +380,7 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
             .border(1.dp, CardBorder, MaterialTheme.shapes.large)
             .clickable(onClick = onClick),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(84.dp)
-                .background(DeepSurface1),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "ảnh: ${program.imageAsset}",
-                style = MaterialTheme.typography.labelMedium,
-                color = TextFaint,
-            )
-        }
+        ProgramCoverArt(program = program, modifier = Modifier.height(84.dp))
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
