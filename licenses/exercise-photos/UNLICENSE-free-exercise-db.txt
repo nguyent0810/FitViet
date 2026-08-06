@@ -71,6 +71,32 @@ Files used (app/src/main/res/drawable-nodpi/):
   worlds_greatest_stretch_0.jpg, worlds_greatest_stretch_1.jpg <- exercises/Worlds_Greatest_Stretch/{0,1}.jpg
   upper_back_stretch_0.jpg, upper_back_stretch_1.jpg     <- exercises/Upper_Back_Stretch/{0,1}.jpg
   seated_calf_stretch_0.jpg, seated_calf_stretch_1.jpg   <- exercises/Seated_Calf_Stretch/{0,1}.jpg
+  -- Gate 29 additions (Biceps + Triceps) --
+  dumbbell_bicep_curl_0.jpg, dumbbell_bicep_curl_1.jpg   <- exercises/Dumbbell_Bicep_Curl/{0,1}.jpg
+  hammer_curls_0.jpg, hammer_curls_1.jpg                 <- exercises/Hammer_Curls/{0,1}.jpg
+  concentration_curls_0.jpg, concentration_curls_1.jpg   <- exercises/Concentration_Curls/{0,1}.jpg
+  incline_dumbbell_curl_0.jpg, incline_dumbbell_curl_1.jpg <- exercises/Incline_Dumbbell_Curl/{0,1}.jpg
+  preacher_curl_0.jpg, preacher_curl_1.jpg               <- exercises/Preacher_Curl/{0,1}.jpg
+  ez_bar_curl_0.jpg, ez_bar_curl_1.jpg                   <- exercises/EZ-Bar_Curl/{0,1}.jpg
+  cable_hammer_curls_0.jpg, cable_hammer_curls_1.jpg     <- exercises/Cable_Hammer_Curls_-_Rope_Attachment/{0,1}.jpg
+  standing_biceps_cable_curl_0.jpg, standing_biceps_cable_curl_1.jpg <- exercises/Standing_Biceps_Cable_Curl/{0,1}.jpg
+  machine_bicep_curl_0.jpg, machine_bicep_curl_1.jpg     <- exercises/Machine_Bicep_Curl/{0,1}.jpg
+  zottman_curl_0.jpg, zottman_curl_1.jpg                 <- exercises/Zottman_Curl/{0,1}.jpg
+  close_grip_ez_bar_curl_0.jpg, close_grip_ez_bar_curl_1.jpg <- exercises/Close-Grip_EZ_Bar_Curl/{0,1}.jpg
+  reverse_barbell_curl_0.jpg, reverse_barbell_curl_1.jpg <- exercises/Reverse_Barbell_Curl/{0,1}.jpg
+  triceps_rope_pushdown_0.jpg, triceps_rope_pushdown_1.jpg <- exercises/Triceps_Pushdown_-_Rope_Attachment/{0,1}.jpg
+  close_grip_barbell_bench_press_0.jpg, close_grip_barbell_bench_press_1.jpg <- exercises/Close-Grip_Barbell_Bench_Press/{0,1}.jpg
+  ez_bar_skullcrusher_0.jpg, ez_bar_skullcrusher_1.jpg   <- exercises/EZ-Bar_Skullcrusher/{0,1}.jpg
+  triceps_overhead_rope_extension_0.jpg, triceps_overhead_rope_extension_1.jpg <- exercises/Triceps_Overhead_Extension_with_Rope/{0,1}.jpg
+  bench_dips_0.jpg, bench_dips_1.jpg                     <- exercises/Bench_Dips/{0,1}.jpg
+  dips_triceps_version_0.jpg, dips_triceps_version_1.jpg <- exercises/Dips_-_Triceps_Version/{0,1}.jpg
+  standing_dumbbell_triceps_extension_0.jpg, standing_dumbbell_triceps_extension_1.jpg <- exercises/Standing_Dumbbell_Triceps_Extension/{0,1}.jpg
+  tricep_dumbbell_kickback_0.jpg, tricep_dumbbell_kickback_1.jpg <- exercises/Tricep_Dumbbell_Kickback/{0,1}.jpg
+  lying_dumbbell_tricep_extension_0.jpg, lying_dumbbell_tricep_extension_1.jpg <- exercises/Lying_Dumbbell_Tricep_Extension/{0,1}.jpg
+  close_grip_dumbbell_press_0.jpg, close_grip_dumbbell_press_1.jpg <- exercises/Close-Grip_Dumbbell_Press/{0,1}.jpg
+  machine_triceps_extension_0.jpg, machine_triceps_extension_1.jpg <- exercises/Machine_Triceps_Extension/{0,1}.jpg
+  dip_machine_0.jpg, dip_machine_1.jpg                   <- exercises/Dip_Machine/{0,1}.jpg
+  -- (Parallel_Bar_Dip was downloaded then dropped: near-duplicate of Dips_-_Triceps_Version, see Gate 29 codex review) --
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

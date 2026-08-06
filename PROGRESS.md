@@ -1326,3 +1326,17 @@ Same as prior gates: 26 downloads verified, `aapt2 compile --dir` clean on all 1
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 29 (Biceps + Triceps) next.
+
+## Gate 29 — Exercise library expansion: Biceps + Triceps (4/9 gates)
+
+### What was built
+25 new exercises initially: 12 BICEPS, 13 TRICEPS. Every Biceps entry uses `movementType = ISOLATION` (matches the source dataset's own `mechanic` field for all 12 — curls are inherently single-joint); Triceps splits between ISOLATION (curls/pushdowns/extensions) and COMPOUND (close-grip presses, dip variants).
+
+### Codex review
+One round. No correctness defects, but flagged (and I agreed) that `TRICEPS_DIPS` ("Dips - Triceps Version") and `TRICEPS_PARALLEL_BAR_DIP` ("Parallel Bar Dip") were near-duplicate movements — same equipment, muscles, movement type, difficulty, sets/reps/rest, materially equivalent instructions once translated to Vietnamese, even though the source dataset tagged them with different equipment strings ("body only" vs "other"). Removed `TRICEPS_PARALLEL_BAR_DIP` entirely (entity, constant, photo-map entry, license entry, both downloaded images) and kept `TRICEPS_DIPS`, per codex's own recommendation — final count 24 new exercises (12 Biceps + 12 Triceps).
+
+### Verification
+Same as prior gates: 50 downloads verified, `aapt2 compile --dir` clean before and after the dedup removal (184 -> 182 files), count/duplicate checks clean (91 exercises / 91 photo entries / 91 name constants after removal).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 30 (Deltoids) next.
