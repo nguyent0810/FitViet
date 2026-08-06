@@ -2047,3 +2047,39 @@ severity.
 
 ### Push
 Committed and pushed as a fast-forward to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 42 — Difficulty badge on Programs list (feature #8)
+
+### What was built
+- `domain/ProgramDifficulty.kt` (new) — `levelSteps(level: String): Int?`, mapping the 3 possible
+  tiers (`"Mới bắt đầu"`→1, `"Trung cấp"`→2, `"Nâng cao"`→3) plus `null` for `"Mọi trình độ"` and
+  any unrecognized/imported string (mismatch #1: no seeded program currently uses `"Nâng cao"`, but
+  the mapping still covers it since an imported program can carry any level string).
+- `ui/programs/ProgramsListScreen.kt` — new `DifficultyBadge(level: String)`: 3 ascending-height
+  bars (6dp/10dp/14dp), filled with `Accent` up to `levelSteps()`'s count, the rest `CardBorder`
+  muted — `steps = null` renders all 3 muted, not an error. Placed inside `ProgramCard` between
+  `ProgramTitleRow` and the existing meta line (duration/sessions/level/equipment), per the plan.
+- `domain/ProgramDifficultyTest.kt` (new) — 5 cases: all 3 tiers map correctly (including the
+  currently-unseeded `"Nâng cao"`), `"Mọi trình độ"` and an arbitrary unrecognized string both map
+  to `null` rather than throwing.
+
+### Scope decisions
+- **Bars, not stars/text**, per the plan's explicit instruction — 3 fixed-height boxes with
+  ascending heights (visually echoing `ProgramCoverIcon`'s existing `CHART` glyph's 3-ascending-bars
+  motif elsewhere in this same file, for visual consistency rather than inventing an unrelated shape).
+- **No redundant text label on the badge itself** — the program's level string is already shown as
+  plain text in the pre-existing meta line directly below the badge (`"4 tuần · 3 buổi/tuần · Trung
+  cấp · Phòng gym"`), so the badge is a purely visual reinforcement for at-a-glance scanning, not a
+  second copy of the same information.
+
+### Verification
+`ProgramDifficulty.kt`/`ProgramDifficultyTest.kt` have zero Android/Compose dependencies — standalone
+compiled AND actually run via `JUnitCore` (kotlin-stdlib-inclusive recipe from Gate 40):
+`OK (5 tests)`, all genuinely passing. `ProgramsListScreen.kt` (real Compose) verified by manual
+read-through: `DifficultyBadge` correctly placed between `ProgramTitleRow` and the meta `Text` in
+`ProgramCard`; `width`/`height` modifiers correctly imported (added `width`, `height` was already
+present); no other test file references `ProgramsListScreen`/`ProgramsViewModel` that could be
+affected by this purely-additive change (grepped `app/src/test`, none found).
+
+### Push
+Pending independent review.

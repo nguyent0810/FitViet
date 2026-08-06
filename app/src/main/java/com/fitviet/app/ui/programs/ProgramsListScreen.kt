@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -49,6 +50,7 @@ import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.ImportProgramResult
+import com.fitviet.app.domain.ProgramDifficulty
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentBorderAlt
@@ -386,6 +388,7 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             ProgramTitleRow(program = program)
+            DifficultyBadge(level = program.level)
             Text(
                 text = stringResource(
                     R.string.programs_card_meta,
@@ -396,6 +399,25 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
                 ),
                 style = MaterialTheme.typography.labelMedium,
                 color = TextMuted,
+            )
+        }
+    }
+}
+
+/** Feature #8 (Gate 42) — 3 ascending bars, not stars, filled up to
+ * [ProgramDifficulty.levelSteps]'s count; `null` (an unrated "Mọi trình độ" program or an
+ * unrecognized/imported level string) renders all 3 bars muted rather than guessing. */
+@Composable
+private fun DifficultyBadge(level: String) {
+    val steps = ProgramDifficulty.levelSteps(level) ?: 0
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
+        listOf(6.dp, 10.dp, 14.dp).forEachIndexed { index, barHeight ->
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(barHeight)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(if (index < steps) Accent else CardBorder),
             )
         }
     }
