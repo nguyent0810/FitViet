@@ -35,6 +35,28 @@ Files used (app/src/main/res/drawable-nodpi/):
   plate_pinch_0.jpg, plate_pinch_1.jpg                   <- exercises/Plate_Pinch/{0,1}.jpg
   finger_curls_0.jpg, finger_curls_1.jpg                 <- exercises/Finger_Curls/{0,1}.jpg
   rickshaw_carry_0.jpg, rickshaw_carry_1.jpg             <- exercises/Rickshaw_Carry/{0,1}.jpg
+  -- Gate 27 additions (Functional + Cardio) --
+  clean_and_jerk_0.jpg, clean_and_jerk_1.jpg             <- exercises/Clean_and_Jerk/{0,1}.jpg
+  clean_0.jpg, clean_1.jpg                               <- exercises/Clean/{0,1}.jpg
+  snatch_0.jpg, snatch_1.jpg                             <- exercises/Snatch/{0,1}.jpg
+  hang_clean_0.jpg, hang_clean_1.jpg                     <- exercises/Hang_Clean/{0,1}.jpg
+  sled_push_0.jpg, sled_push_1.jpg                       <- exercises/Sled_Push/{0,1}.jpg
+  tire_flip_0.jpg, tire_flip_1.jpg                       <- exercises/Tire_Flip/{0,1}.jpg
+  sandbag_load_0.jpg, sandbag_load_1.jpg                 <- exercises/Sandbag_Load/{0,1}.jpg
+  atlas_stones_0.jpg, atlas_stones_1.jpg                 <- exercises/Atlas_Stones/{0,1}.jpg
+  yoke_walk_0.jpg, yoke_walk_1.jpg                       <- exercises/Yoke_Walk/{0,1}.jpg
+  farmers_walk_0.jpg, farmers_walk_1.jpg                 <- exercises/Farmers_Walk/{0,1}.jpg
+  treadmill_run_0.jpg, treadmill_run_1.jpg               <- exercises/Running_Treadmill/{0,1}.jpg
+  treadmill_walk_0.jpg, treadmill_walk_1.jpg             <- exercises/Walking_Treadmill/{0,1}.jpg
+  stationary_bike_0.jpg, stationary_bike_1.jpg           <- exercises/Bicycling_Stationary/{0,1}.jpg
+  elliptical_trainer_0.jpg, elliptical_trainer_1.jpg     <- exercises/Elliptical_Trainer/{0,1}.jpg
+  rowing_stationary_0.jpg, rowing_stationary_1.jpg       <- exercises/Rowing_Stationary/{0,1}.jpg
+  rope_jumping_0.jpg, rope_jumping_1.jpg                 <- exercises/Rope_Jumping/{0,1}.jpg
+  stairmaster_0.jpg, stairmaster_1.jpg                   <- exercises/Stairmaster/{0,1}.jpg
+  recumbent_bike_0.jpg, recumbent_bike_1.jpg             <- exercises/Recumbent_Bike/{0,1}.jpg
+  trail_running_walking_0.jpg, trail_running_walking_1.jpg <- exercises/Trail_Running_Walking/{0,1}.jpg
+  prowler_sprint_0.jpg, prowler_sprint_1.jpg             <- exercises/Prowler_Sprint/{0,1}.jpg
+  step_mill_0.jpg, step_mill_1.jpg                       <- exercises/Step_Mill/{0,1}.jpg
 
 License (per the repo's LICENSE.md, "The Unlicense"):
 

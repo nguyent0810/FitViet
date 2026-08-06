@@ -1296,3 +1296,19 @@ One round — no findings. Codex additionally verified all 38 JPGs decode as val
 
 ### Push
 Committed and pushed directly to `master`. Continuing to Gate 27 (Functional + Cardio) next, same process, no further check-in needed per the standing autonomous gate workflow.
+
+## Gate 27 — Exercise library expansion: Functional + Cardio (2/9 gates)
+
+### What was built
+21 new exercises: 10 FUNCTIONAL (Olympic lifts — Clean and Jerk, Clean, Snatch, Hang Clean — plus strongman movements — Sled Push, Tire Flip, Sandbag Load, Atlas Stones, Yoke Walk, Farmer's Walk), 11 CARDIO (steady-state machines — treadmill run/walk, stationary/recumbent bike, elliptical, rowing, stairmaster, step mill, trail run/walk — plus interval-style Rope Jumping and Prowler Sprint). Both groups previously at zero.
+
+Before writing content, read `WorkoutTimeBudgetPlanner.kt` directly to confirm neither it nor the fixed demo (`WorkoutPlanSeed`) draw from the full catalog — both use a hardcoded 14-exercise curriculum — so these new duration/distance-based exercises can't be auto-selected into a generated session with nonsensical rep counts; they're library/Handbook content only. This let the modeling extend Gate 26's `reps=1` "one hold/carry" simplification much further: 8 pure steady-state cardio machines model as `1 set × 1 rep` (one continuous session, no natural rep count), several FUNCTIONAL carries/loads similarly use `reps=1` per trip.
+
+### Codex review
+One round. No blocking findings — verified all sets/reps modeling choices individually (Olympic lift rep ranges, carry-exercise reps=1 pattern, cardio 1×1 pattern), confirmed `muscleGroupCode` split (10 FUNCTIONAL / 11 CARDIO) and `movementType`/`difficultyCode` validity, confirmed license source-path accuracy against the upstream repo. One low-severity note: my review prompt's claim that these exercises are "only reachable via search/Handbook" was slightly too broad — imported programs (Gate 15/24's program-day flow) can technically reference any exercise by name, but they carry their own target sets/reps rather than using these new `suggestedSets*`/`suggestedReps*` defaults, so the reps=1 modeling is never actually exposed through that path either. No code change needed, just a documentation nuance.
+
+### Verification
+Same as Gate 26: all 42 downloads verified (HTTP 200, non-trivial size), `aapt2 compile --dir` clean on all 108 drawable-nodpi files, programmatic count/duplicate checks clean (54 exercises / 54 photo entries / 54 name constants).
+
+### Push
+Committed and pushed directly to `master`. Continuing to Gate 28 (Stretching) next.

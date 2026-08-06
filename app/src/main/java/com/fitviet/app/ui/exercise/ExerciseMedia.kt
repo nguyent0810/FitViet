@@ -83,6 +83,28 @@ private val EXERCISE_PHOTOS: Map<String, List<Int>> = mapOf(
     SeedExerciseNames.FOREARM_PLATE_PINCH to listOf(R.drawable.plate_pinch_0, R.drawable.plate_pinch_1),
     SeedExerciseNames.FOREARM_FINGER_CURLS to listOf(R.drawable.finger_curls_0, R.drawable.finger_curls_1),
     SeedExerciseNames.FOREARM_RICKSHAW_CARRY to listOf(R.drawable.rickshaw_carry_0, R.drawable.rickshaw_carry_1),
+    // Gate 27 — Functional + Cardio library expansion
+    SeedExerciseNames.FUNC_CLEAN_AND_JERK to listOf(R.drawable.clean_and_jerk_0, R.drawable.clean_and_jerk_1),
+    SeedExerciseNames.FUNC_CLEAN to listOf(R.drawable.clean_0, R.drawable.clean_1),
+    SeedExerciseNames.FUNC_SNATCH to listOf(R.drawable.snatch_0, R.drawable.snatch_1),
+    SeedExerciseNames.FUNC_HANG_CLEAN to listOf(R.drawable.hang_clean_0, R.drawable.hang_clean_1),
+    SeedExerciseNames.FUNC_SLED_PUSH to listOf(R.drawable.sled_push_0, R.drawable.sled_push_1),
+    SeedExerciseNames.FUNC_TIRE_FLIP to listOf(R.drawable.tire_flip_0, R.drawable.tire_flip_1),
+    SeedExerciseNames.FUNC_SANDBAG_LOAD to listOf(R.drawable.sandbag_load_0, R.drawable.sandbag_load_1),
+    SeedExerciseNames.FUNC_ATLAS_STONES to listOf(R.drawable.atlas_stones_0, R.drawable.atlas_stones_1),
+    SeedExerciseNames.FUNC_YOKE_WALK to listOf(R.drawable.yoke_walk_0, R.drawable.yoke_walk_1),
+    SeedExerciseNames.FUNC_FARMERS_WALK to listOf(R.drawable.farmers_walk_0, R.drawable.farmers_walk_1),
+    SeedExerciseNames.CARDIO_TREADMILL_RUN to listOf(R.drawable.treadmill_run_0, R.drawable.treadmill_run_1),
+    SeedExerciseNames.CARDIO_TREADMILL_WALK to listOf(R.drawable.treadmill_walk_0, R.drawable.treadmill_walk_1),
+    SeedExerciseNames.CARDIO_STATIONARY_BIKE to listOf(R.drawable.stationary_bike_0, R.drawable.stationary_bike_1),
+    SeedExerciseNames.CARDIO_ELLIPTICAL to listOf(R.drawable.elliptical_trainer_0, R.drawable.elliptical_trainer_1),
+    SeedExerciseNames.CARDIO_ROWING to listOf(R.drawable.rowing_stationary_0, R.drawable.rowing_stationary_1),
+    SeedExerciseNames.CARDIO_ROPE_JUMPING to listOf(R.drawable.rope_jumping_0, R.drawable.rope_jumping_1),
+    SeedExerciseNames.CARDIO_STAIRMASTER to listOf(R.drawable.stairmaster_0, R.drawable.stairmaster_1),
+    SeedExerciseNames.CARDIO_RECUMBENT_BIKE to listOf(R.drawable.recumbent_bike_0, R.drawable.recumbent_bike_1),
+    SeedExerciseNames.CARDIO_TRAIL_RUN to listOf(R.drawable.trail_running_walking_0, R.drawable.trail_running_walking_1),
+    SeedExerciseNames.CARDIO_PROWLER_SPRINT to listOf(R.drawable.prowler_sprint_0, R.drawable.prowler_sprint_1),
+    SeedExerciseNames.CARDIO_STEP_MILL to listOf(R.drawable.step_mill_0, R.drawable.step_mill_1),
 )
 
 fun exercisePhotosFor(nameVi: String): List<Int> = EXERCISE_PHOTOS[nameVi].orEmpty()
