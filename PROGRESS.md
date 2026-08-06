@@ -1555,3 +1555,77 @@ confirm `LockedListItem`/`LockReason` truly have zero callers anywhere else in t
 
 ### Push
 Reviewed, no fixes needed, pushed to `origin/claude/routines-code-session-n62xmx`.
+
+## Gate 37 — Settings screen extraction + destructive reset (feature #6)
+
+### What was built
+- `ui/common/SettingsRow.kt` (new) — `SettingsRow`/`WidgetToggleRow` extracted verbatim (now
+  public) from `ProfileScreen.kt`'s private copies, so `ProfileScreen`/`ProfileEditScreen` and the
+  new `SettingsScreen` share one implementation.
+- `ui/settings/SettingsScreen.kt` + `SettingsViewModel.kt` (new) — three grouped cards (TÀI KHOẢN:
+  language/offline/backup/units, unchanged from the old `SettingsCard`; THÔNG BÁO: a single
+  "Nhắc nhở tập luyện" row, **static this gate** — same "row exists before its destination does"
+  precedent as Gate 6's original "Sao lưu dữ liệu" row, Gate 38 makes it real; HIỂN THỊ: the 3
+  Dashboard widget toggles, unchanged from the old `DashboardWidgetsCard`) plus a destructive
+  "Đặt lại ứng dụng" block at the bottom with an `AlertDialog` confirm step (same component this
+  app first used in Gate 14's measurement-delete confirm). `SettingsViewModel` delegates all the
+  language/offline/units/widget-toggle read-writes to the existing `ProfileRepository` (moving
+  *where they're edited from* doesn't change *who owns the data*) and only calls the new
+  `SettingsRepository` for the reset action itself.
+- `data/repository/SettingsRepository.kt` (new) + three new DAO methods
+  (`WorkoutSessionDao.deleteAll()`, `MealDao.deleteAll()`, `MeasurementDao.deleteAll()`) —
+  `resetAppData()`, precisely scoped and documented (see below), wrapped in one
+  `database.withTransaction {}` (all-or-nothing).
+- `ProfileScreen.kt` — the old `SettingsCard` + `DashboardWidgetsCard` (and their now-orphaned
+  private `SettingsRow`/`WidgetToggleRow` copies) removed entirely, replaced by two single-row
+  cards: "Chỉnh sửa hồ sơ ›" (kept directly on Profile — Gate 35's original "row + avatar tap" two
+  entry-point design for profile identity editing is preserved, not buried a level deeper) and the
+  new "Cài đặt ›" row opening `SettingsScreen`.
+- `ui/theme/Color.kt` gained `Danger`/`DangerSurfaceSelected`/`DangerBorder` — the one deliberate
+  exception to this app's single-accent-green palette (see Gate 35's "no new hues" rule): a
+  destructive/danger red is expected, established UI vocabulary (system dialogs, Material
+  guidelines), not a decorative choice the way an arbitrary avatar swatch color would have been.
+- New route `FitVietDestination.Settings` ("settings"), reached from Profile's "Cài đặt ›" row.
+- New strings (vi + en): `profile_settings_open_settings`, `settings_title`,
+  `settings_section_{account,notifications,display}`, `settings_reminders_row`,
+  `settings_reminders_value`, `settings_reset_button`, `settings_reset_confirm_{title,body,yes,cancel}`.
+
+### The destructive reset — exactly what it does (per the plan's own requirement to name this before writing the confirm dialog, not after)
+**Clears** (the user's own logged data, wrapped in one transaction): `workout_sessions` (cascades to
+`set_logs` via the existing `ForeignKey.CASCADE`), `meals`, `measurements`, and `settings` (upserted
+back to `SettingsEntity()`'s defaults) — which includes `onboardingCompleted = false`, so the app
+returns to onboarding, and resets the display name/avatar/language/units/widget-visibility choices.
+
+**Does NOT clear** (this app's static content library, not user data): `programs`, `program_days`,
+`program_exercises`, `exercises`, `foods`. `community_posts` is also deliberately left untouched —
+today those rows are only ever the 3 seeded demo posts (no real user-post-creation flow exists
+until Gate 40/41); revisit this exclusion once posts can actually be user-authored.
+
+**Navigation after reset, the one real design problem this gate had to solve**: flipping
+`onboardingCompleted` back to `false` does NOT, by itself, move the user anywhere. Compose
+Navigation's `NavHost(startDestination = ...)` is only consulted on the graph's *first*
+composition — `FitVietNavHost`'s existing `onboardingCompleted` check recomposing later has no
+effect on an already-live `NavController` sitting deep in a back stack (e.g. on Settings). Handled
+with an explicit imperative call instead: `SettingsViewModel` exposes a one-shot `resetComplete`
+flag once `resetAppData()` finishes; `SettingsScreen` observes it via `LaunchedEffect` and calls a
+passed-in `onResetComplete`, which `FitVietNavHost` wires to
+`navController.navigate(ONBOARDING_GRAPH_ROUTE) { popUpTo(graph.findStartDestination().id) { inclusive = true } }`
+— same `popUpTo(startDestination)` pattern the existing "finish workout → Home" navigation already
+uses, just with `inclusive = true` and no `saveState`/`restoreState` (deliberately discarding
+everything, not preserving state to come back to).
+
+### Verification
+Standalone `kotlinc` compile of the full domain + data layer (all entities/DAOs including the three
+new `deleteAll()` methods, `ProfileRepository`, `SettingsRepository`, `DashboardRepository`) against
+the `FitVietDatabase`/`withTransaction` stub — clean, no errors. No Room schema change this gate (new
+DAO query methods only, no new tables/columns), so no `FitVietDatabase` version bump needed.
+`ProfileScreen.kt`/`SettingsScreen.kt`/`SettingsViewModel.kt`/`ui/common/SettingsRow.kt`/
+`FitVietNavHost.kt` (real `androidx.lifecycle`/Compose/Navigation) verified by manual read-through —
+confirmed no leftover private `SettingsRow`/`WidgetToggleRow`/`SettingsCard`/`DashboardWidgetsCard`
+in `ProfileScreen.kt` (grepped), no stray `androidx.compose.foundation.layout.weight` import, both
+`strings.xml`/`values-en/strings.xml` well-formed XML, and the reset transaction's DAO calls all
+compile against real (not stubbed-away) `@Query` annotations. The `popUpTo(...).inclusive = true`
++ fresh `navigate(ONBOARDING_GRAPH_ROUTE)` sequence is the one piece of this gate genuinely
+unverifiable without a real device/emulator — flagging this explicitly for the independent review
+to scrutinize hardest, since a wrong `popUpTo` target is exactly the kind of bug that only shows up
+at runtime.

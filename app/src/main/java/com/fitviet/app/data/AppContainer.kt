@@ -13,6 +13,7 @@ import com.fitviet.app.data.repository.ProfileRepository
 import com.fitviet.app.data.repository.RoomExerciseRepository
 import com.fitviet.app.data.repository.RoomProgramRepository
 import com.fitviet.app.data.repository.RoomWorkoutRepository
+import com.fitviet.app.data.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +60,13 @@ class AppContainer(context: Context) {
     )
     val communityRepository = CommunityRepository(database.communityPostDao())
     val handbookRepository = HandbookRepository(database.exerciseDao(), database.foodDao())
+    val settingsRepository = SettingsRepository(
+        database = database,
+        workoutSessionDao = database.workoutSessionDao(),
+        mealDao = database.mealDao(),
+        measurementDao = database.measurementDao(),
+        settingsDao = database.settingsDao(),
+    )
 
     /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a
      * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather

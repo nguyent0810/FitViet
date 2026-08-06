@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -40,6 +39,7 @@ import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.domain.MeasurementDeltas
 import com.fitviet.app.domain.WeightHistoryRange
 import com.fitviet.app.domain.WeightPoint
+import com.fitviet.app.ui.common.SettingsRow
 import com.fitviet.app.ui.onboarding.GOAL_OPTIONS
 import com.fitviet.app.ui.onboarding.LEVEL_OPTIONS
 import com.fitviet.app.ui.theme.Accent
@@ -64,7 +64,12 @@ import java.time.LocalDate
 import kotlin.math.abs
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onEditProfile: () -> Unit) {
+fun ProfileScreen(
+    viewModel: ProfileViewModel,
+    onBack: () -> Unit,
+    onEditProfile: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -112,8 +117,8 @@ fun ProfileScreen(viewModel: ProfileViewModel, onBack: () -> Unit, onEditProfile
             useImperial = uiState.settings.useImperialUnits,
             onRangeSelect = viewModel::selectWeightHistoryRange,
         )
-        SettingsCard(settings = uiState.settings, viewModel = viewModel, onEditProfile = onEditProfile)
-        DashboardWidgetsCard(settings = uiState.settings, viewModel = viewModel)
+        SingleRowCard(label = stringResource(R.string.profile_settings_edit_profile), onClick = onEditProfile)
+        SingleRowCard(label = stringResource(R.string.profile_settings_open_settings), onClick = onOpenSettings)
         DonateCard(donated = uiState.settings.hasDonated, onDonateClick = viewModel::toggleDonated)
     }
 
@@ -391,8 +396,11 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
 
 private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthValue}"
 
+/** A single-row card wrapping the shared [SettingsRow] — used for the two Profile-level navigation
+ * entries ("Chỉnh sửa hồ sơ ›", "Cài đặt ›") now that the old multi-row `SettingsCard`/
+ * `DashboardWidgetsCard` have moved into `ui/settings/SettingsScreen.kt` (Gate 37). */
 @Composable
-private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel, onEditProfile: () -> Unit) {
+private fun SingleRowCard(label: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -400,112 +408,7 @@ private fun SettingsCard(settings: SettingsEntity, viewModel: ProfileViewModel, 
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_edit_profile),
-            value = "›",
-            onClick = onEditProfile,
-        )
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_language),
-            value = stringResource(if (settings.languageIsEnglish) R.string.profile_lang_en else R.string.profile_lang_vi) + " ›",
-            onClick = viewModel::cycleLanguage,
-        )
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_offline),
-            value = stringResource(if (settings.offlineMode) R.string.profile_offline_on else R.string.profile_offline_off),
-            valueColor = if (settings.offlineMode) Accent else TextMuted,
-            valueBold = true,
-            onClick = viewModel::toggleOffline,
-        )
-        // Static in the prototype too (no onClick on this row) — there's no real file-export feature yet.
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_backup),
-            value = stringResource(R.string.profile_settings_backup_value),
-            onClick = null,
-        )
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_units),
-            value = stringResource(if (settings.useImperialUnits) R.string.profile_unit_imperial else R.string.profile_unit_metric) + " ›",
-            onClick = viewModel::cycleUnits,
-            showDivider = false,
-        )
-    }
-}
-
-@Composable
-private fun DashboardWidgetsCard(settings: SettingsEntity, viewModel: ProfileViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
-    ) {
-        Text(
-            text = stringResource(R.string.profile_widgets_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = TextMuted,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-        WidgetToggleRow(
-            label = stringResource(R.string.profile_widget_recommendation),
-            enabled = settings.showRecommendationCard,
-            onClick = viewModel::toggleShowRecommendationCard,
-        )
-        WidgetToggleRow(
-            label = stringResource(R.string.profile_widget_muscle_balance),
-            enabled = settings.showMuscleBalanceCard,
-            onClick = viewModel::toggleShowMuscleBalanceCard,
-        )
-        WidgetToggleRow(
-            label = stringResource(R.string.profile_widget_nutrition),
-            enabled = settings.showNutritionCard,
-            onClick = viewModel::toggleShowNutritionCard,
-            showDivider = false,
-        )
-    }
-}
-
-@Composable
-private fun WidgetToggleRow(label: String, enabled: Boolean, onClick: () -> Unit, showDivider: Boolean = true) {
-    SettingsRow(
-        label = label,
-        value = stringResource(if (enabled) R.string.profile_offline_on else R.string.profile_offline_off),
-        valueColor = if (enabled) Accent else TextMuted,
-        valueBold = true,
-        onClick = onClick,
-        showDivider = showDivider,
-    )
-}
-
-@Composable
-private fun SettingsRow(
-    label: String,
-    value: String,
-    onClick: (() -> Unit)?,
-    valueColor: Color = TextMuted,
-    valueBold: Boolean = false,
-    showDivider: Boolean = true,
-) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = valueColor,
-                fontWeight = if (valueBold) FontWeight.Bold else FontWeight.Normal,
-            )
-        }
-        if (showDivider) {
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(CardBorder))
-        }
+        SettingsRow(label = label, value = "›", onClick = onClick, showDivider = false)
     }
 }
 

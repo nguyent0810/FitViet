@@ -26,4 +26,8 @@ interface MeasurementDao {
 
     @Query("DELETE FROM measurements WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /** Feature #6 (Gate 37) — the destructive "reset app data" settings action. */
+    @Query("DELETE FROM measurements")
+    suspend fun deleteAll()
 }

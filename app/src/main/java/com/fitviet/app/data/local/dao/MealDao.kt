@@ -17,4 +17,8 @@ interface MealDao {
 
     @Delete
     suspend fun delete(meal: MealEntity)
+
+    /** Feature #6 (Gate 37) — the destructive "reset app data" settings action. */
+    @Query("DELETE FROM meals")
+    suspend fun deleteAll()
 }

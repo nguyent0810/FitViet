@@ -293,6 +293,7 @@
     <string name="profile_tile_waist_short">Waist</string>
     <string name="profile_tile_arm_short">Arm</string>
     <string name="profile_settings_edit_profile">Edit profile</string>
+    <string name="profile_settings_open_settings">Settings</string>
     <string name="profile_edit_title">Edit profile</string>
     <string name="profile_edit_name_label">Display name</string>
     <string name="profile_edit_name_placeholder">Enter your name</string>
@@ -362,4 +363,17 @@
     <!-- ui/common — LockedListItem (Gate 36, ships unused by design) -->
     <string name="locked_item_requires_upgrade">Requires upgrade</string>
     <string name="locked_item_coming_soon">Coming soon</string>
+
+    <!-- ui/settings — SettingsScreen (Gate 37) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_account">ACCOUNT</string>
+    <string name="settings_section_notifications">NOTIFICATIONS</string>
+    <string name="settings_section_display">DISPLAY</string>
+    <string name="settings_reminders_row">Workout reminders</string>
+    <string name="settings_reminders_value">›</string>
+    <string name="settings_reset_button">Reset app</string>
+    <string name="settings_reset_confirm_title">Reset the app?</string>
+    <string name="settings_reset_confirm_body">All workouts, body measurements, food log entries, and personal settings will be permanently deleted. Programs, exercises, and sample foods are kept. You\'ll be returned to the initial setup screen.</string>
+    <string name="settings_reset_confirm_yes">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
 </resources>

@@ -47,6 +47,8 @@ import com.fitviet.app.ui.programs.ProgramsListScreen
 import com.fitviet.app.ui.programs.ProgramsViewModel
 import com.fitviet.app.ui.programs.WeeklyScheduleScreen
 import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
+import com.fitviet.app.ui.settings.SettingsScreen
+import com.fitviet.app.ui.settings.SettingsViewModel
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.workout.WorkoutPreviewScreen
 import com.fitviet.app.ui.workout.WorkoutPreviewViewModel
@@ -188,11 +190,30 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     onEditProfile = { navController.navigate(FitVietDestination.ProfileEdit.route) },
+                    onOpenSettings = { navController.navigate(FitVietDestination.Settings.route) },
                 )
             }
             composable(FitVietDestination.ProfileEdit.route) {
                 val viewModel: ProfileEditViewModel = viewModel(factory = ProfileEditViewModel.Factory(container.profileRepository))
                 ProfileEditScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(FitVietDestination.Settings.route) {
+                val viewModel: SettingsViewModel = viewModel(
+                    factory = SettingsViewModel.Factory(container.profileRepository, container.settingsRepository),
+                )
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onResetComplete = {
+                        // Explicit imperative nav back to onboarding — see SettingsViewModel's
+                        // class doc for why the reactive onboardingCompleted check alone can't
+                        // move an already-live NavController sitting deep in this back stack.
+                        navController.navigate(ONBOARDING_GRAPH_ROUTE) {
+                            popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
             }
             composable(
                 route = FitVietDestination.ExerciseDetail.route,

@@ -37,3 +37,11 @@ val MacroBarFat = Color(0xFFC9EDD3)
 
 // Selection dot (unselected)
 val DotBorderIdle = Color(0xFF3A443C)
+
+// Destructive actions (Gate 37) — a muted red, the one deliberate exception to this app's
+// single-accent-green palette: a destructive/danger signal is expected, established Android
+// vocabulary (system dialogs, Material guidelines), not a decorative color choice like an avatar
+// swatch would be.
+val Danger = Color(0xFFD9695F)
+val DangerSurfaceSelected = Color(0xFF2A1613)
+val DangerBorder = Color(0xFF5A332D)
