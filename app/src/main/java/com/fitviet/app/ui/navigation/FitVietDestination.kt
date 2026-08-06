@@ -39,6 +39,9 @@ sealed class FitVietDestination(val route: String) {
     data object WorkoutCalendar : FitVietDestination("diary/calendar")
 
     data object Profile : FitVietDestination("profile")
+
+    /** Exercise library by difficulty level + a static food reference (Gate 25). */
+    data object Handbook : FitVietDestination("handbook")
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).
@@ -47,4 +50,5 @@ val BOTTOM_NAV_ROUTES = setOf(
     FitVietDestination.Programs.route,
     FitVietDestination.Nutrition.route,
     FitVietDestination.Community.route,
+    FitVietDestination.Handbook.route,
 )

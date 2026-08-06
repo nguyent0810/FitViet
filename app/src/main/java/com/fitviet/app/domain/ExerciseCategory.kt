@@ -13,3 +13,7 @@ enum class MuscleGroup {
 }
 
 enum class MovementType { COMPOUND, ISOLATION }
+
+/** Same "stable code + separate display label" pattern as [MuscleGroup] — backs the Handbook's
+ * (Gate 25) exercise-library-by-level grouping. */
+enum class ExerciseDifficulty { BEGINNER, INTERMEDIATE, ADVANCED }

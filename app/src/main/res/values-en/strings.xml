@@ -8,6 +8,7 @@
     <string name="nav_workout_fab">TRAIN</string>
     <string name="nav_nutrition">Nutrition</string>
     <string name="nav_community">Community</string>
+    <string name="nav_handbook">Handbook</string>
 
     <!-- 1a Onboarding — goal & level -->
     <string name="onboarding_goal_title">What\'s your goal?</string>
@@ -339,4 +340,16 @@
     <string name="community_comments">💬 %1$d comments</string>
     <string name="community_replies">💬 %1$d replies</string>
     <string name="community_best_answer">1 best answer</string>
+
+    <!-- Handbook (Gate 25) -->
+    <string name="handbook_title">Handbook</string>
+    <string name="handbook_tab_exercises">Exercises</string>
+    <string name="handbook_tab_foods">Foods</string>
+    <string name="handbook_exercises_empty">No exercises in the library yet.</string>
+    <string name="handbook_foods_empty">No food data yet.</string>
+    <string name="handbook_food_kcal">%1$d kcal/100g</string>
+    <string name="handbook_food_macros">%1$sg protein · %2$sg carbs · %3$sg fat</string>
+    <string name="exercise_difficulty_beginner">Beginner</string>
+    <string name="exercise_difficulty_intermediate">Intermediate</string>
+    <string name="exercise_difficulty_advanced">Advanced</string>
 </resources>

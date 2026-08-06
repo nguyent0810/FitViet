@@ -2,6 +2,7 @@ package com.fitviet.app.util
 
 import androidx.annotation.StringRes
 import com.fitviet.app.R
+import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.MuscleGroup
 
 /** Display label for [com.fitviet.app.domain.WorkoutCompositionCalculator]'s muscle-group workload
@@ -20,4 +21,12 @@ fun MuscleGroup.labelRes(): Int = when (this) {
     MuscleGroup.FUNCTIONAL -> R.string.muscle_group_functional
     MuscleGroup.CARDIO -> R.string.muscle_group_cardio
     MuscleGroup.STRETCHING -> R.string.muscle_group_stretching
+}
+
+/** Display label for the Handbook's (Gate 25) exercise-library-by-level grouping. */
+@StringRes
+fun ExerciseDifficulty.labelRes(): Int = when (this) {
+    ExerciseDifficulty.BEGINNER -> R.string.exercise_difficulty_beginner
+    ExerciseDifficulty.INTERMEDIATE -> R.string.exercise_difficulty_intermediate
+    ExerciseDifficulty.ADVANCED -> R.string.exercise_difficulty_advanced
 }

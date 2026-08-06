@@ -1255,3 +1255,25 @@ Two unit tests added to `WorkoutViewModelTest.kt` covering the new program-day p
 
 ### Push
 Committed and pushed directly to `master`.
+
+## Gate 25 — Handbook section (exercise library by level + food reference)
+
+### What was built
+The last item from the user's multi-part request batch. Scoped up front via two direct questions (asked because both were genuine product/design decisions, not engineering judgment calls): Handbook became a new 6th bottom-nav tab (matching the reference app's own layout, over folding it into existing screens), and the food content stayed a simple static reference (name/macros/description) rather than a richer filterable catalog.
+
+- **New `ExerciseDifficulty` enum** (domain layer, same stable-code + `labelRes()` pattern as `MuscleGroup`) and a new `ExerciseEntity.difficultyCode` column — all 14 seeded exercises assigned a level (bodyweight/light-isolation moves → Beginner, most barbell/machine/cable moves → Intermediate, squat/deadlift → Advanced given their technical/form-sensitivity reputation).
+- **New `FoodEntity`/`FoodDao`/`foods` table** — a genuinely new content domain, not reusing `MealEntity` (which is meal-logging, not reference content). 17 hand-authored entries across 5 categories (Đạm/Tinh bột/Chất béo/Rau củ/Trái cây) with standard, widely-published macro figures — codex spot-checked several for protein/carb/fat-to-kcal plausibility, found them consistent.
+- **New `HandbookRepository`/`HandbookViewModel`/`HandbookScreen`**: a 2-tab toggle (Bài tập / Thực phẩm) over a grouped list — exercises by difficulty level (levels with zero matches omitted), foods by category. Exercise rows navigate into the existing `ExerciseDetail` screen rather than building a new one.
+- **`FitVietDatabase` version 4 → 5** (new table + a new required column on an existing entity — same destructive-migration policy as every prior schema-relevant gate).
+- **`BottomNavBar` restructured**: adding a 5th regular nav item (2 left / FAB / 3 right, an unbalanced split for the first time) broke the previous single-`Row`-with-shared-`SpaceAround` centering — with unequal left/right counts the FAB would sit at 41.7% width instead of 50%. Fixed by giving each side its own `Modifier.weight(1f)` Row, so the FAB stays centered regardless of item-count parity.
+
+### Codex review
+Two rounds. Round 1 (full diff) found no functional/compile-shape issues in the new Room/repository/ViewModel/navigation wiring, confirmed the difficulty assignments and Room migration were sound, and confirmed the bottom-nav centering *math* was correct — but caught that the new 3-item right side could still overflow/clip on narrow screens (Vietnamese labels are long) since nothing capped each item's width; plus two low-severity polish items: Handbook content only ever showed `nameVi` even though `nameEn` was already populated and unused, and macro grams were rounded to whole numbers by the formatter in use, losing precision on values like 0.3g.
+
+Fixed all three: `NavItemView` gained `.weight(1f)` (caps each item to an equal share of its side) plus `maxLines=1`/ellipsis and a smaller label style; exercise and food rows now show both `nameVi` and `nameEn` (matching the bilingual pattern already established on the exercise-detail and Gate 24 logging screens); macros switched from the whole-number `formatVi` to the existing `formatOneDecimal` utility. Round 2 (scoped to just these 3 fixes) confirmed all three, no further findings.
+
+### Verification
+Same toolchain as prior gates: standalone `kotlinc` on the domain package (clean), real `aapt2 compile` on both locale `strings.xml` files (clean), full-codebase grep confirming every `ExerciseEntity` construction site supplies the new `difficultyCode`.
+
+### Push
+Committed and pushed directly to `master`. This closes out every item from the user's original multi-part request (Gates 22-25): tag-color contrast, program cover art, the 12-category muscle taxonomy, the workout entry flow redesign, and the Handbook section.

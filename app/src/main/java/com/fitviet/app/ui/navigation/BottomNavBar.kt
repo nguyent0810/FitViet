@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
 import com.fitviet.app.ui.theme.Accent
@@ -40,6 +41,7 @@ private val NAV_ITEMS_LEFT = listOf(
 private val NAV_ITEMS_RIGHT = listOf(
     NavItem(FitVietDestination.Nutrition, R.string.nav_nutrition),
     NavItem(FitVietDestination.Community, R.string.nav_community),
+    NavItem(FitVietDestination.Handbook, R.string.nav_handbook),
 )
 
 @Composable
@@ -60,15 +62,23 @@ fun BottomNavBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 18.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NAV_ITEMS_LEFT.forEach { item ->
-                NavItemView(item = item, selected = item.destination.route == currentRoute, onClick = { onNavigate(item.destination) })
+            // Gate 25 added a 5th regular item (Handbook), so the two sides no longer have equal
+            // counts (2 left, 3 right) — a single shared Arrangement.SpaceAround across all items
+            // would then visibly shift the FAB off-center. Each side gets its own equal-width
+            // Modifier.weight(1f) box instead, so the FAB stays centered regardless of how many
+            // items land on either side.
+            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceAround) {
+                NAV_ITEMS_LEFT.forEach { item ->
+                    NavItemView(item = item, selected = item.destination.route == currentRoute, onClick = { onNavigate(item.destination) })
+                }
             }
             WorkoutFab(onClick = onFabClick)
-            NAV_ITEMS_RIGHT.forEach { item ->
-                NavItemView(item = item, selected = item.destination.route == currentRoute, onClick = { onNavigate(item.destination) })
+            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.SpaceAround) {
+                NAV_ITEMS_RIGHT.forEach { item ->
+                    NavItemView(item = item, selected = item.destination.route == currentRoute, onClick = { onNavigate(item.destination) })
+                }
             }
         }
     }
@@ -78,7 +88,12 @@ fun BottomNavBar(
 private fun RowScope.NavItemView(item: NavItem, selected: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .sizeIn(minWidth = Dimens.MinTouchTarget, minHeight = Dimens.MinTouchTarget)
+            // Gate 25's Handbook tab made the right side hold 3 items instead of 2 — weight(1f)
+            // caps each item to an equal share of its side's width so a long Vietnamese label
+            // (e.g. "Dinh dưỡng") can't push its neighbors into clipping/overlap on narrow screens;
+            // sizeIn's minHeight still guarantees the touch-target floor.
+            .weight(1f)
+            .sizeIn(minHeight = Dimens.MinTouchTarget)
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -90,8 +105,10 @@ private fun RowScope.NavItemView(item: NavItem, selected: Boolean, onClick: () -
         )
         Text(
             text = stringResource(item.labelRes),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall,
             color = if (selected) Accent else TextMuted,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

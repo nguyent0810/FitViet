@@ -8,6 +8,7 @@
     <string name="nav_workout_fab">TẬP</string>
     <string name="nav_nutrition">Dinh dưỡng</string>
     <string name="nav_community">Cộng đồng</string>
+    <string name="nav_handbook">Cẩm nang</string>
 
     <!-- 1a Onboarding — goal & level -->
     <string name="onboarding_goal_title">Mục tiêu của bạn là gì?</string>
@@ -342,4 +343,16 @@
     <string name="community_comments">💬 %1$d bình luận</string>
     <string name="community_replies">💬 %1$d trả lời</string>
     <string name="community_best_answer">1 trả lời hay nhất</string>
+
+    <!-- Handbook (Gate 25) -->
+    <string name="handbook_title">Cẩm nang</string>
+    <string name="handbook_tab_exercises">Bài tập</string>
+    <string name="handbook_tab_foods">Thực phẩm</string>
+    <string name="handbook_exercises_empty">Chưa có bài tập nào trong thư viện.</string>
+    <string name="handbook_foods_empty">Chưa có dữ liệu thực phẩm.</string>
+    <string name="handbook_food_kcal">%1$d kcal/100g</string>
+    <string name="handbook_food_macros">%1$sg đạm · %2$sg tinh bột · %3$sg béo</string>
+    <string name="exercise_difficulty_beginner">Mới bắt đầu</string>
+    <string name="exercise_difficulty_intermediate">Trung cấp</string>
+    <string name="exercise_difficulty_advanced">Nâng cao</string>
 </resources>

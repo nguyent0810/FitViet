@@ -7,6 +7,7 @@ import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.domain.ProgramScheduleDay
@@ -114,6 +115,7 @@ class WorkoutViewModelTest {
         suggestedRestSeconds = 60,
         muscleGroupCode = MuscleGroup.CHEST.name,
         movementType = MovementType.COMPOUND.name,
+        difficultyCode = ExerciseDifficulty.BEGINNER.name,
     )
 
     private val testExercises = listOf(

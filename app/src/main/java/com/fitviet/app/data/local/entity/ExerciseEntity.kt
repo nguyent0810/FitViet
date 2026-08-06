@@ -25,4 +25,7 @@ data class ExerciseEntity(
      * charts that need to group reliably regardless of locale/copy. */
     val muscleGroupCode: String,
     val movementType: String,
+    /** [com.fitviet.app.domain.ExerciseDifficulty] `.name` — backs the Handbook's (Gate 25)
+     * exercise-library-by-level grouping, same stable-code convention as [muscleGroupCode]. */
+    val difficultyCode: String,
 )

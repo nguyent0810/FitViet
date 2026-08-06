@@ -19,6 +19,7 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
         database.withTransaction {
             seedMissingExercises()
             seedMissingCommunityPosts()
+            seedMissingFoods()
 
             if (database.programDao().count() == 0) {
                 val today = LocalDate.now().toEpochDay()
@@ -45,6 +46,15 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
     private suspend fun seedMissingCommunityPosts() {
         if (database.communityPostDao().count() > 0) return
         database.communityPostDao().insertAll(SeedData.communityPosts)
+    }
+
+    /** Same "backfill independently of the fresh-DB gate" reasoning as [seedMissingCommunityPosts]
+     * — the Handbook (Gate 25) food reference is a flat, unordered list, so "count() > 0" is a
+     * sufficient completeness check, unlike exercises which are matched by name to backfill only
+     * genuinely new entries. */
+    private suspend fun seedMissingFoods() {
+        if (database.foodDao().count() > 0) return
+        database.foodDao().insertAll(SeedData.foods)
     }
 
     /**

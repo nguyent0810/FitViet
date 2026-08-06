@@ -6,6 +6,7 @@ import com.fitviet.app.data.local.seed.DatabaseSeeder
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
+import com.fitviet.app.data.repository.HandbookRepository
 import com.fitviet.app.data.repository.NutritionRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
@@ -57,6 +58,7 @@ class AppContainer(context: Context) {
         measurementDao = database.measurementDao(),
     )
     val communityRepository = CommunityRepository(database.communityPostDao())
+    val handbookRepository = HandbookRepository(database.exerciseDao(), database.foodDao())
 
     /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a
      * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather

@@ -3,10 +3,12 @@ package com.fitviet.app.data.local.seed
 import com.fitviet.app.data.local.entity.CommunityPostEntity
 import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.local.entity.FoodEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
+import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 
@@ -84,6 +86,7 @@ object SeedData {
             suggestedRestSeconds = 90,
             muscleGroupCode = MuscleGroup.CHEST.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.SHOULDER_PRESS,
@@ -104,6 +107,7 @@ object SeedData {
             suggestedRestSeconds = 90,
             muscleGroupCode = MuscleGroup.DELTOIDS.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         // Superset pair (2c demo): "↓ không nghỉ ↓" between A1/A2, matching the prototype's
         // Cable fly (15kg×12, Ngực) + Lateral raise (8kg×15, Vai giữa). The prototype's 2c canvas
@@ -128,6 +132,7 @@ object SeedData {
             suggestedRestSeconds = 60,
             muscleGroupCode = MuscleGroup.CHEST.name,
             movementType = MovementType.ISOLATION.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LATERAL_RAISE,
@@ -148,6 +153,7 @@ object SeedData {
             suggestedRestSeconds = 60,
             muscleGroupCode = MuscleGroup.DELTOIDS.name,
             movementType = MovementType.ISOLATION.name,
+            difficultyCode = ExerciseDifficulty.BEGINNER.name,
         ),
         // Gate 9 — library expansion covering the muscle groups 1c/1e's original 4 exercises left
         // untouched (legs, back, arms, core). Not part of the fixed Gate 4 workout demo plan; these
@@ -173,6 +179,7 @@ object SeedData {
             suggestedRestSeconds = 120,
             muscleGroupCode = MuscleGroup.LEGS.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.ADVANCED.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.DEADLIFT,
@@ -193,6 +200,7 @@ object SeedData {
             suggestedRestSeconds = 150,
             muscleGroupCode = MuscleGroup.BACK.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.ADVANCED.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LAT_PULLDOWN,
@@ -213,6 +221,7 @@ object SeedData {
             suggestedRestSeconds = 90,
             muscleGroupCode = MuscleGroup.BACK.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.BENT_OVER_ROW,
@@ -233,6 +242,7 @@ object SeedData {
             suggestedRestSeconds = 90,
             muscleGroupCode = MuscleGroup.BACK.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.BARBELL_CURL,
@@ -253,6 +263,7 @@ object SeedData {
             suggestedRestSeconds = 60,
             muscleGroupCode = MuscleGroup.BICEPS.name,
             movementType = MovementType.ISOLATION.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.TRICEPS_PUSHDOWN,
@@ -273,6 +284,7 @@ object SeedData {
             suggestedRestSeconds = 60,
             muscleGroupCode = MuscleGroup.TRICEPS.name,
             movementType = MovementType.ISOLATION.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LEG_PRESS,
@@ -293,6 +305,7 @@ object SeedData {
             suggestedRestSeconds = 90,
             muscleGroupCode = MuscleGroup.LEGS.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.INTERMEDIATE.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.LUNGE,
@@ -313,6 +326,7 @@ object SeedData {
             suggestedRestSeconds = 75,
             muscleGroupCode = MuscleGroup.LEGS.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.BEGINNER.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.CRUNCH,
@@ -333,6 +347,7 @@ object SeedData {
             suggestedRestSeconds = 45,
             muscleGroupCode = MuscleGroup.ABS.name,
             movementType = MovementType.ISOLATION.name,
+            difficultyCode = ExerciseDifficulty.BEGINNER.name,
         ),
         ExerciseEntity(
             nameVi = SeedExerciseNames.PUSHUP,
@@ -353,6 +368,98 @@ object SeedData {
             suggestedRestSeconds = 60,
             muscleGroupCode = MuscleGroup.CHEST.name,
             movementType = MovementType.COMPOUND.name,
+            difficultyCode = ExerciseDifficulty.BEGINNER.name,
+        ),
+    )
+
+    /** Handbook's (Gate 25) food reference — a simple static list (name, category, macros per
+     * 100g), not tied to meal logging. Values are standard, widely-published nutrition figures
+     * (USDA-type reference ranges), not sourced from any single proprietary database. */
+    val foods = listOf(
+        FoodEntity(
+            nameVi = "Ức gà", nameEn = "Chicken breast", category = "Đạm",
+            descriptionVi = "Nguồn đạm nạc phổ biến, ít chất béo.",
+            kcalPer100g = 165, proteinG = 31.0, carbG = 0.0, fatG = 3.6,
+        ),
+        FoodEntity(
+            nameVi = "Trứng gà", nameEn = "Egg", category = "Đạm",
+            descriptionVi = "Đạm hoàn chỉnh, tiện chuẩn bị.",
+            kcalPer100g = 155, proteinG = 13.0, carbG = 1.1, fatG = 11.0,
+        ),
+        FoodEntity(
+            nameVi = "Cá hồi", nameEn = "Salmon", category = "Đạm",
+            descriptionVi = "Giàu đạm và omega-3.",
+            kcalPer100g = 208, proteinG = 20.0, carbG = 0.0, fatG = 13.0,
+        ),
+        FoodEntity(
+            nameVi = "Thịt bò nạc", nameEn = "Lean beef", category = "Đạm",
+            descriptionVi = "Giàu đạm và sắt.",
+            kcalPer100g = 250, proteinG = 26.0, carbG = 0.0, fatG = 15.0,
+        ),
+        FoodEntity(
+            nameVi = "Đậu phụ", nameEn = "Tofu", category = "Đạm",
+            descriptionVi = "Nguồn đạm thực vật phổ biến.",
+            kcalPer100g = 76, proteinG = 8.0, carbG = 1.9, fatG = 4.8,
+        ),
+        FoodEntity(
+            nameVi = "Tôm", nameEn = "Shrimp", category = "Đạm",
+            descriptionVi = "Đạm cao, gần như không chất béo.",
+            kcalPer100g = 99, proteinG = 24.0, carbG = 0.2, fatG = 0.3,
+        ),
+        FoodEntity(
+            nameVi = "Cơm trắng", nameEn = "White rice (cooked)", category = "Tinh bột",
+            descriptionVi = "Nguồn năng lượng chính trong bữa ăn Việt.",
+            kcalPer100g = 130, proteinG = 2.7, carbG = 28.0, fatG = 0.3,
+        ),
+        FoodEntity(
+            nameVi = "Khoai lang", nameEn = "Sweet potato", category = "Tinh bột",
+            descriptionVi = "Tinh bột hấp thu chậm, giàu chất xơ.",
+            kcalPer100g = 86, proteinG = 1.6, carbG = 20.0, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Yến mạch", nameEn = "Oats (dry)", category = "Tinh bột",
+            descriptionVi = "Phổ biến cho bữa sáng, giàu chất xơ.",
+            kcalPer100g = 389, proteinG = 17.0, carbG = 66.0, fatG = 7.0,
+        ),
+        FoodEntity(
+            nameVi = "Bánh mì nguyên cám", nameEn = "Whole wheat bread", category = "Tinh bột",
+            descriptionVi = "Tinh bột nguyên cám, nhiều chất xơ hơn bánh mì trắng.",
+            kcalPer100g = 247, proteinG = 13.0, carbG = 41.0, fatG = 3.4,
+        ),
+        FoodEntity(
+            nameVi = "Quả bơ", nameEn = "Avocado", category = "Chất béo",
+            descriptionVi = "Chất béo không bão hòa tốt cho tim mạch.",
+            kcalPer100g = 160, proteinG = 2.0, carbG = 9.0, fatG = 15.0,
+        ),
+        FoodEntity(
+            nameVi = "Hạnh nhân", nameEn = "Almonds", category = "Chất béo",
+            descriptionVi = "Ăn vặt lành mạnh, năng lượng đậm đặc.",
+            kcalPer100g = 579, proteinG = 21.0, carbG = 22.0, fatG = 50.0,
+        ),
+        FoodEntity(
+            nameVi = "Dầu oliu", nameEn = "Olive oil", category = "Chất béo",
+            descriptionVi = "Dùng để nấu ăn hoặc trộn salad.",
+            kcalPer100g = 884, proteinG = 0.0, carbG = 0.0, fatG = 100.0,
+        ),
+        FoodEntity(
+            nameVi = "Bông cải xanh", nameEn = "Broccoli", category = "Rau củ",
+            descriptionVi = "Giàu chất xơ và vitamin C.",
+            kcalPer100g = 34, proteinG = 2.8, carbG = 7.0, fatG = 0.4,
+        ),
+        FoodEntity(
+            nameVi = "Rau bina", nameEn = "Spinach", category = "Rau củ",
+            descriptionVi = "Rau lá xanh giàu sắt.",
+            kcalPer100g = 23, proteinG = 2.9, carbG = 3.6, fatG = 0.4,
+        ),
+        FoodEntity(
+            nameVi = "Chuối", nameEn = "Banana", category = "Trái cây",
+            descriptionVi = "Năng lượng nhanh, giàu kali.",
+            kcalPer100g = 89, proteinG = 1.1, carbG = 23.0, fatG = 0.3,
+        ),
+        FoodEntity(
+            nameVi = "Táo", nameEn = "Apple", category = "Trái cây",
+            descriptionVi = "Ăn vặt ít calo, giàu chất xơ.",
+            kcalPer100g = 52, proteinG = 0.3, carbG = 14.0, fatG = 0.2,
         ),
     )
 

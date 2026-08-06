@@ -32,6 +32,8 @@ import com.fitviet.app.ui.diary.DiaryScreen
 import com.fitviet.app.ui.diary.DiaryViewModel
 import com.fitviet.app.ui.exercise.ExerciseDetailScreen
 import com.fitviet.app.ui.exercise.ExerciseDetailViewModel
+import com.fitviet.app.ui.handbook.HandbookScreen
+import com.fitviet.app.ui.handbook.HandbookViewModel
 import com.fitviet.app.ui.nutrition.NutritionScreen
 import com.fitviet.app.ui.nutrition.NutritionViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
@@ -258,6 +260,15 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             composable(FitVietDestination.Community.route) {
                 val viewModel: CommunityViewModel = viewModel(factory = CommunityViewModel.Factory(container.communityRepository))
                 CommunityScreen(viewModel = viewModel)
+            }
+            composable(FitVietDestination.Handbook.route) {
+                val viewModel: HandbookViewModel = viewModel(factory = HandbookViewModel.Factory(container.handbookRepository))
+                HandbookScreen(
+                    viewModel = viewModel,
+                    onExerciseClick = { exercise ->
+                        navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
+                    },
+                )
             }
         }
     }

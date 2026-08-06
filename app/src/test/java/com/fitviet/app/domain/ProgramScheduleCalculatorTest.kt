@@ -26,6 +26,7 @@ class ProgramScheduleCalculatorTest {
         suggestedRestSeconds = 60,
         muscleGroupCode = MuscleGroup.CHEST.name,
         movementType = MovementType.COMPOUND.name,
+        difficultyCode = ExerciseDifficulty.BEGINNER.name,
     )
 
     @Test
