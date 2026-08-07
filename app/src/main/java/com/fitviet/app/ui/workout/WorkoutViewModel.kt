@@ -408,8 +408,12 @@ class WorkoutViewModel(
      * false` and create a duplicate post — caught by independent review. Doing the check-and-set
      * synchronously closes that window entirely, which a debounce (real-time-clock-based, used
      * elsewhere in this file) only would have narrowed. */
+    /** Only reachable in practice from [WorkoutScreen]'s `SessionFinished`-phase branch, but the
+     * phase guard is enforced here too — this ViewModel shouldn't rely solely on its one current UI
+     * call site to keep an in-progress/abandoned session from posting a partial summary. */
     fun shareToCommunity() {
         val state = _uiState.value
+        if (state.phase != WorkoutPhase.SessionFinished) return
         if (state.sessionShared) return
         _uiState.update { it.copy(sessionShared = true) }
         viewModelScope.launch {

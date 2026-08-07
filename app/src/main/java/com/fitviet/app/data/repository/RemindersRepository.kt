@@ -15,7 +15,16 @@ class RemindersRepository(private val reminderDao: ReminderDao) {
      * broken on first touch. */
     suspend fun addReminder() = reminderDao.insert(ReminderEntity(daysOfWeek = DEFAULT_NEW_REMINDER_DAYS))
 
-    suspend fun update(reminder: ReminderEntity) = reminderDao.update(reminder)
+    /** Re-reads the current row by [id] before applying [transform] — a stale [ReminderEntity]
+     * snapshot captured by a Compose closure (this card has several independently-tappable
+     * controls: day pills, the enabled pill, snooze, time sheet) must never overwrite a sibling
+     * field a concurrent tap already changed. No-ops if the row was deleted concurrently. Same
+     * re-read-at-write-time shape as [ProfileRepository]'s `updateSettings`/
+     * [OnboardingViewModel]'s `updateSelection`. */
+    suspend fun update(id: Long, transform: (ReminderEntity) -> ReminderEntity) {
+        val current = reminderDao.getById(id) ?: return
+        reminderDao.update(transform(current))
+    }
 
     suspend fun delete(reminder: ReminderEntity) = reminderDao.delete(reminder)
 

@@ -19,6 +19,10 @@ data class ProfileEditUiState(
     /** True for one frame after [ProfileEditViewModel.save] persists — the screen observes this
      * to navigate back, then [ProfileEditViewModel] is torn down with it (no reset needed). */
     val saved: Boolean = false,
+    /** True from the moment [ProfileEditViewModel.save] is called until the write completes.
+     * Set synchronously (unlike [saved], which only flips after the suspending write finishes) so
+     * a fast double-tap can't launch a second write before the first one lands — see [save]. */
+    val isSaving: Boolean = false,
 )
 
 /** Backs [ProfileEditScreen] (feature #1, Gate 35) — deliberately its own small ViewModel rather
@@ -48,14 +52,20 @@ class ProfileEditViewModel(private val repository: ProfileRepository) : ViewMode
 
     /** No-ops on a blank name (after trimming) rather than persisting an empty display name — the
      * Save button is disabled for that case too (see [ProfileEditScreen]), this is the same guard
-     * enforced on the ViewModel side in case that ever changes. Also no-ops once [ProfileEditUiState.saved]
-     * is already true, so a fast double-tap before the screen navigates away can't launch a second
-     * redundant write. */
+     * enforced on the ViewModel side in case that ever changes. Also no-ops once saved or already
+     * saving: [ProfileEditUiState.isSaving] flips synchronously (before the suspending write, and
+     * before [ProfileEditScreen]'s Save button re-renders as disabled), so a fast double-tap can't
+     * land two taps inside the same write window — a plain post-write [ProfileEditUiState.saved]
+     * check alone leaves that whole window open, since it only flips true once the write is done.
+     * [saved] itself still only flips after the write completes, not before — [ProfileEditScreen]
+     * navigates back on it, which tears this ViewModel down and cancels [viewModelScope], so
+     * flipping it early would risk cancelling the write before it lands. */
     fun save() {
         val state = _uiState.value
-        if (state.saved) return
+        if (state.saved || state.isSaving) return
         val trimmedName = state.displayName.trim()
         if (trimmedName.isEmpty()) return
+        _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             repository.updateProfile(trimmedName, state.avatarId)
             _uiState.update { it.copy(saved = true) }

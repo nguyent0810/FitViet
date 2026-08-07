@@ -33,25 +33,31 @@ class RemindersViewModel(private val repository: RemindersRepository) : ViewMode
     fun deleteReminder(reminder: ReminderEntity) = viewModelScope.launch { repository.delete(reminder) }
 
     /** Disabling/re-enabling is a full reset — it also clears any snooze, otherwise re-enabling
-     * a snoozed reminder would silently land back on "Đã hoãn" instead of "Bật". */
+     * a snoozed reminder would silently land back on "Đã hoãn" instead of "Bật". Re-reads the
+     * current row at write time (see [RemindersRepository.update]) rather than trusting the
+     * [reminder] snapshot from the tapped composable — this card has several independently
+     * tappable controls, so a stale snapshot could silently revert a concurrent edit. */
     fun toggleEnabled(reminder: ReminderEntity) = viewModelScope.launch {
-        repository.update(reminder.copy(enabled = !reminder.enabled, snoozedUntilEpochDay = null))
+        repository.update(reminder.id) { it.copy(enabled = !it.enabled, snoozedUntilEpochDay = null) }
     }
 
     /** Snoozing/un-snoozing is a manual toggle, not date-evaluated — see [ReminderEntity]'s doc
      * comment on why nothing clears this automatically. */
     fun toggleSnooze(reminder: ReminderEntity) = viewModelScope.launch {
-        val newValue = if (reminder.snoozedUntilEpochDay != null) null else LocalDate.now().toEpochDay()
-        repository.update(reminder.copy(snoozedUntilEpochDay = newValue))
+        repository.update(reminder.id) {
+            it.copy(snoozedUntilEpochDay = if (it.snoozedUntilEpochDay != null) null else LocalDate.now().toEpochDay())
+        }
     }
 
     fun toggleDay(reminder: ReminderEntity, isoDayOfWeek: Int) = viewModelScope.launch {
-        val days = if (isoDayOfWeek in reminder.daysOfWeek) {
-            reminder.daysOfWeek - isoDayOfWeek
-        } else {
-            (reminder.daysOfWeek + isoDayOfWeek).sorted()
+        repository.update(reminder.id) { current ->
+            val days = if (isoDayOfWeek in current.daysOfWeek) {
+                current.daysOfWeek - isoDayOfWeek
+            } else {
+                (current.daysOfWeek + isoDayOfWeek).sorted()
+            }
+            current.copy(daysOfWeek = days)
         }
-        repository.update(reminder.copy(daysOfWeek = days))
     }
 
     fun openTimeSheet(reminder: ReminderEntity) {
@@ -64,7 +70,7 @@ class RemindersViewModel(private val repository: RemindersRepository) : ViewMode
 
     fun saveTime(hour: Int, minute: Int) {
         val reminder = editingReminder.value ?: return
-        viewModelScope.launch { repository.update(reminder.copy(hour = hour, minute = minute)) }
+        viewModelScope.launch { repository.update(reminder.id) { it.copy(hour = hour, minute = minute) } }
         editingReminder.value = null
     }
 

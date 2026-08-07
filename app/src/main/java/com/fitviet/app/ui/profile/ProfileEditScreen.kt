@@ -98,7 +98,7 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
                 NameField(value = uiState.displayName, onValueChange = viewModel::updateDisplayName)
             }
 
-            val canSave = uiState.displayName.trim().isNotEmpty()
+            val canSave = uiState.displayName.trim().isNotEmpty() && !uiState.isSaving && !uiState.saved
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -2797,3 +2797,45 @@ gate covered is in its own section above; nothing in the plan's "Gate breakdown"
 unimplemented, and everything the plan explicitly marked "Out of scope for Gates 35-48" (WorkManager
 notification scheduling, real app-wide locale/unit-conversion i18n, superset support in the program
 JSON transfer format) remains genuinely untouched, matching the plan's own documented boundaries.
+
+## Pre-merge review — a genuine second pass from `master`, before merging this branch
+
+The building session above had no LLM API access at all; every "independent review" it recorded was
+a same-session agent stand-in. Before merging into `master`, a separate session with a working
+`master` checkout reviewed this branch fresh — first attempted via `codex exec` (this project's usual
+reviewer), which was unreachable (usage quota exhausted, resets in a few days), so the review ran as
+5 parallel, independently-scoped Claude agents instead, one per gate cluster (35-37, 38-39, 40-42,
+43-46, 47-48 — the last explicitly flagged as highest-risk, since it touches
+`ProgramDayWorkoutPlanner`/`WorkoutViewModel`, the same core state machine Gate 4 took four review
+rounds to stabilize). Each agent was told to verify PROGRESS.md's own claims against the actual code,
+not just corroborate the writeup.
+
+**Result: 0 High findings, 1 Medium, 3 Low across all 14 gates** — a strong result for ~5,000 lines
+across 26 commits. The Medium and two of the three Low findings were real and worth fixing before
+merge:
+
+| Severity | Gate(s) | Finding | Fix |
+|---|---|---|---|
+| Medium | 38 (Reminders) | `RemindersViewModel.toggleEnabled/toggleSnooze/toggleDay/saveTime` all `.copy()`'d a `ReminderEntity` *snapshot* captured by the tapped composable and wrote the whole row back — no mutex, no re-read. The reminders card has several independently-tappable controls (day pills, enabled pill, snooze, time sheet), so two fast taps on different controls could have one silently revert the other (this is the exact same stale-write hazard Gate 2 fixed once already, for onboarding — reintroduced here in a new feature). | `RemindersRepository.update(reminder)` → `RemindersRepository.update(id, transform)`, re-reading the row fresh via a new `ReminderDao.getById(id)` immediately before writing — same re-read-at-write-time shape as `ProfileRepository.updateSettings`/`OnboardingViewModel.updateSelection`. All 4 `RemindersViewModel` call sites updated to pass `reminder.id` + a transform lambda instead of a stale whole-entity copy. |
+| Low | 35 (Profile edit) | `ProfileEditViewModel.save()`'s double-tap guard (`if (state.saved) return`) only closed *after* the suspending write completed — two taps landing inside that window both passed the guard and both launched a write. Harmless in practice (both writes carry identical data, so no double-navigation), but the guard didn't actually close the window the review asked it to. | Added a separate `isSaving` flag, flipped synchronously before the write launches (unlike `saved`, which must stay post-write-only — it drives navigate-back, and flipping it early would risk `viewModelScope` cancellation racing the write). `ProfileEditScreen`'s `canSave` now also gates on `!isSaving`, so the button visibly disables during the write, not just the ViewModel silently no-op'ing a second tap. |
+| Low | 40/41 (Workout-share) | `WorkoutViewModel.shareToCommunity()` had no `phase` precondition — correctness depended entirely on `WorkoutScreen`'s one call site only rendering the share button in `SessionFinished`. Not currently exploitable (grepped, no other caller), but the business rule ("only a completed session can be shared") lived only in UI wiring, not the ViewModel. | Added `if (state.phase != WorkoutPhase.SessionFinished) return` at the top, alongside the existing `sessionShared` double-post guard. All 3 existing share tests already drive to `SessionFinished` before calling `shareToCommunity()`, so none needed changes. |
+| Low (accepted, not fixed) | 47 (Superset planner) | `DatabaseSeeder`'s `orderIndex` is assigned from original list position before dropping any exercise whose name fails to resolve, so "adjacent" for pairing purposes is "adjacent after drops," not strictly "adjacent `orderIndex` values" as the entity's own doc comment implies. Not exploitable today — both seeded superset pairs use exercise names guaranteed present in the catalog. | No fix applied, per the reviewing agent's own recommendation — this only matters if a future gate adds dynamic (non-seed) `supersetGroup` authoring, at which point it's a real edge case worth handling. Documented here so it isn't silently forgotten. |
+
+One more Low/informational note from the Gate 47-48 review was checked and found to be a non-issue:
+the preview's superset card border is `1.dp`, not the `1.5dp` the original design brief mentions —
+but every other `AccentBorder` usage in the entire app (`RestContent`, `DiaryScreen`,
+`DashboardScreen`, `CommunityScreen`, `ExerciseDetailScreen`, `NutritionScreen`,
+`ProgramsListScreen`, `ProfileScreen`) is also `1.dp` with zero `1.5.dp` uses anywhere — so this
+matches the codebase's own 100%-consistent existing convention, not a deviation. No fix needed.
+
+Everything else the 5 review agents checked — the destructive-reset transaction's exact scope, the
+`LockedListItem` zero-caller requirement, the days-per-week `recommendedFor` mapping, the shared
+`WeeklyBucketing` extraction, the sum-to-100 muscle-involvement validation run against all 155 seeded
+exercises, the exercise-detail tabs' per-exercise history query, and — most scrutinized —
+`ProgramDayWorkoutPlanner`'s pairing-degradation rules under every adversarial shape (size-1 groups,
+size-3+ groups, non-consecutive same-group tags) plus the preview/live-session sharing one grouping
+algorithm by construction — held up under direct code reading, not just re-confirming the self-review.
+
+### Push
+Fixes committed and pushed as a follow-up to `origin/claude/routines-code-session-n62xmx`, then
+merged into `master`.
