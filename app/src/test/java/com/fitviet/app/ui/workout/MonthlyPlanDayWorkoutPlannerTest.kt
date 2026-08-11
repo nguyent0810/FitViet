@@ -2,7 +2,9 @@ package com.fitviet.app.ui.workout
 
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanExerciseEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanWeekEntity
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.MonthlyPlanUserChoices
@@ -51,8 +53,13 @@ class MonthlyPlanDayWorkoutPlannerTest {
         private val exercisesByDay: Map<Long, List<MonthlyPlanExerciseEntity>> = emptyMap(),
     ) : MonthlyPlanRepository {
         override fun observeActivePlanId(): Flow<Long?> = flowOf(null)
+        override fun observePlan(planId: Long): Flow<MonthlyPlanEntity?> = flowOf(null)
+        override fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>> = flowOf(emptyList())
         override fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>> = flowOf(emptyList())
         override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = flowOf(exercisesByDay[dayId].orEmpty())
+        override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
+        override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = flowOf(days[dayId])
+        override fun observeIsDayLocked(dayId: Long): Flow<Boolean> = flowOf(false)
         override suspend fun getDay(dayId: Long): MonthlyPlanDayEntity? = days[dayId]
         override suspend fun generate(choices: MonthlyPlanUserChoices, today: LocalDate): Long = 0L
         override suspend fun regenerateDay(dayId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
