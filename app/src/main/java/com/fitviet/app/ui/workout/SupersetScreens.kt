@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
+import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.ui.exercise.ExerciseMediaBox
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
@@ -44,7 +48,8 @@ fun SupersetWorkContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
@@ -58,8 +63,7 @@ fun SupersetWorkContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
 
         SupersetExerciseRow(
             badge = stringResource(R.string.superset_badge_a1),
-            name = block.exerciseA.nameVi,
-            muscle = block.exerciseA.primaryMuscle,
+            exercise = block.exerciseA,
             plannedWeightKg = block.plannedA.weightKg,
             plannedReps = block.plannedA.reps,
             isActive = uiState.supersetSub == 0,
@@ -78,8 +82,7 @@ fun SupersetWorkContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
         )
         SupersetExerciseRow(
             badge = stringResource(R.string.superset_badge_a2),
-            name = block.exerciseB.nameVi,
-            muscle = block.exerciseB.primaryMuscle,
+            exercise = block.exerciseB,
             plannedWeightKg = block.plannedB.weightKg,
             plannedReps = block.plannedB.reps,
             isActive = uiState.supersetSub == 1,
@@ -121,8 +124,7 @@ fun SupersetWorkContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
 @Composable
 private fun SupersetExerciseRow(
     badge: String,
-    name: String,
-    muscle: String,
+    exercise: ExerciseEntity,
     plannedWeightKg: Double,
     plannedReps: Int,
     isActive: Boolean,
@@ -148,6 +150,7 @@ private fun SupersetExerciseRow(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        ExerciseMediaBox(exercise = exercise, height = 100.dp)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -160,10 +163,10 @@ private fun SupersetExerciseRow(
                 Text(text = badge, style = MaterialTheme.typography.labelMedium, color = badgeColor)
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = name, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                Text(text = exercise.nameVi, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
                 if (!isActive) {
                     Text(
-                        text = stringResource(R.string.workout_set_kg_reps, formatWeight(plannedWeightKg), plannedReps) + " · $muscle",
+                        text = stringResource(R.string.workout_set_kg_reps, formatWeight(plannedWeightKg), plannedReps) + " · ${exercise.primaryMuscle}",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextMuted,
                     )

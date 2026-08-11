@@ -12,9 +12,19 @@ sealed class FitVietDestination(val route: String) {
      * dashboard "Start workout"), present when started from [WorkoutPreview]'s "Begin workout",
      * in which case the session is built from that program's real schedule for today instead of
      * the generic duration-picker flow. */
-    data object Workout : FitVietDestination("workout?programId={programId}") {
+    data object Workout : FitVietDestination("workout?programId={programId}&monthlyPlanDayId={monthlyPlanDayId}") {
         const val ARG_PROGRAM_ID = "programId"
-        fun createRoute(programId: Long? = null) = if (programId != null) "workout?programId=$programId" else "workout"
+        // "Hit & Run" (Gate 63+) — mutually exclusive with programId at every real call site (see
+        // WorkoutViewModel's own doc on the two params), both optional so the bare "workout" route
+        // (bottom-nav FAB, dashboard "Start workout" for the duration-picker flow) keeps working.
+        const val ARG_MONTHLY_PLAN_DAY_ID = "monthlyPlanDayId"
+        fun createRoute(programId: Long? = null, monthlyPlanDayId: Long? = null): String {
+            val params = buildList {
+                if (programId != null) add("programId=$programId")
+                if (monthlyPlanDayId != null) add("monthlyPlanDayId=$monthlyPlanDayId")
+            }
+            return if (params.isEmpty()) "workout" else "workout?${params.joinToString("&")}"
+        }
     }
 
     data object ProgramSchedule : FitVietDestination("programs/{programId}/schedule") {
@@ -51,6 +61,20 @@ sealed class FitVietDestination(val route: String) {
 
     /** Exercise library by difficulty level + a static food reference (Gate 25). */
     data object Handbook : FitVietDestination("handbook")
+
+    /** "Hit & Run" (Gate 63+) — no args; reached from Dashboard's empty-state CTA and Programs'
+     * header card, both of which just want "go generate a plan," not a specific plan/day. */
+    data object QuickGenerate : FitVietDestination("quick_generate")
+
+    /** "Hit & Run" (Gate 63+) Regenerate UI — the plan's simple day list (see the plan's scope
+     * note: not a full calendar). No arg — always shows the one active plan. */
+    data object MonthlyPlanDetail : FitVietDestination("monthly_plan")
+
+    /** "Hit & Run" (Gate 63+) Regenerate UI — one day's exercises + swap/regenerate actions. */
+    data object MonthlyPlanDayDetail : FitVietDestination("monthly_plan/day/{dayId}") {
+        const val ARG_DAY_ID = "dayId"
+        fun createRoute(dayId: Long) = "monthly_plan/day/$dayId"
+    }
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).

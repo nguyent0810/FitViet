@@ -3,6 +3,8 @@ package com.fitviet.app.data.repository
 import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
+import com.fitviet.app.data.local.dao.MonthlyPlanDayDao
+import com.fitviet.app.data.local.dao.MonthlyPlanExerciseDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
@@ -15,6 +17,8 @@ import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.CompletedSet
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
+import com.fitviet.app.domain.MonthlyPlanDayCardEstimator
+import com.fitviet.app.domain.MonthlyPlanTodayResolver
 import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.NextTrainingCalculator
@@ -22,6 +26,7 @@ import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.ProgramScheduleCalculator
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.RecommendationCalculator
+import com.fitviet.app.domain.TodayMonthlyPlanCard
 import com.fitviet.app.domain.WorkoutCompositionCalculator
 import java.time.DayOfWeek
 import java.time.Instant
@@ -64,6 +69,12 @@ data class DashboardData(
      * [com.fitviet.app.data.local.entity.SettingsEntity]. */
     val displayName: String,
     val avatarId: Int,
+    /** "Hit & Run" (Gate 63+) — null when there's no active monthly plan, in which case
+     * [featuredProgram]/[nextTraining]/[programProgress] drive the hero card exactly as before this
+     * feature. Independent of [featuredProgram]: both can be non-null at once (see
+     * [com.fitviet.app.data.repository.MonthlyPlanRepository]'s doc), but the hero card prefers
+     * this when present. */
+    val todayMonthlyPlanCard: TodayMonthlyPlanCard?,
 )
 
 /** Output of the first 5-source `combine{}` below — everything except the completed-set breakdown
@@ -96,6 +107,7 @@ private data class BaseDashboardData(
     val showNutritionCard: Boolean,
     val displayName: String,
     val avatarId: Int,
+    val activeMonthlyPlanId: Long?,
 )
 
 class DashboardRepository(
@@ -108,6 +120,8 @@ class DashboardRepository(
     private val programExerciseDao: ProgramExerciseDao,
     private val exerciseDao: ExerciseDao,
     private val setLogDao: SetLogDao,
+    private val monthlyPlanDayDao: MonthlyPlanDayDao,
+    private val monthlyPlanExerciseDao: MonthlyPlanExerciseDao,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observe(): Flow<DashboardData> {
@@ -177,6 +191,7 @@ class DashboardRepository(
                     showNutritionCard = stage1.settings.showNutritionCard,
                     displayName = stage1.settings.displayName,
                     avatarId = stage1.settings.avatarId,
+                    activeMonthlyPlanId = stage1.settings.activeMonthlyPlanId,
                 )
             }
         }.flatMapLatest { base ->
@@ -191,7 +206,7 @@ class DashboardRepository(
             } else {
                 flowOf(emptyList())
             }
-            scheduleFlow.map { schedule ->
+            combine(scheduleFlow, observeTodayMonthlyPlanCard(base.activeMonthlyPlanId, base.today)) { schedule, monthlyPlanCard ->
                 DashboardData(
                     today = base.today,
                     completedSessions = base.completedSessions,
@@ -207,7 +222,34 @@ class DashboardRepository(
                     showNutritionCard = base.showNutritionCard,
                     displayName = base.displayName,
                     avatarId = base.avatarId,
+                    todayMonthlyPlanCard = monthlyPlanCard,
                 )
+            }
+        }
+    }
+
+    /** [monthlyPlanId] null (no active plan) short-circuits to a constant `null` card without
+     * subscribing to anything — the common case for a user who hasn't tried "Hit & Run" yet. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeTodayMonthlyPlanCard(monthlyPlanId: Long?, today: LocalDate): Flow<TodayMonthlyPlanCard?> {
+        if (monthlyPlanId == null) return flowOf(null)
+        return monthlyPlanDayDao.observeForPlan(monthlyPlanId).flatMapLatest { days ->
+            val todayDay = MonthlyPlanTodayResolver.resolve(days, today) ?: return@flatMapLatest flowOf<TodayMonthlyPlanCard?>(null)
+            if (todayDay.isRestDay || todayDay.sessionType == null) {
+                return@flatMapLatest flowOf<TodayMonthlyPlanCard?>(TodayMonthlyPlanCard.RestDay)
+            }
+            val sessionType = todayDay.sessionType
+            monthlyPlanExerciseDao.observeForDay(todayDay.id).map { exercises ->
+                if (exercises.isEmpty()) {
+                    null
+                } else {
+                    TodayMonthlyPlanCard.Training(
+                        dayId = todayDay.id,
+                        sessionType = sessionType,
+                        exerciseCount = exercises.size,
+                        estimatedDurationMinutes = MonthlyPlanDayCardEstimator.estimateDurationMinutes(exercises),
+                    )
+                }
             }
         }
     }

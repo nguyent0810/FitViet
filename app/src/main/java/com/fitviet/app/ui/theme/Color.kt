@@ -41,7 +41,8 @@ val DotBorderIdle = Color(0xFF3A443C)
 // Destructive actions (Gate 37) — a muted red, the one deliberate exception to this app's
 // single-accent-green palette: a destructive/danger signal is expected, established Android
 // vocabulary (system dialogs, Material guidelines), not a decorative color choice like an avatar
-// swatch would be.
-val Danger = Color(0xFFD9695F)
+// swatch would be. Values match the mockup's own proposed literals exactly (#E5484D/#4A2A2C) —
+// Gate 37 originally shipped a close-but-not-exact approximation.
+val Danger = Color(0xFFE5484D)
 val DangerSurfaceSelected = Color(0xFF2A1613)
-val DangerBorder = Color(0xFF5A332D)
+val DangerBorder = Color(0xFF4A2A2C)

@@ -56,19 +56,7 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     fun selectWeightHistoryRange(range: WeightHistoryRange) { weightHistoryRange.value = range }
 
-    fun cycleLanguage() = viewModelScope.launch { repository.cycleLanguage() }
-
-    fun toggleOffline() = viewModelScope.launch { repository.toggleOffline() }
-
-    fun cycleUnits() = viewModelScope.launch { repository.cycleUnits() }
-
     fun toggleDonated() = viewModelScope.launch { repository.toggleDonated() }
-
-    fun toggleShowRecommendationCard() = viewModelScope.launch { repository.toggleShowRecommendationCard() }
-
-    fun toggleShowMuscleBalanceCard() = viewModelScope.launch { repository.toggleShowMuscleBalanceCard() }
-
-    fun toggleShowNutritionCard() = viewModelScope.launch { repository.toggleShowNutritionCard() }
 
     fun openUpdateSheet() {
         editingMeasurement.value = null

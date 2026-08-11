@@ -42,11 +42,57 @@
     <string name="split_chest_back_sub">Ghép nhóm cơ hỗ trợ — tiết kiệm thời gian, cơ phụ đã nóng</string>
     <string name="split_bro_title">Bro split</string>
     <string name="split_bro_sub">Mỗi ngày 1–2 nhóm cơ — tập sâu, pump tốt</string>
+    <string name="split_phul_title">PHUL</string>
+    <string name="split_phul_sub">Sức mạnh &amp; Phì đại xen kẽ — hợp 4 buổi/tuần</string>
     <string name="split_fullbody_title">Full body</string>
     <string name="split_fullbody_sub">Toàn thân mỗi buổi — hợp người mới, 2–3 buổi/tuần</string>
     <string name="split_info_prefix">Ưu tiên riêng:\u0020</string>
     <string name="split_info_body">thêm 2 ngày ngực, 2 ngày tay… — tùy chỉnh ở bước sau.</string>
     <string name="split_continue">Tiếp tục</string>
+
+    <!-- "Hit &amp; Run" (Gate 63+) — Quick Generate screen -->
+    <string name="quick_generate_title">Tạo lịch tháng</string>
+    <string name="quick_generate_subtitle">Chọn mục tiêu, kiểu chia lịch và số buổi/tuần — hệ thống tự lên lịch cả tháng cho bạn</string>
+    <string name="quick_generate_goal_label">Mục tiêu</string>
+    <string name="quick_generate_level_label">Trình độ</string>
+    <string name="quick_generate_split_label">Kiểu chia lịch</string>
+    <string name="quick_generate_days_label">Số buổi/tuần</string>
+    <string name="quick_generate_cta">Tạo lịch tháng</string>
+    <string name="quick_generate_generating">Đang tạo lịch…</string>
+    <string name="dashboard_generate_cta_title">Thử Hit &amp; Run</string>
+    <string name="dashboard_generate_cta_body">Tạo lịch tập cả tháng chỉ trong 1 chạm, dựa trên mục tiêu và trình độ của bạn</string>
+    <string name="dashboard_generate_cta_button">Tạo lịch tháng</string>
+    <string name="programs_generate_cta_title">Tạo lịch tháng tự động</string>
+    <string name="programs_generate_cta_body">Không cần tự chọn bài tập — Hit &amp; Run lên lịch cả tháng cho bạn</string>
+    <string name="programs_generate_cta_button">Tạo ngay</string>
+    <string name="dashboard_view_monthly_plan">Xem lịch tháng ›</string>
+
+    <!-- "Hit & Run" (Gate 63+) — Regenerate UI -->
+    <string name="monthly_plan_detail_title">Lịch tháng</string>
+    <string name="monthly_plan_regenerate_month">Tạo lại cả tháng</string>
+    <string name="monthly_plan_regenerating">Đang tạo lại…</string>
+    <string name="monthly_plan_regenerate_week">Tạo lại tuần này</string>
+    <string name="monthly_plan_week_label">Tuần %1$d</string>
+    <string name="monthly_plan_phase_base">Nền tảng</string>
+    <string name="monthly_plan_phase_build">Phát triển</string>
+    <string name="monthly_plan_phase_peak">Đỉnh cao</string>
+    <string name="monthly_plan_phase_deload">Giảm tải</string>
+    <string name="monthly_plan_rest_day">Nghỉ</string>
+    <string name="monthly_plan_locked_badge">Đã khoá</string>
+    <string name="monthly_plan_locked_message">Buổi đã có lịch sử tập, không thể tạo lại</string>
+    <string name="monthly_plan_day_regenerate">Tạo lại ngày này</string>
+    <string name="monthly_plan_day_locked_banner">Ngày này đã có lịch sử tập — không thể thay đổi</string>
+    <string name="monthly_plan_exercise_swap">Đổi bài</string>
+    <string name="monthly_plan_exercise_swap_equipment">Không có dụng cụ này</string>
+    <string name="monthly_plan_exercise_meta">%1$d hiệp × %2$d–%3$d reps</string>
+    <string name="monthly_plan_empty">Chưa có kế hoạch nào</string>
+
+    <!-- "Hit & Run" (Gate 63+) — adaptive scheduling prompt -->
+    <string name="dashboard_missed_day_title">Bạn đã bỏ lỡ một buổi tập</string>
+    <string name="dashboard_missed_day_body">%1$s · %2$s vẫn chưa được hoàn thành. Bạn muốn làm gì?</string>
+    <string name="dashboard_missed_day_push_today">Dời sang hôm nay</string>
+    <string name="dashboard_missed_day_skip">Bỏ qua, tiếp tục lịch</string>
+    <string name="dashboard_missed_day_view_plan">Xem lịch tháng</string>
 
     <!-- Day-of-week short labels (used on 1b's 7-day chart and 2b's schedule rows) -->
     <string name="day_mon">T2</string>
@@ -73,6 +119,11 @@
     <string name="dashboard_hero_meta_schedule">%1$s · %2$d bài tập</string>
     <string name="dashboard_progress_label">%1$d/%2$d buổi tuần này</string>
     <string name="dashboard_start_workout">Bắt đầu tập</string>
+    <!-- "Hit & Run" (Gate 63+) -->
+    <string name="dashboard_hero_meta_monthly_plan">%1$d bài tập · %2$d phút</string>
+    <string name="dashboard_start_workout_today">Bắt đầu buổi hôm nay</string>
+    <string name="dashboard_rest_day_title">Hôm nay là ngày nghỉ</string>
+    <string name="dashboard_rest_day_meta">Nghỉ ngơi để phục hồi cho buổi tập tiếp theo</string>
     <string name="dashboard_workout_in_progress">Đang tập · %1$s — chạm để kết thúc</string>
     <string name="dashboard_stat_streak">Chuỗi ngày</string>
     <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>
@@ -80,6 +131,7 @@
     <string name="dashboard_weekly_volume_title">Khối lượng 7 ngày</string>
     <string name="dashboard_volume_title_month">Khối lượng 4 tuần gần nhất</string>
     <string name="dashboard_volume_title_all">Khối lượng theo tuần</string>
+    <string name="dashboard_stats_section_label">THỐNG KÊ</string>
     <string name="dashboard_range_week">Tuần</string>
     <string name="dashboard_range_month">Tháng</string>
     <string name="dashboard_range_all">Tất cả</string>
@@ -142,6 +194,14 @@
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Làm lại</string>
+    <string name="workout_exit">Thoát</string>
+    <string name="workout_exit_confirm_title">Thoát buổi tập?</string>
+    <string name="workout_exit_confirm_body">Tiến trình buổi tập hiện tại sẽ không được lưu. Bạn có thể bắt đầu lại từ đầu bất cứ lúc nào.</string>
+    <string name="workout_exit_confirm_yes">Thoát</string>
+    <string name="workout_exit_confirm_cancel">Tiếp tục tập</string>
+    <string name="workout_reset_confirm_title">Làm lại buổi tập?</string>
+    <string name="workout_reset_confirm_body">Các set đã ghi trong buổi tập hiện tại sẽ bị xoá và buổi tập bắt đầu lại từ đầu.</string>
+    <string name="workout_reset_confirm_yes">Làm lại</string>
     <string name="workout_exercise_progress">%1$s · Bài %2$d/%3$d</string>
     <string name="workout_complete_set">Hoàn thành set %1$d</string>
     <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
@@ -164,6 +224,7 @@
 
     <!-- Workout preview (Gate 24) -->
     <string name="workout_preview_title">Bài tập hôm nay</string>
+    <string name="workout_preview_estimated_duration">Khoảng %1$d phút</string>
     <string name="workout_preview_summary">%1$d hiệp × %2$d–%3$d lần × %4$s kg</string>
     <string name="workout_preview_empty">Chưa có bài tập nào cho hôm nay.</string>
     <!-- Superset grouping preview (Gate 48) -->
@@ -187,6 +248,8 @@
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 BÀI LIÊN TIẾP</string>
+    <string name="superset_group_header">SIÊU HIỆP %1$s · %2$d VÒNG</string>
+    <string name="superset_group_rest">Nghỉ %1$ds/vòng</string>
     <string name="superset_badge_a1">A1</string>
     <string name="superset_badge_a2">A2</string>
     <string name="superset_no_rest_note">↓ không nghỉ ↓</string>
@@ -225,7 +288,7 @@
     <string name="exercise_sets_range">%1$d–%2$d</string>
     <string name="exercise_rest_seconds">%1$ds</string>
     <string name="exercise_involvement_title">Mức độ tham gia cơ</string>
-    <string name="exercise_involvement_caption">Ước tính theo dạng vận động, không phải số đo thực tế trên từng người.</string>
+    <string name="exercise_involvement_caption">Ước lượng theo bài tập, không phải đo từ buổi tập của bạn. Không có nội dung nào bị khoá ở đây.</string>
     <string name="exercise_tab_howto">Cách tập</string>
     <string name="exercise_tab_muscles">Nhóm cơ</string>
     <string name="exercise_tab_progress">Tiến bộ</string>
@@ -244,6 +307,7 @@
     <string name="diary_pr_title">Kỷ lục cá nhân (PR)</string>
     <string name="diary_pr_empty">Chưa có kỷ lục nào — hoàn thành buổi tập đầu tiên để bắt đầu</string>
     <string name="diary_recent_title">Buổi gần đây</string>
+    <string name="diary_recent_see_all">Xem tất cả</string>
     <string name="diary_recent_empty">Chưa có buổi tập nào</string>
     <string name="diary_recent_meta">%1$s phút · %2$s kg</string>
 
@@ -328,7 +392,7 @@
     <string name="profile_offline_on">Bật</string>
     <string name="profile_offline_off">Tắt</string>
     <string name="profile_settings_backup">Sao lưu dữ liệu</string>
-    <string name="profile_settings_backup_value">Xuất file ›</string>
+    <string name="profile_settings_backup_value">Sắp ra mắt</string>
     <string name="profile_settings_units">Đơn vị</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
@@ -336,6 +400,7 @@
     <string name="profile_widget_recommendation">Gợi ý hôm nay</string>
     <string name="profile_widget_muscle_balance">Cân bằng nhóm cơ</string>
     <string name="profile_widget_nutrition">Dinh dưỡng</string>
+    <string name="profile_widget_skip_preview">Bỏ qua màn hình xem trước buổi tập</string>
     <string name="profile_donate_title">Ứng dụng miễn phí 100%</string>
     <string name="profile_donate_body">Không quảng cáo, không thu phí. Nếu app hữu ích, bạn có thể ủng hộ để duy trì máy chủ và phát triển tính năng mới.</string>
     <string name="profile_donate_cta">Ủng hộ dự án</string>
@@ -362,7 +427,7 @@
 
     <!-- 1h Community -->
     <string name="community_title">Cộng đồng</string>
-    <string name="community_add_post">+ Chia sẻ buổi tập</string>
+    <string name="community_add_post">Chia sẻ từ trang hoàn thành buổi tập</string>
     <string name="community_tab_latest">Mới nhất</string>
     <string name="community_tab_qa">Hỏi đáp</string>
     <string name="community_tab_progress">Tiến bộ</string>
@@ -384,7 +449,7 @@
 
     <!-- ui/common — LockedListItem (Gate 36, ships unused by design) -->
     <string name="locked_item_requires_upgrade">Cần nâng cấp</string>
-    <string name="locked_item_coming_soon">Sắp có</string>
+    <string name="locked_item_not_yet_unlocked">Chưa mở khoá</string>
 
     <!-- ui/settings — SettingsScreen (Gate 37) -->
     <string name="settings_title">Cài đặt</string>
@@ -392,7 +457,8 @@
     <string name="settings_section_notifications">THÔNG BÁO</string>
     <string name="settings_section_display">HIỂN THỊ</string>
     <string name="settings_reminders_row">Nhắc nhở tập luyện</string>
-    <string name="settings_reminders_value">›</string>
+    <string name="settings_reminders_value">%1$d lịch ›</string>
+    <string name="settings_profile_row">Hồ sơ &amp; ảnh đại diện</string>
     <string name="settings_reset_button">Đặt lại ứng dụng</string>
     <string name="settings_reset_confirm_title">Đặt lại ứng dụng?</string>
     <string name="settings_reset_confirm_body">Toàn bộ buổi tập, số đo cơ thể, nhật ký ăn uống và cài đặt cá nhân sẽ bị xoá vĩnh viễn. Giáo án, bài tập và thực phẩm mẫu sẽ được giữ lại. Bạn sẽ quay lại màn hình thiết lập ban đầu.</string>
@@ -401,6 +467,7 @@
 
     <!-- ui/reminders — RemindersScreen (Gate 38, persists/renders only — nothing fires yet) -->
     <string name="reminders_title">Nhắc nhở tập luyện</string>
+    <string name="reminders_no_push_disclaimer">Nhắc nhở hiện chỉ hiển thị trong ứng dụng, chưa gửi thông báo đẩy.</string>
     <string name="reminders_empty">Chưa có nhắc nhở nào. Thêm một nhắc nhở để bắt đầu.</string>
     <string name="reminders_add_button">+ Thêm nhắc nhở</string>
     <string name="reminders_state_on">Bật</string>
@@ -413,6 +480,8 @@
     <string name="reminders_time_sheet_title">Đổi giờ nhắc</string>
     <string name="reminders_time_sheet_hour">Giờ</string>
     <string name="reminders_time_sheet_minute">Phút</string>
+    <string name="reminders_time_sheet_label">Ghi chú (tuỳ chọn)</string>
+    <string name="reminders_time_sheet_label_placeholder">VD: Đẩy 1 · Ngực ưu tiên + vai + tay sau</string>
     <string name="reminders_time_sheet_save">Lưu</string>
     <string name="reminders_delete_confirm_title">Xoá nhắc nhở này?</string>
     <string name="reminders_delete_confirm_body">Hành động này không thể hoàn tác.</string>

@@ -68,9 +68,9 @@ class RemindersViewModel(private val repository: RemindersRepository) : ViewMode
         editingReminder.value = null
     }
 
-    fun saveTime(hour: Int, minute: Int) {
+    fun saveTimeAndLabel(hour: Int, minute: Int, label: String) {
         val reminder = editingReminder.value ?: return
-        viewModelScope.launch { repository.update(reminder.id) { it.copy(hour = hour, minute = minute) } }
+        viewModelScope.launch { repository.update(reminder.id) { it.copy(hour = hour, minute = minute, label = label) } }
         editingReminder.value = null
     }
 

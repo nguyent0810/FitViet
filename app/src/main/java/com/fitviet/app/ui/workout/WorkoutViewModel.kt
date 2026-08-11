@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
+import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import java.time.LocalDate
@@ -67,11 +68,16 @@ class WorkoutViewModel(
     private val workoutRepository: WorkoutRepository,
     private val programRepository: ProgramRepository,
     private val communityRepository: CommunityRepository,
+    private val monthlyPlanRepository: MonthlyPlanRepository,
     private val databaseReady: Deferred<Unit>,
     // Set when entered from WorkoutPreview's "Begin workout" (Gate 24) — the session is then built
     // from this program's real schedule for today instead of the generic duration-picker flow.
     // Null for the free-standing entry points (bottom-nav FAB, dashboard "Start workout").
     private val programId: Long? = null,
+    // Set when entered from a "Hit & Run" (Gate 63+) monthly-plan day (the Today card, or a
+    // regenerate/preview flow) — takes priority over [programId] when both are somehow supplied,
+    // since the two entry points are mutually exclusive by construction at every real call site.
+    private val monthlyPlanDayId: Long? = null,
     // Injectable so tests can supply a controllable fake — android.os.SystemClock is stubbed to a
     // constant 0 in plain JVM unit tests, which would make every debounced action a permanent no-op.
     private val elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
@@ -84,16 +90,24 @@ class WorkoutViewModel(
     private var restJob: Job? = null
     private var elapsedJob: Job? = null
     private var sessionInitJob: Job? = null
+    private var sessionFinishJob: Job? = null
+    /** Set inserts are intentionally launched off the UI action path, but session completion (and
+     * especially the monthly-plan PR hook) must not overtake an insert that is still suspended in
+     * Room. Access is confined to the main dispatcher used by [viewModelScope]. */
+    private val pendingSetLogJobs = mutableListOf<Job>()
     private var lastActionAtMillis = 0L
 
     init {
         loadInitialSession()
     }
 
-    /** Entry point for both the initial load and "Làm lại" (Gate 24 added the [programId] branch;
-     * the pre-existing picker flow below is otherwise unchanged). */
+    /** Entry point for both the initial load and "Làm lại" (Gate 24 added the [programId] branch,
+     * Gate 63+ added the [monthlyPlanDayId] branch; the pre-existing picker flow below is
+     * otherwise unchanged). */
     private fun loadInitialSession() {
-        if (programId != null) {
+        if (monthlyPlanDayId != null) {
+            startMonthlyPlanDaySession(monthlyPlanDayId)
+        } else if (programId != null) {
             startProgramDaySession(programId)
         } else {
             loadExercisesAndShowDurationPicker()
@@ -121,6 +135,36 @@ class WorkoutViewModel(
             sessionId = workoutRepository.startSession(dayLabel = resolved.titleVi, startedAtMillis = System.currentTimeMillis())
             _uiState.value = resetForBlock(
                 WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi, programTitle = programTitle),
+                0,
+                blocks.firstOrNull(),
+            )
+            startElapsedTicker()
+        }
+    }
+
+    /** Resolves [monthlyPlanDayId]'s exercises and starts logging immediately — same "nothing for a
+     * duration picker to choose" reasoning as [startProgramDaySession], and the same picker
+     * fallback if the day somehow has no resolvable exercises (e.g. a stale/deleted plan). Unlike
+     * the program-day branch, this passes [monthlyPlanDayId] through to
+     * [WorkoutRepository.startSession] so the created session row carries the FK the regenerate
+     * lock rule depends on — see [com.fitviet.app.data.repository.MonthlyPlanRepository]. */
+    private fun startMonthlyPlanDaySession(monthlyPlanDayId: Long) {
+        sessionInitJob?.cancel()
+        sessionInitJob = viewModelScope.launch {
+            databaseReady.await()
+            val resolved = MonthlyPlanDayWorkoutPlanner.resolveDay(monthlyPlanDayId, monthlyPlanRepository, exerciseRepository, workoutRepository)
+            val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
+            if (resolved == null || blocks.isEmpty()) {
+                showDurationPicker()
+                return@launch
+            }
+            sessionId = workoutRepository.startSession(
+                dayLabel = resolved.titleVi,
+                startedAtMillis = System.currentTimeMillis(),
+                monthlyPlanDayId = monthlyPlanDayId,
+            )
+            _uiState.value = resetForBlock(
+                WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi),
                 0,
                 blocks.firstOrNull(),
             )
@@ -185,16 +229,19 @@ class WorkoutViewModel(
         }
     }
 
-    /** For a program-day session (Gate 24), "Làm lại" restarts that same day's session again
-     * rather than dropping to the generic picker, which this flow never shows in the first place.
-     * The two branches are kept explicit (rather than always routing through [loadInitialSession])
-     * so the pre-existing picker flow keeps resetting synchronously with no loading-state frame,
-     * exactly as it did before Gate 24. */
+    /** For a program-day or monthly-plan-day session (Gate 24 / Gate 63+), "Làm lại" restarts that
+     * same day's session again rather than dropping to the generic picker, which these flows never
+     * show in the first place. The branches are kept explicit (rather than always routing through
+     * [loadInitialSession]) so the pre-existing picker flow keeps resetting synchronously with no
+     * loading-state frame, exactly as it did before Gate 24. */
     fun resetWorkout() = debounced {
         restJob?.cancel()
         elapsedJob?.cancel()
         sessionInitJob?.cancel()
-        if (programId != null) {
+        if (monthlyPlanDayId != null) {
+            _uiState.value = WorkoutUiState()
+            startMonthlyPlanDaySession(monthlyPlanDayId)
+        } else if (programId != null) {
             _uiState.value = WorkoutUiState()
             startProgramDaySession(programId)
         } else {
@@ -380,17 +427,26 @@ class WorkoutViewModel(
     /** Awaits [WorkoutRepository.completeSession] before reading the streak (rather than the old
      * fire-and-forget write + immediate synchronous phase flip) so `getCurrentStreakDays` sees
      * today's just-completed session already persisted — otherwise a share created right after
-     * landing on [WorkoutPhase.SessionFinished] could read yesterday's streak instead of today's. */
+     * landing on [WorkoutPhase.SessionFinished] could read yesterday's streak instead of today's.
+     * For a monthly-plan-day session, the PR-bump hook runs right after — it must come after
+     * [WorkoutRepository.completeSession], not before, since [MonthlyPlanRepository.onMonthlyPlanSessionCompleted]
+     * only considers a personal best from a session whose `completedAt` is already set. */
     private fun finishSession() {
+        if (sessionFinishJob?.isActive == true) return
         elapsedJob?.cancel()
         val state = _uiState.value
-        viewModelScope.launch {
+        val targetSessionId = sessionId
+        sessionFinishJob = viewModelScope.launch {
+            val setLogJobs = pendingSetLogJobs.toList()
+            pendingSetLogJobs.clear()
+            setLogJobs.forEach { it.join() }
             workoutRepository.completeSession(
-                sessionId = sessionId,
+                sessionId = targetSessionId,
                 completedAtMillis = System.currentTimeMillis(),
                 totalVolumeKg = state.sessionTotalVolumeKg,
                 durationSeconds = state.sessionElapsedSeconds,
             )
+            monthlyPlanDayId?.let { monthlyPlanRepository.onMonthlyPlanSessionCompleted(it) }
             val streakDays = workoutRepository.getCurrentStreakDays(LocalDate.now())
             _uiState.update { it.copy(phase = WorkoutPhase.SessionFinished, sessionStreakDays = streakDays) }
         }
@@ -434,7 +490,10 @@ class WorkoutViewModel(
                 sessionTotalSets = it.sessionTotalSets + 1,
             )
         }
-        viewModelScope.launch { workoutRepository.logSet(sessionId, set) }
+        // Capture now: resetWorkout() can replace the ViewModel's current session id before a
+        // suspended/queued insert actually invokes the repository.
+        val targetSessionId = sessionId
+        pendingSetLogJobs += viewModelScope.launch { workoutRepository.logSet(targetSessionId, set) }
     }
 
     private fun startElapsedTicker() {
@@ -450,6 +509,7 @@ class WorkoutViewModel(
     override fun onCleared() {
         restJob?.cancel()
         elapsedJob?.cancel()
+        sessionFinishJob?.cancel()
     }
 
     /** Exercise position(s) within the whole session, for [LoggedSet.exerciseOrder] — 2 for a superset block, 1 otherwise. */
@@ -472,11 +532,21 @@ class WorkoutViewModel(
         private val workoutRepository: WorkoutRepository,
         private val programRepository: ProgramRepository,
         private val communityRepository: CommunityRepository,
+        private val monthlyPlanRepository: MonthlyPlanRepository,
         private val databaseReady: Deferred<Unit>,
         private val programId: Long? = null,
+        private val monthlyPlanDayId: Long? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            WorkoutViewModel(exerciseRepository, workoutRepository, programRepository, communityRepository, databaseReady, programId) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = WorkoutViewModel(
+            exerciseRepository,
+            workoutRepository,
+            programRepository,
+            communityRepository,
+            monthlyPlanRepository,
+            databaseReady,
+            programId,
+            monthlyPlanDayId,
+        ) as T
     }
 }

@@ -74,7 +74,7 @@ fun SplitScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     DAYS_PER_WEEK_OPTIONS.forEach { days ->
-                        LevelChip(
+                        PillChip(
                             label = days.toString(),
                             selected = uiState.selectedDaysPerWeek == days,
                             onClick = { viewModel.selectDaysPerWeek(days) },

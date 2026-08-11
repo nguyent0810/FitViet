@@ -29,6 +29,7 @@ import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.DotBorderIdle
 import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
@@ -116,6 +117,31 @@ fun LevelChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: M
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = if (selected) TextPrimary else TextMuted,
+        )
+    }
+}
+
+/** Solid-fill pill chip — matches `ProgramsListScreen`'s `FilterChips` treatment exactly (selected =
+ * Accent bg + OnAccent text, idle = SurfaceCard + CardBorder + TextMuted, true [PillShape] capsule),
+ * per the plan's explicit "same chip treatment as FilterChips" instruction for the days-per-week
+ * row (feature #3) — distinct from [LevelChip]'s tinted-selection-card look used for 1a's level
+ * selector, which reads as "this option is selected" rather than "this filter is active." */
+@Composable
+fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .heightIn(min = 44.dp)
+            .clip(PillShape)
+            .background(if (selected) Accent else SurfaceCard)
+            .border(width = 1.dp, color = if (selected) Accent else CardBorder, shape = PillShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) OnAccent else TextMuted,
         )
     }
 }

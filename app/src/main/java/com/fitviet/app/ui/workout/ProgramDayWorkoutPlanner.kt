@@ -110,6 +110,36 @@ object ProgramDayWorkoutPlanner {
         }
     }
 
+    /** Shared by [toSupersetBlock] (the live session's block) and the preview screen's group
+     * header, so both describe a pair's round count identically. */
+    fun supersetRounds(a: ProgramDayWorkoutItem, b: ProgramDayWorkoutItem) = minOf(a.targetSets, b.targetSets).coerceAtLeast(1)
+
+    /** Rough end-to-end estimate for the whole day, shown on the preview screen so "Bắt đầu tập"
+     * isn't a blind commitment — reuses [WorkoutTimeBudgetPlanner]'s exact per-rep/per-transition
+     * assumptions and [DEFAULT_REST_SECONDS] rather than inventing a second set of constants. A
+     * paired group counts its rest once per round (shared between both exercises), not once per
+     * exercise like a solo block — mirroring how [WorkoutViewModel]'s superset-rest phase actually
+     * runs, so this estimate doesn't overcount rest for supersets versus straight sets. */
+    fun estimateDurationMinutes(groupings: List<ResolvedGrouping>): Int {
+        val totalSeconds = groupings.sumOf { grouping ->
+            when (grouping) {
+                is ResolvedGrouping.Solo -> {
+                    val item = grouping.item
+                    val sets = item.targetSets.coerceAtLeast(1)
+                    val reps = midpointReps(item.targetRepsMin, item.targetRepsMax)
+                    sets * reps * SECONDS_PER_REP + (sets - 1).coerceAtLeast(0) * DEFAULT_REST_SECONDS + TRANSITION_SECONDS
+                }
+                is ResolvedGrouping.Paired -> {
+                    val rounds = supersetRounds(grouping.first, grouping.second)
+                    val repsA = midpointReps(grouping.first.targetRepsMin, grouping.first.targetRepsMax)
+                    val repsB = midpointReps(grouping.second.targetRepsMin, grouping.second.targetRepsMax)
+                    rounds * (repsA + repsB) * SECONDS_PER_REP + (rounds - 1).coerceAtLeast(0) * DEFAULT_REST_SECONDS + TRANSITION_SECONDS * 2
+                }
+            }
+        }
+        return (totalSeconds / 60).coerceAtLeast(1)
+    }
+
     private fun midpointReps(min: Int, max: Int) = ((min + max) / 2).coerceAtLeast(1)
 
     private fun toStraightBlock(item: ProgramDayWorkoutItem): WorkoutBlockPlan.Straight {
@@ -133,7 +163,7 @@ object ProgramDayWorkoutPlanner {
                 plannedA = PlannedSet(a.recommendedWeightKg, midpointReps(a.targetRepsMin, a.targetRepsMax)),
                 exerciseB = b.exercise,
                 plannedB = PlannedSet(b.recommendedWeightKg, midpointReps(b.targetRepsMin, b.targetRepsMax)),
-                totalRounds = minOf(a.targetSets, b.targetSets).coerceAtLeast(1),
+                totalRounds = supersetRounds(a, b),
             ),
         )
 }

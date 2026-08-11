@@ -56,6 +56,7 @@ import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentBorderAlt
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
+import com.fitviet.app.ui.theme.ChartBarIdle
 import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
@@ -76,6 +77,10 @@ fun ProgramsListScreen(
     viewModel: ProgramsViewModel,
     onProgramClick: (ProgramEntity) -> Unit,
     onExerciseClick: (ExerciseEntity) -> Unit,
+    // "Hit & Run" (Gate 63+) — the header card below the title row, per the plan's Quick Generate
+    // entry-point list (Dashboard's empty state + this screen's own header, both reachable
+    // independent of whether the user has ever generated a plan before).
+    onGenerateMonthlyPlan: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -126,6 +131,9 @@ fun ProgramsListScreen(
                 Text(text = stringResource(R.string.programs_title), style = MaterialTheme.typography.headlineMedium)
                 ImportButton(onClick = { importLauncher.launch("*/*") })
             }
+        }
+        item {
+            GenerateMonthlyPlanHeaderCard(onClick = onGenerateMonthlyPlan)
         }
         importMessage?.let { message ->
             item {
@@ -197,6 +205,35 @@ private fun ImportMessageCard(message: String, onDismiss: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = message, style = MaterialTheme.typography.bodySmall, color = TextBody, modifier = Modifier.weight(1f))
+    }
+}
+
+/** "Hit & Run" (Gate 63+) entry point — same accent-tinted-card treatment as
+ * [com.fitviet.app.ui.dashboard.DashboardScreen]'s own Quick Generate CTA, so the feature reads
+ * consistently wherever it's offered. */
+@Composable
+private fun GenerateMonthlyPlanHeaderCard(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(AccentSurfaceSelected)
+            .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(Dimens.CardPaddingSmall),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
+            Text(text = stringResource(R.string.programs_generate_cta_title), style = MaterialTheme.typography.labelLarge, color = Accent)
+            Text(
+                text = stringResource(R.string.programs_generate_cta_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextBody,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        Text(text = stringResource(R.string.programs_generate_cta_button), style = MaterialTheme.typography.labelLarge, color = Accent)
     }
 }
 
@@ -404,20 +441,27 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
     }
 }
 
-/** Feature #8 (Gate 42) — 3 ascending bars, not stars, filled up to
- * [ProgramDifficulty.levelSteps]'s count; `null` (an unrated "Mọi trình độ" program or an
- * unrecognized/imported level string) renders all 3 bars muted rather than guessing. */
+/** Feature #8 (Gate 42) — 3 uniform 14×4dp flat bars, not stars and not an ascending-height
+ * "signal strength" shape, filled up to [ProgramDifficulty.levelSteps]'s count (mockup's own exact
+ * dimensions — a Gate 42 review pass drew ascending-height columns instead, fixed in this audit
+ * pass). Unrated ("Mọi trình độ" or an unrecognized/imported level string, `levelSteps` returns
+ * `null`) reads as visibly distinct from a *rated* card's empty bars: all-[TextMuted] for unrated,
+ * vs. [ChartBarIdle] for the unfilled remainder of a rated card — collapsing both to the same
+ * color would make "this program has no difficulty rating" indistinguishable from "this program is
+ * rated Beginner." */
 @Composable
 private fun DifficultyBadge(level: String) {
-    val steps = ProgramDifficulty.levelSteps(level) ?: 0
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.Bottom) {
-        listOf(6.dp, 10.dp, 14.dp).forEachIndexed { index, barHeight ->
+    val steps = ProgramDifficulty.levelSteps(level)
+    val emptyColor = if (steps == null) TextMuted else ChartBarIdle
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        repeat(3) { index ->
+            val filled = steps != null && index < steps
             Box(
                 modifier = Modifier
-                    .width(4.dp)
-                    .height(barHeight)
+                    .width(14.dp)
+                    .height(4.dp)
                     .clip(MaterialTheme.shapes.extraSmall)
-                    .background(if (index < steps) Accent else CardBorder),
+                    .background(if (filled) Accent else emptyColor),
             )
         }
     }

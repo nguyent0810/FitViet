@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.CardBorder
+import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
@@ -73,10 +75,12 @@ fun CommunityScreen(viewModel: CommunityViewModel) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(text = stringResource(R.string.community_title), style = MaterialTheme.typography.headlineMedium)
-            // Static (no onClick) — the real creation entry point is the "Chia sẻ lên Cộng đồng"
-            // button on the workout session-finished screen (Gate 40), not a composer reachable
-            // from here; this label just reflects what sharing now actually does.
-            Text(text = stringResource(R.string.community_add_post), style = MaterialTheme.typography.labelLarge, color = Accent)
+            // Deliberately NOT styled like a button (no Accent color, no onClick): this screen has
+            // no post composer, and an earlier "+ Chia sẻ buổi tập" label in Accent read as a live
+            // action even though tapping it did nothing. The real creation entry point is the
+            // "Chia sẻ lên Cộng đồng" button on the workout session-finished screen (Gate 40) — this
+            // is a passive pointer to that, not a control of its own.
+            Text(text = stringResource(R.string.community_add_post), style = MaterialTheme.typography.labelSmall, color = TextFaint)
         }
         TabRow(selectedTab = uiState.selectedTab, onSelect = viewModel::selectTab)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -160,33 +164,45 @@ private fun WorkoutSharePostCard(post: CommunityPostEntity, onLikeClick: () -> U
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PostAuthorHeader(post)
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            // No program (an ad-hoc session) -> the day label alone is the heading, not a
-            // fabricated program name — matches mismatch #4's "not every session has a program".
-            if (post.programTitle != null) {
-                Text(text = post.programTitle, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.labelMedium, color = TextMuted)
-            } else {
-                Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+        // Mockup's "inset summary block" — visually separates "who posted" (header, outside this
+        // panel) from "what they did" (this DeepSurface1 panel), rather than both sitting flat as
+        // siblings in the outer card.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(DeepSurface1)
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                // No program (an ad-hoc session) -> the day label alone is the heading, not a
+                // fabricated program name — matches mismatch #4's "not every session has a program".
+                if (post.programTitle != null) {
+                    Text(text = post.programTitle, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                    Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                } else {
+                    Text(text = post.dayLabel.orEmpty(), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                }
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            SummaryTile(
-                value = formatMinutesSeconds(post.durationSeconds ?: 0),
-                label = stringResource(R.string.workout_stat_time),
-                modifier = Modifier.weight(1f),
-            )
-            SummaryTile(
-                value = formatVi(post.totalVolumeKg ?: 0.0),
-                label = stringResource(R.string.workout_stat_volume),
-                modifier = Modifier.weight(1f),
-            )
-            SummaryTile(
-                value = formatVi(post.streakDays ?: 0),
-                label = stringResource(R.string.dashboard_stat_streak),
-                accent = true,
-                modifier = Modifier.weight(1f),
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SummaryTile(
+                    value = formatMinutesSeconds(post.durationSeconds ?: 0),
+                    label = stringResource(R.string.workout_stat_time),
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryTile(
+                    value = formatVi(post.totalVolumeKg ?: 0.0),
+                    label = stringResource(R.string.workout_stat_volume),
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryTile(
+                    value = formatVi(post.streakDays ?: 0),
+                    label = stringResource(R.string.dashboard_stat_streak),
+                    accent = true,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
         PostLikeCommentRow(post = post, onLikeClick = onLikeClick)
     }

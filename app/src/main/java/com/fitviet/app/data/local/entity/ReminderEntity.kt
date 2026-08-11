@@ -14,6 +14,12 @@ data class ReminderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val hour: Int = DEFAULT_HOUR,
     val minute: Int = DEFAULT_MINUTE,
+    /** Optional free-text tying this reminder to a specific workout day (e.g. "Đẩy 1 · Ngực ưu
+     * tiên + vai + tay sau"), shown under the time/days row per the mockup. Blank (not null) means
+     * "no label set" — this feature has no real link to a program day yet (Gate 38's scope), so the
+     * user just types whatever they want here; it's purely descriptive, never resolved against
+     * program data. */
+    val label: String = "",
     /** ISO weekday values (1=Monday..7=Sunday), always stored sorted ascending. Empty is a
      * genuinely inert reminder (no day selected yet) rather than an implied "every day" — matches
      * this app's existing "explicit over inferred" convention. */

@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -24,7 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
@@ -36,7 +41,7 @@ import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
@@ -70,10 +75,23 @@ fun WorkoutPreviewScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             BackRow(onBack = onBack)
-            Text(
-                text = uiState.dayTitleVi.ifBlank { stringResource(R.string.workout_preview_title) },
-                style = MaterialTheme.typography.headlineMedium,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = uiState.dayTitleVi.ifBlank { stringResource(R.string.workout_preview_title) },
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                // Uses the same per-rep/rest assumptions WorkoutTimeBudgetPlanner's duration-picker
+                // flow already relies on, so committing to "Bắt đầu tập" isn't a blind guess — the
+                // one thing this screen's own purpose (reduce pre-workout commitment anxiety) most
+                // needed and didn't have.
+                if (uiState.estimatedDurationMinutes > 0) {
+                    Text(
+                        text = stringResource(R.string.workout_preview_estimated_duration, uiState.estimatedDurationMinutes),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextFaint,
+                    )
+                }
+            }
             if (uiState.showSupersetHint) {
                 SupersetHintCard(onDismiss = viewModel::dismissSupersetHint)
             }
@@ -128,34 +146,63 @@ private fun PreviewExerciseCard(item: ProgramDayWorkoutItem) {
 }
 
 /** A superset pair (Gate 48) — renders exactly the grouping
- * [ProgramDayWorkoutPlanner.resolveGroupings] resolved, in the same
- * `DeepSurface1`/`AccentBorder` "group card" the plan specifies, with each exercise inside its own
+ * [ProgramDayWorkoutPlanner.resolveGroupings] resolved: a round-letter badge + connector line in a
+ * gutter to the left of the group card (mirrors the mockup's external gutter, not an inline pill),
+ * a header naming the round count ([ProgramDayWorkoutPlanner.supersetRounds] — the same figure the
+ * live session's block plan uses) and the between-round rest ([DEFAULT_REST_SECONDS], the same
+ * constant the live session's rest timer counts down from), then each exercise inside its own
  * normal card labelled A1/A2 (reusing the live session's [R.string.superset_badge_a1]/`_a2`/
- * [R.string.superset_badge]/[R.string.superset_no_rest_note] strings, so the preview and the live
- * session describe the same pairing the same way). Ungrouped exercises never reach this composable
- * — they render as a plain [PreviewExerciseCard], unchanged from before this gate. */
+ * [R.string.superset_no_rest_note] strings, so the preview and the live session describe the same
+ * pairing the same way). Ungrouped exercises never reach this composable — they render as a plain
+ * [PreviewExerciseCard], unchanged from before this gate. */
 @Composable
 private fun PreviewSupersetCard(first: ProgramDayWorkoutItem, second: ProgramDayWorkoutItem) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(DeepSurface1)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.large)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(Accent)
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-        ) {
-            Text(text = stringResource(R.string.superset_badge), style = MaterialTheme.typography.labelSmall, color = OnAccent)
+    val groupLetter = first.supersetGroup ?: "A"
+    val rounds = ProgramDayWorkoutPlanner.supersetRounds(first, second)
+    // IntrinsicSize.Min, not a bare Row: this screen's content sits inside a verticalScroll
+    // Column, which measures children with unbounded height. A plain Row would pass that same
+    // unbounded height down to the gutter Column below, and weight() on its connector line would
+    // hit Compose's "infinite height with weight" crash. IntrinsicSize.Min bounds the Row's height
+    // to its tallest child's intrinsic height (the group card) before either child is weight-measured.
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.width(26.dp).padding(top = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(AccentSurfaceSelected)
+                    .border(1.5.dp, Accent, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = groupLetter, style = MaterialTheme.typography.labelSmall.copy(fontFamily = Anton), color = Accent)
+            }
+            Box(modifier = Modifier.weight(1f).width(2.dp).background(Accent))
         }
-        SupersetExerciseCard(item = first, badge = stringResource(R.string.superset_badge_a1))
-        SupersetConnector()
-        SupersetExerciseCard(item = second, badge = stringResource(R.string.superset_badge_a2))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clip(MaterialTheme.shapes.large)
+                .background(DeepSurface1)
+                .border(1.5.dp, AccentBorder, MaterialTheme.shapes.large)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.superset_group_header, groupLetter, rounds),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.08.em),
+                    color = Accent,
+                )
+                Text(
+                    text = stringResource(R.string.superset_group_rest, DEFAULT_REST_SECONDS),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextFaint,
+                )
+            }
+            SupersetExerciseCard(item = first, badge = stringResource(R.string.superset_badge_a1))
+            SupersetConnector()
+            SupersetExerciseCard(item = second, badge = stringResource(R.string.superset_badge_a2))
+        }
     }
 }
 
@@ -175,36 +222,28 @@ private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String) {
     }
 }
 
-/** The 2dp Accent connector line + "không nghỉ" divider between a superset pair's two exercise
- * cards. */
+/** The "không nghỉ" divider between a superset pair's two exercise cards — flanking 1dp
+ * [AccentBorder] lines, not the vertical bars used before this gate's mockup pass. */
 @Composable
 private fun SupersetConnector() {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Box(modifier = Modifier.width(2.dp).height(12.dp).background(Accent))
-        Text(text = stringResource(R.string.superset_no_rest_note), style = MaterialTheme.typography.labelSmall, color = TextFaint)
-        Box(modifier = Modifier.width(2.dp).height(12.dp).background(Accent))
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(AccentBorder))
+        Text(text = stringResource(R.string.superset_no_rest_note), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = Accent)
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(AccentBorder))
     }
 }
 
 /** Media + name + sets/reps/weight summary shared by both a plain [PreviewExerciseCard] and a
- * [PreviewSupersetCard]'s two halves — [badge] is the 26dp A1/A2 tile when this exercise is part of
- * a superset pair, `null` for a standalone exercise. */
+ * [PreviewSupersetCard]'s two halves — [badge] is the Anton-styled "A1"/"A2" label at the row's
+ * trailing edge when this exercise is part of a superset pair, `null` for a standalone exercise. */
 @Composable
 private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) {
     ExerciseMediaBox(exercise = item.exercise, height = 140.dp)
     Row(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = if (badge != null) Arrangement.SpaceBetween else Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (badge != null) {
-            Box(
-                modifier = Modifier.size(26.dp).clip(MaterialTheme.shapes.extraSmall).background(Accent),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = badge, style = MaterialTheme.typography.labelMedium.copy(fontFamily = Anton), color = OnAccent)
-            }
-        }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = item.exercise.nameVi, style = MaterialTheme.typography.titleSmall)
             Text(
@@ -219,12 +258,17 @@ private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) 
                 color = TextFaint,
             )
         }
+        if (badge != null) {
+            Text(text = badge, style = MaterialTheme.typography.titleSmall.copy(fontFamily = Anton), color = Accent)
+        }
     }
 }
 
 /** First-run superset explainer (Gate 48) — an inline card in the scroll content, not a floating
  * tooltip, per the plan. Dismissing persists [SettingsEntity.hasSeenSupersetHint][
- * com.fitviet.app.data.local.entity.SettingsEntity.hasSeenSupersetHint] so it doesn't show again. */
+ * com.fitviet.app.data.local.entity.SettingsEntity.hasSeenSupersetHint] so it doesn't show again.
+ * Bordered in bright [Accent], not [AccentBorder] — the group card below uses the muted border, so
+ * this explainer needs to read as visually distinct from the thing it explains. */
 @Composable
 private fun SupersetHintCard(onDismiss: () -> Unit) {
     Column(
@@ -232,17 +276,24 @@ private fun SupersetHintCard(onDismiss: () -> Unit) {
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(AccentSurfaceSelected)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.large)
+            .border(1.5.dp, Accent, MaterialTheme.shapes.large)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(text = stringResource(R.string.workout_preview_superset_hint_title), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
         Text(text = stringResource(R.string.workout_preview_superset_hint_body), style = MaterialTheme.typography.bodySmall, color = TextBody)
-        Text(
-            text = stringResource(R.string.workout_preview_superset_hint_dismiss),
-            style = MaterialTheme.typography.labelLarge,
-            color = Accent,
-            modifier = Modifier.align(Alignment.End).clickable(onClick = onDismiss),
-        )
+        Box(
+            modifier = Modifier
+                .clip(PillShape)
+                .border(1.dp, AccentBorder, PillShape)
+                .clickable(onClick = onDismiss)
+                .padding(horizontal = 14.dp, vertical = 7.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.workout_preview_superset_hint_dismiss),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                color = Accent,
+            )
+        }
     }
 }

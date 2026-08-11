@@ -37,4 +37,21 @@ class Converters {
         val array = JSONArray(value)
         return List(array.length()) { array.getInt(it) }
     }
+
+    /** Same JSON-array approach as the pairs above — added for
+     * [com.fitviet.app.data.local.entity.MonthlyPlanEntity.exclusionExerciseIds] ("Hit & Run",
+     * Gate 63+), which needs real exercise ids (Long), not the String/Int lists already covered. */
+    @TypeConverter
+    fun fromLongList(value: List<Long>): String {
+        val array = JSONArray()
+        value.forEach(array::put)
+        return array.toString()
+    }
+
+    @TypeConverter
+    fun toLongList(value: String): List<Long> {
+        if (value.isEmpty()) return emptyList()
+        val array = JSONArray(value)
+        return List(array.length()) { array.getLong(it) }
+    }
 }

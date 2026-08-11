@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.repository.ProfileRepository
+import com.fitviet.app.data.repository.RemindersRepository
 import com.fitviet.app.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,6 +16,9 @@ import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val settings: SettingsEntity = SettingsEntity(),
+    /** Feeds the "Nhắc nhở tập luyện" row's dynamic "N lịch ›" value (mockup) instead of a static
+     * "›" that never reflected how many reminders actually exist. */
+    val reminderCount: Int = 0,
     val showResetConfirmDialog: Boolean = false,
     /** True for one frame after [SettingsViewModel.confirmReset] completes — the screen observes
      * this to navigate all the way back to onboarding (see [SettingsViewModel]'s class doc for why
@@ -42,14 +46,20 @@ data class SettingsUiState(
 class SettingsViewModel(
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
+    remindersRepository: RemindersRepository,
 ) : ViewModel() {
     private val showResetConfirmDialog = MutableStateFlow(false)
     private val resetComplete = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState> = combine(
-        profileRepository.observe(), showResetConfirmDialog, resetComplete,
-    ) { data, showConfirm, reset ->
-        SettingsUiState(settings = data.settings, showResetConfirmDialog = showConfirm, resetComplete = reset)
+        profileRepository.observe(), remindersRepository.observeAll(), showResetConfirmDialog, resetComplete,
+    ) { data, reminders, showConfirm, reset ->
+        SettingsUiState(
+            settings = data.settings,
+            reminderCount = reminders.size,
+            showResetConfirmDialog = showConfirm,
+            resetComplete = reset,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     fun cycleLanguage() = viewModelScope.launch { profileRepository.cycleLanguage() }
@@ -63,6 +73,8 @@ class SettingsViewModel(
     fun toggleShowMuscleBalanceCard() = viewModelScope.launch { profileRepository.toggleShowMuscleBalanceCard() }
 
     fun toggleShowNutritionCard() = viewModelScope.launch { profileRepository.toggleShowNutritionCard() }
+
+    fun toggleSkipWorkoutPreview() = viewModelScope.launch { profileRepository.toggleSkipWorkoutPreview() }
 
     fun requestReset() {
         showResetConfirmDialog.value = true
@@ -83,9 +95,10 @@ class SettingsViewModel(
     class Factory(
         private val profileRepository: ProfileRepository,
         private val settingsRepository: SettingsRepository,
+        private val remindersRepository: RemindersRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            SettingsViewModel(profileRepository, settingsRepository) as T
+            SettingsViewModel(profileRepository, settingsRepository, remindersRepository) as T
     }
 }

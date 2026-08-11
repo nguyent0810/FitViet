@@ -17,7 +17,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 interface WorkoutRepository {
-    suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long
+    /** [monthlyPlanDayId], when non-null, is the authoritative "Hit & Run" (Gate 63+) regenerate-
+     * lock signal — see [com.fitviet.app.data.repository.MonthlyPlanRepository]'s lock rule. */
+    suspend fun startSession(dayLabel: String, startedAtMillis: Long, monthlyPlanDayId: Long? = null): Long
 
     /** Persisted as each set completes rather than batched at the end, so a killed process doesn't lose logged sets. */
     suspend fun logSet(sessionId: Long, set: LoggedSet)
@@ -45,8 +47,8 @@ class RoomWorkoutRepository(
     private val workoutSessionDao: WorkoutSessionDao,
     private val setLogDao: SetLogDao,
 ) : WorkoutRepository {
-    override suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long =
-        workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis))
+    override suspend fun startSession(dayLabel: String, startedAtMillis: Long, monthlyPlanDayId: Long?): Long =
+        workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis, monthlyPlanDayId = monthlyPlanDayId))
 
     override suspend fun getRecommendedWeight(exerciseId: Long): Double? = setLogDao.getPersonalBest(exerciseId)?.weightKg
 

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,6 +82,11 @@ fun RemindersScreen(viewModel: RemindersViewModel, onBack: () -> Unit) {
             }
             Text(text = stringResource(R.string.reminders_title), style = MaterialTheme.typography.headlineMedium)
         }
+        // Honest disclosure, not a cosmetic caption: ReminderEntity's own doc comment confirms
+        // there's no WorkManager/notification-channel scheduling in this app yet, so nothing here
+        // ever actually fires a system notification — only in-app "Bật/Tắt" state. Without this,
+        // a user sets a 6am reminder, sees it as "Bật," and is never told it won't actually notify.
+        Text(text = stringResource(R.string.reminders_no_push_disclaimer), style = MaterialTheme.typography.labelSmall, color = TextFaint)
 
         if (uiState.reminders.isEmpty()) {
             Text(text = stringResource(R.string.reminders_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
@@ -111,7 +119,7 @@ fun RemindersScreen(viewModel: RemindersViewModel, onBack: () -> Unit) {
     }
 
     uiState.editingReminder?.let { reminder ->
-        TimeChangeSheet(reminder = reminder, onSave = viewModel::saveTime, onDismiss = viewModel::dismissTimeSheet)
+        TimeChangeSheet(reminder = reminder, onSave = viewModel::saveTimeAndLabel, onDismiss = viewModel::dismissTimeSheet)
     }
 
     val toDelete = pendingDelete
@@ -181,6 +189,9 @@ private fun ReminderCard(
                 }
             }
         }
+        if (reminder.label.isNotBlank()) {
+            Text(text = reminder.label, style = MaterialTheme.typography.labelMedium, color = TextMuted)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             ReminderActionText(text = stringResource(R.string.reminders_change_time), onClick = onChangeTimeClick)
             ReminderActionText(
@@ -223,9 +234,10 @@ private fun ReminderActionText(text: String, onClick: () -> Unit, color: Color =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimeChangeSheet(reminder: ReminderEntity, onSave: (hour: Int, minute: Int) -> Unit, onDismiss: () -> Unit) {
+private fun TimeChangeSheet(reminder: ReminderEntity, onSave: (hour: Int, minute: Int, label: String) -> Unit, onDismiss: () -> Unit) {
     var hour by remember(reminder.id) { mutableIntStateOf(reminder.hour) }
     var minute by remember(reminder.id) { mutableIntStateOf(reminder.minute) }
+    var label by remember(reminder.id) { mutableStateOf(reminder.label) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -249,12 +261,46 @@ private fun TimeChangeSheet(reminder: ReminderEntity, onSave: (hour: Int, minute
                     modifier = Modifier.weight(1f),
                 )
             }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.reminders_time_sheet_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextMuted,
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.small)
+                        .background(SurfaceCard)
+                        .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    if (label.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.reminders_time_sheet_label_placeholder),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextFaint,
+                        )
+                    }
+                    BasicTextField(
+                        value = label,
+                        onValueChange = { label = it },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                            color = TextPrimary,
+                        ),
+                        cursorBrush = SolidColor(Accent),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.small)
                     .background(Accent)
-                    .clickable { onSave(hour, minute) }
+                    .clickable { onSave(hour, minute, label) }
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {

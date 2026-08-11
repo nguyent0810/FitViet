@@ -43,6 +43,7 @@ import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.CardBorder
+import com.fitviet.app.ui.theme.ChartBarIdle
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.MacroBarCarb
 import com.fitviet.app.ui.theme.MacroBarFat
@@ -161,32 +162,38 @@ private fun ExerciseDetailContent(
     }
 }
 
+/** Left-aligned, natural-width tabs with an 8dp gap (mockup — not stretched/centered across the
+ * full row) over a 1dp [CardBorder] rail running the whole row's width, so unselected tabs still
+ * sit on a visible baseline instead of floating with nothing under them; each tab's 2dp [Accent]
+ * underline sits directly on top of that rail when selected. */
 @Composable
 private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (ExerciseDetailTab) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        ExerciseDetailTab.entries.forEach { tab ->
-            val isSelected = tab == selected
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onSelect(tab) }
-                    .padding(vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = tab.label(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) Accent else TextMuted,
-                )
-                Box(
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ExerciseDetailTab.entries.forEach { tab ->
+                val isSelected = tab == selected
+                Column(
                     modifier = Modifier
-                        .padding(top = 6.dp)
-                        .fillMaxWidth(0.6f)
-                        .height(2.dp)
-                        .background(if (isSelected) Accent else Color.Transparent),
-                )
+                        .clickable { onSelect(tab) }
+                        .padding(horizontal = 4.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = tab.label(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isSelected) Accent else TextMuted,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(if (isSelected) Accent else Color.Transparent),
+                    )
+                }
             }
         }
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(CardBorder))
     }
 }
 
@@ -367,7 +374,7 @@ private fun InvolvementRow(label: String, percent: Int, color: Color) {
                 .weight(1f)
                 .height(8.dp)
                 .clip(MaterialTheme.shapes.extraSmall)
-                .background(CardBorder),
+                .background(ChartBarIdle),
         ) {
             Box(
                 modifier = Modifier

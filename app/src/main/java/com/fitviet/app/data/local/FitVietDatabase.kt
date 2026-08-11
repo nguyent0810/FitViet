@@ -10,24 +10,34 @@ import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.FoodDao
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
+import com.fitviet.app.data.local.dao.MonthlyPlanDao
+import com.fitviet.app.data.local.dao.MonthlyPlanDayDao
+import com.fitviet.app.data.local.dao.MonthlyPlanExerciseDao
+import com.fitviet.app.data.local.dao.MonthlyPlanWeekDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
 import com.fitviet.app.data.local.dao.ReminderDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
+import com.fitviet.app.data.local.dao.SplitTemplateDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.CommunityPostEntity
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.FoodEntity
 import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanExerciseEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanWeekEntity
 import com.fitviet.app.data.local.entity.ProgramDayEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.ProgramExerciseEntity
 import com.fitviet.app.data.local.entity.ReminderEntity
 import com.fitviet.app.data.local.entity.SetLogEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
+import com.fitviet.app.data.local.entity.SplitTemplateEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 
 @Database(
@@ -44,6 +54,11 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
         CommunityPostEntity::class,
         FoodEntity::class,
         ReminderEntity::class,
+        MonthlyPlanEntity::class,
+        MonthlyPlanWeekEntity::class,
+        MonthlyPlanDayEntity::class,
+        MonthlyPlanExerciseEntity::class,
+        SplitTemplateEntity::class,
     ],
     // Bump this on every schema change, pre-release — see fallbackToDestructiveMigration() below.
     // Gate 15 raised this from 1 to 2 (new program_days/program_exercises tables, new columns on
@@ -57,6 +72,8 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // exercises.muscleGroupCode stores the enum's raw name string with no TypeConverter — a device
     // that already seeded the old codes needs a forced wipe+reseed or those rows would silently
     // drop out of the muscle-workload chart (unrecognized codes are excluded, not migrated).
+    // Gate 19 raised this from 2 to 3: new `showRecommendationCard`/`showMuscleBalanceCard`/
+    // `showNutritionCard` columns on `settings` (per-widget dashboard visibility toggles).
     // Gate 25 raised this from 4 to 5: new `foods` table, plus a new `difficultyCode` column on
     // `exercises` (same rationale as Gate 23 — a device already running an earlier version needs a
     // forced recreate to pick up the new column at all, Room won't add it in place).
@@ -69,7 +86,13 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // Gate 47 raised this from 10 to 11: new nullable `supersetGroup` column on
     // `program_exercises`.
     // Gate 48 raised this from 11 to 12: new `hasSeenSupersetHint` column on `settings`.
-    version = 12,
+    // Post-Gate-48 audit pass raised this from 12 to 13: new `label` column on `reminders`
+    // (missing per the Tier 1 mockup — a workout-day description shown under the time/days row).
+    // "Hit & Run" (Gate 63+) raised this from 13 to 14: 5 new tables (`monthly_plans`,
+    // `monthly_plan_weeks`, `monthly_plan_days`, `monthly_plan_exercises`, `split_templates`) for
+    // the one-tap generated multi-week plan, plus new `monthlyPlanDayId` column on
+    // `workout_sessions` and new `activeMonthlyPlanId`/`skipWorkoutPreview` columns on `settings`.
+    version = 14,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -86,6 +109,11 @@ abstract class FitVietDatabase : RoomDatabase() {
     abstract fun communityPostDao(): CommunityPostDao
     abstract fun foodDao(): FoodDao
     abstract fun reminderDao(): ReminderDao
+    abstract fun monthlyPlanDao(): MonthlyPlanDao
+    abstract fun monthlyPlanWeekDao(): MonthlyPlanWeekDao
+    abstract fun monthlyPlanDayDao(): MonthlyPlanDayDao
+    abstract fun monthlyPlanExerciseDao(): MonthlyPlanExerciseDao
+    abstract fun splitTemplateDao(): SplitTemplateDao
 
     companion object {
         @Volatile private var instance: FitVietDatabase? = null

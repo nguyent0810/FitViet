@@ -11,6 +11,11 @@ data class PersonalBestRow(val exerciseId: Long, val nameVi: String, val maxWeig
 
 data class SetHistoryRow(val completedAt: Long, val weightKg: Double, val reps: Int)
 
+/** One exercise's most recent completed-session date — feeds "Hit & Run" (Gate 63+) exercise
+ * selection's variety tie-break (ascending recency = deprioritized, not excluded). Distinct from
+ * [SetBreakdownRow], which exposes muscle-group/movement-type but not [exerciseId] itself. */
+data class RecentExerciseUsageRow(val exerciseId: Long, val completedAt: Long)
+
 /** One completed set joined to its exercise's stable classification codes — feeds
  * [com.fitviet.app.domain.WorkoutCompositionCalculator] (features #8/#9). */
 data class SetBreakdownRow(
@@ -26,8 +31,26 @@ interface SetLogDao {
     @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId ORDER BY exerciseOrder, setIndex")
     fun observeForSession(sessionId: Long): Flow<List<SetLogEntity>>
 
-    @Query("SELECT * FROM set_logs WHERE exerciseId = :exerciseId AND isDone = 1 ORDER BY weightKg DESC LIMIT 1")
+    @Query(
+        """
+        SELECT s.* FROM set_logs s
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.exerciseId = :exerciseId AND s.isDone = 1 AND w.completedAt IS NOT NULL
+        ORDER BY s.weightKg DESC LIMIT 1
+        """,
+    )
     suspend fun getPersonalBest(exerciseId: Long): SetLogEntity?
+
+    /** Exercises actually performed on a session linked to this monthly-plan day. */
+    @Query(
+        """
+        SELECT DISTINCT s.exerciseId
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE w.monthlyPlanDayId = :monthlyPlanDayId AND s.isDone = 1
+        """,
+    )
+    suspend fun getCompletedExerciseIdsForMonthlyPlanDay(monthlyPlanDayId: Long): List<Long>
 
     @Query(
         """
@@ -70,6 +93,21 @@ interface SetLogDao {
         """,
     )
     fun observeHistoryForExercise(exerciseId: Long): Flow<List<SetHistoryRow>>
+
+    /** "Hit & Run" (Gate 63+) — most recent completed-session date per exercise, most recent
+     * first. [sinceEpochMillis] bounds the scan so a long-lived install doesn't have to hash every
+     * set ever logged just to size a variety tie-break. */
+    @Query(
+        """
+        SELECT s.exerciseId AS exerciseId, MAX(w.completedAt) AS completedAt
+        FROM set_logs s
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.isDone = 1 AND w.completedAt IS NOT NULL AND w.completedAt >= :sinceEpochMillis
+        GROUP BY s.exerciseId
+        ORDER BY completedAt DESC
+        """,
+    )
+    fun observeRecentExerciseUsage(sinceEpochMillis: Long): Flow<List<RecentExerciseUsageRow>>
 
     @Insert
     suspend fun insert(setLog: SetLogEntity): Long

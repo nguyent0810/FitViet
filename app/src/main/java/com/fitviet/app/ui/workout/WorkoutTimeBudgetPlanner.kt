@@ -6,12 +6,15 @@ import kotlin.math.roundToInt
 
 /** Seconds of actual lifting time assumed per rep (concentric + eccentric) when estimating how long
  * a block takes — a transparent estimate, not a promise; the user's real pace, rest add/skip taps,
- * and edited weight/reps all make the real session run long or short. */
-private const val SECONDS_PER_REP = 3
+ * and edited weight/reps all make the real session run long or short. Internal (not private): also
+ * used by [ProgramDayWorkoutPlanner.estimateDurationMinutes] for the day-preview screen's duration
+ * line, which needs the exact same assumptions this budget-fitting logic uses so the two figures
+ * can never quietly drift apart. */
+internal const val SECONDS_PER_REP = 3
 
 /** Fixed overhead per exercise — walking to the next station, loading the bar, reading the setup —
  * added once per block regardless of set count. */
-private const val TRANSITION_SECONDS = 30
+internal const val TRANSITION_SECONDS = 30
 
 /**
  * A sensible full-body order — compound lifts first (most training value per minute), then

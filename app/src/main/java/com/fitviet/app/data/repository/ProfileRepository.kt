@@ -55,6 +55,11 @@ class ProfileRepository(
 
     suspend fun toggleShowNutritionCard() = updateSettings { it.copy(showNutritionCard = !it.showNutritionCard) }
 
+    /** "Hit & Run" (Gate 63+) Phase 9 — the power-user toggle documented on
+     * [SettingsEntity.skipWorkoutPreview] itself; lives here for the same "moving where it's
+     * edited from doesn't change who owns the data" reason as the widget-visibility toggles above. */
+    suspend fun toggleSkipWorkoutPreview() = updateSettings { it.copy(skipWorkoutPreview = !it.skipWorkoutPreview) }
+
     /** One-shot read for [com.fitviet.app.ui.profile.ProfileEditViewModel]'s initial draft — that
      * screen holds local edits the user can discard by navigating back, so it deliberately does
      * NOT stay subscribed to [observe]'s continuous [SettingsEntity] `Flow` (a mid-edit emission

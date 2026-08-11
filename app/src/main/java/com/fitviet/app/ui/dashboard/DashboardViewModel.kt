@@ -3,8 +3,10 @@ package com.fitviet.app.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.DashboardRepository
+import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
 import com.fitviet.app.domain.DayVolume
@@ -13,11 +15,15 @@ import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
+import com.fitviet.app.domain.TodayMonthlyPlanCard
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class DashboardUiState(
     val stats: DashboardStats = DashboardStats(0, 0, 0.0, emptyList()),
@@ -39,9 +45,19 @@ data class DashboardUiState(
     val showNutritionCard: Boolean = true,
     val displayName: String = "",
     val avatarId: Int = 0,
+    val todayMonthlyPlanCard: TodayMonthlyPlanCard? = null,
+    /** "Hit & Run" (Gate 63+) adaptive scheduling — the oldest still-unresolved missed training
+     * day from the active plan, checked once per Dashboard load (not continuously re-scanned; see
+     * [DashboardViewModel]'s `init` block), or null if there isn't one / there's no active plan.
+     * Only ever one at a time is surfaced. Push/skip resolves it so the next-oldest one (if any)
+     * can surface on a later load; viewing the plan leaves it unresolved so it may surface again. */
+    val missedDay: MonthlyPlanDayEntity? = null,
 )
 
-class DashboardViewModel(private val repository: DashboardRepository) : ViewModel() {
+class DashboardViewModel(
+    private val repository: DashboardRepository,
+    private val monthlyPlanRepository: MonthlyPlanRepository,
+) : ViewModel() {
     private val selectedRange = MutableStateFlow(StatsRange.WEEK)
 
     // Null = "no explicit tap yet for the current range" -> falls back to the series' last (most
@@ -50,11 +66,25 @@ class DashboardViewModel(private val repository: DashboardRepository) : ViewMode
     // from a series of a different length.
     private val explicitDayIndex = MutableStateFlow<Int?>(null)
 
+    // "On Dashboard load" per the "Hit & Run" plan's adaptive-scheduling section — a one-shot
+    // check per ViewModel instance (i.e. per time the user navigates to Dashboard), not a
+    // continuous Flow subscription; resolving the prompt updates this directly rather than
+    // re-running the whole scan, so it can't re-surface a day the user just acted on this session.
+    private val missedDay = MutableStateFlow<MonthlyPlanDayEntity?>(null)
+
+    init {
+        viewModelScope.launch {
+            val planId = monthlyPlanRepository.observeActivePlanId().first() ?: return@launch
+            missedDay.value = monthlyPlanRepository.findMissedDays(planId, LocalDate.now()).firstOrNull()
+        }
+    }
+
     val uiState: StateFlow<DashboardUiState> = combine(
         repository.observe(),
         selectedRange,
         explicitDayIndex,
-    ) { data, range, explicitIndex ->
+        missedDay,
+    ) { data, range, explicitIndex, missed ->
         val series = DashboardStatsCalculator.rangeSeries(data.completedSessions, data.today, range)
         DashboardUiState(
             stats = data.stats,
@@ -72,6 +102,8 @@ class DashboardViewModel(private val repository: DashboardRepository) : ViewMode
             showNutritionCard = data.showNutritionCard,
             displayName = data.displayName,
             avatarId = data.avatarId,
+            todayMonthlyPlanCard = data.todayMonthlyPlanCard,
+            missedDay = missed,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
@@ -84,8 +116,39 @@ class DashboardViewModel(private val repository: DashboardRepository) : ViewMode
         explicitDayIndex.value = null
     }
 
-    class Factory(private val repository: DashboardRepository) : ViewModelProvider.Factory {
+    /** Adaptive scheduling's "dời sang hôm nay" choice — see
+     * [MonthlyPlanRepository.pushMissedDayToToday]'s "no cascade" doc. */
+    fun pushMissedDayToToday() {
+        val day = missedDay.value ?: return
+        missedDay.value = null
+        viewModelScope.launch { monthlyPlanRepository.pushMissedDayToToday(day.id, LocalDate.now()) }
+    }
+
+    /** Adaptive scheduling's "bỏ qua, tiếp tục lịch" choice. */
+    fun skipMissedDay() {
+        val day = missedDay.value ?: return
+        missedDay.value = null
+        viewModelScope.launch { monthlyPlanRepository.skipMissedDay(day.id) }
+    }
+
+    /** Adaptive scheduling's "xem lịch tháng" choice — nothing about the missed day is resolved
+     * yet, so unlike [pushMissedDayToToday]/[skipMissedDay] this deliberately does NOT call
+     * [MonthlyPlanRepository.markMissed] or mutate the day at all; the caller navigates to
+     * [com.fitviet.app.ui.monthlyplan.MonthlyPlanDetailScreen] so the user can look at the whole
+     * plan before deciding. A dedicated "pick two days, swap them" picker UI is deferred —
+     * [MonthlyPlanRepository.swapTwoDays] exists and is ready for a future gate to build a real
+     * picker on top of; until then this option's only job is honestly not claiming to rearrange
+     * anything itself. Since nothing was resolved, the same day is expected to surface again on
+     * the next Dashboard load — that's correct, not a bug (see [findMissedDays]'s scan). */
+    fun dismissMissedDayToViewPlan() {
+        missedDay.value = null
+    }
+
+    class Factory(
+        private val repository: DashboardRepository,
+        private val monthlyPlanRepository: MonthlyPlanRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = DashboardViewModel(repository) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = DashboardViewModel(repository, monthlyPlanRepository) as T
     }
 }

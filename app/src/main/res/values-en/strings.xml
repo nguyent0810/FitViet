@@ -44,9 +44,55 @@
     <string name="split_bro_sub">1–2 muscle groups per day — deep work, great pump</string>
     <string name="split_fullbody_title">Full body</string>
     <string name="split_fullbody_sub">Whole body each session — great for beginners, 2–3 sessions/week</string>
+    <string name="split_phul_title">PHUL</string>
+    <string name="split_phul_sub">Alternating Power &amp; Hypertrophy — fits 4 sessions/week</string>
     <string name="split_info_prefix">Custom priorities: </string>
     <string name="split_info_body">add 2 chest days, 2 arm days… — customize in a later step.</string>
     <string name="split_continue">Continue</string>
+
+    <!-- "Hit &amp; Run" (Gate 63+) — Quick Generate screen -->
+    <string name="quick_generate_title">Generate monthly plan</string>
+    <string name="quick_generate_subtitle">Pick a goal, split, and days per week — we\'ll schedule the whole month for you</string>
+    <string name="quick_generate_goal_label">Goal</string>
+    <string name="quick_generate_level_label">Level</string>
+    <string name="quick_generate_split_label">Split</string>
+    <string name="quick_generate_days_label">Days/week</string>
+    <string name="quick_generate_cta">Generate monthly plan</string>
+    <string name="quick_generate_generating">Generating…</string>
+    <string name="dashboard_generate_cta_title">Try Hit &amp; Run</string>
+    <string name="dashboard_generate_cta_body">Generate a whole month of workouts in one tap, based on your goal and level</string>
+    <string name="dashboard_generate_cta_button">Generate monthly plan</string>
+    <string name="programs_generate_cta_title">Auto-generate a monthly plan</string>
+    <string name="programs_generate_cta_body">No need to pick exercises yourself — Hit &amp; Run schedules the whole month for you</string>
+    <string name="programs_generate_cta_button">Generate now</string>
+    <string name="dashboard_view_monthly_plan">View monthly plan ›</string>
+
+    <!-- "Hit & Run" (Gate 63+) — Regenerate UI -->
+    <string name="monthly_plan_detail_title">Monthly plan</string>
+    <string name="monthly_plan_regenerate_month">Regenerate whole month</string>
+    <string name="monthly_plan_regenerating">Regenerating…</string>
+    <string name="monthly_plan_regenerate_week">Regenerate this week</string>
+    <string name="monthly_plan_week_label">Week %1$d</string>
+    <string name="monthly_plan_phase_base">Base</string>
+    <string name="monthly_plan_phase_build">Build</string>
+    <string name="monthly_plan_phase_peak">Peak</string>
+    <string name="monthly_plan_phase_deload">Deload</string>
+    <string name="monthly_plan_rest_day">Rest</string>
+    <string name="monthly_plan_locked_badge">Locked</string>
+    <string name="monthly_plan_locked_message">This session already has training history, so it can\'t be regenerated</string>
+    <string name="monthly_plan_day_regenerate">Regenerate this day</string>
+    <string name="monthly_plan_day_locked_banner">This day already has training history — it can\'t be changed</string>
+    <string name="monthly_plan_exercise_swap">Swap</string>
+    <string name="monthly_plan_exercise_swap_equipment">Don\'t have this equipment</string>
+    <string name="monthly_plan_exercise_meta">%1$d sets × %2$d–%3$d reps</string>
+    <string name="monthly_plan_empty">No plan yet</string>
+
+    <!-- "Hit & Run" (Gate 63+) — adaptive scheduling prompt -->
+    <string name="dashboard_missed_day_title">You missed a workout</string>
+    <string name="dashboard_missed_day_body">%1$s · %2$s is still incomplete. What would you like to do?</string>
+    <string name="dashboard_missed_day_push_today">Move it to today</string>
+    <string name="dashboard_missed_day_skip">Skip it, keep going</string>
+    <string name="dashboard_missed_day_view_plan">View monthly plan</string>
 
     <!-- Day-of-week short labels (used on 1b's 7-day chart and 2b's schedule rows) -->
     <string name="day_mon">Mon</string>
@@ -73,6 +119,11 @@
     <string name="dashboard_hero_meta_schedule">%1$s · %2$d exercises</string>
     <string name="dashboard_progress_label">%1$d/%2$d sessions this week</string>
     <string name="dashboard_start_workout">Start workout</string>
+    <!-- "Hit & Run" (Gate 63+) -->
+    <string name="dashboard_hero_meta_monthly_plan">%1$d exercises · %2$d min</string>
+    <string name="dashboard_start_workout_today">Start today\'s workout</string>
+    <string name="dashboard_rest_day_title">Today is a rest day</string>
+    <string name="dashboard_rest_day_meta">Recover today so you\'re ready for the next session</string>
     <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
     <string name="dashboard_stat_streak">Day streak</string>
     <string name="dashboard_stat_sessions_this_week">Sessions this week</string>
@@ -80,6 +131,7 @@
     <string name="dashboard_weekly_volume_title">7-day volume</string>
     <string name="dashboard_volume_title_month">Volume, last 4 weeks</string>
     <string name="dashboard_volume_title_all">Volume by week</string>
+    <string name="dashboard_stats_section_label">STATS</string>
     <string name="dashboard_range_week">Week</string>
     <string name="dashboard_range_month">Month</string>
     <string name="dashboard_range_all">All</string>
@@ -142,6 +194,14 @@
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Restart</string>
+    <string name="workout_exit">Exit</string>
+    <string name="workout_exit_confirm_title">Exit workout?</string>
+    <string name="workout_exit_confirm_body">Your progress on this workout won\'t be saved. You can start over anytime.</string>
+    <string name="workout_exit_confirm_yes">Exit</string>
+    <string name="workout_exit_confirm_cancel">Keep training</string>
+    <string name="workout_reset_confirm_title">Restart this workout?</string>
+    <string name="workout_reset_confirm_body">Sets logged in the current session will be discarded and the workout starts over.</string>
+    <string name="workout_reset_confirm_yes">Restart</string>
     <string name="workout_exercise_progress">%1$s · Exercise %2$d/%3$d</string>
     <string name="workout_complete_set">Complete set %1$d</string>
     <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
@@ -164,6 +224,7 @@
 
     <!-- Workout preview (Gate 24) -->
     <string name="workout_preview_title">Today\'s workout</string>
+    <string name="workout_preview_estimated_duration">About %1$d min</string>
     <string name="workout_preview_summary">%1$d sets × %2$d–%3$d reps × %4$s kg</string>
     <string name="workout_preview_empty">No exercises scheduled for today.</string>
     <!-- Superset grouping preview (Gate 48) -->
@@ -187,6 +248,8 @@
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 EXERCISES BACK-TO-BACK</string>
+    <string name="superset_group_header">SUPERSET %1$s · %2$d ROUNDS</string>
+    <string name="superset_group_rest">Rest %1$ds/round</string>
     <string name="superset_badge_a1">A1</string>
     <string name="superset_badge_a2">A2</string>
     <string name="superset_no_rest_note">↓ no rest ↓</string>
@@ -225,7 +288,7 @@
     <string name="exercise_sets_range">%1$d–%2$d</string>
     <string name="exercise_rest_seconds">%1$ds</string>
     <string name="exercise_involvement_title">Muscle involvement</string>
-    <string name="exercise_involvement_caption">Estimated by movement pattern, not a per-person measurement.</string>
+    <string name="exercise_involvement_caption">Estimated per exercise, not measured from your own sessions. Nothing here is locked.</string>
     <string name="exercise_tab_howto">How to</string>
     <string name="exercise_tab_muscles">Muscles</string>
     <string name="exercise_tab_progress">Progress</string>
@@ -244,6 +307,7 @@
     <string name="diary_pr_title">Personal records (PR)</string>
     <string name="diary_pr_empty">No records yet — finish your first workout to start</string>
     <string name="diary_recent_title">Recent sessions</string>
+    <string name="diary_recent_see_all">See all</string>
     <string name="diary_recent_empty">No sessions yet</string>
     <string name="diary_recent_meta">%1$s min · %2$s kg</string>
 
@@ -325,7 +389,7 @@
     <string name="profile_offline_on">On</string>
     <string name="profile_offline_off">Off</string>
     <string name="profile_settings_backup">Back up data</string>
-    <string name="profile_settings_backup_value">Export file ›</string>
+    <string name="profile_settings_backup_value">Coming soon</string>
     <string name="profile_settings_units">Units</string>
     <string name="profile_unit_metric">kg / cm</string>
     <string name="profile_unit_imperial">lb / in</string>
@@ -333,6 +397,7 @@
     <string name="profile_widget_recommendation">Today\'s tip</string>
     <string name="profile_widget_muscle_balance">Muscle balance</string>
     <string name="profile_widget_nutrition">Nutrition</string>
+    <string name="profile_widget_skip_preview">Skip the workout preview screen</string>
     <string name="profile_donate_title">100% free app</string>
     <string name="profile_donate_body">No ads, no fees. If the app has been useful, you can chip in to help keep the servers running and fund new features.</string>
     <string name="profile_donate_cta">Support the project</string>
@@ -359,7 +424,7 @@
 
     <!-- 1h Community -->
     <string name="community_title">Community</string>
-    <string name="community_add_post">+ Share a workout</string>
+    <string name="community_add_post">Share from a finished workout\'s screen</string>
     <string name="community_tab_latest">Latest</string>
     <string name="community_tab_qa">Q&amp;A</string>
     <string name="community_tab_progress">Progress</string>
@@ -381,7 +446,7 @@
 
     <!-- ui/common — LockedListItem (Gate 36, ships unused by design) -->
     <string name="locked_item_requires_upgrade">Requires upgrade</string>
-    <string name="locked_item_coming_soon">Coming soon</string>
+    <string name="locked_item_not_yet_unlocked">Not yet unlocked</string>
 
     <!-- ui/settings — SettingsScreen (Gate 37) -->
     <string name="settings_title">Settings</string>
@@ -389,7 +454,8 @@
     <string name="settings_section_notifications">NOTIFICATIONS</string>
     <string name="settings_section_display">DISPLAY</string>
     <string name="settings_reminders_row">Workout reminders</string>
-    <string name="settings_reminders_value">›</string>
+    <string name="settings_reminders_value">%1$d reminders ›</string>
+    <string name="settings_profile_row">Profile &amp; avatar</string>
     <string name="settings_reset_button">Reset app</string>
     <string name="settings_reset_confirm_title">Reset the app?</string>
     <string name="settings_reset_confirm_body">All workouts, body measurements, food log entries, and personal settings will be permanently deleted. Programs, exercises, and sample foods are kept. You\'ll be returned to the initial setup screen.</string>
@@ -398,6 +464,7 @@
 
     <!-- ui/reminders — RemindersScreen (Gate 38, persists/renders only — nothing fires yet) -->
     <string name="reminders_title">Workout reminders</string>
+    <string name="reminders_no_push_disclaimer">Reminders currently only show inside the app — they don\'t send push notifications yet.</string>
     <string name="reminders_empty">No reminders yet. Add one to get started.</string>
     <string name="reminders_add_button">+ Add reminder</string>
     <string name="reminders_state_on">On</string>
@@ -410,6 +477,8 @@
     <string name="reminders_time_sheet_title">Change reminder time</string>
     <string name="reminders_time_sheet_hour">Hour</string>
     <string name="reminders_time_sheet_minute">Minute</string>
+    <string name="reminders_time_sheet_label">Note (optional)</string>
+    <string name="reminders_time_sheet_label_placeholder">e.g. Push 1 · Chest focus + shoulders + triceps</string>
     <string name="reminders_time_sheet_save">Save</string>
     <string name="reminders_delete_confirm_title">Delete this reminder?</string>
     <string name="reminders_delete_confirm_body">This action cannot be undone.</string>

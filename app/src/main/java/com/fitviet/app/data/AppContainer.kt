@@ -8,6 +8,7 @@ import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
 import com.fitviet.app.data.repository.HandbookRepository
 import com.fitviet.app.data.repository.NutritionRepository
+import com.fitviet.app.data.repository.RoomMonthlyPlanRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
 import com.fitviet.app.data.repository.RemindersRepository
@@ -49,6 +50,8 @@ class AppContainer(context: Context) {
         programExerciseDao = database.programExerciseDao(),
         exerciseDao = database.exerciseDao(),
         setLogDao = database.setLogDao(),
+        monthlyPlanDayDao = database.monthlyPlanDayDao(),
+        monthlyPlanExerciseDao = database.monthlyPlanExerciseDao(),
     )
     val diaryRepository = DiaryRepository(
         workoutSessionDao = database.workoutSessionDao(),
@@ -69,11 +72,29 @@ class AppContainer(context: Context) {
         settingsDao = database.settingsDao(),
     )
     val remindersRepository = RemindersRepository(database.reminderDao())
+    val monthlyPlanRepository = RoomMonthlyPlanRepository(
+        database = database,
+        monthlyPlanDao = database.monthlyPlanDao(),
+        monthlyPlanWeekDao = database.monthlyPlanWeekDao(),
+        monthlyPlanDayDao = database.monthlyPlanDayDao(),
+        monthlyPlanExerciseDao = database.monthlyPlanExerciseDao(),
+        splitTemplateDao = database.splitTemplateDao(),
+        exerciseDao = database.exerciseDao(),
+        setLogDao = database.setLogDao(),
+        workoutSessionDao = database.workoutSessionDao(),
+        settingsDao = database.settingsDao(),
+    )
 
     /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a
      * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather
      * than on [ProfileRepository]. */
     val languageIsEnglish: Flow<Boolean> = database.settingsDao().observe().map { it?.languageIsEnglish ?: false }
+
+    /** "Hit & Run" (Gate 63+) Phase 9 — the power-user toggle read at every call site that
+     * currently always routes through [com.fitviet.app.ui.workout.WorkoutPreviewScreen]; same
+     * cross-cutting-concern reasoning as [languageIsEnglish] above for why this lives here rather
+     * than being re-derived per screen. */
+    val skipWorkoutPreview: Flow<Boolean> = database.settingsDao().observe().map { it?.skipWorkoutPreview ?: false }
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's
      * exercise catalog) must await this first so they don't race an empty, not-yet-seeded table. */

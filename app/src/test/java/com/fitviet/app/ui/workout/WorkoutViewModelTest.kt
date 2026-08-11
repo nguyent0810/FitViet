@@ -5,16 +5,22 @@ import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.entity.CommunityPostEntity
 import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
+import com.fitviet.app.data.local.entity.MonthlyPlanExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ImportProgramResult
+import com.fitviet.app.data.repository.MonthlyPlanRepository
+import com.fitviet.app.data.repository.MonthlyPlanUserChoices
 import com.fitviet.app.data.repository.ProgramRepository
+import com.fitviet.app.data.repository.RegenerateResult
 import com.fitviet.app.data.repository.WorkoutRepository
 import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.ExerciseHistoryEntry
+import com.fitviet.app.domain.MonthlyPlanDayStatus
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.domain.ProgramScheduleDay
@@ -77,10 +83,16 @@ class WorkoutViewModelTest {
         var completedSessionId: Long? = null
         var completedVolumeKg: Double? = null
         var completedDurationSeconds: Int? = null
+        var startedMonthlyPlanDayId: Long? = null
+        var logSetGate: CompletableDeferred<Unit>? = null
 
-        override suspend fun startSession(dayLabel: String, startedAtMillis: Long): Long = nextSessionId++
+        override suspend fun startSession(dayLabel: String, startedAtMillis: Long, monthlyPlanDayId: Long?): Long {
+            startedMonthlyPlanDayId = monthlyPlanDayId
+            return nextSessionId++
+        }
 
         override suspend fun logSet(sessionId: Long, set: LoggedSet) {
+            logSetGate?.await()
             loggedSets += set
         }
 
@@ -152,6 +164,74 @@ class WorkoutViewModelTest {
         override suspend fun importProgram(json: String): ImportProgramResult = ImportProgramResult.Failed
     }
 
+    /** [days]/[exercisesByDay] fake a single monthly plan's persisted state, keyed by day id —
+     * enough for [MonthlyPlanDayWorkoutPlanner.resolveDay] to run against without a real Room
+     * database. Every other [MonthlyPlanRepository] method (regenerate/adaptive-scheduling/PR
+     * hook) is untested surface here; this file only covers the live-session entry point Gate 63+
+     * Phase 4 wires up, not the repository's own logic (already covered independently). */
+    private class FakeMonthlyPlanRepository(
+        private val days: Map<Long, MonthlyPlanDayEntity> = emptyMap(),
+        private val exercisesByDay: Map<Long, List<MonthlyPlanExerciseEntity>> = emptyMap(),
+    ) : MonthlyPlanRepository {
+        val completedDayIds = mutableListOf<Long>()
+
+        override fun observeActivePlanId(): Flow<Long?> = flowOf(null)
+        override fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>> = flowOf(emptyList())
+        override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = flowOf(exercisesByDay[dayId].orEmpty())
+        override suspend fun getDay(dayId: Long): MonthlyPlanDayEntity? = days[dayId]
+        override suspend fun generate(choices: MonthlyPlanUserChoices, today: LocalDate): Long = 0L
+        override suspend fun regenerateDay(dayId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun regenerateWeek(weekId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun regenerateMonth(planId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun swapExercise(monthlyPlanExerciseId: Long, avoidEquipment: String?): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun findMissedDays(planId: Long, today: LocalDate): List<MonthlyPlanDayEntity> = emptyList()
+        override suspend fun markMissed(dayIds: List<Long>) {}
+        override suspend fun pushMissedDayToToday(dayId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun skipMissedDay(dayId: Long): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun swapTwoDays(dayIdA: Long, dayIdB: Long): RegenerateResult = RegenerateResult.NotFound
+        override suspend fun onMonthlyPlanSessionCompleted(monthlyPlanDayId: Long) {
+            completedDayIds += monthlyPlanDayId
+        }
+    }
+
+    private fun testMonthlyPlanDay(
+        id: Long,
+        sessionType: String?,
+        isRestDay: Boolean = false,
+    ) = MonthlyPlanDayEntity(
+        id = id,
+        monthlyPlanWeekId = 1L,
+        plannedEpochDay = 0L,
+        effectiveEpochDay = 0L,
+        dayOfWeek = 1,
+        isRestDay = isRestDay,
+        sessionType = sessionType,
+        muscleGroupCodes = emptyList(),
+        status = MonthlyPlanDayStatus.SCHEDULED.name,
+    )
+
+    private fun testMonthlyPlanExercise(
+        dayId: Long,
+        exerciseId: Long,
+        orderIndex: Int = 0,
+        targetSets: Int = 3,
+        targetRepsMin: Int = 8,
+        targetRepsMax: Int = 10,
+        targetWeightKg: Double? = null,
+    ) = MonthlyPlanExerciseEntity(
+        id = orderIndex.toLong() + dayId * 100,
+        monthlyPlanDayId = dayId,
+        exerciseId = exerciseId,
+        orderIndex = orderIndex,
+        tier = "MAIN_COMPOUND",
+        selectionReasonCode = "test",
+        targetSets = targetSets,
+        targetRepsMin = targetRepsMin,
+        targetRepsMax = targetRepsMax,
+        targetWeightKg = targetWeightKg,
+        supersetGroup = null,
+    )
+
     private fun testExercise(id: Long, nameVi: String) = ExerciseEntity(
         id = id,
         nameVi = nameVi,
@@ -203,6 +283,7 @@ class WorkoutViewModelTest {
             workoutRepository = workoutRepository,
             programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
             elapsedRealtimeMillis = clock::now,
         )
@@ -566,6 +647,7 @@ class WorkoutViewModelTest {
             workoutRepository = workoutRepository,
             programRepository = programRepository,
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
             programId = 42L,
         )
@@ -597,6 +679,7 @@ class WorkoutViewModelTest {
             workoutRepository = FakeWorkoutRepository(),
             programRepository = programRepository,
             communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
             programId = 42L,
             elapsedRealtimeMillis = clock::now,
@@ -632,8 +715,119 @@ class WorkoutViewModelTest {
             workoutRepository = FakeWorkoutRepository(),
             programRepository = FakeProgramRepository(), // no schedule for programId 99 at all
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
             programId = 99L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.SelectingDuration, vm.uiState.value.phase)
+    }
+
+    // ---- Gate 63+: monthly-plan-day-driven session ----
+
+    @Test
+    fun `a monthly-plan-day session skips the picker and builds blocks from that day's exercises`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 3, targetRepsMin = 8, targetRepsMax = 10))),
+        )
+        val workoutRepository = FakeWorkoutRepository()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = workoutRepository,
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        val state = vm.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals("Push", state.dayLabel)
+        assertEquals(1, state.blocks.size)
+        val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
+        assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
+        assertEquals(3, block.plannedSets.size)
+        assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
+        assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
+        assertEquals(7L, workoutRepository.startedMonthlyPlanDayId) // carrying the regenerate-lock FK
+    }
+
+    @Test
+    fun `finishing a monthly-plan-day session runs the PR-bump hook for that day`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
+        )
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        vm.completeCurrentSet() // this day's only set -> StraightBlockDone
+        testDispatcher.scheduler.runCurrent()
+        vm.advanceToNextBlock() // no next block -> finishSession()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
+        assertEquals(listOf(7L), monthlyPlanRepository.completedDayIds)
+    }
+
+    @Test
+    fun `monthly-plan completion waits for the final set write before running the PR-bump hook`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1))),
+        )
+        val workoutRepository = FakeWorkoutRepository().apply { logSetGate = CompletableDeferred() }
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = workoutRepository,
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        vm.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        vm.advanceToNextBlock()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(emptyList<Long>(), monthlyPlanRepository.completedDayIds)
+        assertEquals(null, workoutRepository.completedSessionId)
+
+        workoutRepository.logSetGate?.complete(Unit)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, workoutRepository.loggedSets.size)
+        assertEquals(listOf(7L), monthlyPlanRepository.completedDayIds)
+    }
+
+    @Test
+    fun `a monthly-plan rest day falls back to the duration picker`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = null, isRestDay = true)),
+        )
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
         )
         testDispatcher.scheduler.runCurrent()
 

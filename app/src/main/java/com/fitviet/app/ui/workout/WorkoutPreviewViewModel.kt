@@ -23,6 +23,9 @@ data class WorkoutPreviewUiState(
      * exactly the pairing the live session will use rather than re-deriving it. */
     val groupings: List<ResolvedGrouping> = emptyList(),
     val showSupersetHint: Boolean = false,
+    /** [ProgramDayWorkoutPlanner.estimateDurationMinutes] over [groupings] — 0 when there's nothing
+     * to estimate yet (still loading, or an empty day). */
+    val estimatedDurationMinutes: Int = 0,
 )
 
 /** Backs the "day exercise list" preview screen (Gate 24) shown after tapping today's row on the
@@ -50,6 +53,7 @@ class WorkoutPreviewViewModel(
                 // No point showing the explainer on a day with no superset to explain, even if the
                 // user hasn't dismissed it yet.
                 showSupersetHint = !hasSeenHint && groupings.any { it is ResolvedGrouping.Paired },
+                estimatedDurationMinutes = if (groupings.isEmpty()) 0 else ProgramDayWorkoutPlanner.estimateDurationMinutes(groupings),
             )
         }
     }

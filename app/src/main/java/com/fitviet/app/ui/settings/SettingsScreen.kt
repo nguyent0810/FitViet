@@ -44,6 +44,7 @@ import com.fitviet.app.ui.theme.TextMuted
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
+    onOpenProfileEdit: () -> Unit,
     onResetComplete: () -> Unit,
     onOpenReminders: () -> Unit,
 ) {
@@ -80,10 +81,10 @@ fun SettingsScreen(
         }
 
         SectionLabel(text = stringResource(R.string.settings_section_account))
-        AccountSection(settings = uiState.settings, viewModel = viewModel)
+        AccountSection(settings = uiState.settings, onOpenProfileEdit = onOpenProfileEdit)
 
         SectionLabel(text = stringResource(R.string.settings_section_notifications))
-        NotificationsSection(onOpenReminders = onOpenReminders)
+        NotificationsSection(reminderCount = uiState.reminderCount, onOpenReminders = onOpenReminders)
 
         SectionLabel(text = stringResource(R.string.settings_section_display))
         DisplaySection(settings = uiState.settings, viewModel = viewModel)
@@ -121,7 +122,7 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun AccountSection(settings: SettingsEntity, viewModel: SettingsViewModel) {
+private fun AccountSection(settings: SettingsEntity, onOpenProfileEdit: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -130,34 +131,22 @@ private fun AccountSection(settings: SettingsEntity, viewModel: SettingsViewMode
             .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
         SettingsRow(
-            label = stringResource(R.string.profile_settings_language),
-            value = stringResource(if (settings.languageIsEnglish) R.string.profile_lang_en else R.string.profile_lang_vi) + " ›",
-            onClick = viewModel::cycleLanguage,
-        )
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_offline),
-            value = stringResource(if (settings.offlineMode) R.string.profile_offline_on else R.string.profile_offline_off),
-            valueColor = if (settings.offlineMode) Accent else TextMuted,
-            valueBold = true,
-            onClick = viewModel::toggleOffline,
+            label = stringResource(R.string.settings_profile_row),
+            value = settings.displayName,
+            onClick = onOpenProfileEdit,
         )
         // Static in the prototype too (no onClick on this row) — there's no real file-export feature yet.
         SettingsRow(
             label = stringResource(R.string.profile_settings_backup),
             value = stringResource(R.string.profile_settings_backup_value),
             onClick = null,
-        )
-        SettingsRow(
-            label = stringResource(R.string.profile_settings_units),
-            value = stringResource(if (settings.useImperialUnits) R.string.profile_unit_imperial else R.string.profile_unit_metric) + " ›",
-            onClick = viewModel::cycleUnits,
             showDivider = false,
         )
     }
 }
 
 @Composable
-private fun NotificationsSection(onOpenReminders: () -> Unit) {
+private fun NotificationsSection(reminderCount: Int, onOpenReminders: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -167,7 +156,9 @@ private fun NotificationsSection(onOpenReminders: () -> Unit) {
     ) {
         SettingsRow(
             label = stringResource(R.string.settings_reminders_row),
-            value = stringResource(R.string.settings_reminders_value),
+            value = stringResource(R.string.settings_reminders_value, reminderCount),
+            valueColor = Accent,
+            valueBold = true,
             onClick = onOpenReminders,
             showDivider = false,
         )
@@ -183,6 +174,23 @@ private fun DisplaySection(settings: SettingsEntity, viewModel: SettingsViewMode
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
+        SettingsRow(
+            label = stringResource(R.string.profile_settings_language),
+            value = stringResource(if (settings.languageIsEnglish) R.string.profile_lang_en else R.string.profile_lang_vi) + " ›",
+            onClick = viewModel::cycleLanguage,
+        )
+        SettingsRow(
+            label = stringResource(R.string.profile_settings_units),
+            value = stringResource(if (settings.useImperialUnits) R.string.profile_unit_imperial else R.string.profile_unit_metric) + " ›",
+            onClick = viewModel::cycleUnits,
+        )
+        SettingsRow(
+            label = stringResource(R.string.profile_settings_offline),
+            value = stringResource(if (settings.offlineMode) R.string.profile_offline_on else R.string.profile_offline_off),
+            valueColor = if (settings.offlineMode) Accent else TextMuted,
+            valueBold = true,
+            onClick = viewModel::toggleOffline,
+        )
         Text(
             text = stringResource(R.string.profile_widgets_title),
             style = MaterialTheme.typography.labelLarge,
@@ -203,6 +211,14 @@ private fun DisplaySection(settings: SettingsEntity, viewModel: SettingsViewMode
             label = stringResource(R.string.profile_widget_nutrition),
             enabled = settings.showNutritionCard,
             onClick = viewModel::toggleShowNutritionCard,
+        )
+        // "Hit & Run" (Gate 63+) Phase 9 — lives in the widgets group visually (same toggle-row
+        // treatment) but is a workout-flow behavior, not a Dashboard widget; kept last since it's
+        // the newest addition and doesn't fit either existing section's own theme precisely.
+        WidgetToggleRow(
+            label = stringResource(R.string.profile_widget_skip_preview),
+            enabled = settings.skipWorkoutPreview,
+            onClick = viewModel::toggleSkipWorkoutPreview,
             showDivider = false,
         )
     }

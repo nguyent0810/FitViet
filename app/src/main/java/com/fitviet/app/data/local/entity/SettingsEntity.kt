@@ -15,8 +15,14 @@ import androidx.room.PrimaryKey
             childColumns = ["activeProgramId"],
             onDelete = ForeignKey.SET_NULL,
         ),
+        ForeignKey(
+            entity = MonthlyPlanEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["activeMonthlyPlanId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
-    indices = [Index("activeProgramId")],
+    indices = [Index("activeProgramId"), Index("activeMonthlyPlanId")],
 )
 data class SettingsEntity(
     @PrimaryKey val id: Int = SINGLETON_ID,
@@ -50,6 +56,14 @@ data class SettingsEntity(
     /** Feature #11b (Gate 48) — flips true once the user has dismissed the "day exercise list"
      * preview screen's first-run superset explainer card, so it doesn't show again. */
     val hasSeenSupersetHint: Boolean = false,
+    /** "Hit & Run" (Gate 63+) — the generated monthly plan currently driving the Dashboard "Today"
+     * card, independent of [activeProgramId]: a user can have both a hand-picked program and an
+     * active monthly plan at once, only the Today card prefers this one when non-null. */
+    val activeMonthlyPlanId: Long? = null,
+    /** "Hit & Run" — power-user toggle to skip [com.fitviet.app.ui.workout.WorkoutPreviewScreen]
+     * entirely and go straight from a Start action into the live session. Off by default so the
+     * first-run "day exercise list" screen still shows until the user opts out. */
+    val skipWorkoutPreview: Boolean = false,
 ) {
     companion object {
         const val SINGLETON_ID = 0

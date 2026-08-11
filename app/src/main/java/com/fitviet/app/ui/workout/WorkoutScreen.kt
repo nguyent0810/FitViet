@@ -10,11 +10,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +43,8 @@ fun WorkoutScreen(
     onFinishToHome: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showExitConfirm by remember { mutableStateOf(false) }
+    var showResetConfirm by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
         if (uiState.isLoading) {
@@ -48,11 +55,11 @@ fun WorkoutScreen(
         }
 
         if (uiState.phase != WorkoutPhase.SessionFinished && uiState.phase != WorkoutPhase.SelectingDuration) {
-            WorkoutHeader(uiState = uiState, onReset = viewModel::resetWorkout)
+            WorkoutHeader(uiState = uiState, onReset = { showResetConfirm = true }, onExit = { showExitConfirm = true })
         }
 
         when (uiState.phase) {
-            WorkoutPhase.SelectingDuration -> WorkoutDurationPickerContent(onSelect = viewModel::selectDuration)
+            WorkoutPhase.SelectingDuration -> WorkoutDurationPickerContent(onSelect = viewModel::selectDuration, onExit = onFinishToHome)
             WorkoutPhase.StraightLog -> StraightLogContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.StraightRest -> {
                 val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan
@@ -101,10 +108,54 @@ fun WorkoutScreen(
             onDismiss = viewModel::closeTechniquePicker,
         )
     }
+
+    // Neither dialog colors its confirm button Danger — that token is reserved for genuinely
+    // permanent data loss (Settings' full-app reset). Losing an in-progress, unsaved workout is
+    // real but recoverable (the user can just start again), the same severity tier as the
+    // undecorated delete confirms elsewhere (RemindersScreen, MeasurementHistorySheet).
+    if (showExitConfirm) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            title = { Text(text = stringResource(R.string.workout_exit_confirm_title)) },
+            text = { Text(text = stringResource(R.string.workout_exit_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = { showExitConfirm = false; onFinishToHome() }) {
+                    Text(text = stringResource(R.string.workout_exit_confirm_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirm = false }) {
+                    Text(text = stringResource(R.string.workout_exit_confirm_cancel))
+                }
+            },
+        )
+    }
+
+    // Added alongside the exit dialog above: "Làm lại" discards the same in-progress logged sets
+    // and totals as "Thoát" does, and sits pixel-adjacent to it in WorkoutHeader with identical
+    // chrome — leaving it a single unconfirmed tap while its neighbor gained a confirm dialog
+    // protected the wrong button from an accidental double-tap.
+    if (showResetConfirm) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirm = false },
+            title = { Text(text = stringResource(R.string.workout_reset_confirm_title)) },
+            text = { Text(text = stringResource(R.string.workout_reset_confirm_body)) },
+            confirmButton = {
+                TextButton(onClick = { showResetConfirm = false; viewModel.resetWorkout() }) {
+                    Text(text = stringResource(R.string.workout_reset_confirm_yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) {
+                    Text(text = stringResource(R.string.workout_exit_confirm_cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
-private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit) {
+private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit, onExit: () -> Unit) {
     val exerciseName = when (val block = uiState.currentBlock) {
         is WorkoutBlockPlan.Straight -> block.plan.exercise.nameVi
         is WorkoutBlockPlan.Superset -> stringResource(R.string.superset_title)
@@ -128,17 +179,31 @@ private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit) {
             )
             Text(text = exerciseName, style = MaterialTheme.typography.headlineSmall)
         }
-        Box(
-            modifier = Modifier
-                .heightIn(min = 44.dp)
-                .clip(MaterialTheme.shapes.small)
-                .background(SurfaceCard)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-                .clickable(onClick = onReset)
-                .padding(horizontal = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = stringResource(R.string.workout_reset), style = MaterialTheme.typography.labelMedium, color = TextFaint)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 44.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(SurfaceCard)
+                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .clickable(onClick = onExit)
+                    .padding(horizontal = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = stringResource(R.string.workout_exit), style = MaterialTheme.typography.labelMedium, color = TextFaint)
+            }
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 44.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(SurfaceCard)
+                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .clickable(onClick = onReset)
+                    .padding(horizontal = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = stringResource(R.string.workout_reset), style = MaterialTheme.typography.labelMedium, color = TextFaint)
+            }
         }
     }
 }

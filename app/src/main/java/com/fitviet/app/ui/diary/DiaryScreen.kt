@@ -107,7 +107,7 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
         MuscleGroupWorkloadCard(workload = uiState.muscleGroupWorkload)
         MovementTypeCard(distribution = uiState.movementTypeDistribution)
         PersonalBestsCard(personalBests = uiState.personalBests)
-        RecentSessionsCard(sessions = uiState.recentSessions)
+        RecentSessionsCard(sessions = uiState.recentSessions, onOpenCalendar = onOpenCalendar)
     }
 }
 
@@ -387,8 +387,12 @@ private fun PersonalBestsCard(personalBests: List<PersonalBestRow>) {
     }
 }
 
+/** [sessions] is already truncated to [RECENT_SESSIONS_DISPLAY_LIMIT][com.fitviet.app.ui.diary.DiaryViewModel]
+ * by the ViewModel, with no way for this composable to tell "exactly 3 total" from "3 shown, more
+ * exist" — [onOpenCalendar] (the same button DiaryScreen's own header already exposes) is offered
+ * whenever the list is non-empty rather than threading an extra has-more flag through just for this. */
 @Composable
-private fun RecentSessionsCard(sessions: List<WorkoutSessionEntity>) {
+private fun RecentSessionsCard(sessions: List<WorkoutSessionEntity>, onOpenCalendar: () -> Unit) {
     val zone = remember { ZoneId.systemDefault() }
     Column(
         modifier = Modifier
@@ -399,7 +403,17 @@ private fun RecentSessionsCard(sessions: List<WorkoutSessionEntity>) {
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(text = stringResource(R.string.diary_recent_title), style = MaterialTheme.typography.titleSmall)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = stringResource(R.string.diary_recent_title), style = MaterialTheme.typography.titleSmall)
+            if (sessions.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.diary_recent_see_all),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Accent,
+                    modifier = Modifier.clickable(onClick = onOpenCalendar),
+                )
+            }
+        }
         if (sessions.isEmpty()) {
             Text(text = stringResource(R.string.diary_recent_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
         } else {
