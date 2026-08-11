@@ -148,7 +148,9 @@ fun QuickGenerateScreen(
 
         OnboardingPrimaryButton(
             text = stringResource(if (uiState.isGenerating) R.string.quick_generate_generating else R.string.quick_generate_cta),
-            onClick = { if (!uiState.isLoading && !uiState.isGenerating) onGenerateClick() },
+            // The ViewModel serializes initialization/generation. Do not silently discard a tap
+            // here while its initial settings read is still in flight.
+            onClick = onGenerateClick,
             modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 14.dp),
         )
     }

@@ -38,18 +38,20 @@ class QuickGenerateViewModel(
     private val _uiState = MutableStateFlow(QuickGenerateUiState())
     val uiState: StateFlow<QuickGenerateUiState> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
+    private val initialization = viewModelScope.launch {
+        try {
             val saved = onboardingRepository.getSelections()
             _uiState.update {
                 it.copy(
-                    isLoading = false,
                     goal = mapOnboardingGoal(saved.selectedGoal),
                     level = ExerciseDifficulty.entries.getOrElse(saved.selectedLevel) { ExerciseDifficulty.BEGINNER },
                     splitTemplate = mapOnboardingSplit(saved.selectedSplit),
                     daysPerWeek = saved.selectedDaysPerWeek.coerceIn(MIN_DAYS_PER_WEEK, MAX_DAYS_PER_WEEK),
                 )
             }
+        } finally {
+            // A failed settings read must not leave the CTA permanently and invisibly disabled.
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -62,8 +64,11 @@ class QuickGenerateViewModel(
      * [com.fitviet.app.ui.onboarding.OnboardingViewModel.completeOnboarding] uses) so a
      * `popUpTo`/screen-pop right after can't cancel the generation mid-transaction. */
     suspend fun generate(): Boolean {
+        // Preserve the user's first tap if it happens before prefill completes instead of
+        // returning false and requiring an unexplained second tap.
+        initialization.join()
         val state = _uiState.value
-        if (state.isLoading || state.isGenerating) return false
+        if (state.isGenerating) return false
         _uiState.update { it.copy(isGenerating = true) }
         return try {
             monthlyPlanRepository.generate(
