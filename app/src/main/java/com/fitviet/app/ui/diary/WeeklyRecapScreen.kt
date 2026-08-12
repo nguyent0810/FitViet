@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,10 +28,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.drawLayer
-import androidx.compose.ui.graphics.layer.rememberGraphicsLayer
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
@@ -113,7 +116,9 @@ fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
                     .fillMaxWidth()
                     .entranceFade()
                     .drawWithContent {
-                        graphicsLayer.record { this@drawWithContent.drawContent() }
+                        graphicsLayer.record(this, layoutDirection, IntSize(size.width.toInt(), size.height.toInt())) {
+                            this@drawWithContent.drawContent()
+                        }
                         drawLayer(graphicsLayer)
                     },
             ) {
@@ -259,3 +264,21 @@ private fun RecapStatTile(label: String, value: String, modifier: Modifier = Mod
 }
 
 private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthValue}"
+
+/**
+ * This project's Compose BOM resolves to Compose UI 1.7.6, which does not yet ship the
+ * `rememberGraphicsLayer()` convenience composable (added in a later Compose UI release) —
+ * confirmed by inspecting the actual `ui`/`ui-graphics` 1.7.6 jars, since an earlier review had
+ * incorrectly assumed it was already present at this version. Reimplemented here from the
+ * lower-level `GraphicsContext`/[LocalGraphicsContext] API, which IS public at 1.7.6 and is what
+ * the real `rememberGraphicsLayer()` wraps internally in newer versions.
+ */
+@Composable
+private fun rememberGraphicsLayer(): GraphicsLayer {
+    val graphicsContext = LocalGraphicsContext.current
+    val graphicsLayer = remember { graphicsContext.createGraphicsLayer() }
+    DisposableEffect(graphicsLayer) {
+        onDispose { graphicsContext.releaseGraphicsLayer(graphicsLayer) }
+    }
+    return graphicsLayer
+}
