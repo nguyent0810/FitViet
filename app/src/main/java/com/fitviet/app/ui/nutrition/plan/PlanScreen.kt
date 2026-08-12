@@ -68,6 +68,8 @@ fun PlanScreen(viewModel: PlanViewModel, onBack: () -> Unit, onOpenCalendar: () 
             Text(
                 text = stringResource(R.string.nutrition_plan_title),
                 style = MaterialTheme.typography.headlineMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             if (uiState.hasActivePlan) {
@@ -87,6 +89,8 @@ fun PlanScreen(viewModel: PlanViewModel, onBack: () -> Unit, onOpenCalendar: () 
                     text = stringResource(R.string.nutrition_plan_regenerate_week),
                     style = MaterialTheme.typography.labelLarge,
                     color = Accent,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.clickable(enabled = planId != null && !uiState.isRegenerating) {
                         if (planId != null) {
                             coroutineScope.launch { viewModel.regenerateWeek(planId) }
@@ -125,7 +129,9 @@ fun PlanScreen(viewModel: PlanViewModel, onBack: () -> Unit, onOpenCalendar: () 
         val selectedDay = uiState.days.getOrNull(uiState.selectedDayIndex)
         if (selectedDay != null) {
             Row(
-                modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -139,11 +145,16 @@ fun PlanScreen(viewModel: PlanViewModel, onBack: () -> Unit, onOpenCalendar: () 
                     ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                 )
                 Text(
                     text = stringResource(R.string.nutrition_plan_regenerate_day),
                     style = MaterialTheme.typography.labelLarge,
                     color = Accent,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.clickable(enabled = !uiState.isRegenerating) {
                         coroutineScope.launch { viewModel.regenerateDay(selectedDay.dayId) }
                     },
@@ -203,7 +214,7 @@ private fun PlanMealRow(meal: PlanMealUiItem, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
             Text(text = meal.slot, style = MaterialTheme.typography.labelMedium, color = TextMuted)
             Text(
                 text = meal.recipeName,
@@ -217,6 +228,8 @@ private fun PlanMealRow(meal: PlanMealUiItem, onClick: () -> Unit) {
             text = stringResource(R.string.nutrition_meal_kcal, formatVi(meal.kcal)),
             style = MaterialTheme.typography.titleSmall,
             color = Accent,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }
