@@ -59,6 +59,7 @@
     <string name="quick_generate_days_label">Days/week</string>
     <string name="quick_generate_cta">Generate monthly plan</string>
     <string name="quick_generate_generating">Generating…</string>
+    <string name="quick_generate_error">Couldn\'t create the monthly plan: %1$s</string>
     <string name="dashboard_generate_cta_title">Try Hit &amp; Run</string>
     <string name="dashboard_generate_cta_body">Generate a whole month of workouts in one tap, based on your goal and level</string>
     <string name="dashboard_generate_cta_button">Generate monthly plan</string>
@@ -537,6 +538,11 @@
     <string name="handbook_foods_empty">No food data yet.</string>
     <string name="handbook_food_kcal">%1$d kcal/100g</string>
     <string name="handbook_food_macros">%1$sg protein · %2$sg carbs · %3$sg fat</string>
+    <string name="handbook_muscle_group_exercise_count">%1$d exercises</string>
+    <plurals name="handbook_food_category_count">
+        <item quantity="one">%1$d food</item>
+        <item quantity="other">%1$d foods</item>
+    </plurals>
     <string name="exercise_difficulty_beginner">Beginner</string>
     <string name="exercise_difficulty_intermediate">Intermediate</string>
     <string name="exercise_difficulty_advanced">Advanced</string>

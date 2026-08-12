@@ -1,5 +1,7 @@
 package com.fitviet.app.ui.navigation
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
@@ -17,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -26,7 +29,9 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fitviet.app.R
 import com.fitviet.app.data.AppContainer
+import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.ui.calendar.WorkoutCalendarScreen
 import com.fitviet.app.ui.calendar.WorkoutCalendarViewModel
 import com.fitviet.app.ui.community.CommunityScreen
@@ -39,6 +44,10 @@ import com.fitviet.app.ui.diary.WeeklyRecapScreen
 import com.fitviet.app.ui.diary.WeeklyRecapViewModel
 import com.fitviet.app.ui.exercise.ExerciseDetailScreen
 import com.fitviet.app.ui.exercise.ExerciseDetailViewModel
+import com.fitviet.app.ui.handbook.HandbookFoodCategoryScreen
+import com.fitviet.app.ui.handbook.HandbookFoodCategoryViewModel
+import com.fitviet.app.ui.handbook.HandbookMuscleGroupScreen
+import com.fitviet.app.ui.handbook.HandbookMuscleGroupViewModel
 import com.fitviet.app.ui.handbook.HandbookScreen
 import com.fitviet.app.ui.handbook.HandbookViewModel
 import com.fitviet.app.ui.monthlyplan.MonthlyPlanDayDetailScreen
@@ -84,6 +93,8 @@ import com.fitviet.app.ui.workout.WorkoutPreviewViewModel
 import com.fitviet.app.ui.workout.WorkoutScreen
 import com.fitviet.app.ui.workout.WorkoutViewModel
 import com.fitviet.app.util.LocaleController
+import java.time.DayOfWeek
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
@@ -229,6 +240,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             }
             composable(FitVietDestination.QuickGenerate.route) {
                 val quickGenerateCoroutineScope = rememberCoroutineScope()
+                val quickGenerateContext = LocalContext.current
                 val viewModel: QuickGenerateViewModel = viewModel(
                     factory = QuickGenerateViewModel.Factory(container.onboardingRepository, container.monthlyPlanRepository),
                 )
@@ -238,14 +250,30 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     // Await the write before navigating — same reasoning as onboarding's
                     // completeOnboarding() above: popping this screen off the back stack would
                     // otherwise risk cancelling the generation transaction mid-flight.
+                    // A user-reported "tapping the button does nothing" bug traced to this call
+                    // silently swallowing whatever monthlyPlanRepository.generate() throws (no
+                    // catch here previously, and the exception apparently didn't surface as a
+                    // visible crash) — this now logs and shows a Toast on failure instead of
+                    // leaving the UI looking unresponsive with zero feedback.
                     onGenerateClick = {
                         quickGenerateCoroutineScope.launch {
-                            if (viewModel.generate()) {
-                                navController.navigate(FitVietDestination.Home.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+                            try {
+                                if (viewModel.generate()) {
+                                    navController.navigate(FitVietDestination.Home.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e("QuickGenerate", "monthlyPlanRepository.generate() failed", e)
+                                Toast.makeText(
+                                    quickGenerateContext,
+                                    quickGenerateContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             }
                         }
                     },
@@ -373,16 +401,36 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId))
                         }
                     },
+                    // Gate E4 — tapping a day row now opens that day's overview (today or any
+                    // other day), matching the requested Programs -> schedule -> day overview
+                    // flow; skipWorkoutPreview intentionally does NOT apply here (unlike
+                    // onStartToday above) — an explicit tap on a specific day is asking to see
+                    // what's in it, not to jump straight into a session.
+                    onOpenDayDetail = { dayOfWeek ->
+                        navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId, dayOfWeek.value))
+                    },
                 )
             }
             composable(
                 route = FitVietDestination.WorkoutPreview.route,
-                arguments = listOf(navArgument(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) { type = NavType.LongType }),
+                arguments = listOf(
+                    navArgument(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) { type = NavType.LongType },
+                    navArgument(FitVietDestination.WorkoutPreview.ARG_DAY_OF_WEEK) { type = NavType.IntType; defaultValue = -1 },
+                ),
             ) { backStackEntry ->
                 val programId = backStackEntry.arguments?.getLong(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) ?: 0L
+                // Gate E4 — -1 sentinel (same "absent optional arg" convention as Workout's own
+                // programId/monthlyPlanDayId below) means "resolve today", matching this screen's
+                // original today-only entry points (the FAB/dashboard start, and Weekly Schedule's
+                // own inline today-only quick-start text) — only the Weekly Schedule's day-ROW tap
+                // (Gate E4) ever supplies a real dayOfWeek value.
+                val dayOfWeek = backStackEntry.arguments?.getInt(FitVietDestination.WorkoutPreview.ARG_DAY_OF_WEEK)
+                    ?.takeIf { it != -1 }
+                    ?.let { DayOfWeek.of(it) }
                 val viewModel: WorkoutPreviewViewModel = viewModel(
                     factory = WorkoutPreviewViewModel.Factory(
                         programId,
+                        dayOfWeek,
                         container.programRepository,
                         container.exerciseRepository,
                         container.workoutRepository,
@@ -392,7 +440,16 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 WorkoutPreviewScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    onBeginWorkout = { navController.navigate(FitVietDestination.Workout.createRoute(programId)) },
+                    // Gate E4 fix — thread the SAME dayOfWeek this preview is showing through to
+                    // the live session, so "Bắt đầu tập" starts the day the user was actually
+                    // looking at, not always today (a real bug: opening a non-today day's preview
+                    // and tapping this previously silently started today's session instead).
+                    onBeginWorkout = { navController.navigate(FitVietDestination.Workout.createRoute(programId, dayOfWeek = dayOfWeek?.value)) },
+                    // Gate E4 — lets a user tap into an exercise's "cách tập" (how-to) detail
+                    // straight from the day overview, per the requested Programs -> schedule ->
+                    // day overview -> exercise detail flow, instead of the overview being a
+                    // dead-end that only offers "start the whole session."
+                    onExerciseClick = { exerciseId -> navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exerciseId)) },
                 )
             }
             composable(
@@ -400,20 +457,25 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 arguments = listOf(
                     navArgument(FitVietDestination.Workout.ARG_PROGRAM_ID) { type = NavType.LongType; defaultValue = -1L },
                     navArgument(FitVietDestination.Workout.ARG_MONTHLY_PLAN_DAY_ID) { type = NavType.LongType; defaultValue = -1L },
+                    navArgument(FitVietDestination.Workout.ARG_DAY_OF_WEEK) { type = NavType.IntType; defaultValue = -1 },
                 ),
             ) { backStackEntry ->
                 val programId = backStackEntry.arguments?.getLong(FitVietDestination.Workout.ARG_PROGRAM_ID)?.takeIf { it != -1L }
                 val monthlyPlanDayId = backStackEntry.arguments?.getLong(FitVietDestination.Workout.ARG_MONTHLY_PLAN_DAY_ID)?.takeIf { it != -1L }
+                val workoutDayOfWeek = backStackEntry.arguments?.getInt(FitVietDestination.Workout.ARG_DAY_OF_WEEK)
+                    ?.takeIf { it != -1 }
+                    ?.let { DayOfWeek.of(it) }
                 val viewModel: WorkoutViewModel = viewModel(
                     factory = WorkoutViewModel.Factory(
-                        container.exerciseRepository,
-                        container.workoutRepository,
-                        container.programRepository,
-                        container.communityRepository,
-                        container.monthlyPlanRepository,
-                        container.databaseReady,
-                        programId,
-                        monthlyPlanDayId,
+                        exerciseRepository = container.exerciseRepository,
+                        workoutRepository = container.workoutRepository,
+                        programRepository = container.programRepository,
+                        communityRepository = container.communityRepository,
+                        monthlyPlanRepository = container.monthlyPlanRepository,
+                        databaseReady = container.databaseReady,
+                        programId = programId,
+                        monthlyPlanDayId = monthlyPlanDayId,
+                        dayOfWeek = workoutDayOfWeek,
                     ),
                 )
                 WorkoutScreen(
@@ -545,9 +607,46 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: HandbookViewModel = viewModel(factory = HandbookViewModel.Factory(container.handbookRepository))
                 HandbookScreen(
                     viewModel = viewModel,
+                    onMuscleGroupClick = { group ->
+                        navController.navigate(FitVietDestination.HandbookMuscleGroup.createRoute(group.name))
+                    },
+                    onFoodCategoryClick = { category ->
+                        navController.navigate(FitVietDestination.HandbookFoodCategory.createRoute(category))
+                    },
+                )
+            }
+            composable(
+                route = FitVietDestination.HandbookMuscleGroup.route,
+                arguments = listOf(navArgument(FitVietDestination.HandbookMuscleGroup.ARG_MUSCLE_GROUP_CODE) { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val code = backStackEntry.arguments?.getString(FitVietDestination.HandbookMuscleGroup.ARG_MUSCLE_GROUP_CODE).orEmpty()
+                val group = MuscleGroup.entries.find { it.name == code } ?: MuscleGroup.CHEST
+                val viewModel: HandbookMuscleGroupViewModel = viewModel(
+                    factory = HandbookMuscleGroupViewModel.Factory(group, container.handbookRepository),
+                )
+                HandbookMuscleGroupScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
                     onExerciseClick = { exercise ->
                         navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
                     },
+                )
+            }
+            composable(
+                route = FitVietDestination.HandbookFoodCategory.route,
+                arguments = listOf(navArgument(FitVietDestination.HandbookFoodCategory.ARG_CATEGORY) { type = NavType.StringType }),
+            ) { backStackEntry ->
+                // createRoute() Uri.encode()s the category (it's a free-text string that can contain
+                // spaces/diacritics, e.g. "Cá & hải sản") — Navigation Compose's own route-matching
+                // already applies Uri.decode() to path arguments before they reach this Bundle, so
+                // no further decoding is needed here.
+                val category = backStackEntry.arguments?.getString(FitVietDestination.HandbookFoodCategory.ARG_CATEGORY).orEmpty()
+                val viewModel: HandbookFoodCategoryViewModel = viewModel(
+                    factory = HandbookFoodCategoryViewModel.Factory(category, container.handbookRepository),
+                )
+                HandbookFoodCategoryScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
                 )
             }
             }

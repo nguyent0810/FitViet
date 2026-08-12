@@ -3710,32 +3710,32 @@ object SeedData {
      * (USDA-type reference ranges), not sourced from any single proprietary database. */
     val foods = listOf(
         FoodEntity(
-            nameVi = "Ức gà", nameEn = "Chicken breast", category = "Đạm",
+            nameVi = "Ức gà", nameEn = "Chicken breast", category = "Thịt",
             descriptionVi = "Nguồn đạm nạc phổ biến, ít chất béo.",
             kcalPer100g = 165, proteinG = 31.0, carbG = 0.0, fatG = 3.6,
         ),
         FoodEntity(
-            nameVi = "Trứng gà", nameEn = "Egg", category = "Đạm",
+            nameVi = "Trứng gà", nameEn = "Egg", category = "Trứng",
             descriptionVi = "Đạm hoàn chỉnh, tiện chuẩn bị.",
             kcalPer100g = 155, proteinG = 13.0, carbG = 1.1, fatG = 11.0,
         ),
         FoodEntity(
-            nameVi = "Cá hồi", nameEn = "Salmon", category = "Đạm",
+            nameVi = "Cá hồi", nameEn = "Salmon", category = "Cá & hải sản",
             descriptionVi = "Giàu đạm và omega-3.",
             kcalPer100g = 208, proteinG = 20.0, carbG = 0.0, fatG = 13.0,
         ),
         FoodEntity(
-            nameVi = "Thịt bò nạc", nameEn = "Lean beef", category = "Đạm",
+            nameVi = "Thịt bò nạc", nameEn = "Lean beef", category = "Thịt",
             descriptionVi = "Giàu đạm và sắt.",
             kcalPer100g = 250, proteinG = 26.0, carbG = 0.0, fatG = 15.0,
         ),
         FoodEntity(
-            nameVi = "Đậu phụ", nameEn = "Tofu", category = "Đạm",
+            nameVi = "Đậu phụ", nameEn = "Tofu", category = "Đậu & đạm thực vật",
             descriptionVi = "Nguồn đạm thực vật phổ biến.",
             kcalPer100g = 76, proteinG = 8.0, carbG = 1.9, fatG = 4.8,
         ),
         FoodEntity(
-            nameVi = "Tôm", nameEn = "Shrimp", category = "Đạm",
+            nameVi = "Tôm", nameEn = "Shrimp", category = "Cá & hải sản",
             descriptionVi = "Đạm cao, gần như không chất béo.",
             kcalPer100g = 99, proteinG = 24.0, carbG = 0.2, fatG = 0.3,
         ),
@@ -3760,17 +3760,17 @@ object SeedData {
             kcalPer100g = 247, proteinG = 13.0, carbG = 41.0, fatG = 3.4,
         ),
         FoodEntity(
-            nameVi = "Quả bơ", nameEn = "Avocado", category = "Chất béo",
+            nameVi = "Quả bơ", nameEn = "Avocado", category = "Trái cây",
             descriptionVi = "Chất béo không bão hòa tốt cho tim mạch.",
             kcalPer100g = 160, proteinG = 2.0, carbG = 9.0, fatG = 15.0,
         ),
         FoodEntity(
-            nameVi = "Hạnh nhân", nameEn = "Almonds", category = "Chất béo",
+            nameVi = "Hạnh nhân", nameEn = "Almonds", category = "Hạt & quả hạch",
             descriptionVi = "Ăn vặt lành mạnh, năng lượng đậm đặc.",
             kcalPer100g = 579, proteinG = 21.0, carbG = 22.0, fatG = 50.0,
         ),
         FoodEntity(
-            nameVi = "Dầu oliu", nameEn = "Olive oil", category = "Chất béo",
+            nameVi = "Dầu oliu", nameEn = "Olive oil", category = "Dầu & mỡ",
             descriptionVi = "Dùng để nấu ăn hoặc trộn salad.",
             kcalPer100g = 884, proteinG = 0.0, carbG = 0.0, fatG = 100.0,
         ),
@@ -3797,22 +3797,22 @@ object SeedData {
         // Nutrition Gate B4 — expanded ingredient catalog for the real Recipe system (Part B/C),
         // same "standard, widely-published reference figures" sourcing note as the block above.
         FoodEntity(
-            nameVi = "Thịt heo nạc", nameEn = "Lean pork", category = "Đạm",
+            nameVi = "Thịt heo nạc", nameEn = "Lean pork", category = "Thịt",
             descriptionVi = "Thịt heo phần nạc, ít mỡ.",
             kcalPer100g = 143, proteinG = 20.9, carbG = 0.0, fatG = 6.3,
         ),
         FoodEntity(
-            nameVi = "Cá basa", nameEn = "Basa fillet", category = "Đạm",
+            nameVi = "Cá basa", nameEn = "Basa fillet", category = "Cá & hải sản",
             descriptionVi = "Cá thịt trắng phổ biến, dễ chế biến.",
             kcalPer100g = 90, proteinG = 18.0, carbG = 0.0, fatG = 2.0,
         ),
         FoodEntity(
-            nameVi = "Thịt bò xay", nameEn = "Ground beef (90/10)", category = "Đạm",
+            nameVi = "Thịt bò xay", nameEn = "Ground beef (90/10)", category = "Thịt",
             descriptionVi = "Dùng cho món xào, bún bò.",
             kcalPer100g = 176, proteinG = 20.0, carbG = 0.0, fatG = 10.0,
         ),
         FoodEntity(
-            nameVi = "Sữa chua không đường", nameEn = "Plain yogurt", category = "Đạm",
+            nameVi = "Sữa chua không đường", nameEn = "Plain yogurt", category = "Sữa",
             descriptionVi = "Đạm nhẹ, tốt cho tiêu hóa.",
             kcalPer100g = 61, proteinG = 3.5, carbG = 4.7, fatG = 3.3,
         ),
@@ -3837,7 +3837,7 @@ object SeedData {
             kcalPer100g = 79, proteinG = 0.2, carbG = 19.0, fatG = 0.1,
         ),
         FoodEntity(
-            nameVi = "Dầu ăn", nameEn = "Vegetable oil", category = "Chất béo",
+            nameVi = "Dầu ăn", nameEn = "Vegetable oil", category = "Dầu & mỡ",
             descriptionVi = "Dầu thực vật thông dụng cho các món xào/áp chảo.",
             kcalPer100g = 884, proteinG = 0.0, carbG = 0.0, fatG = 100.0,
         ),
@@ -3887,12 +3887,12 @@ object SeedData {
             kcalPer100g = 47, proteinG = 0.9, carbG = 12.0, fatG = 0.1,
         ),
         FoodEntity(
-            nameVi = "Nước mắm", nameEn = "Fish sauce", category = "Khác",
+            nameVi = "Nước mắm", nameEn = "Fish sauce", category = "Gia vị",
             descriptionVi = "Gia vị nền của ẩm thực Việt, dùng lượng nhỏ.",
             kcalPer100g = 35, proteinG = 5.0, carbG = 3.6, fatG = 0.0,
         ),
         FoodEntity(
-            nameVi = "Đường", nameEn = "Sugar", category = "Khác",
+            nameVi = "Đường", nameEn = "Sugar", category = "Gia vị",
             descriptionVi = "Gia vị tạo vị ngọt, dùng lượng nhỏ.",
             kcalPer100g = 387, proteinG = 0.0, carbG = 100.0, fatG = 0.0,
         ),

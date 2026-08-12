@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -163,7 +164,25 @@ private fun ExerciseDetailContent(
 /** Left-aligned, natural-width tabs with an 8dp gap (mockup — not stretched/centered across the
  * full row) over a 1dp [CardBorder] rail running the whole row's width, so unselected tabs still
  * sit on a visible baseline instead of floating with nothing under them; each tab's 2dp [Accent]
- * underline sits directly on top of that rail when selected. */
+ * underline sits directly on top of that rail when selected.
+ *
+ * Gate E6 — the tab's own vertical padding (was 10dp top+bottom around the label, plus another
+ * 6dp before the underline) combined with the parent content Column's blanket 16dp inter-section
+ * spacing above and below this whole row read as excess empty space around the tab strip — user
+ * feedback specifically named "the 'Cách tập' text and the line under it" as the deadspace source.
+ * Tightened the underline's top padding to 4dp; the tab's own vertical padding stays 10dp so the
+ * tap target holds at [Dimens.MinTouchTarget] (44dp = 10 + 18sp line height + 4 + 2dp underline +
+ * 10) rather than dropping below it.
+ *
+ * Also fixes the actual root cause the padding tweak alone didn't: each tab's underline [Box] used
+ * `fillMaxWidth()` inside an unweighted [Row] child, which measures every non-weighted child with
+ * the *same* full incoming max-width constraint rather than shrinking per sibling — so each tab's
+ * [Column] sized itself to the underline's full-row-width Box, not its own [Text]'s intrinsic
+ * width. The first tab (HOW_TO/"Cách tập") ended up claiming the entire row, pushing MUSCLES/PROGRESS
+ * off-screen with nothing to scroll them into view, and its now-full-width underline plus the tall
+ * blank band below is exactly what read as "the text and the line under it, too much empty space."
+ * `Modifier.width(IntrinsicSize.Max)` on each tab's Column makes it size to its own content's max
+ * intrinsic width (the [Text] label) instead of the underline's greedy fillMaxWidth. */
 @Composable
 private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (ExerciseDetailTab) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -172,6 +191,7 @@ private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (Exercis
                 val isSelected = tab == selected
                 Column(
                     modifier = Modifier
+                        .width(IntrinsicSize.Max)
                         .clickable { onSelect(tab) }
                         .padding(horizontal = 4.dp, vertical = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -183,7 +203,7 @@ private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (Exercis
                     )
                     Box(
                         modifier = Modifier
-                            .padding(top = 6.dp)
+                            .padding(top = 4.dp)
                             .fillMaxWidth()
                             .height(2.dp)
                             .background(if (isSelected) Accent else Color.Transparent),

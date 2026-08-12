@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
@@ -226,9 +227,21 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = stringResource(R.string.diary_weekly_volume_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.diary_weekly_volume_title),
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+            )
             if (selected != null) {
-                Text(text = "${formatVi(selected.volumeKg)} kg", style = MaterialTheme.typography.titleSmall, color = Accent)
+                Text(
+                    text = "${formatVi(selected.volumeKg)} kg",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Accent,
+                    maxLines = 1,
+                    softWrap = false,
+                )
             }
         }
         Row(
@@ -263,6 +276,9 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
                         style = MaterialTheme.typography.labelSmall,
                         color = if (index == selectedIndex) Accent else TextMuted,
                         textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Visible,
                         modifier = Modifier.padding(top = 6.dp),
                     )
                 }

@@ -656,11 +656,23 @@ private fun WeeklyVolumeCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = stringResource(titleRes), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+            )
             if (selected != null) {
                 val restLabel = stringResource(R.string.dashboard_bar_rest)
                 val valueLabel = if (selected.volumeKg <= 0.0) restLabel else "${formatVi(selected.volumeKg)} kg"
-                Text(text = "${barLabel(range, selected)} · $valueLabel", style = MaterialTheme.typography.titleSmall, color = Accent)
+                Text(
+                    text = "${barLabel(range, selected)} · $valueLabel",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Accent,
+                    maxLines = 1,
+                    softWrap = false,
+                )
             }
         }
         Row(
@@ -690,6 +702,9 @@ private fun WeeklyVolumeCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Visible,
                     modifier = Modifier.weight(1f),
                 )
             }

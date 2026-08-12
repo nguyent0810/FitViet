@@ -4,6 +4,7 @@ import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 
@@ -55,13 +56,24 @@ object ProgramDayWorkoutPlanner {
         programRepository: ProgramRepository,
         exerciseRepository: ExerciseRepository,
         workoutRepository: WorkoutRepository,
+    ): ResolvedProgramDay? = resolveDay(programId, LocalDate.now().dayOfWeek, programRepository, exerciseRepository, workoutRepository)
+
+    /** Same resolution as [resolveToday], generalized to an arbitrary [dayOfWeek] — backs the
+     * Weekly Schedule screen's "tap any day, not just today" day-overview flow. [resolveToday]
+     * is just this called with the real current day, so both stay in sync by construction. */
+    suspend fun resolveDay(
+        programId: Long,
+        dayOfWeek: DayOfWeek,
+        programRepository: ProgramRepository,
+        exerciseRepository: ExerciseRepository,
+        workoutRepository: WorkoutRepository,
     ): ResolvedProgramDay? {
         val schedule = programRepository.observeSchedule(programId).first()
-        val today = schedule.firstOrNull { it.dayOfWeek == LocalDate.now().dayOfWeek && !it.isRestDay } ?: return null
-        if (today.exercises.isEmpty()) return null
+        val day = schedule.firstOrNull { it.dayOfWeek == dayOfWeek && !it.isRestDay } ?: return null
+        if (day.exercises.isEmpty()) return null
 
         val exercisesById = exerciseRepository.getAll().associateBy { it.id }
-        val items = today.exercises.mapNotNull { scheduleExercise ->
+        val items = day.exercises.mapNotNull { scheduleExercise ->
             val exercise = exercisesById[scheduleExercise.exerciseId] ?: return@mapNotNull null
             ProgramDayWorkoutItem(
                 exercise = exercise,
@@ -73,7 +85,7 @@ object ProgramDayWorkoutPlanner {
             )
         }
         if (items.isEmpty()) return null
-        return ResolvedProgramDay(titleVi = today.titleVi, items = items)
+        return ResolvedProgramDay(titleVi = day.titleVi, items = items)
     }
 
     /** A non-null [ProgramDayWorkoutItem.supersetGroup] only resolves to a [ResolvedGrouping.Paired]

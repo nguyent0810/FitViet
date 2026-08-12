@@ -129,7 +129,12 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // `meal_plan_days`, `meal_plan_meals`, `favorite_recipes`) — a user's saved/generated plan and
     // favorites, no `userId` column (single local user).
     // Gate D4 raised this from 18 to 19: new `lastCelebratedStreakDays` column on `settings`.
-    version = 19,
+    // Gate E7 raised this from 19 to 20: table shape unchanged, but `foods.category`'s seeded
+    // VALUES were recategorized from a macro-nutrient taxonomy to real ingredient types — same
+    // "content-only but a device already seeded needs a forced wipe+reseed" case as Gate 23's
+    // MuscleGroup rename above, since DatabaseSeeder.seedMissingFoods() only backfills by name and
+    // never repairs an existing row's category.
+    version = 20,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

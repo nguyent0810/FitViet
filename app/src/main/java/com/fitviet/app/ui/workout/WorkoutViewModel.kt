@@ -10,6 +10,7 @@ import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -78,6 +79,10 @@ class WorkoutViewModel(
     // regenerate/preview flow) — takes priority over [programId] when both are somehow supplied,
     // since the two entry points are mutually exclusive by construction at every real call site.
     private val monthlyPlanDayId: Long? = null,
+    // Gate E4 — only ever paired with [programId], from WorkoutPreview's "Begin workout" for a
+    // specific tapped day (not just today). Null (the original behavior, still used by every
+    // other [programId] entry point) resolves today's schedule.
+    private val dayOfWeek: DayOfWeek? = null,
     // Injectable so tests can supply a controllable fake — android.os.SystemClock is stubbed to a
     // constant 0 in plain JVM unit tests, which would make every debounced action a permanent no-op.
     private val elapsedRealtimeMillis: () -> Long = SystemClock::elapsedRealtime,
@@ -114,15 +119,24 @@ class WorkoutViewModel(
         }
     }
 
-    /** Resolves [programId]'s schedule for today and starts logging immediately — there's nothing
-     * for a duration picker to choose, the program already determines every set. Falls back to the
-     * generic picker if the program has no schedule/exercises for today rather than stranding the
-     * user on a blank screen (e.g. a program whose schedule hasn't finished seeding yet). */
+    /** Resolves [programId]'s schedule for [dayOfWeek] (today, when null) and starts logging
+     * immediately — there's nothing for a duration picker to choose, the program already
+     * determines every set. Falls back to the generic picker if the program has no
+     * schedule/exercises for that day rather than stranding the user on a blank screen (e.g. a
+     * program whose schedule hasn't finished seeding yet). */
     private fun startProgramDaySession(programId: Long) {
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
-            val resolved = ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
+            // Gate E4 fix — this used to always call resolveToday() even when the user opened
+            // WorkoutPreview for a DIFFERENT day and tapped "Bắt đầu tập" there: the live session
+            // would silently start today's workout instead of the one they were just looking at
+            // (worse still, an empty/unstartable session if today happened to be a rest day).
+            val resolved = if (dayOfWeek == null) {
+                ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
+            } else {
+                ProgramDayWorkoutPlanner.resolveDay(programId, dayOfWeek, programRepository, exerciseRepository, workoutRepository)
+            }
             val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
             if (resolved == null || blocks.isEmpty()) {
                 showDurationPicker()
@@ -536,17 +550,19 @@ class WorkoutViewModel(
         private val databaseReady: Deferred<Unit>,
         private val programId: Long? = null,
         private val monthlyPlanDayId: Long? = null,
+        private val dayOfWeek: DayOfWeek? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T = WorkoutViewModel(
-            exerciseRepository,
-            workoutRepository,
-            programRepository,
-            communityRepository,
-            monthlyPlanRepository,
-            databaseReady,
-            programId,
-            monthlyPlanDayId,
+            exerciseRepository = exerciseRepository,
+            workoutRepository = workoutRepository,
+            programRepository = programRepository,
+            communityRepository = communityRepository,
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = databaseReady,
+            programId = programId,
+            monthlyPlanDayId = monthlyPlanDayId,
+            dayOfWeek = dayOfWeek,
         ) as T
     }
 }

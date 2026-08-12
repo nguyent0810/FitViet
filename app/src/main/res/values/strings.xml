@@ -59,6 +59,7 @@
     <string name="quick_generate_days_label">Số buổi/tuần</string>
     <string name="quick_generate_cta">Tạo lịch tháng</string>
     <string name="quick_generate_generating">Đang tạo lịch…</string>
+    <string name="quick_generate_error">Không thể tạo lịch tháng: %1$s</string>
     <string name="dashboard_generate_cta_title">Thử Hit &amp; Run</string>
     <string name="dashboard_generate_cta_body">Tạo lịch tập cả tháng chỉ trong 1 chạm, dựa trên mục tiêu và trình độ của bạn</string>
     <string name="dashboard_generate_cta_button">Tạo lịch tháng</string>
@@ -540,6 +541,10 @@
     <string name="handbook_foods_empty">Chưa có dữ liệu thực phẩm.</string>
     <string name="handbook_food_kcal">%1$d kcal/100g</string>
     <string name="handbook_food_macros">%1$sg đạm · %2$sg tinh bột · %3$sg béo</string>
+    <string name="handbook_muscle_group_exercise_count">%1$d bài tập</string>
+    <plurals name="handbook_food_category_count">
+        <item quantity="other">%1$d thực phẩm</item>
+    </plurals>
     <string name="exercise_difficulty_beginner">Mới bắt đầu</string>
     <string name="exercise_difficulty_intermediate">Trung cấp</string>
     <string name="exercise_difficulty_advanced">Nâng cao</string>

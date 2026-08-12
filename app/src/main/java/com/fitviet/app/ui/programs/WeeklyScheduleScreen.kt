@@ -51,6 +51,9 @@ fun WeeklyScheduleScreen(
     viewModel: WeeklyScheduleViewModel,
     onBack: () -> Unit,
     onStartToday: () -> Unit,
+    // Gate E4 — tapping a day row (any day, not just today) opens that day's exercise overview.
+    // Rest days have nothing to preview, so [ScheduleRow] never wires a rest day's tap to this.
+    onOpenDayDetail: (DayOfWeek) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -116,7 +119,10 @@ fun WeeklyScheduleScreen(
                         day = day,
                         isToday = day.dayOfWeek == LocalDate.now().dayOfWeek,
                         selected = day.dayOfWeek == uiState.selectedDay,
-                        onClick = { viewModel.selectDay(day.dayOfWeek) },
+                        onClick = {
+                            viewModel.selectDay(day.dayOfWeek)
+                            if (!day.isRestDay) onOpenDayDetail(day.dayOfWeek)
+                        },
                         onStartToday = onStartToday,
                     )
                 }

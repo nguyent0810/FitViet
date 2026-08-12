@@ -12,8 +12,11 @@ data class FoodEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val nameVi: String,
     val nameEn: String,
-    /** Free-text grouping label (e.g. "Đạm", "Tinh bột") — a static display section, not a filter
-     * chip taxonomy, matching this gate's "simple reference" scope. */
+    /** Free-text ingredient-type grouping label (e.g. "Thịt", "Cá & hải sản", "Rau củ" — see the
+     * curated list in [com.fitviet.app.data.local.seed.SeedData.foods], Gate E7 recategorized this
+     * from an earlier macro-nutrient taxonomy to real ingredient types). Used both as
+     * [com.fitviet.app.ui.nutrition.foods.FoodsScreen]'s filter chips and as the Handbook's
+     * (Gate 25/E7) category-drilldown grouping — not purely a static display label. */
     val category: String,
     val descriptionVi: String,
     val kcalPer100g: Int,

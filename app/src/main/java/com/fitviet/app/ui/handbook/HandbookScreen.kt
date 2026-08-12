@@ -6,11 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -20,12 +20,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
-import com.fitviet.app.data.local.entity.ExerciseEntity
-import com.fitviet.app.data.local.entity.FoodEntity
+import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.CardBorder
@@ -33,16 +33,18 @@ import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextFaint
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
-import com.fitviet.app.util.formatOneDecimal
 import com.fitviet.app.util.labelRes
 
 @Composable
 fun HandbookScreen(
     viewModel: HandbookViewModel,
-    onExerciseClick: (ExerciseEntity) -> Unit,
+    // Gate E5 — exercises no longer render inline here; a group card opens
+    // HandbookMuscleGroupScreen, which is where an individual exercise's own tap-through lives.
+    onMuscleGroupClick: (MuscleGroup) -> Unit,
+    // Gate E7 — same drill-down shape as onMuscleGroupClick, for the Foods tab's categories.
+    onFoodCategoryClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -61,14 +63,11 @@ fun HandbookScreen(
         ) {
             when (uiState.selectedTab) {
                 HandbookTab.EXERCISES -> {
-                    if (uiState.exercisesByLevel.isEmpty()) {
+                    if (uiState.exercisesByMuscleGroup.isEmpty()) {
                         item { EmptyText(text = stringResource(R.string.handbook_exercises_empty)) }
                     } else {
-                        uiState.exercisesByLevel.forEach { (level, exercises) ->
-                            item { SectionHeader(text = stringResource(level.labelRes())) }
-                            items(exercises, key = { "ex-${it.id}" }) { exercise ->
-                                ExerciseRow(exercise = exercise, onClick = { onExerciseClick(exercise) })
-                            }
+                        items(uiState.exercisesByMuscleGroup, key = { (group, _) -> "group-${group.name}" }) { (group, count) ->
+                            MuscleGroupCard(group = group, exerciseCount = count, onClick = { onMuscleGroupClick(group) })
                         }
                     }
                 }
@@ -76,9 +75,8 @@ fun HandbookScreen(
                     if (uiState.foodsByCategory.isEmpty()) {
                         item { EmptyText(text = stringResource(R.string.handbook_foods_empty)) }
                     } else {
-                        uiState.foodsByCategory.forEach { (category, foods) ->
-                            item { SectionHeader(text = category) }
-                            items(foods, key = { "food-${it.id}" }) { food -> FoodRow(food = food) }
+                        items(uiState.foodsByCategory, key = { (category, _) -> "category-$category" }) { (category, count) ->
+                            FoodCategoryCard(category = category, foodCount = count, onClick = { onFoodCategoryClick(category) })
                         }
                     }
                 }
@@ -118,22 +116,15 @@ private fun TabChip(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = TextMuted,
-        modifier = Modifier.padding(top = 6.dp),
-    )
-}
-
-@Composable
 private fun EmptyText(text: String) {
     Text(text = text, style = MaterialTheme.typography.bodyMedium, color = TextMuted, modifier = Modifier.padding(top = 24.dp))
 }
 
+/** Gate E5 — one card per [MuscleGroup] on the Exercises tab, replacing the old flat
+ * by-difficulty-level list. [exerciseCount] gives a preview of how much is inside without
+ * requiring the drill-down tap. */
 @Composable
-private fun ExerciseRow(exercise: ExerciseEntity, onClick: () -> Unit) {
+private fun MuscleGroupCard(group: MuscleGroup, exerciseCount: Int, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,51 +132,44 @@ private fun ExerciseRow(exercise: ExerciseEntity, onClick: () -> Unit) {
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Text(text = exercise.nameVi, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-            Text(text = exercise.nameEn, style = MaterialTheme.typography.labelSmall, color = TextFaint)
-            Text(text = exercise.primaryMuscle, style = MaterialTheme.typography.labelMedium, color = TextMuted)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = stringResource(group.labelRes()), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+            Text(
+                text = stringResource(R.string.handbook_muscle_group_exercise_count, exerciseCount),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted,
+            )
         }
         Text(text = "›", style = MaterialTheme.typography.titleMedium, color = TextMuted)
     }
 }
 
+/** Gate E7 — same shape as [MuscleGroupCard], for the Foods tab's ingredient categories. */
 @Composable
-private fun FoodRow(food: FoodEntity) {
-    Column(
+private fun FoodCategoryCard(category: String, foodCount: Int, onClick: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(SurfaceCard)
             .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text(text = food.nameVi, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                Text(text = food.nameEn, style = MaterialTheme.typography.labelSmall, color = TextFaint)
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = category, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
             Text(
-                text = stringResource(R.string.handbook_food_kcal, food.kcalPer100g),
-                style = MaterialTheme.typography.labelLarge,
-                color = Accent,
+                text = pluralStringResource(R.plurals.handbook_food_category_count, foodCount, foodCount),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted,
             )
         }
-        Text(text = food.descriptionVi, style = MaterialTheme.typography.labelMedium, color = TextFaint)
-        Text(
-            text = stringResource(
-                R.string.handbook_food_macros,
-                formatOneDecimal(food.proteinG),
-                formatOneDecimal(food.carbG),
-                formatOneDecimal(food.fatG),
-            ),
-            style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
-        )
+        Text(text = "›", style = MaterialTheme.typography.titleMedium, color = TextMuted)
     }
 }

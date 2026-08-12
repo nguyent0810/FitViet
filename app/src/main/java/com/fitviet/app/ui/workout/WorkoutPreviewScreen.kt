@@ -56,6 +56,9 @@ fun WorkoutPreviewScreen(
     viewModel: WorkoutPreviewViewModel,
     onBack: () -> Unit,
     onBeginWorkout: () -> Unit,
+    // Gate E4 — tapping an exercise card opens its "cách tập" (how-to) detail, so this overview
+    // isn't a dead-end that only offers committing to the whole session.
+    onExerciseClick: (exerciseId: Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -99,8 +102,8 @@ fun WorkoutPreviewScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     uiState.groupings.forEach { grouping ->
                         when (grouping) {
-                            is ResolvedGrouping.Solo -> PreviewExerciseCard(item = grouping.item)
-                            is ResolvedGrouping.Paired -> PreviewSupersetCard(first = grouping.first, second = grouping.second)
+                            is ResolvedGrouping.Solo -> PreviewExerciseCard(item = grouping.item, onClick = { onExerciseClick(grouping.item.exercise.id) })
+                            is ResolvedGrouping.Paired -> PreviewSupersetCard(first = grouping.first, second = grouping.second, onExerciseClick = onExerciseClick)
                         }
                     }
                 }
@@ -131,13 +134,14 @@ private fun BackRow(onBack: () -> Unit) {
 }
 
 @Composable
-private fun PreviewExerciseCard(item: ProgramDayWorkoutItem) {
+private fun PreviewExerciseCard(item: ProgramDayWorkoutItem, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clickable(onClick = onClick),
     ) {
         PreviewExerciseContent(item = item, badge = null)
     }
@@ -154,7 +158,7 @@ private fun PreviewExerciseCard(item: ProgramDayWorkoutItem) {
  * pairing the same way). Ungrouped exercises never reach this composable — they render as a plain
  * [PreviewExerciseCard], unchanged from before this gate. */
 @Composable
-private fun PreviewSupersetCard(first: ProgramDayWorkoutItem, second: ProgramDayWorkoutItem) {
+private fun PreviewSupersetCard(first: ProgramDayWorkoutItem, second: ProgramDayWorkoutItem, onExerciseClick: (exerciseId: Long) -> Unit) {
     val groupLetter = first.supersetGroup ?: "A"
     val rounds = ProgramDayWorkoutPlanner.supersetRounds(first, second)
     // IntrinsicSize.Min, not a bare Row: this screen's content sits inside a verticalScroll
@@ -197,15 +201,15 @@ private fun PreviewSupersetCard(first: ProgramDayWorkoutItem, second: ProgramDay
                     color = TextFaint,
                 )
             }
-            SupersetExerciseCard(item = first, badge = stringResource(R.string.superset_badge_a1))
+            SupersetExerciseCard(item = first, badge = stringResource(R.string.superset_badge_a1), onClick = { onExerciseClick(first.exercise.id) })
             SupersetConnector()
-            SupersetExerciseCard(item = second, badge = stringResource(R.string.superset_badge_a2))
+            SupersetExerciseCard(item = second, badge = stringResource(R.string.superset_badge_a2), onClick = { onExerciseClick(second.exercise.id) })
         }
     }
 }
 
 @Composable
-private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String) {
+private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -214,7 +218,8 @@ private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String) {
             // corner border visible poking out past this card's border.
             .clip(MaterialTheme.shapes.large)
             .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clickable(onClick = onClick),
     ) {
         PreviewExerciseContent(item = item, badge = badge)
     }

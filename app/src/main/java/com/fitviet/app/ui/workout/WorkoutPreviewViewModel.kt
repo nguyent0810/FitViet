@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import java.time.DayOfWeek
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +30,14 @@ data class WorkoutPreviewUiState(
 )
 
 /** Backs the "day exercise list" preview screen (Gate 24) shown after tapping today's row on the
- * Weekly Schedule screen, before the user commits to starting the live logging session. */
+ * Weekly Schedule screen, before the user commits to starting the live logging session.
+ * [dayOfWeek] null (the original entry point) resolves *today*'s schedule; non-null (Gate E4 —
+ * the Weekly Schedule's own day rows now navigate here for ANY tapped day, not just today) shows
+ * that specific day's exercises instead, so the overview a user sees always matches the day they
+ * actually tapped rather than silently substituting today's session. */
 class WorkoutPreviewViewModel(
     private val programId: Long,
+    private val dayOfWeek: DayOfWeek?,
     private val programRepository: ProgramRepository,
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
@@ -43,7 +49,11 @@ class WorkoutPreviewViewModel(
     init {
         viewModelScope.launch {
             databaseReady.await()
-            val resolved = ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
+            val resolved = if (dayOfWeek == null) {
+                ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
+            } else {
+                ProgramDayWorkoutPlanner.resolveDay(programId, dayOfWeek, programRepository, exerciseRepository, workoutRepository)
+            }
             val groupings = ProgramDayWorkoutPlanner.resolveGroupings(resolved?.items.orEmpty())
             val hasSeenHint = programRepository.observeHasSeenSupersetHint().first()
             _uiState.value = WorkoutPreviewUiState(
@@ -68,6 +78,7 @@ class WorkoutPreviewViewModel(
 
     class Factory(
         private val programId: Long,
+        private val dayOfWeek: DayOfWeek?,
         private val programRepository: ProgramRepository,
         private val exerciseRepository: ExerciseRepository,
         private val workoutRepository: WorkoutRepository,
@@ -75,6 +86,6 @@ class WorkoutPreviewViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            WorkoutPreviewViewModel(programId, programRepository, exerciseRepository, workoutRepository, databaseReady) as T
+            WorkoutPreviewViewModel(programId, dayOfWeek, programRepository, exerciseRepository, workoutRepository, databaseReady) as T
     }
 }
