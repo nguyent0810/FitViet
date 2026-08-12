@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -357,7 +358,7 @@ private fun KcalRing(kcal: Int, percent: Int) {
                     val glowPaint = FrameworkPaint().apply {
                         isAntiAlias = true
                         style = FrameworkPaint.Style.STROKE
-                        strokeWidth = strokeWidth * 2.2f
+                        this.strokeWidth = strokeWidth * 2.2f
                         color = Accent.copy(alpha = 0.35f).toArgb()
                         maskFilter = BlurMaskFilter(strokeWidth, BlurMaskFilter.Blur.NORMAL)
                     }
