@@ -75,6 +75,11 @@ data class DashboardData(
      * [com.fitviet.app.data.repository.MonthlyPlanRepository]'s doc), but the hero card prefers
      * this when present. */
     val todayMonthlyPlanCard: TodayMonthlyPlanCard?,
+    /** Gate D4 — read straight from [com.fitviet.app.data.local.entity.SettingsEntity], threaded
+     * through so [com.fitviet.app.ui.dashboard.DashboardViewModel] can derive
+     * [com.fitviet.app.domain.StreakMilestones.crossedMilestone] without a second settings
+     * subscription. */
+    val lastCelebratedStreakDays: Int,
 )
 
 /** Output of the first 5-source `combine{}` below — everything except the completed-set breakdown
@@ -108,6 +113,7 @@ private data class BaseDashboardData(
     val displayName: String,
     val avatarId: Int,
     val activeMonthlyPlanId: Long?,
+    val lastCelebratedStreakDays: Int,
 )
 
 class DashboardRepository(
@@ -192,6 +198,7 @@ class DashboardRepository(
                     displayName = stage1.settings.displayName,
                     avatarId = stage1.settings.avatarId,
                     activeMonthlyPlanId = stage1.settings.activeMonthlyPlanId,
+                    lastCelebratedStreakDays = stage1.settings.lastCelebratedStreakDays,
                 )
             }
         }.flatMapLatest { base ->
@@ -223,9 +230,25 @@ class DashboardRepository(
                     displayName = base.displayName,
                     avatarId = base.avatarId,
                     todayMonthlyPlanCard = monthlyPlanCard,
+                    lastCelebratedStreakDays = base.lastCelebratedStreakDays,
                 )
             }
         }
+    }
+
+    /** Gate D4 — persists that a streak-milestone overlay was just shown, so
+     * [com.fitviet.app.domain.StreakMilestones.crossedMilestone] doesn't fire it again on the next
+     * data emission. Read-modify-write rather than a targeted `@Query UPDATE`, matching this DAO's
+     * existing single-row upsert idiom (see [com.fitviet.app.data.repository.ProgramRepository]'s
+     * `dismissSupersetHint`). */
+    suspend fun celebrateStreakMilestone(streakDays: Int) {
+        val current = settingsDao.get() ?: SettingsEntity()
+        // maxOf, not a plain overwrite — this is a lifetime high-water mark (see
+        // StreakMilestones' doc), so a call carrying a lower value than what's already stored
+        // (e.g. delayed by a slow dispatcher after a newer, higher one already landed) must never
+        // roll it back.
+        val newMark = maxOf(current.lastCelebratedStreakDays, streakDays)
+        settingsDao.upsert(current.copy(lastCelebratedStreakDays = newMark))
     }
 
     /** [monthlyPlanId] null (no active plan) short-circuits to a constant `null` card without

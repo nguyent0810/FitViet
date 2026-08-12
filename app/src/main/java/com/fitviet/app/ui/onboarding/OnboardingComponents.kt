@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
+import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
@@ -146,15 +147,18 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
     }
 }
 
-/** Filled accent CTA used at the bottom of every onboarding step. */
+/** Filled accent CTA used at the bottom of every onboarding step. Reused by
+ * [com.fitviet.app.ui.quickgenerate.QuickGenerateScreen] and
+ * [com.fitviet.app.ui.nutrition.createplan.CreatePlanScreen] too, so this single
+ * [pressScale] rollout (Gate D1) covers every one of those call sites at once. */
 @Composable
 fun OnboardingPrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .pressScale(onClick = onClick)
             .clip(MaterialTheme.shapes.large)
             .background(Accent)
-            .clickable(onClick = onClick)
             .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
     ) {

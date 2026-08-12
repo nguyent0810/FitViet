@@ -9,6 +9,8 @@ import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.domain.ExerciseDifficulty
+import com.fitviet.app.domain.MealPlanTemplateCodec
+import com.fitviet.app.domain.MealPlanTemplateDay
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 
@@ -3791,6 +3793,592 @@ object SeedData {
             nameVi = "Táo", nameEn = "Apple", category = "Trái cây",
             descriptionVi = "Ăn vặt ít calo, giàu chất xơ.",
             kcalPer100g = 52, proteinG = 0.3, carbG = 14.0, fatG = 0.2,
+        ),
+        // Nutrition Gate B4 — expanded ingredient catalog for the real Recipe system (Part B/C),
+        // same "standard, widely-published reference figures" sourcing note as the block above.
+        FoodEntity(
+            nameVi = "Thịt heo nạc", nameEn = "Lean pork", category = "Đạm",
+            descriptionVi = "Thịt heo phần nạc, ít mỡ.",
+            kcalPer100g = 143, proteinG = 20.9, carbG = 0.0, fatG = 6.3,
+        ),
+        FoodEntity(
+            nameVi = "Cá basa", nameEn = "Basa fillet", category = "Đạm",
+            descriptionVi = "Cá thịt trắng phổ biến, dễ chế biến.",
+            kcalPer100g = 90, proteinG = 18.0, carbG = 0.0, fatG = 2.0,
+        ),
+        FoodEntity(
+            nameVi = "Thịt bò xay", nameEn = "Ground beef (90/10)", category = "Đạm",
+            descriptionVi = "Dùng cho món xào, bún bò.",
+            kcalPer100g = 176, proteinG = 20.0, carbG = 0.0, fatG = 10.0,
+        ),
+        FoodEntity(
+            nameVi = "Sữa chua không đường", nameEn = "Plain yogurt", category = "Đạm",
+            descriptionVi = "Đạm nhẹ, tốt cho tiêu hóa.",
+            kcalPer100g = 61, proteinG = 3.5, carbG = 4.7, fatG = 3.3,
+        ),
+        FoodEntity(
+            nameVi = "Gạo lứt", nameEn = "Brown rice (cooked)", category = "Tinh bột",
+            descriptionVi = "Tinh bột nguyên cám, nhiều chất xơ hơn cơm trắng.",
+            kcalPer100g = 111, proteinG = 2.6, carbG = 23.0, fatG = 0.9,
+        ),
+        FoodEntity(
+            nameVi = "Bún tươi", nameEn = "Rice vermicelli (cooked)", category = "Tinh bột",
+            descriptionVi = "Dùng cho bún bò, bún gà, gỏi gà.",
+            kcalPer100g = 109, proteinG = 1.8, carbG = 25.0, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Bánh phở", nameEn = "Flat rice noodles (cooked)", category = "Tinh bột",
+            descriptionVi = "Dùng cho phở bò, phở gà.",
+            kcalPer100g = 109, proteinG = 2.0, carbG = 24.0, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Miến", nameEn = "Glass noodles (cooked)", category = "Tinh bột",
+            descriptionVi = "Miến dong, dùng cho miến gà, miến xào.",
+            kcalPer100g = 79, proteinG = 0.2, carbG = 19.0, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Dầu ăn", nameEn = "Vegetable oil", category = "Chất béo",
+            descriptionVi = "Dầu thực vật thông dụng cho các món xào/áp chảo.",
+            kcalPer100g = 884, proteinG = 0.0, carbG = 0.0, fatG = 100.0,
+        ),
+        FoodEntity(
+            nameVi = "Cà chua", nameEn = "Tomato", category = "Rau củ",
+            descriptionVi = "Dùng cho canh chua, xào, salad.",
+            kcalPer100g = 18, proteinG = 0.9, carbG = 3.9, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Dưa leo", nameEn = "Cucumber", category = "Rau củ",
+            descriptionVi = "Ăn kèm hoặc trộn gỏi.",
+            kcalPer100g = 15, proteinG = 0.7, carbG = 3.6, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Giá đỗ", nameEn = "Bean sprouts", category = "Rau củ",
+            descriptionVi = "Ăn kèm phở, bún, món xào.",
+            kcalPer100g = 30, proteinG = 3.0, carbG = 5.9, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Rau muống", nameEn = "Water spinach", category = "Rau củ",
+            descriptionVi = "Rau xào phổ biến trong bữa cơm Việt.",
+            kcalPer100g = 19, proteinG = 2.6, carbG = 3.1, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Nấm", nameEn = "Mushroom", category = "Rau củ",
+            descriptionVi = "Dùng cho món xào, canh, súp.",
+            kcalPer100g = 22, proteinG = 3.1, carbG = 3.3, fatG = 0.3,
+        ),
+        FoodEntity(
+            nameVi = "Hành tây", nameEn = "Onion", category = "Rau củ",
+            descriptionVi = "Gia vị nền cho nhiều món xào, súp.",
+            kcalPer100g = 40, proteinG = 1.1, carbG = 9.3, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Cà rốt", nameEn = "Carrot", category = "Rau củ",
+            descriptionVi = "Dùng cho món xào, canh, salad.",
+            kcalPer100g = 41, proteinG = 0.9, carbG = 10.0, fatG = 0.2,
+        ),
+        FoodEntity(
+            nameVi = "Thơm", nameEn = "Pineapple", category = "Trái cây",
+            descriptionVi = "Dùng cho canh chua, món xào, sinh tố.",
+            kcalPer100g = 50, proteinG = 0.5, carbG = 13.0, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Cam", nameEn = "Orange", category = "Trái cây",
+            descriptionVi = "Ăn vặt hoặc ép nước.",
+            kcalPer100g = 47, proteinG = 0.9, carbG = 12.0, fatG = 0.1,
+        ),
+        FoodEntity(
+            nameVi = "Nước mắm", nameEn = "Fish sauce", category = "Khác",
+            descriptionVi = "Gia vị nền của ẩm thực Việt, dùng lượng nhỏ.",
+            kcalPer100g = 35, proteinG = 5.0, carbG = 3.6, fatG = 0.0,
+        ),
+        FoodEntity(
+            nameVi = "Đường", nameEn = "Sugar", category = "Khác",
+            descriptionVi = "Gia vị tạo vị ngọt, dùng lượng nhỏ.",
+            kcalPer100g = 387, proteinG = 0.0, carbG = 100.0, fatG = 0.0,
+        ),
+        // Gate B1 backfill: every row above predates `normalizedName` (defaults to "" via the
+        // entity's default param) — compute it here once rather than hand-editing 12+ literals.
+    ).map { it.copy(normalizedName = com.fitviet.app.util.normalizeVietnamese(it.nameVi)) }
+
+    /** One ingredient line, resolved to a real [FoodEntity] id by [foodName] (must match a
+     * [foods] entry's `nameVi` exactly) at seed time — same name-lookup idiom
+     * [ProgramExerciseSeed.exerciseName] already uses for exercises. */
+    data class RecipeIngredientSeed(val foodName: String, val grams: Double, val displayQuantity: String? = null)
+
+    /** [code] is a [com.fitviet.app.domain.RecipeVariantType] name. */
+    data class RecipeVariantSeed(
+        val code: String,
+        val kcalMultiplier: Double = 1.0,
+        val proteinMultiplier: Double = 1.0,
+        val carbMultiplier: Double = 1.0,
+        val fatMultiplier: Double = 1.0,
+    )
+
+    /** [category] doubles as the meal-slot marker ("Bữa sáng"/"Bữa trưa"/"Bữa tối"/"Bữa phụ"),
+     * same free-text values [com.fitviet.app.data.local.entity.MealEntity.slot] already uses —
+     * this is how [com.fitviet.app.domain.MealPlanGenerator]'s "exact slot match" priority reads
+     * which meal a recipe belongs to, no separate `mealType` column needed. [difficultyCode] is a
+     * [com.fitviet.app.domain.RecipeDifficulty] name. Nutrition is never stored here — it's always
+     * computed from [ingredients] at read time by
+     * [com.fitviet.app.domain.RecipeNutritionCalculator]. */
+    data class RecipeSeed(
+        val nameVi: String,
+        val category: String,
+        val baseServings: Int,
+        val prepTimeMinutes: Int,
+        val cookTimeMinutes: Int,
+        val difficultyCode: String,
+        val tags: List<String>,
+        val instructions: List<String>,
+        val ingredients: List<RecipeIngredientSeed>,
+        val variants: List<RecipeVariantSeed> = listOf(RecipeVariantSeed("STANDARD")),
+    )
+
+    /** Nutrition module's real recipe catalog (Gate B4) — 24 dishes across all 4 meal slots,
+     * Vietnamese-first per the design brief, deliberately reference/seed-tier data (not
+     * medical-grade), computed deterministically from [foods] at read time, never hardcoded. */
+    val recipes: List<RecipeSeed> = listOf(
+        // Bữa sáng (5)
+        RecipeSeed(
+            nameVi = "Trứng ốp", category = "Bữa sáng", baseServings = 1,
+            prepTimeMinutes = 3, cookTimeMinutes = 5, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "≤15 phút"),
+            instructions = listOf(
+                "Đập trứng ra chảo nóng đã tráng dầu.",
+                "Chiên lửa vừa 2-3 phút tới khi lòng trắng chín.",
+                "Nêm chút muối tiêu, dùng nóng.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Trứng gà", 100.0, "2 quả"),
+                RecipeIngredientSeed("Dầu ăn", 5.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Overnight oats", category = "Bữa sáng", baseServings = 1,
+            prepTimeMinutes = 5, cookTimeMinutes = 0, difficultyCode = "EASY",
+            tags = listOf("Dễ làm", "≤15 phút"),
+            instructions = listOf(
+                "Trộn yến mạch với sữa chua trong hũ.",
+                "Thái lát chuối cho lên trên.",
+                "Đậy nắp, để tủ lạnh qua đêm.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Yến mạch", 50.0),
+                RecipeIngredientSeed("Sữa chua không đường", 100.0),
+                RecipeIngredientSeed("Chuối", 50.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.3)),
+        ),
+        RecipeSeed(
+            nameVi = "Cháo yến mạch chuối", category = "Bữa sáng", baseServings = 1,
+            prepTimeMinutes = 5, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm"),
+            instructions = listOf(
+                "Nấu yến mạch với nước tới khi sánh.",
+                "Thái chuối trộn vào, thêm sữa chua.",
+                "Dùng ấm.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Yến mạch", 40.0),
+                RecipeIngredientSeed("Chuối", 80.0),
+                RecipeIngredientSeed("Sữa chua không đường", 50.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Bánh mì trứng ốp", category = "Bữa sáng", baseServings = 1,
+            prepTimeMinutes = 5, cookTimeMinutes = 8, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "≤15 phút"),
+            instructions = listOf(
+                "Chiên trứng ốp la với dầu ăn.",
+                "Nướng bánh mì, kẹp trứng và cà chua thái lát.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Bánh mì nguyên cám", 60.0),
+                RecipeIngredientSeed("Trứng gà", 100.0, "2 quả"),
+                RecipeIngredientSeed("Dầu ăn", 5.0),
+                RecipeIngredientSeed("Cà chua", 30.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Sinh tố chuối bơ", category = "Bữa sáng", baseServings = 1,
+            prepTimeMinutes = 5, cookTimeMinutes = 0, difficultyCode = "EASY",
+            tags = listOf("Dễ làm", "≤15 phút"),
+            instructions = listOf("Cho tất cả nguyên liệu vào máy xay.", "Xay nhuyễn, dùng ngay."),
+            ingredients = listOf(
+                RecipeIngredientSeed("Chuối", 100.0),
+                RecipeIngredientSeed("Quả bơ", 50.0),
+                RecipeIngredientSeed("Sữa chua không đường", 100.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("BULK", kcalMultiplier = 1.2)),
+        ),
+        // Bữa trưa (8)
+        RecipeSeed(
+            nameVi = "Cơm ức gà", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 15, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giàu protein"),
+            instructions = listOf(
+                "Ướp ức gà với chút muối, tiêu.",
+                "Áp chảo ức gà mỗi mặt 5-6 phút đến chín vàng.",
+                "Xới cơm trắng ra đĩa, thái ức gà, bày cùng bông cải luộc.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Ức gà", 150.0),
+                RecipeIngredientSeed("Cơm trắng", 200.0),
+                RecipeIngredientSeed("Bông cải xanh", 100.0),
+                RecipeIngredientSeed("Dầu ăn", 5.0),
+            ),
+            variants = listOf(
+                RecipeVariantSeed("STANDARD"),
+                RecipeVariantSeed("CUT", kcalMultiplier = 0.85),
+                RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.35),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Ức gà sả ớt", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 15, cookTimeMinutes = 15, difficultyCode = "MEDIUM",
+            tags = listOf("Món Việt", "Giàu protein"),
+            instructions = listOf(
+                "Ướp ức gà thái miếng với sả ớt băm, nước mắm.",
+                "Xào ức gà với hành tây tới chín vàng.",
+                "Ăn kèm cơm trắng.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Ức gà", 150.0),
+                RecipeIngredientSeed("Cơm trắng", 200.0),
+                RecipeIngredientSeed("Hành tây", 30.0),
+                RecipeIngredientSeed("Dầu ăn", 8.0),
+                RecipeIngredientSeed("Nước mắm", 10.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("CUT", kcalMultiplier = 0.85)),
+        ),
+        RecipeSeed(
+            nameVi = "Bò xào rau", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giàu protein", "≤15 phút"),
+            instructions = listOf(
+                "Ướp thịt bò với chút nước mắm, tiêu.",
+                "Xào bò lửa lớn 2 phút cho tái, để riêng.",
+                "Xào rau củ chín tới, cho bò vào đảo đều.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Thịt bò nạc", 150.0),
+                RecipeIngredientSeed("Bông cải xanh", 100.0),
+                RecipeIngredientSeed("Cà rốt", 50.0),
+                RecipeIngredientSeed("Dầu ăn", 8.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.2)),
+        ),
+        RecipeSeed(
+            nameVi = "Cá áp chảo", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "≤15 phút"),
+            instructions = listOf(
+                "Ướp cá với muối tiêu.",
+                "Áp chảo mỗi mặt 3-4 phút tới vàng.",
+                "Dùng kèm cơm và cà chua.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Cá basa", 180.0),
+                RecipeIngredientSeed("Cơm trắng", 150.0),
+                RecipeIngredientSeed("Dầu ăn", 6.0),
+                RecipeIngredientSeed("Cà chua", 40.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Cơm gạo lứt đậu hũ", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 15, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giảm mỡ"),
+            instructions = listOf(
+                "Chiên đậu phụ vàng đều các mặt.",
+                "Xào rau muống với chút dầu ăn.",
+                "Dùng cùng gạo lứt.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Gạo lứt", 200.0),
+                RecipeIngredientSeed("Đậu phụ", 150.0),
+                RecipeIngredientSeed("Rau muống", 100.0),
+                RecipeIngredientSeed("Dầu ăn", 8.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Ức gà xào bông cải", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giảm mỡ", "≤15 phút"),
+            instructions = listOf(
+                "Thái ức gà miếng vừa ăn, ướp gia vị.",
+                "Xào ức gà chín tới.",
+                "Cho bông cải vào xào cùng 3-4 phút.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Ức gà", 150.0),
+                RecipeIngredientSeed("Bông cải xanh", 150.0),
+                RecipeIngredientSeed("Dầu ăn", 8.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("CUT", kcalMultiplier = 0.8)),
+        ),
+        RecipeSeed(
+            nameVi = "Thịt bò xào nấm", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm"),
+            instructions = listOf(
+                "Xào thịt bò với hành tây.",
+                "Cho nấm vào xào tới mềm.",
+                "Nêm nước mắm vừa ăn.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Thịt bò xay", 150.0),
+                RecipeIngredientSeed("Nấm", 100.0),
+                RecipeIngredientSeed("Hành tây", 30.0),
+                RecipeIngredientSeed("Dầu ăn", 8.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Tôm xào rau củ", category = "Bữa trưa", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giàu protein", "≤15 phút"),
+            instructions = listOf(
+                "Xào tôm chín tới, để riêng.",
+                "Xào rau củ chín tới.",
+                "Trộn tôm vào, nêm vừa ăn.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Tôm", 150.0),
+                RecipeIngredientSeed("Cà rốt", 50.0),
+                RecipeIngredientSeed("Bông cải xanh", 80.0),
+                RecipeIngredientSeed("Dầu ăn", 6.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.25)),
+        ),
+        // Bữa tối (7)
+        RecipeSeed(
+            nameVi = "Cá hấp", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 15, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Giảm mỡ"),
+            instructions = listOf(
+                "Xếp cá lên đĩa cùng hành tây, cà rốt thái sợi.",
+                "Hấp cách thủy 12-15 phút.",
+                "Rưới nước mắm khi dùng, ăn kèm cơm trắng.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Cá basa", 180.0),
+                RecipeIngredientSeed("Cơm trắng", 150.0),
+                RecipeIngredientSeed("Hành tây", 20.0),
+                RecipeIngredientSeed("Cà rốt", 30.0),
+                RecipeIngredientSeed("Nước mắm", 10.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Gỏi gà", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 15, cookTimeMinutes = 10, difficultyCode = "MEDIUM",
+            tags = listOf("Món Việt", "Giảm mỡ", "Giàu protein"),
+            instructions = listOf(
+                "Luộc chín ức gà, xé sợi.",
+                "Trộn cùng dưa leo, cà rốt, hành tây bào sợi.",
+                "Nêm nước mắm chua ngọt.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Ức gà", 120.0),
+                RecipeIngredientSeed("Dưa leo", 80.0),
+                RecipeIngredientSeed("Cà rốt", 50.0),
+                RecipeIngredientSeed("Hành tây", 20.0),
+                RecipeIngredientSeed("Nước mắm", 10.0),
+                RecipeIngredientSeed("Đường", 5.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("CUT", kcalMultiplier = 0.85)),
+        ),
+        RecipeSeed(
+            nameVi = "Phở bò", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 20, difficultyCode = "MEDIUM",
+            tags = listOf("Món Việt"),
+            instructions = listOf(
+                "Trụng bánh phở qua nước sôi.",
+                "Xếp thịt bò thái mỏng, hành tây lên trên.",
+                "Chan nước dùng nóng, ăn kèm giá đỗ.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Bánh phở", 200.0),
+                RecipeIngredientSeed("Thịt bò nạc", 100.0),
+                RecipeIngredientSeed("Hành tây", 30.0),
+                RecipeIngredientSeed("Giá đỗ", 50.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Bún bò", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 15, cookTimeMinutes = 20, difficultyCode = "MEDIUM",
+            tags = listOf("Món Việt", "Giàu protein"),
+            instructions = listOf(
+                "Trụng bún, xếp ra tô.",
+                "Xào sơ thịt bò với gia vị.",
+                "Chan nước dùng, ăn kèm giá đỗ, rau muống.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Bún tươi", 200.0),
+                RecipeIngredientSeed("Thịt bò nạc", 120.0),
+                RecipeIngredientSeed("Giá đỗ", 50.0),
+                RecipeIngredientSeed("Rau muống", 50.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.2)),
+        ),
+        RecipeSeed(
+            nameVi = "Bún gà", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 15, cookTimeMinutes = 15, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Giảm mỡ"),
+            instructions = listOf(
+                "Luộc chín ức gà, xé sợi.",
+                "Trụng bún ra tô.",
+                "Chan nước dùng, thêm gà xé và giá đỗ.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Bún tươi", 200.0),
+                RecipeIngredientSeed("Ức gà", 120.0),
+                RecipeIngredientSeed("Giá đỗ", 50.0),
+                RecipeIngredientSeed("Hành tây", 20.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("CUT", kcalMultiplier = 0.85)),
+        ),
+        RecipeSeed(
+            nameVi = "Canh chua cá basa", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 15, difficultyCode = "MEDIUM",
+            tags = listOf("Món Việt", "Giảm mỡ"),
+            instructions = listOf(
+                "Nấu sôi nước cùng cà chua, thơm.",
+                "Cho cá vào nấu chín.",
+                "Nêm chua ngọt, thêm giá đỗ trước khi tắt bếp. Ăn kèm cơm trắng.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Cá basa", 150.0),
+                RecipeIngredientSeed("Cơm trắng", 150.0),
+                RecipeIngredientSeed("Cà chua", 60.0),
+                RecipeIngredientSeed("Thơm", 60.0),
+                RecipeIngredientSeed("Giá đỗ", 40.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Ức gà áp chảo", category = "Bữa tối", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 12, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giàu protein"),
+            instructions = listOf(
+                "Ướp ức gà với muối tiêu.",
+                "Áp chảo mỗi mặt 5-6 phút.",
+                "Dùng kèm salad cà chua dưa leo.",
+            ),
+            ingredients = listOf(
+                RecipeIngredientSeed("Ức gà", 180.0),
+                RecipeIngredientSeed("Dầu ăn", 6.0),
+                RecipeIngredientSeed("Cà chua", 40.0),
+                RecipeIngredientSeed("Dưa leo", 40.0),
+            ),
+            variants = listOf(
+                RecipeVariantSeed("STANDARD"),
+                RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.3),
+                RecipeVariantSeed("CUT", kcalMultiplier = 0.85),
+            ),
+        ),
+        // Bữa phụ (4)
+        RecipeSeed(
+            nameVi = "Sữa chua chuối", category = "Bữa phụ", baseServings = 1,
+            prepTimeMinutes = 3, cookTimeMinutes = 0, difficultyCode = "EASY",
+            tags = listOf("Dễ làm", "≤15 phút"),
+            instructions = listOf("Thái lát chuối.", "Trộn cùng sữa chua, dùng lạnh."),
+            ingredients = listOf(
+                RecipeIngredientSeed("Sữa chua không đường", 150.0),
+                RecipeIngredientSeed("Chuối", 60.0),
+            ),
+        ),
+        RecipeSeed(
+            nameVi = "Khoai lang nướng", category = "Bữa phụ", baseServings = 1,
+            prepTimeMinutes = 5, cookTimeMinutes = 30, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Dễ làm", "Giảm mỡ"),
+            instructions = listOf("Rửa sạch khoai, để nguyên vỏ.", "Nướng 200°C trong 25-30 phút tới mềm."),
+            ingredients = listOf(RecipeIngredientSeed("Khoai lang", 200.0)),
+        ),
+        RecipeSeed(
+            nameVi = "Salad bơ trứng", category = "Bữa phụ", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 10, difficultyCode = "EASY",
+            tags = listOf("Dễ làm", "Giàu protein", "≤15 phút"),
+            instructions = listOf("Luộc chín trứng, bổ đôi.", "Thái bơ, dưa leo.", "Trộn đều, nêm nhẹ."),
+            ingredients = listOf(
+                RecipeIngredientSeed("Quả bơ", 80.0),
+                RecipeIngredientSeed("Trứng gà", 50.0, "1 quả"),
+                RecipeIngredientSeed("Dưa leo", 50.0),
+            ),
+            variants = listOf(RecipeVariantSeed("STANDARD"), RecipeVariantSeed("HIGH_PROTEIN", proteinMultiplier = 1.2)),
+        ),
+        RecipeSeed(
+            nameVi = "Gỏi tôm dưa leo", category = "Bữa phụ", baseServings = 1,
+            prepTimeMinutes = 10, cookTimeMinutes = 8, difficultyCode = "EASY",
+            tags = listOf("Món Việt", "Giảm mỡ", "≤15 phút"),
+            instructions = listOf("Luộc chín tôm.", "Trộn cùng dưa leo, cà rốt bào sợi.", "Nêm chua ngọt nhẹ."),
+            ingredients = listOf(
+                RecipeIngredientSeed("Tôm", 100.0),
+                RecipeIngredientSeed("Dưa leo", 100.0),
+                RecipeIngredientSeed("Cà rốt", 30.0),
+            ),
+        ),
+    )
+
+    /** One template's day-structure entry, pre-codec — [MealPlanTemplateCodec.encode]d at seed
+     * time into [com.fitviet.app.data.local.entity.MealPlanTemplateEntity.dayStructureJson]. */
+    data class MealPlanTemplateSeed(
+        val nameVi: String,
+        val descriptionVi: String,
+        val goalCode: String,
+        val kcalPerDay: Int,
+        val proteinPerDayG: Int,
+        val mealsPerDay: Int,
+        val difficultyCode: String,
+        val dayStructure: List<MealPlanTemplateDay>,
+    )
+
+    private val FOUR_MEAL_STRUCTURE = listOf(
+        MealPlanTemplateDay("Bữa sáng", 25),
+        MealPlanTemplateDay("Bữa trưa", 35),
+        MealPlanTemplateDay("Bữa tối", 30),
+        MealPlanTemplateDay("Bữa phụ", 10),
+    )
+    private val THREE_MEAL_STRUCTURE = listOf(
+        MealPlanTemplateDay("Bữa sáng", 30),
+        MealPlanTemplateDay("Bữa trưa", 40),
+        MealPlanTemplateDay("Bữa tối", 30),
+    )
+
+    /** Nutrition module's Templates screen catalog (Gate B5) — 7 curated starter plans, stored in
+     * the database per the backend's explicit requirement (never hardcoded in UI). */
+    val mealPlanTemplateSeeds: List<MealPlanTemplateSeed> = listOf(
+        MealPlanTemplateSeed(
+            nameVi = "Giảm mỡ 1.800 kcal", descriptionVi = "Mức calo thâm hụt vừa phải cho người mới bắt đầu giảm mỡ.",
+            goalCode = "CUT", kcalPerDay = 1800, proteinPerDayG = 130, mealsPerDay = 4,
+            difficultyCode = "EASY", dayStructure = FOUR_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Giảm mỡ 2.000 kcal", descriptionVi = "Thâm hụt nhẹ, phù hợp người hoạt động nhiều hơn.",
+            goalCode = "CUT", kcalPerDay = 2000, proteinPerDayG = 140, mealsPerDay = 4,
+            difficultyCode = "EASY", dayStructure = FOUR_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Duy trì 2.200 kcal", descriptionVi = "Giữ cân nặng ổn định, cân bằng 4 bữa mỗi ngày.",
+            goalCode = "MAINTAIN", kcalPerDay = 2200, proteinPerDayG = 140, mealsPerDay = 4,
+            difficultyCode = "EASY", dayStructure = FOUR_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Giàu protein", descriptionVi = "Ưu tiên các món giàu đạm, phù hợp tăng cơ.",
+            goalCode = "BULK", kcalPerDay = 2400, proteinPerDayG = 180, mealsPerDay = 4,
+            difficultyCode = "MEDIUM", dayStructure = FOUR_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Dễ nấu", descriptionVi = "Các món đơn giản, ít bước chế biến, chỉ 3 bữa mỗi ngày.",
+            goalCode = "MAINTAIN", kcalPerDay = 2000, proteinPerDayG = 130, mealsPerDay = 3,
+            difficultyCode = "EASY", dayStructure = THREE_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Tiết kiệm", descriptionVi = "Nguyên liệu phổ biến, dễ tìm, chi phí thấp.",
+            goalCode = "MAINTAIN", kcalPerDay = 2000, proteinPerDayG = 120, mealsPerDay = 3,
+            difficultyCode = "EASY", dayStructure = THREE_MEAL_STRUCTURE,
+        ),
+        MealPlanTemplateSeed(
+            nameVi = "Món Việt 7 ngày", descriptionVi = "Thực đơn thuần Việt cho cả tuần, đủ 4 bữa mỗi ngày.",
+            goalCode = "MAINTAIN", kcalPerDay = 2200, proteinPerDayG = 140, mealsPerDay = 4,
+            difficultyCode = "EASY", dayStructure = FOUR_MEAL_STRUCTURE,
         ),
     )
 

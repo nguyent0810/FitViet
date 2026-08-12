@@ -8,7 +8,9 @@ import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.DiaryRepository
 import com.fitviet.app.data.repository.HandbookRepository
 import com.fitviet.app.data.repository.NutritionRepository
+import com.fitviet.app.data.repository.RoomMealPlanRepository
 import com.fitviet.app.data.repository.RoomMonthlyPlanRepository
+import com.fitviet.app.data.repository.RoomRecipeRepository
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.data.repository.ProfileRepository
 import com.fitviet.app.data.repository.RemindersRepository
@@ -83,6 +85,24 @@ class AppContainer(context: Context) {
         setLogDao = database.setLogDao(),
         workoutSessionDao = database.workoutSessionDao(),
         settingsDao = database.settingsDao(),
+    )
+    val recipeRepository = RoomRecipeRepository(
+        recipeDao = database.recipeDao(),
+        recipeIngredientDao = database.recipeIngredientDao(),
+        recipeVariantDao = database.recipeVariantDao(),
+        foodDao = database.foodDao(),
+        favoriteRecipeDao = database.favoriteRecipeDao(),
+    )
+    val mealPlanRepository = RoomMealPlanRepository(
+        database = database,
+        userMealPlanDao = database.userMealPlanDao(),
+        mealPlanDayDao = database.mealPlanDayDao(),
+        mealPlanMealDao = database.mealPlanMealDao(),
+        mealPlanTemplateDao = database.mealPlanTemplateDao(),
+        recipeDao = database.recipeDao(),
+        recipeIngredientDao = database.recipeIngredientDao(),
+        recipeVariantDao = database.recipeVariantDao(),
+        foodDao = database.foodDao(),
     )
 
     /** Drives [com.fitviet.app.util.LocaleController] from the persisted 1i language setting — a

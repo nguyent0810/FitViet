@@ -64,6 +64,12 @@ data class SettingsEntity(
      * entirely and go straight from a Start action into the live session. Off by default so the
      * first-run "day exercise list" screen still shows until the user opts out. */
     val skipWorkoutPreview: Boolean = false,
+    /** Gate D4 — the highest workout streak length (in days) a milestone overlay has already been
+     * shown for. [com.fitviet.app.domain.StreakMilestones.crossedMilestone] compares this against
+     * the live streak to decide whether a new milestone just came into range; dismissing the
+     * overlay bumps this to the current streak so already-passed milestones never re-fire, even if
+     * several were skipped over between app opens. */
+    val lastCelebratedStreakDays: Int = 0,
 ) {
     companion object {
         const val SINGLETON_ID = 0

@@ -157,6 +157,12 @@
     <string name="recommendation_tip_5">Eat enough protein to support muscle recovery.</string>
     <string name="recommendation_tip_6">Rest between sessions that train the same muscle group.</string>
     <string name="recommendation_tip_7">Logging your sessions makes progress easier to see.</string>
+
+    <!-- Streak Milestone overlay (Gate D4) -->
+    <string name="streak_milestone_badge">%1$d-day milestone</string>
+    <string name="streak_milestone_headline">%1$d days in a row!</string>
+    <string name="streak_milestone_subtitle">You\'ve trained consistently for %1$d days straight. Keep up the momentum!</string>
+    <string name="streak_milestone_cta">Awesome!</string>
     <string name="recommendation_tip_8">Good form matters more than heavy weight.</string>
 
     <!-- 1c Programs list -->
@@ -331,6 +337,19 @@
     <string name="diary_movement_type_compound">Compound</string>
     <string name="diary_movement_type_isolation">Isolation</string>
     <string name="diary_movement_type_sets">%1$d sets</string>
+    <string name="diary_open_weekly_recap">Weekly recap ›</string>
+
+    <!-- Weekly Recap (Gate D3) -->
+    <string name="weekly_recap_title">Weekly Recap</string>
+    <string name="weekly_recap_date_range">%1$s – %2$s</string>
+    <string name="weekly_recap_sessions">Sessions</string>
+    <string name="weekly_recap_volume">Volume</string>
+    <string name="weekly_recap_muscle_balance">Muscle group balance</string>
+    <string name="weekly_recap_personal_bests">Current bests</string>
+    <string name="weekly_recap_empty">No data for this week yet.</string>
+    <string name="weekly_recap_share">Share</string>
+    <string name="weekly_recap_share_chooser_title">Share weekly recap</string>
+    <string name="weekly_recap_share_failed">Couldn\'t create the share image.</string>
 
     <!-- Workout calendar (Diary extension, feature 4) -->
     <string name="calendar_title">Workout calendar</string>
@@ -361,6 +380,84 @@
     <string name="nutrition_add_meal">+ %1$s</string>
     <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Vietnamese food database · works offline</string>
+
+    <!-- Nutrition module (real backend, Part C) -->
+    <string name="nutrition_quick_discover">Discover recipes</string>
+    <string name="nutrition_quick_discover_body">Find dishes by goal, cook time</string>
+    <string name="nutrition_quick_foods">Ingredients</string>
+    <string name="nutrition_quick_templates">Meal templates</string>
+    <string name="nutrition_quick_create_plan">Create meal plan</string>
+    <string name="nutrition_planned_title">Today\'s plan</string>
+    <string name="nutrition_planned_empty">No plan this week yet.</string>
+    <string name="nutrition_planned_empty_today">No meals scheduled for today.</string>
+    <string name="nutrition_planned_status_eaten">Eaten</string>
+    <string name="nutrition_planned_status_next">Next</string>
+    <string name="nutrition_view_plan">View week plan ›</string>
+    <string name="nutrition_search_placeholder">Search dishes…</string>
+    <string name="nutrition_filter_low_cal">Low calorie</string>
+    <string name="nutrition_filter_high_protein">High protein</string>
+    <string name="nutrition_filter_quick">≤15 min</string>
+    <string name="nutrition_filter_vietnamese">Vietnamese</string>
+    <string name="nutrition_filter_easy">Easy</string>
+    <string name="nutrition_recipe_kcal_per_serving">%1$s kcal / serving</string>
+    <string name="nutrition_recipe_meta">%1$d min · %2$s</string>
+    <string name="nutrition_foods_category_all">All</string>
+    <string name="nutrition_food_per_100g">%1$s kcal / 100g</string>
+    <string name="nutrition_food_macros_per_100g">P %1$dg · C %2$dg · F %3$dg</string>
+    <string name="nutrition_empty_discover">No matching dishes found.</string>
+    <string name="nutrition_empty_foods">No matching ingredients found.</string>
+
+    <!-- Recipe Detail -->
+    <string name="nutrition_recipe_variant_standard">Standard</string>
+    <string name="nutrition_recipe_variant_cut">Cut</string>
+    <string name="nutrition_recipe_variant_high_protein">High Protein</string>
+    <string name="nutrition_recipe_variant_bulk">Bulk</string>
+    <string name="nutrition_servings_label">Servings</string>
+    <string name="nutrition_ingredients_title">Ingredients</string>
+    <string name="nutrition_instructions_title">Instructions</string>
+    <string name="nutrition_recipe_prep_cook">Prep %1$d min · Cook %2$d min</string>
+    <string name="nutrition_recipe_macros">P %1$dg · C %2$dg · F %3$dg</string>
+    <string name="nutrition_recipe_grams">%1$dg</string>
+
+    <!-- Templates -->
+    <string name="nutrition_templates_title">Meal templates</string>
+    <string name="nutrition_template_matches_goal">MATCHES YOUR GOAL</string>
+    <string name="nutrition_template_meta">%1$d kcal/day · %2$dg protein · %3$d meals</string>
+    <string name="nutrition_template_use">Use this template</string>
+
+    <!-- Create-plan wizard -->
+    <string name="nutrition_create_plan_title">Create meal plan</string>
+    <string name="nutrition_create_plan_goal">Goal</string>
+    <string name="nutrition_create_plan_goal_cut">Cut</string>
+    <string name="nutrition_create_plan_goal_maintain">Maintain</string>
+    <string name="nutrition_create_plan_goal_bulk">Bulk</string>
+    <string name="nutrition_create_plan_kcal">Daily calories</string>
+    <string name="nutrition_create_plan_protein">Daily protein</string>
+    <string name="nutrition_create_plan_meals_per_day">Meals per day</string>
+    <string name="nutrition_create_plan_cook_time">Max cook time</string>
+    <string name="nutrition_create_plan_cook_time_unlimited">No limit</string>
+    <string name="nutrition_create_plan_cook_time_option">≤%1$d min</string>
+    <string name="nutrition_create_plan_generate">Generate plan</string>
+
+    <!-- Generated plan -->
+    <string name="nutrition_plan_title">Weekly plan</string>
+    <string name="nutrition_plan_day_totals">%1$s kcal · %2$dg protein · %3$dg carbs · %4$dg fat</string>
+    <string name="nutrition_plan_regenerate_day">Regenerate day</string>
+    <string name="nutrition_plan_regenerate_week">Regenerate week</string>
+    <string name="nutrition_plan_empty">No plan yet — create a new one.</string>
+
+    <!-- Swap sheet -->
+    <string name="nutrition_swap_title">Swap dish</string>
+    <string name="nutrition_swap_reroll">Suggest more ↻</string>
+    <string name="nutrition_swap_empty">No suitable suggestions.</string>
+    <string name="nutrition_swap_kcal_delta_more">+%1$s kcal</string>
+    <string name="nutrition_swap_kcal_delta_less">−%1$s kcal</string>
+
+    <!-- Calendar -->
+    <string name="nutrition_calendar_title">Plan calendar</string>
+    <string name="nutrition_calendar_today">Today</string>
+    <string name="nutrition_calendar_week">Week</string>
+    <string name="nutrition_calendar_week_average">Week average</string>
 
     <!-- 1i Profile & settings -->
     <string name="profile_back">Profile</string>

@@ -1,5 +1,10 @@
 package com.fitviet.app.ui.navigation
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +35,8 @@ import com.fitviet.app.ui.dashboard.DashboardScreen
 import com.fitviet.app.ui.dashboard.DashboardViewModel
 import com.fitviet.app.ui.diary.DiaryScreen
 import com.fitviet.app.ui.diary.DiaryViewModel
+import com.fitviet.app.ui.diary.WeeklyRecapScreen
+import com.fitviet.app.ui.diary.WeeklyRecapViewModel
 import com.fitviet.app.ui.exercise.ExerciseDetailScreen
 import com.fitviet.app.ui.exercise.ExerciseDetailViewModel
 import com.fitviet.app.ui.handbook.HandbookScreen
@@ -40,6 +47,20 @@ import com.fitviet.app.ui.monthlyplan.MonthlyPlanDetailScreen
 import com.fitviet.app.ui.monthlyplan.MonthlyPlanDetailViewModel
 import com.fitviet.app.ui.nutrition.NutritionScreen
 import com.fitviet.app.ui.nutrition.NutritionViewModel
+import com.fitviet.app.ui.nutrition.discover.DiscoverScreen
+import com.fitviet.app.ui.nutrition.discover.DiscoverViewModel
+import com.fitviet.app.ui.nutrition.foods.FoodsScreen
+import com.fitviet.app.ui.nutrition.foods.FoodsViewModel
+import com.fitviet.app.ui.nutrition.calendar.CalendarScreen
+import com.fitviet.app.ui.nutrition.calendar.CalendarViewModel
+import com.fitviet.app.ui.nutrition.createplan.CreatePlanScreen
+import com.fitviet.app.ui.nutrition.createplan.CreatePlanViewModel
+import com.fitviet.app.ui.nutrition.plan.PlanScreen
+import com.fitviet.app.ui.nutrition.plan.PlanViewModel
+import com.fitviet.app.ui.nutrition.recipedetail.RecipeDetailScreen
+import com.fitviet.app.ui.nutrition.recipedetail.RecipeDetailViewModel
+import com.fitviet.app.ui.nutrition.templates.TemplatesScreen
+import com.fitviet.app.ui.nutrition.templates.TemplatesViewModel
 import com.fitviet.app.ui.onboarding.GoalLevelScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
 import com.fitviet.app.ui.onboarding.SplitScreen
@@ -88,6 +109,7 @@ fun FitVietNavHost(container: AppContainer) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer) {
     val navController = rememberNavController()
@@ -114,11 +136,21 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             }
         },
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding),
-        ) {
+        // Gate D1 — a snappier app-wide screen-to-screen crossfade (220/180ms; nav-compose 2.8.5's
+        // own NavHost default is already a 700ms fadeIn/fadeOut, not an abrupt cut, but the brief
+        // called for shorter transitions) plus a SharedTransitionLayout scope for the single
+        // Discover->RecipeDetail card-title shared element below; wrapping the whole graph here
+        // means every OTHER composable() block in this file needed zero changes.
+        SharedTransitionLayout {
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = { fadeIn(animationSpec = tween(220)) },
+                exitTransition = { fadeOut(animationSpec = tween(180)) },
+                popEnterTransition = { fadeIn(animationSpec = tween(220)) },
+                popExitTransition = { fadeOut(animationSpec = tween(180)) },
+            ) {
             navigation(startDestination = FitVietDestination.OnboardingGoal.route, route = ONBOARDING_GRAPH_ROUTE) {
                 composable(FitVietDestination.OnboardingGoal.route) { backStackEntry ->
                     val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(ONBOARDING_GRAPH_ROUTE) }
@@ -263,11 +295,16 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     onOpenCalendar = { navController.navigate(FitVietDestination.WorkoutCalendar.route) },
+                    onOpenWeeklyRecap = { navController.navigate(FitVietDestination.DiaryWeeklyRecap.route) },
                 )
             }
             composable(FitVietDestination.WorkoutCalendar.route) {
                 val viewModel: WorkoutCalendarViewModel = viewModel(factory = WorkoutCalendarViewModel.Factory(container.diaryRepository))
                 WorkoutCalendarScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(FitVietDestination.DiaryWeeklyRecap.route) {
+                val viewModel: WeeklyRecapViewModel = viewModel(factory = WeeklyRecapViewModel.Factory(container.diaryRepository))
+                WeeklyRecapScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(FitVietDestination.Profile.route) {
                 val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory(container.profileRepository))
@@ -407,8 +444,98 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 )
             }
             composable(FitVietDestination.Nutrition.route) {
-                val viewModel: NutritionViewModel = viewModel(factory = NutritionViewModel.Factory(container.nutritionRepository))
-                NutritionScreen(viewModel = viewModel)
+                val viewModel: NutritionViewModel = viewModel(
+                    factory = NutritionViewModel.Factory(container.nutritionRepository, container.mealPlanRepository, container.recipeRepository),
+                )
+                NutritionScreen(
+                    viewModel = viewModel,
+                    onOpenDiscover = { navController.navigate(FitVietDestination.NutritionDiscover.route) },
+                    onOpenFoods = { navController.navigate(FitVietDestination.NutritionFoods.route) },
+                    onOpenTemplates = { navController.navigate(FitVietDestination.NutritionTemplates.route) },
+                    onOpenCreatePlan = { navController.navigate(FitVietDestination.NutritionCreatePlan.route) },
+                    onOpenPlan = { navController.navigate(FitVietDestination.NutritionPlan.route) },
+                )
+            }
+            composable(FitVietDestination.NutritionFoods.route) {
+                val viewModel: FoodsViewModel = viewModel(factory = FoodsViewModel.Factory(container.recipeRepository))
+                FoodsScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            }
+            composable(FitVietDestination.NutritionDiscover.route) {
+                val viewModel: DiscoverViewModel = viewModel(factory = DiscoverViewModel.Factory(container.recipeRepository))
+                DiscoverScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onOpenRecipe = { recipeId -> navController.navigate(FitVietDestination.NutritionRecipeDetail.createRoute(recipeId)) },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
+                )
+            }
+            composable(
+                route = FitVietDestination.NutritionRecipeDetail.route,
+                arguments = listOf(navArgument(FitVietDestination.NutritionRecipeDetail.ARG_RECIPE_ID) { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val recipeId = backStackEntry.arguments?.getLong(FitVietDestination.NutritionRecipeDetail.ARG_RECIPE_ID) ?: 0L
+                val viewModel: RecipeDetailViewModel = viewModel(
+                    factory = RecipeDetailViewModel.Factory(recipeId, container.recipeRepository),
+                )
+                RecipeDetailScreen(
+                    viewModel = viewModel,
+                    recipeId = recipeId,
+                    onBack = { navController.popBackStack() },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
+                )
+            }
+            composable(FitVietDestination.NutritionTemplates.route) {
+                val viewModel: TemplatesViewModel = viewModel(
+                    factory = TemplatesViewModel.Factory(container.mealPlanRepository, container.database.settingsDao()),
+                )
+                TemplatesScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    // Gate C7 (Generated plan screen) lands next — same "navigate to the route
+                    // before its composable is registered" incremental sequencing DiscoverScreen's
+                    // onOpenRecipe used ahead of Gate C4, not an oversight.
+                    onPlanGenerated = {
+                        navController.navigate(FitVietDestination.NutritionPlan.route) {
+                            popUpTo(FitVietDestination.Nutrition.route)
+                        }
+                    },
+                )
+            }
+            composable(FitVietDestination.NutritionCreatePlan.route) {
+                val viewModel: CreatePlanViewModel = viewModel(
+                    factory = CreatePlanViewModel.Factory(
+                        container.mealPlanRepository,
+                        container.database.settingsDao(),
+                        container.database.measurementDao(),
+                    ),
+                )
+                CreatePlanScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    // Same incremental-sequencing precedent as Discover->RecipeDetail and
+                    // Templates->Plan: nutrition/plan's own composable lands in Gate C7.
+                    onPlanGenerated = {
+                        navController.navigate(FitVietDestination.NutritionPlan.route) {
+                            popUpTo(FitVietDestination.Nutrition.route)
+                        }
+                    },
+                )
+            }
+            composable(FitVietDestination.NutritionPlan.route) {
+                val viewModel: PlanViewModel = viewModel(
+                    factory = PlanViewModel.Factory(container.mealPlanRepository, container.recipeRepository),
+                )
+                PlanScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onOpenCalendar = { navController.navigate(FitVietDestination.NutritionPlanCalendar.route) },
+                )
+            }
+            composable(FitVietDestination.NutritionPlanCalendar.route) {
+                val viewModel: CalendarViewModel = viewModel(factory = CalendarViewModel.Factory(container.mealPlanRepository))
+                CalendarScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(FitVietDestination.Community.route) {
                 val viewModel: CommunityViewModel = viewModel(factory = CommunityViewModel.Factory(container.communityRepository))
@@ -422,6 +549,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
                     },
                 )
+            }
             }
         }
     }

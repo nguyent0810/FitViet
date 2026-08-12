@@ -7,8 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.fitviet.app.data.local.dao.CommunityPostDao
 import com.fitviet.app.data.local.dao.ExerciseDao
+import com.fitviet.app.data.local.dao.FavoriteRecipeDao
 import com.fitviet.app.data.local.dao.FoodDao
 import com.fitviet.app.data.local.dao.MealDao
+import com.fitviet.app.data.local.dao.MealPlanDayDao
+import com.fitviet.app.data.local.dao.MealPlanMealDao
+import com.fitviet.app.data.local.dao.MealPlanTemplateDao
 import com.fitviet.app.data.local.dao.MeasurementDao
 import com.fitviet.app.data.local.dao.MonthlyPlanDao
 import com.fitviet.app.data.local.dao.MonthlyPlanDayDao
@@ -17,15 +21,23 @@ import com.fitviet.app.data.local.dao.MonthlyPlanWeekDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
+import com.fitviet.app.data.local.dao.RecipeDao
+import com.fitviet.app.data.local.dao.RecipeIngredientDao
+import com.fitviet.app.data.local.dao.RecipeVariantDao
 import com.fitviet.app.data.local.dao.ReminderDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.SplitTemplateDao
+import com.fitviet.app.data.local.dao.UserMealPlanDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.CommunityPostEntity
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.data.local.entity.FavoriteRecipeEntity
 import com.fitviet.app.data.local.entity.FoodEntity
 import com.fitviet.app.data.local.entity.MealEntity
+import com.fitviet.app.data.local.entity.MealPlanDayEntity
+import com.fitviet.app.data.local.entity.MealPlanMealEntity
+import com.fitviet.app.data.local.entity.MealPlanTemplateEntity
 import com.fitviet.app.data.local.entity.MeasurementEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanEntity
@@ -34,10 +46,14 @@ import com.fitviet.app.data.local.entity.MonthlyPlanWeekEntity
 import com.fitviet.app.data.local.entity.ProgramDayEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.ProgramExerciseEntity
+import com.fitviet.app.data.local.entity.RecipeEntity
+import com.fitviet.app.data.local.entity.RecipeIngredientEntity
+import com.fitviet.app.data.local.entity.RecipeVariantEntity
 import com.fitviet.app.data.local.entity.ReminderEntity
 import com.fitviet.app.data.local.entity.SetLogEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.local.entity.SplitTemplateEntity
+import com.fitviet.app.data.local.entity.UserMealPlanEntity
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 
 @Database(
@@ -59,6 +75,14 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
         MonthlyPlanDayEntity::class,
         MonthlyPlanExerciseEntity::class,
         SplitTemplateEntity::class,
+        RecipeEntity::class,
+        RecipeIngredientEntity::class,
+        RecipeVariantEntity::class,
+        MealPlanTemplateEntity::class,
+        UserMealPlanEntity::class,
+        MealPlanDayEntity::class,
+        MealPlanMealEntity::class,
+        FavoriteRecipeEntity::class,
     ],
     // Bump this on every schema change, pre-release — see fallbackToDestructiveMigration() below.
     // Gate 15 raised this from 1 to 2 (new program_days/program_exercises tables, new columns on
@@ -92,7 +116,20 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // `monthly_plan_weeks`, `monthly_plan_days`, `monthly_plan_exercises`, `split_templates`) for
     // the one-tap generated multi-week plan, plus new `monthlyPlanDayId` column on
     // `workout_sessions` and new `activeMonthlyPlanId`/`skipWorkoutPreview` columns on `settings`.
-    version = 14,
+    // Nutrition Gate B1 raised this from 14 to 15: new `normalizedName`/`servingSizeG`/
+    // `servingUnit`/`fiberG`/`tags`/`source` columns on `foods` (real Recipe/MealPlan backend
+    // foundation — `foods` becomes the shared ingredient catalog, not just the Handbook's
+    // read-only reference list).
+    // Nutrition Gate B2 raised this from 15 to 16: 3 new tables (`recipes`, `recipe_ingredients`,
+    // `recipe_variants`) — a recipe's nutrition is always computed from its ingredient rows
+    // (see RecipeNutritionCalculator), never hardcoded.
+    // Nutrition Gate B5 raised this from 16 to 17: new `meal_plan_templates` table — curated
+    // starter meal plans stored in the database, not hardcoded in UI.
+    // Nutrition Gate B6 raised this from 17 to 18: 4 new tables (`user_meal_plans`,
+    // `meal_plan_days`, `meal_plan_meals`, `favorite_recipes`) — a user's saved/generated plan and
+    // favorites, no `userId` column (single local user).
+    // Gate D4 raised this from 18 to 19: new `lastCelebratedStreakDays` column on `settings`.
+    version = 19,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -114,6 +151,14 @@ abstract class FitVietDatabase : RoomDatabase() {
     abstract fun monthlyPlanDayDao(): MonthlyPlanDayDao
     abstract fun monthlyPlanExerciseDao(): MonthlyPlanExerciseDao
     abstract fun splitTemplateDao(): SplitTemplateDao
+    abstract fun recipeDao(): RecipeDao
+    abstract fun recipeIngredientDao(): RecipeIngredientDao
+    abstract fun recipeVariantDao(): RecipeVariantDao
+    abstract fun mealPlanTemplateDao(): MealPlanTemplateDao
+    abstract fun userMealPlanDao(): UserMealPlanDao
+    abstract fun mealPlanDayDao(): MealPlanDayDao
+    abstract fun mealPlanMealDao(): MealPlanMealDao
+    abstract fun favoriteRecipeDao(): FavoriteRecipeDao
 
     companion object {
         @Volatile private var instance: FitVietDatabase? = null

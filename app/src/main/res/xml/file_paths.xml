@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gate D3 — exposes only app/cache/images/ (the Weekly Recap PNG export's save location) via
+     FileProvider, not the whole cache dir, so no other cached file becomes shareable. -->
+<paths>
+    <cache-path name="images" path="images/" />
+</paths>

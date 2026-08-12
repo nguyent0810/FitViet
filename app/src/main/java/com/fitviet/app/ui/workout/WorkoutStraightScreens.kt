@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
+import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -271,9 +272,9 @@ internal fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Mo
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .pressScale(onClick = onClick)
             .clip(MaterialTheme.shapes.large)
             .background(Accent)
-            .clickable(onClick = onClick)
             .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
     ) {

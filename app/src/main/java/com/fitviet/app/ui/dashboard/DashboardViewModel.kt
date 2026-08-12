@@ -15,6 +15,7 @@ import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
+import com.fitviet.app.domain.StreakMilestones
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +53,13 @@ data class DashboardUiState(
      * Only ever one at a time is surfaced. Push/skip resolves it so the next-oldest one (if any)
      * can surface on a later load; viewing the plan leaves it unresolved so it may surface again. */
     val missedDay: MonthlyPlanDayEntity? = null,
+    /** Gate D4 — the milestone (7/14/30/60) [com.fitviet.app.domain.StreakMilestones] says
+     * [stats]'s current streak just crossed and hasn't been celebrated yet, or null. Unlike
+     * [missedDay]'s one-shot-per-load `MutableStateFlow`, this is derived straight from the
+     * repository's own reactive data on every emission — dismissing it persists
+     * `lastCelebratedStreakDays` via [DashboardRepository.celebrateStreakMilestone], which is what
+     * actually makes this go back to null (see [dismissStreakMilestone]), not any local UI state. */
+    val streakMilestone: Int? = null,
 )
 
 class DashboardViewModel(
@@ -104,6 +112,7 @@ class DashboardViewModel(
             avatarId = data.avatarId,
             todayMonthlyPlanCard = data.todayMonthlyPlanCard,
             missedDay = missed,
+            streakMilestone = StreakMilestones.crossedMilestone(data.stats.streakDays, data.lastCelebratedStreakDays),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
@@ -142,6 +151,16 @@ class DashboardViewModel(
      * the next Dashboard load — that's correct, not a bug (see [findMissedDays]'s scan). */
     fun dismissMissedDayToViewPlan() {
         missedDay.value = null
+    }
+
+    /** Gate D4 — persists the current streak as the new "last celebrated" high-water mark, which
+     * makes [StreakMilestones.crossedMilestone] return null again on the next data emission and
+     * closes the overlay. Reads [uiState]'s already-collected value rather than re-observing stats,
+     * matching this ViewModel's existing "no reactive continuation" style for one-shot dismiss
+     * actions (see [pushMissedDayToToday]/[skipMissedDay] above). */
+    fun dismissStreakMilestone() {
+        val streakDays = uiState.value.stats.streakDays
+        viewModelScope.launch { repository.celebrateStreakMilestone(streakDays) }
     }
 
     class Factory(

@@ -51,6 +51,8 @@ import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.domain.ProgramDifficulty
+import com.fitviet.app.ui.common.pressScale
+import com.fitviet.app.ui.common.tiltOnDrag
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorder
 import com.fitviet.app.ui.theme.AccentBorderAlt
@@ -63,6 +65,7 @@ import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.PillShape
+import com.fitviet.app.ui.theme.premiumShadow
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
@@ -216,10 +219,10 @@ private fun GenerateMonthlyPlanHeaderCard(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .pressScale(onClick = onClick)
             .clip(MaterialTheme.shapes.medium)
             .background(AccentSurfaceSelected)
             .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
-            .clickable(onClick = onClick)
             .padding(Dimens.CardPaddingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -414,10 +417,18 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            // Gate D1 rollout — premiumShadow, not entranceFade: this card lives inside a
+            // LazyColumn's items(...), so it gets recycled/re-entered on scroll; entranceFade's
+            // one-shot LaunchedEffect(Unit) would replay every time a scrolled-off card scrolls
+            // back into view, which reads as a glitch, not polish. premiumShadow is a static draw
+            // effect with no such replay risk. accentBloom = false — this isn't a donate/PR-style
+            // hero surface, just an ambient lift to match Dashboard's hero card now having one.
+            .premiumShadow(radius = 18.dp, accentBloom = false)
+            .pressScale(onClick = onClick)
+            .tiltOnDrag(maxDegrees = 6f)
             .clip(MaterialTheme.shapes.large)
             .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
-            .clickable(onClick = onClick),
+            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
     ) {
         ProgramCoverArt(program = program, modifier = Modifier.height(84.dp))
         Column(

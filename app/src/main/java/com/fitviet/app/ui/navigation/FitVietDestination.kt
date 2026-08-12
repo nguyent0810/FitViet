@@ -48,6 +48,9 @@ sealed class FitVietDestination(val route: String) {
 
     data object WorkoutCalendar : FitVietDestination("diary/calendar")
 
+    /** Gate D3 — a shareable weekly summary card, reusing Diary's own already-loaded stats. */
+    data object DiaryWeeklyRecap : FitVietDestination("diary/weekly-recap")
+
     data object Profile : FitVietDestination("profile")
 
     /** Feature #1 (Gate 35) — reached from Profile's header avatar tap or its "Chỉnh sửa hồ sơ ›" row. */
@@ -75,6 +78,28 @@ sealed class FitVietDestination(val route: String) {
         const val ARG_DAY_ID = "dayId"
         fun createRoute(dayId: Long) = "monthly_plan/day/$dayId"
     }
+
+    // ---- Nutrition module (real backend, Part C) — Nutrition (above) is the module's Home. ----
+
+    data object NutritionDiscover : FitVietDestination("nutrition/discover")
+
+    data object NutritionFoods : FitVietDestination("nutrition/foods")
+
+    data object NutritionRecipeDetail : FitVietDestination("nutrition/recipe/{recipeId}") {
+        const val ARG_RECIPE_ID = "recipeId"
+        fun createRoute(recipeId: Long) = "nutrition/recipe/$recipeId"
+    }
+
+    data object NutritionTemplates : FitVietDestination("nutrition/templates")
+
+    data object NutritionCreatePlan : FitVietDestination("nutrition/create-plan")
+
+    /** The active plan's generated week — no arg, always shows the one active
+     * [com.fitviet.app.data.local.entity.UserMealPlanEntity], same "one active plan" convention as
+     * [MonthlyPlanDetail]. */
+    data object NutritionPlan : FitVietDestination("nutrition/plan")
+
+    data object NutritionPlanCalendar : FitVietDestination("nutrition/plan/calendar")
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).

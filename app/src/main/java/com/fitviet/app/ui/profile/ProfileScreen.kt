@@ -1,5 +1,9 @@
 package com.fitviet.app.ui.profile
 
+import android.graphics.BlurMaskFilter
+import android.graphics.Paint as FrameworkPaint
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,16 +24,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +51,9 @@ import com.fitviet.app.domain.WeightHistoryRange
 import com.fitviet.app.domain.WeightPoint
 import com.fitviet.app.ui.common.RangePills
 import com.fitviet.app.ui.common.SettingsRow
+import com.fitviet.app.ui.common.entranceFade
+import com.fitviet.app.ui.common.pressScale
+import com.fitviet.app.ui.common.rememberReducedMotion
 import com.fitviet.app.ui.onboarding.GOAL_OPTIONS
 import com.fitviet.app.ui.onboarding.LEVEL_OPTIONS
 import com.fitviet.app.ui.theme.Accent
@@ -53,6 +66,7 @@ import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.SurfaceCard
+import com.fitviet.app.ui.theme.premiumShadow
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatLengthUnit
@@ -335,6 +349,18 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
     // would silently place it at the bottom instead.
     val isFlat = maxValue - minValue <= 0.01
 
+    // Gate D2 — the line "grows in" left-to-right on first composition and whenever the plotted
+    // points genuinely change (range switch, new check-in logged), not on every unrelated
+    // recomposition — keyed by `points` itself, not Unit.
+    val reducedMotion = rememberReducedMotion()
+    val progress = remember(points) { Animatable(if (reducedMotion) 1f else 0f) }
+    LaunchedEffect(points, reducedMotion) {
+        // If reduced motion turns on mid-reveal (same `points`, so the Animatable above isn't
+        // recreated), the animateTo(...) branch below would simply stop running — snapTo ensures
+        // the line doesn't get stuck partially drawn.
+        if (reducedMotion) progress.snapTo(1f) else progress.animateTo(1f, tween(durationMillis = 900))
+    }
+
     Column {
         Row(modifier = Modifier.fillMaxWidth().height(120.dp)) {
             Column(
@@ -352,15 +378,54 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
                     val fraction = if (isFlat) 0.5f else ((value - minValue) / (maxValue - minValue)).toFloat()
                     return usableHeight - (fraction * usableHeight) + pointGapPx
                 }
-                val path = Path()
-                displayValues.forEachIndexed { index, value ->
-                    val x = pointGapPx + index * stepX
-                    val y = yFor(value)
-                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                val pointPositions = displayValues.mapIndexed { index, value -> Offset(pointGapPx + index * stepX, yFor(value)) }
+                val fullPath = Path()
+                pointPositions.forEachIndexed { index, position ->
+                    if (index == 0) fullPath.moveTo(position.x, position.y) else fullPath.lineTo(position.x, position.y)
                 }
-                drawPath(path = path, color = Accent, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-                displayValues.forEachIndexed { index, value ->
-                    drawCircle(color = Accent, radius = 4.dp.toPx(), center = Offset(pointGapPx + index * stepX, yFor(value)))
+                // Cumulative Euclidean distance to each point, in the same units PathMeasure
+                // measures the path in below — used to sync the dots to exactly where the
+                // revealed line has geometrically drawn to, not an index-based approximation
+                // (segments aren't equal length when the plotted values vary in steepness).
+                val cumulativeDistances = FloatArray(pointPositions.size)
+                for (i in 1 until pointPositions.size) {
+                    cumulativeDistances[i] = cumulativeDistances[i - 1] + (pointPositions[i] - pointPositions[i - 1]).getDistance()
+                }
+
+                val revealProgress = progress.value
+                val visiblePath = if (revealProgress >= 1f) {
+                    fullPath
+                } else {
+                    val measure = PathMeasure()
+                    measure.setPath(fullPath, false)
+                    Path().also { measure.getSegment(0f, measure.length * revealProgress, it, startWithMoveTo = true) }
+                }
+
+                val strokeWidthPx = 3.dp.toPx()
+                // Soft glow behind the crisp line — same native BlurMaskFilter idiom as
+                // com.fitviet.app.ui.theme.premiumShadow/NutritionScreen's KcalRing.
+                drawIntoCanvas { canvas ->
+                    val glowPaint = FrameworkPaint().apply {
+                        isAntiAlias = true
+                        style = FrameworkPaint.Style.STROKE
+                        strokeWidth = strokeWidthPx * 3f
+                        strokeCap = FrameworkPaint.Cap.ROUND
+                        strokeJoin = FrameworkPaint.Join.ROUND
+                        color = Accent.copy(alpha = 0.3f).toArgb()
+                        maskFilter = BlurMaskFilter(strokeWidthPx * 2.5f, BlurMaskFilter.Blur.NORMAL)
+                    }
+                    canvas.nativeCanvas.drawPath(visiblePath.asAndroidPath(), glowPaint)
+                }
+                drawPath(path = visiblePath, color = Accent, style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+                // A dot is visible once the revealed line has geometrically drawn PAST its
+                // position — comparing real cumulative distance, not an index/count
+                // approximation, so this stays in sync regardless of how steep each segment is.
+                val revealedDistance = (cumulativeDistances.lastOrNull() ?: 0f) * revealProgress
+                pointPositions.forEachIndexed { index, position ->
+                    if (revealProgress >= 1f || cumulativeDistances[index] <= revealedDistance) {
+                        drawCircle(color = Accent, radius = 4.dp.toPx(), center = position)
+                    }
                 }
             }
         }
@@ -396,6 +461,13 @@ private fun DonateCard(donated: Boolean, onDonateClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .entranceFade()
+            // "Donate surfaces" is one of premiumShadow's own doc-listed use cases (Gate A1) —
+            // this is that primitive's first actual call site in the app (Gate D1 rollout).
+            // radius matches FitVietShapes.large's own 18.dp corner (Theme/Shape.kt) — premiumShadow
+            // takes a literal Dp, not a Shape, same as every other .clip(MaterialTheme.shapes.large)
+            // call site in this codebase already hardcodes its border/shape values independently.
+            .premiumShadow(radius = 18.dp, accentBloom = true)
             .clip(MaterialTheme.shapes.large)
             .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd)))
             .border(1.dp, AccentBorderAlt, MaterialTheme.shapes.large)
@@ -408,9 +480,9 @@ private fun DonateCard(donated: Boolean, onDonateClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .pressScale(onClick = onDonateClick)
                     .clip(MaterialTheme.shapes.small)
                     .border(1.dp, AccentBorderAlt, MaterialTheme.shapes.small)
-                    .clickable(onClick = onDonateClick)
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -422,9 +494,9 @@ private fun DonateCard(donated: Boolean, onDonateClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .pressScale(onClick = onDonateClick)
                     .clip(MaterialTheme.shapes.small)
                     .border(Dimens.SelectedBorderWidth, Accent, MaterialTheme.shapes.small)
-                    .clickable(onClick = onDonateClick)
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {

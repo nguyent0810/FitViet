@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
-import com.fitviet.app.ui.theme.Accent
+import com.fitviet.app.ui.common.LoadingSkeleton
 import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
@@ -48,9 +47,7 @@ fun WorkoutScreen(
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Accent)
-            }
+            LoadingSkeleton(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp))
             return@Column
         }
 

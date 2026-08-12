@@ -59,7 +59,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 @Composable
-fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: () -> Unit) {
+fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: () -> Unit, onOpenWeeklyRecap: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -104,6 +104,12 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
         DayStrip(last7Days = uiState.last7Days, selectedIndex = uiState.selectedDayIndex, onSelect = viewModel::selectDay)
         DayHintCard(day = uiState.last7Days.getOrNull(uiState.selectedDayIndex), sessions = uiState.allCompletedSessions)
         WeeklyVolumeCard(last4Weeks = uiState.last4Weeks, selectedIndex = uiState.selectedWeekIndex, onSelect = viewModel::selectWeek)
+        Text(
+            text = stringResource(R.string.diary_open_weekly_recap),
+            style = MaterialTheme.typography.labelLarge,
+            color = Accent,
+            modifier = Modifier.clickable(onClick = onOpenWeeklyRecap),
+        )
         MuscleGroupWorkloadCard(workload = uiState.muscleGroupWorkload)
         MovementTypeCard(distribution = uiState.movementTypeDistribution)
         PersonalBestsCard(personalBests = uiState.personalBests)

@@ -4,6 +4,12 @@ import androidx.room.withTransaction
 import com.fitviet.app.data.local.FitVietDatabase
 import com.fitviet.app.data.local.entity.ProgramDayEntity
 import com.fitviet.app.data.local.entity.ProgramExerciseEntity
+import com.fitviet.app.data.local.entity.MealPlanTemplateEntity
+import com.fitviet.app.data.local.entity.RecipeEntity
+import com.fitviet.app.data.local.entity.RecipeIngredientEntity
+import com.fitviet.app.data.local.entity.RecipeVariantEntity
+import com.fitviet.app.domain.MealPlanTemplateCodec
+import com.fitviet.app.domain.RecipeInstructionsCodec
 import java.time.LocalDate
 
 /**
@@ -30,6 +36,8 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
             }
 
             seedMissingProgramSchedules()
+            seedMissingRecipes()
+            seedMissingMealPlanTemplates()
         }
     }
 
@@ -48,13 +56,16 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
         database.communityPostDao().insertAll(SeedData.communityPosts)
     }
 
-    /** Same "backfill independently of the fresh-DB gate" reasoning as [seedMissingCommunityPosts]
-     * — the Handbook (Gate 25) food reference is a flat, unordered list, so "count() > 0" is a
-     * sufficient completeness check, unlike exercises which are matched by name to backfill only
-     * genuinely new entries. */
+    /** Same by-name backfill as [seedMissingExercises] — NOT a coarse "count() > 0" check
+     * (Nutrition Gate B4 expanded this list from ~17 to ~37 entries; a device already seeded by
+     * an earlier build, e.g. one used for on-device testing before Gate B4 landed, must still
+     * pick up the new entries the real Recipe system's ingredients depend on, or
+     * [seedMissingRecipes] would silently resolve most recipes against a food catalog missing
+     * most of their ingredients). */
     private suspend fun seedMissingFoods() {
-        if (database.foodDao().count() > 0) return
-        database.foodDao().insertAll(SeedData.foods)
+        val existingNames = database.foodDao().getAllOnce().map { it.nameVi }.toSet()
+        val missing = SeedData.foods.filter { it.nameVi !in existingNames }
+        if (missing.isNotEmpty()) database.foodDao().insertAll(missing)
     }
 
     /**
@@ -108,5 +119,88 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
                 if (programExercises.isNotEmpty()) database.programExerciseDao().insertAll(programExercises)
             }
         }
+    }
+
+    /** Nutrition Gate B4 — same coarse "flat catalog, count() > 0 means already seeded" policy
+     * [seedMissingFoods] used to use, but recipes themselves don't need name-based backfilling the
+     * way foods did: this table didn't exist before this gate, so there's no pre-existing partial
+     * content to reconcile against. Requires [seedMissingFoods] to have already run in the same
+     * transaction (see call order in [seedIfEmpty]) so every seed recipe's ingredient names
+     * resolve. A name with no match throws rather than silently dropping the ingredient — every
+     * name here is authored Kotlin data, not external input, so a miss always means a typo/rename
+     * that broke this file, not a legitimate runtime case to degrade gracefully from.
+     */
+    private suspend fun seedMissingRecipes() {
+        if (database.recipeDao().count() > 0) return
+
+        val foodIdByName = database.foodDao().getAllOnce().associateBy({ it.nameVi }, { it.id })
+
+        SeedData.recipes.forEach { recipeSeed ->
+            val recipeId = database.recipeDao().insertAll(
+                listOf(
+                    RecipeEntity(
+                        nameVi = recipeSeed.nameVi,
+                        category = recipeSeed.category,
+                        baseServings = recipeSeed.baseServings,
+                        prepTimeMinutes = recipeSeed.prepTimeMinutes,
+                        cookTimeMinutes = recipeSeed.cookTimeMinutes,
+                        difficultyCode = recipeSeed.difficultyCode,
+                        tags = recipeSeed.tags,
+                        instructionsJson = RecipeInstructionsCodec.encode(recipeSeed.instructions),
+                    ),
+                ),
+            ).first()
+
+            val ingredients = recipeSeed.ingredients.mapIndexed { orderIndex, ingredientSeed ->
+                val foodId = foodIdByName[ingredientSeed.foodName]
+                    ?: error("Seed recipe '${recipeSeed.nameVi}' references unknown food '${ingredientSeed.foodName}'")
+                RecipeIngredientEntity(
+                    recipeId = recipeId,
+                    foodId = foodId,
+                    grams = ingredientSeed.grams,
+                    orderIndex = orderIndex,
+                    displayQuantity = ingredientSeed.displayQuantity,
+                )
+            }
+            if (ingredients.isNotEmpty()) database.recipeIngredientDao().insertAll(ingredients)
+
+            val variants = recipeSeed.variants.map { variantSeed ->
+                RecipeVariantEntity(
+                    recipeId = recipeId,
+                    code = variantSeed.code,
+                    kcalMultiplier = variantSeed.kcalMultiplier,
+                    proteinMultiplier = variantSeed.proteinMultiplier,
+                    carbMultiplier = variantSeed.carbMultiplier,
+                    fatMultiplier = variantSeed.fatMultiplier,
+                )
+            }
+            database.recipeVariantDao().insertAll(variants)
+        }
+    }
+
+    /** Nutrition Gate B5 — same coarse "flat catalog, count() > 0 means already seeded" policy as
+     * [seedMissingRecipes]; this table and its complete 7-template catalog are introduced together
+     * in this gate, so there's no pre-existing partial content to reconcile by name against (same
+     * reasoning as [seedMissingRecipes]'s own doc comment). A malformed [MealPlanTemplateCodec.encode]
+     * round trip can't happen here since [SeedData.MealPlanTemplateSeed.dayStructure] is authored
+     * Kotlin data, not decoded external input, but every template's shares are still authored to
+     * sum to exactly 100 so [MealPlanTemplateCodec.decode] validates it correctly at read time.
+     */
+    private suspend fun seedMissingMealPlanTemplates() {
+        if (database.mealPlanTemplateDao().count() > 0) return
+
+        val templates = SeedData.mealPlanTemplateSeeds.map { seed ->
+            MealPlanTemplateEntity(
+                nameVi = seed.nameVi,
+                descriptionVi = seed.descriptionVi,
+                goalCode = seed.goalCode,
+                kcalPerDay = seed.kcalPerDay,
+                proteinPerDayG = seed.proteinPerDayG,
+                mealsPerDay = seed.mealsPerDay,
+                difficultyCode = seed.difficultyCode,
+                dayStructureJson = MealPlanTemplateCodec.encode(seed.dayStructure),
+            )
+        }
+        database.mealPlanTemplateDao().insertAll(templates)
     }
 }

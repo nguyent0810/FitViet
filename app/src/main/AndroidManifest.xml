@@ -35,6 +35,19 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
+
+        <!-- Gate D3 — the Weekly Recap PNG export/share feature needs a content:// URI (a raw
+             file:// URI can't be granted to another app's share target since Android 7). Exposes
+             only app/cache/images/ per file_paths.xml, not the whole cache dir. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

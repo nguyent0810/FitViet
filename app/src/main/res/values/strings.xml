@@ -157,6 +157,12 @@
     <string name="recommendation_tip_5">Ăn đủ đạm để hỗ trợ phục hồi cơ bắp.</string>
     <string name="recommendation_tip_6">Nghỉ ngơi giữa các buổi tập cùng nhóm cơ.</string>
     <string name="recommendation_tip_7">Ghi lại buổi tập giúp bạn theo dõi tiến bộ rõ ràng hơn.</string>
+
+    <!-- Streak Milestone overlay (Gate D4) -->
+    <string name="streak_milestone_badge">Cột mốc %1$d ngày</string>
+    <string name="streak_milestone_headline">%1$d ngày liên tiếp!</string>
+    <string name="streak_milestone_subtitle">Bạn đã tập luyện đều đặn %1$d ngày liên tiếp. Cứ giữ vững phong độ này nhé!</string>
+    <string name="streak_milestone_cta">Tuyệt vời!</string>
     <string name="recommendation_tip_8">Kỹ thuật đúng quan trọng hơn khối lượng tạ nặng.</string>
 
     <!-- 1c Programs list -->
@@ -331,6 +337,19 @@
     <string name="diary_movement_type_compound">Bài tổng hợp (Compound)</string>
     <string name="diary_movement_type_isolation">Bài cô lập (Isolation)</string>
     <string name="diary_movement_type_sets">%1$d set</string>
+    <string name="diary_open_weekly_recap">Tổng kết tuần ›</string>
+
+    <!-- Weekly Recap (Gate D3) -->
+    <string name="weekly_recap_title">Tổng kết tuần</string>
+    <string name="weekly_recap_date_range">%1$s – %2$s</string>
+    <string name="weekly_recap_sessions">Buổi tập</string>
+    <string name="weekly_recap_volume">Khối lượng</string>
+    <string name="weekly_recap_muscle_balance">Cân bằng nhóm cơ</string>
+    <string name="weekly_recap_personal_bests">Kỷ lục hiện tại</string>
+    <string name="weekly_recap_empty">Chưa có dữ liệu tuần này.</string>
+    <string name="weekly_recap_share">Chia sẻ</string>
+    <string name="weekly_recap_share_chooser_title">Chia sẻ tổng kết tuần</string>
+    <string name="weekly_recap_share_failed">Không thể tạo ảnh chia sẻ.</string>
 
     <!-- Workout calendar (Diary extension, feature 4) -->
     <string name="calendar_title">Lịch tập luyện</string>
@@ -361,6 +380,84 @@
     <string name="nutrition_add_meal">+ %1$s</string>
     <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Cơ sở dữ liệu món ăn Việt · hoạt động offline</string>
+
+    <!-- Nutrition module (real backend, Part C) -->
+    <string name="nutrition_quick_discover">Khám phá món ăn</string>
+    <string name="nutrition_quick_discover_body">Tìm món theo mục tiêu, thời gian nấu</string>
+    <string name="nutrition_quick_foods">Nguyên liệu</string>
+    <string name="nutrition_quick_templates">Thực đơn mẫu</string>
+    <string name="nutrition_quick_create_plan">Tạo thực đơn</string>
+    <string name="nutrition_planned_title">Thực đơn hôm nay</string>
+    <string name="nutrition_planned_empty">Chưa có thực đơn tuần này.</string>
+    <string name="nutrition_planned_empty_today">Không có bữa nào được lên lịch cho hôm nay.</string>
+    <string name="nutrition_planned_status_eaten">Đã ăn</string>
+    <string name="nutrition_planned_status_next">Tiếp theo</string>
+    <string name="nutrition_view_plan">Xem thực đơn tuần ›</string>
+    <string name="nutrition_search_placeholder">Tìm món ăn…</string>
+    <string name="nutrition_filter_low_cal">Giảm mỡ</string>
+    <string name="nutrition_filter_high_protein">Giàu protein</string>
+    <string name="nutrition_filter_quick">≤15 phút</string>
+    <string name="nutrition_filter_vietnamese">Món Việt</string>
+    <string name="nutrition_filter_easy">Dễ làm</string>
+    <string name="nutrition_recipe_kcal_per_serving">%1$s kcal / khẩu phần</string>
+    <string name="nutrition_recipe_meta">%1$d phút · %2$s</string>
+    <string name="nutrition_foods_category_all">Tất cả</string>
+    <string name="nutrition_food_per_100g">%1$s kcal / 100g</string>
+    <string name="nutrition_food_macros_per_100g">P %1$dg · C %2$dg · B %3$dg</string>
+    <string name="nutrition_empty_discover">Không tìm thấy món phù hợp.</string>
+    <string name="nutrition_empty_foods">Không tìm thấy nguyên liệu.</string>
+
+    <!-- Recipe Detail -->
+    <string name="nutrition_recipe_variant_standard">Tiêu chuẩn</string>
+    <string name="nutrition_recipe_variant_cut">Giảm mỡ</string>
+    <string name="nutrition_recipe_variant_high_protein">Giàu protein</string>
+    <string name="nutrition_recipe_variant_bulk">Tăng cân</string>
+    <string name="nutrition_servings_label">Khẩu phần</string>
+    <string name="nutrition_ingredients_title">Nguyên liệu</string>
+    <string name="nutrition_instructions_title">Cách làm</string>
+    <string name="nutrition_recipe_prep_cook">Chuẩn bị %1$d phút · Nấu %2$d phút</string>
+    <string name="nutrition_recipe_macros">P %1$dg · C %2$dg · B %3$dg</string>
+    <string name="nutrition_recipe_grams">%1$dg</string>
+
+    <!-- Templates -->
+    <string name="nutrition_templates_title">Thực đơn mẫu</string>
+    <string name="nutrition_template_matches_goal">PHÙ HỢP MỤC TIÊU</string>
+    <string name="nutrition_template_meta">%1$d kcal/ngày · %2$dg đạm · %3$d bữa</string>
+    <string name="nutrition_template_use">Dùng thực đơn này</string>
+
+    <!-- Create-plan wizard -->
+    <string name="nutrition_create_plan_title">Tạo thực đơn</string>
+    <string name="nutrition_create_plan_goal">Mục tiêu</string>
+    <string name="nutrition_create_plan_goal_cut">Giảm mỡ</string>
+    <string name="nutrition_create_plan_goal_maintain">Duy trì</string>
+    <string name="nutrition_create_plan_goal_bulk">Tăng cân</string>
+    <string name="nutrition_create_plan_kcal">Lượng calo mỗi ngày</string>
+    <string name="nutrition_create_plan_protein">Lượng đạm mỗi ngày</string>
+    <string name="nutrition_create_plan_meals_per_day">Số bữa mỗi ngày</string>
+    <string name="nutrition_create_plan_cook_time">Thời gian nấu tối đa</string>
+    <string name="nutrition_create_plan_cook_time_unlimited">Không giới hạn</string>
+    <string name="nutrition_create_plan_cook_time_option">≤%1$d phút</string>
+    <string name="nutrition_create_plan_generate">Tạo thực đơn</string>
+
+    <!-- Generated plan -->
+    <string name="nutrition_plan_title">Thực đơn tuần</string>
+    <string name="nutrition_plan_day_totals">%1$s kcal · %2$dg đạm · %3$dg tinh bột · %4$dg béo</string>
+    <string name="nutrition_plan_regenerate_day">Tạo lại ngày</string>
+    <string name="nutrition_plan_regenerate_week">Tạo lại tuần</string>
+    <string name="nutrition_plan_empty">Chưa có thực đơn — hãy tạo một thực đơn mới.</string>
+
+    <!-- Swap sheet -->
+    <string name="nutrition_swap_title">Đổi món</string>
+    <string name="nutrition_swap_reroll">Gợi ý khác ↻</string>
+    <string name="nutrition_swap_empty">Không có gợi ý phù hợp.</string>
+    <string name="nutrition_swap_kcal_delta_more">+%1$s kcal</string>
+    <string name="nutrition_swap_kcal_delta_less">−%1$s kcal</string>
+
+    <!-- Calendar -->
+    <string name="nutrition_calendar_title">Lịch thực đơn</string>
+    <string name="nutrition_calendar_today">Hôm nay</string>
+    <string name="nutrition_calendar_week">Tuần</string>
+    <string name="nutrition_calendar_week_average">Trung bình tuần</string>
 
     <!-- 1i Profile & settings -->
     <string name="profile_back">Hồ sơ</string>

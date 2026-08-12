@@ -46,6 +46,9 @@ import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import com.fitviet.app.ui.common.RangePills
+import com.fitviet.app.ui.common.entranceFade
+import com.fitviet.app.ui.common.pressScale
+import com.fitviet.app.ui.common.tiltOnDrag
 import com.fitviet.app.ui.profile.MonogramAvatar
 import com.fitviet.app.ui.profile.avatarInitial
 import com.fitviet.app.ui.theme.Accent
@@ -59,6 +62,7 @@ import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.premiumShadow
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
@@ -186,16 +190,30 @@ fun DashboardScreen(
 
     // "Hit & Run" (Gate 63+) adaptive scheduling — see DashboardViewModel's `missedDay` doc for
     // why this is a one-shot-per-load check, not a continuously re-triggering prompt.
-    uiState.missedDay?.let { missed ->
-        MissedDayDialog(
-            missedDay = missed,
-            onPushToday = viewModel::pushMissedDayToToday,
-            onSkip = viewModel::skipMissedDay,
-            onViewPlan = {
-                viewModel.dismissMissedDayToViewPlan()
-                onViewMonthlyPlan()
-            },
+    // Gate D4 — a fresh streak milestone takes priority over the missed-day prompt when both are
+    // non-null at once (rare, but both are independently derived so nothing rules it out): showing
+    // both at the same time would stack two modal windows with competing back behavior. The missed
+    // day isn't lost, just deferred — it's untouched here, so it reappears the moment the milestone
+    // overlay above it is dismissed and this recomposes.
+    val streakMilestone = uiState.streakMilestone
+    if (streakMilestone != null) {
+        StreakMilestoneOverlay(
+            streakDays = uiState.stats.streakDays,
+            milestone = streakMilestone,
+            onDismiss = viewModel::dismissStreakMilestone,
         )
+    } else {
+        uiState.missedDay?.let { missed ->
+            MissedDayDialog(
+                missedDay = missed,
+                onPushToday = viewModel::pushMissedDayToToday,
+                onSkip = viewModel::skipMissedDay,
+                onViewPlan = {
+                    viewModel.dismissMissedDayToViewPlan()
+                    onViewMonthlyPlan()
+                },
+            )
+        }
     }
 }
 
@@ -242,6 +260,12 @@ private fun HeroCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .entranceFade()
+            // Gate D1 rollout — this is Dashboard's own hero card, the exact surface
+            // premiumShadow's Gate A1 doc comment names first, yet it never actually got the
+            // shadow applied until now.
+            .premiumShadow(radius = 18.dp, accentBloom = true)
+            .tiltOnDrag()
             .clip(MaterialTheme.shapes.large)
             .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd), start = Offset(0f, 0f)))
             .padding(Dimens.CardPaddingLarge),
@@ -287,9 +311,9 @@ private fun HeroCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .pressScale(onClick = onStart)
                 .clip(MaterialTheme.shapes.small)
                 .background(Accent)
-                .clickable(onClick = onStart)
                 .padding(vertical = 14.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -311,6 +335,7 @@ private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit,
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .tiltOnDrag()
             .clip(MaterialTheme.shapes.large)
             .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd), start = Offset(0f, 0f)))
             .padding(Dimens.CardPaddingLarge),
@@ -355,9 +380,9 @@ private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit,
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .pressScale(onClick = onStart)
                     .clip(MaterialTheme.shapes.small)
                     .background(Accent)
-                    .clickable(onClick = onStart)
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -385,10 +410,10 @@ private fun GenerateMonthlyPlanCard(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .pressScale(onClick = onClick)
             .clip(MaterialTheme.shapes.medium)
             .background(AccentSurfaceSelected)
             .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
-            .clickable(onClick = onClick)
             .padding(Dimens.CardPaddingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
