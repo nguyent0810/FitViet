@@ -55,7 +55,7 @@ fun HandbookFoodCategoryScreen(viewModel: HandbookFoodCategoryViewModel, onBack:
                 text = stringResource(R.string.handbook_foods_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextMuted,
-                modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, top = 24.dp),
+                modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal).padding(top = 24.dp),
             )
         } else {
             LazyColumn(
