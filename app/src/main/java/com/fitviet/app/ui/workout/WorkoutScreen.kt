@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,17 +24,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.ui.common.LoadingSkeleton
 import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrShapes
+import com.fitviet.app.util.formatMinutesSeconds
 import com.fitviet.app.util.formatWeight
 
 @Composable
@@ -50,7 +53,6 @@ fun WorkoutScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirm by remember { mutableStateOf(false) }
-    var showResetConfirm by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
         if (uiState.isLoading) {
@@ -62,7 +64,7 @@ fun WorkoutScreen(
             uiState.phase !is WorkoutPhase.NoSessionToday &&
             uiState.phase != WorkoutPhase.AwaitingPlanGeneration
         ) {
-            WorkoutHeader(uiState = uiState, onReset = { showResetConfirm = true }, onExit = { showExitConfirm = true })
+            WorkoutHeader(uiState = uiState, onExit = { showExitConfirm = true })
         }
 
         when (val phase = uiState.phase) {
@@ -113,7 +115,6 @@ fun WorkoutScreen(
                     onSkipRest = viewModel::skipRest,
                 )
             }
-            WorkoutPhase.StraightBlockDone -> StraightBlockDoneContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.SupersetWork -> SupersetWorkContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.SupersetRest -> {
                 val supersetBlock = (uiState.currentBlock as? WorkoutBlockPlan.Superset)?.plan
@@ -145,10 +146,10 @@ fun WorkoutScreen(
         )
     }
 
-    // Neither dialog colors its confirm button Danger — that token is reserved for genuinely
-    // permanent data loss (Settings' full-app reset). Losing an in-progress, unsaved workout is
-    // real but recoverable (the user can just start again), the same severity tier as the
-    // undecorated delete confirms elsewhere (RemindersScreen, MeasurementHistorySheet).
+    // Doesn't color its confirm button Danger — that token is reserved for genuinely permanent
+    // data loss (Settings' full-app reset). Losing an in-progress, unsaved workout is real but
+    // recoverable (the user can just start again), the same severity tier as the undecorated
+    // delete confirms elsewhere (RemindersScreen, MeasurementHistorySheet).
     if (showExitConfirm) {
         AlertDialog(
             onDismissRequest = { showExitConfirm = false },
@@ -166,80 +167,64 @@ fun WorkoutScreen(
             },
         )
     }
-
-    // Added alongside the exit dialog above: "Làm lại" discards the same in-progress logged sets
-    // and totals as "Thoát" does, and sits pixel-adjacent to it in WorkoutHeader with identical
-    // chrome — leaving it a single unconfirmed tap while its neighbor gained a confirm dialog
-    // protected the wrong button from an accidental double-tap.
-    if (showResetConfirm) {
-        AlertDialog(
-            onDismissRequest = { showResetConfirm = false },
-            title = { Text(text = stringResource(R.string.workout_reset_confirm_title)) },
-            text = { Text(text = stringResource(R.string.workout_reset_confirm_body)) },
-            confirmButton = {
-                TextButton(onClick = { showResetConfirm = false; viewModel.resetWorkout() }) {
-                    Text(text = stringResource(R.string.workout_reset_confirm_yes))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetConfirm = false }) {
-                    Text(text = stringResource(R.string.workout_exit_confirm_cancel))
-                }
-            },
-        )
-    }
 }
 
+/**
+ * Redesign Gate 4a-ii — collapsed to the mock's single line ("Lưng & Tay · Bài 1/3 · 0:42") plus
+ * one "Thoát" chip, replacing the old two-line header with a separate "Làm lại" chip next to it.
+ *
+ * "Làm lại" (restart-in-place) is deliberately dropped here, not just deferred — the mock's own
+ * header has no second chip for it, and [WorkoutViewModel.resetWorkout]'s in-progress-restart case
+ * (the only case this header's chip ever exercised) already has an equivalent path: "Thoát" already
+ * discards the same unsaved sets/totals, and re-entering the workout re-resolves the SAME
+ * not-yet-completed day (`observeIsDayCompleted` is false for an abandoned session), landing back
+ * at set 1 exactly like "Làm lại" did. The one capability this header's chip is NOT equivalent to —
+ * redoing an ALREADY-completed day, via [WorkoutViewModel]'s `resolvedTodayDayId`/`allowRestart`
+ * plumbing — was never reachable from here anyway (this header is hidden on
+ * [WorkoutPhase.SessionFinished]); it has no mock-specified home yet and is a known gap for a later
+ * gate, not something this change strands. [WorkoutViewModel.resetWorkout] itself is untouched and
+ * still covered by `WorkoutViewModelTest` — only this screen's own affordance for it is gone.
+ */
 @Composable
-private fun WorkoutHeader(uiState: WorkoutUiState, onReset: () -> Unit, onExit: () -> Unit) {
-    val exerciseName = when (val block = uiState.currentBlock) {
-        is WorkoutBlockPlan.Straight -> block.plan.exercise.nameVi
-        is WorkoutBlockPlan.Superset -> stringResource(R.string.superset_title)
-        null -> ""
-    }
+private fun WorkoutHeader(uiState: WorkoutUiState, onExit: () -> Unit) {
     Row(
-        modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Text(
-                text = stringResource(
-                    R.string.workout_exercise_progress,
-                    uiState.dayLabel,
-                    uiState.currentBlockIndex + 1,
-                    uiState.blocks.size,
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
-            )
-            Text(text = exerciseName, style = MaterialTheme.typography.headlineSmall)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 44.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-                    .clickable(onClick = onExit)
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.workout_exit), style = MaterialTheme.typography.labelMedium, color = TextFaint)
-            }
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 44.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-                    .clickable(onClick = onReset)
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.workout_reset), style = MaterialTheme.typography.labelMedium, color = TextFaint)
-            }
+        Text(
+            // Review finding (Gate 4a-ii) — this is the session/day title (mock's own {{ exName }}
+            // slot on this line is actually the day title in the literal markup, e.g. "Lưng & Tay"),
+            // NOT the current exercise name — that already renders in the photo overlay below.
+            // Passing the exercise name here duplicated it there and left dayLabel shown nowhere.
+            text = stringResource(
+                R.string.workout_header_line,
+                uiState.dayLabel,
+                uiState.currentBlockIndex + 1,
+                uiState.blocks.size,
+                formatMinutesSeconds(uiState.sessionElapsedSeconds),
+            ),
+            fontFamily = HrBody,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = HrColors.TextMid,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false).padding(end = 12.dp),
+        )
+        Box(
+            modifier = Modifier
+                .heightIn(min = 44.dp)
+                .clip(HrShapes.CardSmall)
+                .background(HrColors.Surface)
+                .border(1.dp, HrColors.Border, HrShapes.CardSmall)
+                .clickable(onClick = onExit)
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = stringResource(R.string.workout_exit), fontFamily = HrBody, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = HrColors.TextLow)
         }
     }
 }

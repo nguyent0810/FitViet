@@ -899,7 +899,7 @@ class WorkoutViewModelTest {
 
     /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block.
      * Redesign Gate 4a-i — completing a block's last set now lands on [WorkoutPhase.StraightRest]
-     * with a pending hand-off to the next block (no more [WorkoutPhase.StraightBlockDone]
+     * with a pending hand-off to the next block (no more `WorkoutPhase.StraightBlockDone`
      * interstitial), so [WorkoutViewModel.skipRest] is what consumes that hand-off now, not
      * [WorkoutViewModel.advanceToNextBlock] (which the straight path no longer reaches at all). */
     private fun advanceToSupersetBlock(h: Harness) {

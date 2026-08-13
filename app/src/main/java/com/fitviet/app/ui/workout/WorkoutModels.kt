@@ -21,15 +21,6 @@ sealed class WorkoutBlockPlan {
     data class Superset(val plan: SupersetBlockPlan) : WorkoutBlockPlan()
 }
 
-enum class SetRowStatus { DONE, CURRENT, PENDING }
-
-data class SetRowUiState(
-    val setIndex: Int,
-    val weightKg: Double,
-    val reps: Int,
-    val status: SetRowStatus,
-)
-
 /** A set as actually performed, ready to persist to Room. */
 data class LoggedSet(val exerciseId: Long, val exerciseOrder: Int, val setIndex: Int, val weightKg: Double, val reps: Int)
 
@@ -64,8 +55,12 @@ sealed class WorkoutPhase {
      * to log yet ([WorkoutViewModel] itself never navigates). */
     data object AwaitingPlanGeneration : WorkoutPhase()
     data object StraightLog : WorkoutPhase()
+    // Redesign Gate 4a-i/4a-ii — the straight path's old interstitial (StraightBlockDone) between
+    // exercises is gone: completing a block's last set now goes straight to an inter-exercise
+    // StraightRest that hands off to the next block, matching the mock's own completeSet (see
+    // WorkoutViewModel.completeCurrentSet's own doc). No replacement case needed — StraightRest
+    // already covers it.
     data object StraightRest : WorkoutPhase()
-    data object StraightBlockDone : WorkoutPhase()
     data object SupersetWork : WorkoutPhase()
     data object SupersetRest : WorkoutPhase()
     data object SupersetBlockDone : WorkoutPhase()

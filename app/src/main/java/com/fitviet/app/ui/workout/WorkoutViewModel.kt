@@ -46,7 +46,7 @@ data class WorkoutUiState(
      * timer's zero-out) to decide whether ending rest should hand off to [WorkoutViewModel.resetForBlock]
      * (a new block) or just flip back to [WorkoutPhase.StraightLog] (same block, next set) — see the
      * mock's own `completeSet`, which folds "advance to the next exercise" into the same rest
-     * transition rather than the old interstitial [WorkoutPhase.StraightBlockDone] screen. */
+     * transition rather than the old interstitial `StraightBlockDone` screen (removed in Gate 4a-ii). */
     val pendingNextBlockIndex: Int? = null,
     // Superset sub-state
     val supersetRound: Int = 1,
@@ -103,7 +103,15 @@ class WorkoutViewModel(
      * already knows its own day id). Lets [resetWorkout]'s bare-route "Làm lại" branch restart the
      * SAME day it originally resolved, bypassing `observeTodaySession`'s fresh re-resolution — which
      * would otherwise now correctly report `Completed` for a day the user just finished, refusing
-     * the very redo "Làm lại" exists to allow. */
+     * the very redo "Làm lại" exists to allow.
+     *
+     * Review finding (Gate 4a-ii) — [resetWorkout] has no production UI call site as of this gate
+     * (its own header chip was removed to match the mock; see [WorkoutScreen]'s `WorkoutHeader` doc
+     * for why that's intentional, not an oversight). This field, [resetWorkout] itself, and
+     * [runMonthlyPlanDaySession]'s `allowRestart` parameter are dormant, not dead — they stay
+     * correct and test-covered (`WorkoutViewModelTest`) for whenever a redo affordance gets a new
+     * home. Do NOT "clean up" `allowRestart` as an always-false parameter — it silently reintroduces
+     * the exact same-day-lockout bug `WorkoutSessionDao`'s own doc records as already fixed once. */
     private var resolvedTodayDayId: Long? = null
 
     /** Redesign Gate 4a-i — set synchronously, in the same call frame as the decision to finish
@@ -242,6 +250,11 @@ class WorkoutViewModel(
      * [loadInitialSession]) so the monthly-plan-day flow keeps resetting synchronously with no
      * loading-state frame, exactly as it did before Gate 24.
      *
+     * Gate 4a-ii — dormant, not dead: no screen calls this anymore (its own header chip was
+     * removed to match the mock), but `WorkoutViewModelTest` still exercises it directly and the
+     * logic stays correct for whenever a redo affordance is given a new home. See
+     * [resolvedTodayDayId]'s own doc for why its supporting fields must not be "cleaned up."
+     *
      * Phase 2 checkpoint fix — the no-arg branch used to always call [resolveTodaySessionAndStart],
      * which re-resolves "today" from scratch via `observeTodaySession`. Once that resolution
      * correctly reports `Completed` for a day the user just finished (this same gate's `Completed`
@@ -282,9 +295,8 @@ class WorkoutViewModel(
      * Redesign Gate 4a-i — mirrors the mock's own `completeSet`: the last set of the *session's*
      * last block goes straight to [finishSession] (no interstitial); the last set of any other
      * block advances to rest, then hands off to the next block via [pendingNextBlockIndex] once
-     * that rest ends; otherwise it's the old same-block, next-set rest. [WorkoutPhase.StraightBlockDone]
-     * is never entered from here anymore — it's dead code left in place for Gate 4a-ii to remove
-     * alongside its own Composable cleanup, not resurrected by anything in this gate.
+     * that rest ends; otherwise it's the old same-block, next-set rest. The old interstitial
+     * `StraightBlockDone` phase this replaced was removed entirely in Gate 4a-ii.
      */
     fun completeCurrentSet() = debounced {
         val state = _uiState.value
@@ -458,9 +470,12 @@ class WorkoutViewModel(
 
     // ---- Block/session transitions ----
 
+    // Redesign Gate 4a-ii — only the superset path calls this now (SupersetBlockDoneContent's own
+    // CTA); the straight path's completeCurrentSet() handles its own block-to-block hand-off
+    // directly (see that function's own doc), so it no longer needs this guard's other disjunct.
     fun advanceToNextBlock() = debounced {
         val state = _uiState.value
-        if (state.phase != WorkoutPhase.StraightBlockDone && state.phase != WorkoutPhase.SupersetBlockDone) return@debounced
+        if (state.phase != WorkoutPhase.SupersetBlockDone) return@debounced
         val nextIndex = state.currentBlockIndex + 1
         val nextBlock = state.blocks.getOrNull(nextIndex)
         if (nextBlock == null) {

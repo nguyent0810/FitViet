@@ -215,17 +215,25 @@
     <string name="split_custom_title">Tuỳ chỉnh</string>
 
     <!-- 1e Workout flow -->
-    <string name="workout_reset">Làm lại</string>
     <string name="workout_exit">Thoát</string>
     <string name="workout_exit_confirm_title">Thoát buổi tập?</string>
     <string name="workout_exit_confirm_body">Tiến trình buổi tập hiện tại sẽ không được lưu. Bạn có thể bắt đầu lại từ đầu bất cứ lúc nào.</string>
     <string name="workout_exit_confirm_yes">Thoát</string>
     <string name="workout_exit_confirm_cancel">Tiếp tục tập</string>
-    <string name="workout_reset_confirm_title">Làm lại buổi tập?</string>
-    <string name="workout_reset_confirm_body">Các set đã ghi trong buổi tập hiện tại sẽ bị xoá và buổi tập bắt đầu lại từ đầu.</string>
-    <string name="workout_reset_confirm_yes">Làm lại</string>
-    <string name="workout_exercise_progress">%1$s · Bài %2$d/%3$d</string>
-    <string name="workout_complete_set">Hoàn thành set %1$d</string>
+    <!-- Redesign Gate 4a-ii — the mock's single-line header: day title · block progress · running
+         timer (mm:ss), all in one row (see design_handoff_hit_and_run_redesign/README.md §4). -->
+    <string name="workout_header_line">%1$s · Bài %2$d/%3$d · %4$s</string>
+    <!-- workout_set_label + the current set number are separate composables (lime, bold) from this
+         suffix (dim) — see StraightLogContent's own SetProgressRow, matching the mock's per-span
+         styling. "Set" is used as-is in the mock's own Vietnamese copy, not translated. -->
+    <string name="workout_set_label">Set</string>
+    <string name="workout_set_progress_suffix">/%1$d · gợi ý %2$s kg × %3$d</string>
+    <string name="workout_set_done_row">Set %1$d · %2$s kg × %3$d reps</string>
+    <string name="workout_stepper_kg_label">KG</string>
+    <string name="workout_stepper_reps_label">REPS</string>
+    <string name="workout_complete_set">Xong set %1$d ✓</string>
+    <string name="workout_complete_set_last_of_exercise">Xong set %1$d → bài tiếp theo</string>
+    <string name="workout_complete_set_session_final">Xong set cuối — kết thúc buổi ✓</string>
     <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
     <string name="workout_tag_done">Xong</string>
     <string name="workout_tag_current">Đang tập</string>
@@ -238,13 +246,10 @@
     <string name="workout_rest_next_exercise">Tiếp theo: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 giây</string>
     <string name="workout_skip_rest">Bỏ qua</string>
-    <string name="workout_exercise_done_title">Hoàn thành bài tập!</string>
     <string name="workout_stat_sets">Set</string>
     <string name="workout_stat_volume">Tổng kg</string>
     <string name="workout_stat_time">Thời gian</string>
     <string name="workout_stat_kcal">Kcal (ước tính)</string>
-    <string name="workout_stat_reps">Lần</string>
-    <string name="workout_recommended_weight">Khối lượng gợi ý: %1$s kg</string>
     <string name="workout_next_exercise">Bài tiếp theo: %1$s →</string>
     <string name="workout_finish_session">Hoàn tất buổi tập</string>
 

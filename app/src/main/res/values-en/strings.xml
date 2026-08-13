@@ -210,17 +210,20 @@
     <string name="split_custom_title">Custom</string>
 
     <!-- 1e Workout flow -->
-    <string name="workout_reset">Restart</string>
     <string name="workout_exit">Exit</string>
     <string name="workout_exit_confirm_title">Exit workout?</string>
     <string name="workout_exit_confirm_body">Your progress on this workout won\'t be saved. You can start over anytime.</string>
     <string name="workout_exit_confirm_yes">Exit</string>
     <string name="workout_exit_confirm_cancel">Keep training</string>
-    <string name="workout_reset_confirm_title">Restart this workout?</string>
-    <string name="workout_reset_confirm_body">Sets logged in the current session will be discarded and the workout starts over.</string>
-    <string name="workout_reset_confirm_yes">Restart</string>
-    <string name="workout_exercise_progress">%1$s · Exercise %2$d/%3$d</string>
-    <string name="workout_complete_set">Complete set %1$d</string>
+    <string name="workout_header_line">%1$s · Exercise %2$d/%3$d · %4$s</string>
+    <string name="workout_set_label">Set</string>
+    <string name="workout_set_progress_suffix">/%1$d · suggested %2$s kg × %3$d</string>
+    <string name="workout_set_done_row">Set %1$d · %2$s kg × %3$d reps</string>
+    <string name="workout_stepper_kg_label">KG</string>
+    <string name="workout_stepper_reps_label">REPS</string>
+    <string name="workout_complete_set">Done set %1$d ✓</string>
+    <string name="workout_complete_set_last_of_exercise">Done set %1$d → next exercise</string>
+    <string name="workout_complete_set_session_final">Done last set — finish workout ✓</string>
     <string name="workout_set_kg_reps">%1$s kg × %2$d reps</string>
     <string name="workout_tag_done">Done</string>
     <string name="workout_tag_current">In progress</string>
@@ -230,13 +233,10 @@
     <string name="workout_rest_next_exercise">Next: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 sec</string>
     <string name="workout_skip_rest">Skip</string>
-    <string name="workout_exercise_done_title">Exercise complete!</string>
     <string name="workout_stat_sets">Sets</string>
     <string name="workout_stat_volume">Total kg</string>
     <string name="workout_stat_time">Time</string>
     <string name="workout_stat_kcal">Kcal (est.)</string>
-    <string name="workout_stat_reps">Reps</string>
-    <string name="workout_recommended_weight">Recommended weight: %1$s kg</string>
     <string name="workout_next_exercise">Next: %1$s →</string>
     <string name="workout_finish_session">Finish workout</string>
 
