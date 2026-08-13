@@ -22,4 +22,11 @@ interface CommunityPostDao {
 
     @Query("UPDATE community_posts SET likedByUser = :liked WHERE id = :id")
     suspend fun setLiked(id: Long, liked: Boolean)
+
+    /** Redesign Gate 6b — the destructive "reset app data" settings action. Safe to clear
+     * unconditionally (including the 3 seeded demo posts): `DatabaseSeeder.seedMissingCommunityPosts()`
+     * re-inserts them on the next launch, the same `count() == 0` backfill check every other
+     * "Missing" seeder uses. */
+    @Query("DELETE FROM community_posts")
+    suspend fun deleteAll()
 }

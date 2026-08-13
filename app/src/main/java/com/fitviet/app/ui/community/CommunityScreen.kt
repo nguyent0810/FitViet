@@ -67,10 +67,10 @@ private val COMMUNITY_TABS = listOf(
  * nút đăng trống"), so it moved there instead of staying in the header. `community_add_post`
  * (former header label) is deleted — see `community_footer_note` below.
  *
- * `WorkoutSharePostCard`'s dead `post.programTitle != null` branch (see `WorkoutViewModel.shareToCommunity`'s
- * own comment — always null since Gate 2b) is deleted here, and its stat tiles moved from the
- * legacy `SummaryTile` (now deleted, this was its last caller) to [HrSummaryTile] (see that
- * composable's own doc for the updated ownership note).
+ * `WorkoutSharePostCard`'s dead `post.programTitle != null` branch is deleted here (the column
+ * itself, `programTitle`, was write-only since Gate 2b and was dropped entirely in Gate 6b), and
+ * its stat tiles moved from the legacy `SummaryTile` (now deleted, this was its last caller) to
+ * [HrSummaryTile] (see that composable's own doc for the updated ownership note).
  */
 @Composable
 fun CommunityScreen(viewModel: CommunityViewModel) {
@@ -160,7 +160,14 @@ private fun PostCard(post: CommunityPostEntity, onLikeClick: () -> Unit) {
     }
 }
 
-/** Feature #4b (Gate 41) — renders Gate 40's structured columns instead of freeform [CommunityPostEntity.bodyText].
+/** Feature #4b (Gate 41) — renders Gate 40's structured columns instead of freeform [CommunityPostEntity.bodyText]
+ * for the stat grid, but (Gate 6b) [bodyText] itself is rendered too now — it was write-only from
+ * Gate 41 through Gate 6a (this card never read it; only [PostCard] did), which meant Gate 40's own
+ * static "Vừa hoàn thành buổi tập…" copy silently never appeared, and would have made Gate 6b's own
+ * new user-composed text (`CommunityRepository.shareWorkout`'s `userText` param) a second write-only
+ * field on top of it. Shown between the author header and the stat panel, same position [PostCard]
+ * gives the equivalent content.
+ *
  * Reuses [PostAuthorHeader]/[PostLikeCommentRow] (identical across every post type) and
  * [HrSummaryTile] (Gate 6a — moved off the legacy `SummaryTile`, same primitive `SessionFinishedContent`
  * uses), so a shared workout reads as a natural extension of the app's existing visual language
@@ -178,6 +185,9 @@ private fun WorkoutSharePostCard(post: CommunityPostEntity, onLikeClick: () -> U
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         PostAuthorHeader(post)
+        if (post.bodyText.isNotBlank()) {
+            Text(text = post.bodyText, fontFamily = HrBody, fontSize = 14.sp, lineHeight = 21.sp, color = HrColors.TextMid)
+        }
         // Gate 41's own mockup's "inset summary block" (not the Hit & Run redesign mock, which has
         // no stat grid here at all — see this file's own top doc) — visually separates "who posted"
         // (header, outside this panel) from "what they did" (this panel), rather than both sitting
@@ -191,8 +201,8 @@ private fun WorkoutSharePostCard(post: CommunityPostEntity, onLikeClick: () -> U
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Every session posted here is a monthly-plan-day session (see WorkoutViewModel's own
-            // comment) — there is no program title to show, only the day label.
+            // There is no program title to show, only the day label — `programTitle` was dropped
+            // from `CommunityPostEntity` entirely in Gate 6b (write-only since Gate 2b).
             Text(text = post.dayLabel.orEmpty(), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HrSummaryTile(

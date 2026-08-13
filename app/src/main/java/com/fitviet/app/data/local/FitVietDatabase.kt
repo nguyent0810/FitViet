@@ -146,7 +146,11 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // (its only two honoring call sites were both retired this gate; the one remaining
     // WorkoutPreview entry point, a program's optional "Xem trước" link, never honored it even
     // before this gate). Also removes `settings`' foreign key to `programs`.
-    version = 22,
+    // "Hit & Run" redesign Gate 6b raised this from 22 to 23: dropped `community_posts.programTitle`
+    // (write-only since Gate 2b — the only writer path was removed then, and its one reader was
+    // deleted in Gate 6a) and added a new nullable `community_posts.category` column (the share
+    // composer's category-pill tag, distinct from `postType` — see CommunityPostEntity's own doc).
+    version = 23,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

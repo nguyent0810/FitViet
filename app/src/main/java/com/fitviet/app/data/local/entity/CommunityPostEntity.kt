@@ -9,7 +9,10 @@ object CommunityPostType {
     const val QA = 1
     const val PROGRESS = 2
     /** Feature #4 (Gate 40) — a real post created from a finished [com.fitviet.app.ui.workout.WorkoutViewModel]
-     * session, distinct from [SHARE]'s generic seeded freeform posts. Populates the 5 columns below. */
+     * session, distinct from [SHARE]'s generic seeded freeform posts. Populates the 4 stat columns
+     * below (`dayLabel`/`durationSeconds`/`totalVolumeKg`/`streakDays`) directly; `category` is a
+     * 5th [WORKOUT_SHARE]-only column but is populated by the share composer (Gate 6c), not by the
+     * session-completion path itself. */
     const val WORKOUT_SHARE = 3
 }
 
@@ -35,16 +38,18 @@ data class CommunityPostEntity(
     val baseLikeCount: Int,
     val likedByUser: Boolean = false,
     val commentCount: Int,
-    /** [WORKOUT_SHARE]-only columns below, null for every other [postType]. [programTitle] is
-     * write-only as of Redesign Gate 2b — the only session path that could populate it (a
-     * program-day session) no longer exists (`WorkoutDurationPickerContent` and the program-day
-     * flow it belonged to were both cut), so `WorkoutViewModel.shareToCommunity()` always writes
-     * `null` here and no code reads it (the one reader, `CommunityScreen`'s programTitle-present
-     * branch, was deleted in Gate 6a since it was dead). Left in place pending a later gate's own
-     * data-layer cleanup rather than dropped alongside the UI branch. */
-    val programTitle: String? = null,
+    /** [WORKOUT_SHARE]-only columns below, null for every other [postType]. */
     val dayLabel: String? = null,
     val durationSeconds: Int? = null,
     val totalVolumeKg: Double? = null,
     val streakDays: Int? = null,
+    /** Redesign Gate 6b — the share composer's category pill (Tiến bộ/Hỏi đáp/Chia sẻ, i.e.
+     * [CommunityPostType.PROGRESS]/[CommunityPostType.QA]/[CommunityPostType.SHARE]), tagged onto
+     * a [WORKOUT_SHARE] post without changing its own [postType] — [postType] stays [WORKOUT_SHARE]
+     * so the post keeps its stat-grid rendering (`WorkoutSharePostCard`, an app extension beyond
+     * the mock's own plain-text feed), while [category] alone drives `CommunityFilter.byTab`'s
+     * PROGRESS/QA tab membership. Null until Gate 6c's composer exists to populate it — a share
+     * posted before then (or from any code path that never sets it) shows only under "Mới nhất",
+     * matching a [WORKOUT_SHARE] post's pre-Gate-6b behavior exactly. */
+    val category: Int? = null,
 )

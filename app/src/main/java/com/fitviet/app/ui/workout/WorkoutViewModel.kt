@@ -612,13 +612,10 @@ class WorkoutViewModel(
         if (state.sessionShared) return
         _uiState.update { it.copy(sessionShared = true) }
         viewModelScope.launch {
+            // Redesign Gate 6b — userText/category omitted: this call site still posts directly and
+            // immediately, exactly as before this gate. Gate 6c rewires this to open the share
+            // composer instead, which is what will actually supply both.
             communityRepository.shareWorkout(
-                // Redesign Gate 2b — no program-day session path remains to populate this (see
-                // this class's own constructor doc); a monthly-plan-day session never had a
-                // program title to begin with. `CommunityScreen`'s programTitle-present rendering
-                // branch was dead for the same reason and was deleted in Gate 6a; the entity/DAO
-                // column itself is left in place pending a later gate's own data-layer cleanup.
-                programTitle = null,
                 dayLabel = state.dayLabel,
                 durationSeconds = state.sessionElapsedSeconds,
                 totalVolumeKg = state.sessionTotalVolumeKg,

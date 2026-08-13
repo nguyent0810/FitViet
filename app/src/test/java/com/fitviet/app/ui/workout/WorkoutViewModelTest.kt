@@ -142,6 +142,7 @@ class WorkoutViewModelTest {
             return inserted.size.toLong()
         }
         override suspend fun setLiked(id: Long, liked: Boolean) {}
+        override suspend fun deleteAll() { inserted.clear() }
     }
 
     /** [days]/[exercisesByDay] fake a single monthly plan's persisted state, keyed by day id —
@@ -595,6 +596,11 @@ class WorkoutViewModelTest {
         assertEquals(state.sessionElapsedSeconds, post.durationSeconds)
         assertEquals(state.sessionTotalVolumeKg, post.totalVolumeKg)
         assertEquals(3, post.streakDays)
+        // Gate 6b — this call site omits userText/category (Gate 6c's composer is what will
+        // supply them), so shareWorkout()'s own fallback copy is what lands in bodyText, and
+        // category stays null (no dedicated tab until the composer tags one).
+        assertEquals("Vừa hoàn thành buổi tập!", post.bodyText)
+        assertEquals(null, post.category)
         assertTrue(h.viewModel.uiState.value.sessionShared)
         h.finish()
     }

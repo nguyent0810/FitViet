@@ -83,6 +83,7 @@ class AppContainer(context: Context) {
         mealDao = database.mealDao(),
         measurementDao = database.measurementDao(),
         settingsDao = database.settingsDao(),
+        communityPostDao = database.communityPostDao(),
     )
     val remindersRepository = RemindersRepository(database.reminderDao())
     val recipeRepository = RoomRecipeRepository(
