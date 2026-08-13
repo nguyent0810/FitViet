@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,11 @@ import com.fitviet.app.util.labelRes
 @Composable
 fun HandbookScreen(
     viewModel: HandbookViewModel,
+    // Redesign Phase 3b — Handbook dropped out of the bottom nav (see BottomNavBar's own doc), so
+    // it's now a real drill-in (reached from the Kế hoạch tab's "Thư viện bài tập" row) rather than
+    // a peer tab — it needs an explicit back affordance the same way every other drill-in screen in
+    // this app already has one (MonthlyPlanDetailScreen, ExerciseDetailScreen, DiaryScreen, ...).
+    onBack: () -> Unit,
     // Gate E5 — exercises no longer render inline here; a group card opens
     // HandbookMuscleGroupScreen, which is where an individual exercise's own tap-through lives.
     onMuscleGroupClick: (MuscleGroup) -> Unit,
@@ -53,7 +59,10 @@ fun HandbookScreen(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(text = stringResource(R.string.handbook_title), style = MaterialTheme.typography.headlineMedium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BackChip(onClick = onBack)
+                Text(text = stringResource(R.string.handbook_title), style = MaterialTheme.typography.headlineMedium)
+            }
             TabRow(selected = uiState.selectedTab, onSelect = viewModel::selectTab)
         }
         LazyColumn(
@@ -82,6 +91,21 @@ fun HandbookScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BackChip(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .clip(MaterialTheme.shapes.small)
+            .background(SurfaceCard)
+            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
     }
 }
 

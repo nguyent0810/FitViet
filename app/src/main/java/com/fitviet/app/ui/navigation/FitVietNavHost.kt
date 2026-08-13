@@ -329,8 +329,8 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId))
                     },
                     onViewFullMonth = { navController.navigate(FitVietDestination.MonthlyPlanDetail.route) },
-                    // Second entry point alongside the still-present Handbook bottom-nav tab —
-                    // removing that tab is Phase 3b's nav-consolidation job, not this gate's.
+                    // Redesign Phase 3b — now the sole entry point: Handbook's own bottom-nav tab
+                    // is gone (see BottomNavBar's own doc), so this is the only way in.
                     onOpenExerciseLibrary = { navController.navigate(FitVietDestination.Handbook.route) },
                 )
             }
@@ -577,6 +577,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: HandbookViewModel = viewModel(factory = HandbookViewModel.Factory(container.handbookRepository))
                 HandbookScreen(
                     viewModel = viewModel,
+                    // Redesign Phase 3b — Handbook is now a drill-in (see HandbookScreen's own
+                    // `onBack` doc), reached only via the Kế hoạch tab, so there's always a real
+                    // back-stack entry to pop.
+                    onBack = { navController.popBackStack() },
                     onMuscleGroupClick = { group ->
                         navController.navigate(FitVietDestination.HandbookMuscleGroup.createRoute(group.name))
                     },

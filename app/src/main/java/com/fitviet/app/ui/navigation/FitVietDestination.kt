@@ -118,10 +118,12 @@ sealed class FitVietDestination(val route: String) {
 }
 
 // Destinations that show the persistent bottom nav bar (matches 1b/1c/1g/1h in the design spec).
+// Redesign Phase 3b — Handbook dropped: it's no longer a top-level tab (see BottomNavBar's own
+// NAV_ITEMS_RIGHT doc), reached instead via the Kế hoạch tab's "Thư viện bài tập" row, same
+// drill-in treatment MonthlyPlanDetail/ExerciseDetail already get (neither shows the bottom bar).
 val BOTTOM_NAV_ROUTES = setOf(
     FitVietDestination.Home.route,
     FitVietDestination.Programs.route,
     FitVietDestination.Nutrition.route,
     FitVietDestination.Community.route,
-    FitVietDestination.Handbook.route,
 )

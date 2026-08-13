@@ -38,10 +38,13 @@ private val NAV_ITEMS_LEFT = listOf(
     NavItem(FitVietDestination.Home, R.string.nav_home),
     NavItem(FitVietDestination.Programs, R.string.nav_programs),
 )
+// Redesign Phase 3b — Handbook dropped from here (see FitVietDestination.BOTTOM_NAV_ROUTES' own
+// doc): reachable via the Kế hoạch tab's "Thư viện bài tập" row instead, per the mock's own "6 mục
+// → 4 tab + TẬP" nav consolidation. Back to 2/2 with NAV_ITEMS_LEFT, which incidentally resolves
+// the centering compromise the old 2-vs-3 split forced (see the Row below).
 private val NAV_ITEMS_RIGHT = listOf(
     NavItem(FitVietDestination.Nutrition, R.string.nav_nutrition),
     NavItem(FitVietDestination.Community, R.string.nav_community),
-    NavItem(FitVietDestination.Handbook, R.string.nav_handbook),
 )
 
 @Composable
@@ -58,28 +61,13 @@ fun BottomNavBar(
                 .height(1.dp)
                 .background(CardBorder),
         )
-        // Gate 25 added a 5th regular item (Handbook), so the two sides no longer have equal
-        // counts (2 left, 3 right) — an odd total that provably can't satisfy both "every item is
-        // the same width" AND "the FAB sits at the bar's exact mathematical center" at once (2
-        // items and 3 items can only occupy equal-width halves if their own per-item widths
-        // differ, and can only have equal per-item widths if the two halves' total widths differ).
-        // A prior attempt tried decoupling the FAB into a `Box`-overlay pinned to `Alignment
-        // .Center`, independent of a `Spacer` left in the item `Row` — review confirmed the FAB
-        // itself does land at the true center that way, but the `Row`'s own internal gap does NOT
-        // (same ~30dp asymmetry as ever, just moved from "the FAB" to "the gap"), so the
-        // true-centered FAB ends up physically overlapping ~16-18dp of the 3rd nav item's touch
-        // target — since the FAB is composed last (topmost hit-test layer) and is clickable, THAT
-        // failure mode can silently steal taps meant for a real nav destination. A cosmetically
-        // off-center FAB is a minor visual nitpick; a nav item that intermittently swallows taps is
-        // a real usability regression — so this reverts to weighting the two side-`Row`s by their
-        // own item count (2f left / 3f right), which review already confirmed gives every item a
-        // genuinely equal share of the bar's width with NO overlap risk (the FAB is a plain,
-        // non-overlapping sibling sitting in the natural gap between the two `Row`s, not a floating
-        // overlay). The tradeoff: the FAB itself sits ~25-35dp left of the bar's exact mathematical
-        // center. That asymmetry is real and intentionally accepted, not an oversight — there is no
-        // layout that avoids it without either changing the FAB's visual design (e.g. a fully
-        // above-the-bar docked FAB with no embedded overlap at all) or reducing the item count back
-        // to an even split, neither of which is this gate's scope.
+        // Redesign Phase 3b restored the 2 left / 2 right split (Handbook's removal, see
+        // NAV_ITEMS_RIGHT's own doc) that Gate 25's 5th item had broken — weighting each side by
+        // its own item count now gives every item an equal share AND puts the FAB at the bar's
+        // true mathematical center, with no overlap risk. (Gate 25 through Phase 3a ran with an
+        // asymmetric 2 left / 3 right split and an off-center FAB as a deliberate, documented
+        // trade-off rather than risk the FAB's hit-test layer stealing taps from a nav item — that
+        // trade-off is moot now that the counts match again.)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,10 +93,9 @@ fun BottomNavBar(
 private fun RowScope.NavItemView(item: NavItem, selected: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            // Gate 25's Handbook tab made the right side hold 3 items instead of 2 — weight(1f)
-            // caps each item to an equal share of its side's width so a long Vietnamese label
-            // (e.g. "Dinh dưỡng") can't push its neighbors into clipping/overlap on narrow screens;
-            // sizeIn's minHeight still guarantees the touch-target floor.
+            // weight(1f) caps each item to an equal share of its side's width so a long
+            // Vietnamese label (e.g. "Dinh dưỡng") can't push its neighbors into clipping/overlap
+            // on narrow screens; sizeIn's minHeight still guarantees the touch-target floor.
             .weight(1f)
             .sizeIn(minHeight = Dimens.MinTouchTarget)
             .clickable(onClick = onClick),

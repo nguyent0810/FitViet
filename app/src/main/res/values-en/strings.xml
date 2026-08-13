@@ -8,7 +8,6 @@
     <string name="nav_workout_fab">TRAIN</string>
     <string name="nav_nutrition">Nutrition</string>
     <string name="nav_community">Community</string>
-    <string name="nav_handbook">Handbook</string>
 
     <!-- Redesign Gate 2a — single-screen onboarding (replaces GoalLevelScreen + SplitScreen) -->
     <string name="onboarding_kicker">FITVIET · 100% FREE</string>

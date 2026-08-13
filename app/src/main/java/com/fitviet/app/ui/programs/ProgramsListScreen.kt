@@ -240,6 +240,16 @@ fun ProgramsListScreen(
         item {
             FilterChips(selectedIndex = uiState.selectedFilterIndex, onSelect = viewModel::onFilterSelected)
         }
+        item {
+            // Redesign Phase 3b review — moved up from the very bottom of the list: once
+            // Handbook lost its own bottom-nav tab (see FitVietNavHost's onOpenExerciseLibrary
+            // doc), this row became the library's ONLY entry point, and burying the sole entry
+            // point below the full program list (a screen's worth of scrolling, more once a
+            // search query populates matchingExercises) would have made a previously one-tap
+            // feature hard to find. Placed here since exercise browsing thematically belongs
+            // next to the search/filter block above, not after the sample-program list below.
+            LibraryEntryRow(onClick = onOpenExerciseLibrary)
+        }
         if (uiState.matchingExercises.isNotEmpty()) {
             item {
                 Text(
@@ -291,9 +301,6 @@ fun ProgramsListScreen(
                     },
                 )
             }
-        }
-        item {
-            LibraryEntryRow(onClick = onOpenExerciseLibrary)
         }
     }
 

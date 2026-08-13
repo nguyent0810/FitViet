@@ -8,7 +8,6 @@
     <string name="nav_workout_fab">TẬP</string>
     <string name="nav_nutrition">Dinh dưỡng</string>
     <string name="nav_community">Cộng đồng</string>
-    <string name="nav_handbook">Cẩm nang</string>
 
     <!-- Redesign Gate 2a — single-screen onboarding (replaces GoalLevelScreen + SplitScreen) -->
     <string name="onboarding_kicker">FITVIET · MIỄN PHÍ 100%</string>
