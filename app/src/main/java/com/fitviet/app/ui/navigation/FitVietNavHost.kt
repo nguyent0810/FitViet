@@ -15,7 +15,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
@@ -25,7 +24,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
@@ -70,9 +68,8 @@ import com.fitviet.app.ui.nutrition.recipedetail.RecipeDetailScreen
 import com.fitviet.app.ui.nutrition.recipedetail.RecipeDetailViewModel
 import com.fitviet.app.ui.nutrition.templates.TemplatesScreen
 import com.fitviet.app.ui.nutrition.templates.TemplatesViewModel
-import com.fitviet.app.ui.onboarding.GoalLevelScreen
+import com.fitviet.app.ui.onboarding.OnboardingScreen
 import com.fitviet.app.ui.onboarding.OnboardingViewModel
-import com.fitviet.app.ui.onboarding.SplitScreen
 import com.fitviet.app.ui.profile.ProfileEditScreen
 import com.fitviet.app.ui.profile.ProfileEditViewModel
 import com.fitviet.app.ui.profile.ProfileScreen
@@ -96,8 +93,6 @@ import com.fitviet.app.util.LocaleController
 import java.time.DayOfWeek
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-
-private const val ONBOARDING_GRAPH_ROUTE = "onboarding"
 
 @Composable
 fun FitVietNavHost(container: AppContainer) {
@@ -125,7 +120,7 @@ fun FitVietNavHost(container: AppContainer) {
 private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer) {
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    val startDestination = if (startAtOnboarding) ONBOARDING_GRAPH_ROUTE else FitVietDestination.Home.route
+    val startDestination = if (startAtOnboarding) FitVietDestination.Onboarding.route else FitVietDestination.Home.route
     // "Hit & Run" (Gate 63+) Phase 9 — read once here, at the graph level, so every "start a
     // program-day session" call site below applies the same toggle consistently.
     val skipWorkoutPreview by container.skipWorkoutPreview.collectAsStateWithLifecycle(initialValue = false)
@@ -162,39 +157,41 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 popEnterTransition = { fadeIn(animationSpec = tween(220)) },
                 popExitTransition = { fadeOut(animationSpec = tween(180)) },
             ) {
-            navigation(startDestination = FitVietDestination.OnboardingGoal.route, route = ONBOARDING_GRAPH_ROUTE) {
-                composable(FitVietDestination.OnboardingGoal.route) { backStackEntry ->
-                    val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(ONBOARDING_GRAPH_ROUTE) }
-                    val viewModel: OnboardingViewModel = viewModel(
-                        parentEntry,
-                        factory = OnboardingViewModel.Factory(container.onboardingRepository),
-                    )
-                    GoalLevelScreen(
-                        viewModel = viewModel,
-                        onContinue = { navController.navigate(FitVietDestination.OnboardingSplit.route) },
-                    )
-                }
-                composable(FitVietDestination.OnboardingSplit.route) { backStackEntry ->
-                    val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(ONBOARDING_GRAPH_ROUTE) }
-                    val viewModel: OnboardingViewModel = viewModel(
-                        parentEntry,
-                        factory = OnboardingViewModel.Factory(container.onboardingRepository),
-                    )
-                    val coroutineScope = rememberCoroutineScope()
-                    SplitScreen(
-                        viewModel = viewModel,
-                        onContinue = {
-                            // Await the write before navigating — popUpTo below clears the
-                            // graph-scoped ViewModel, which would cancel an in-flight write.
-                            coroutineScope.launch {
-                                viewModel.completeOnboarding()
-                                navController.navigate(FitVietDestination.Home.route) {
-                                    popUpTo(ONBOARDING_GRAPH_ROUTE) { inclusive = true }
+            composable(FitVietDestination.Onboarding.route) {
+                val viewModel: OnboardingViewModel = viewModel(
+                    factory = OnboardingViewModel.Factory(container.onboardingRepository, container.monthlyPlanRepository),
+                )
+                val coroutineScope = rememberCoroutineScope()
+                val onboardingContext = LocalContext.current
+                OnboardingScreen(
+                    viewModel = viewModel,
+                    // "Tạo plan & vào tập →" — await the write+generate before navigating (popUpTo
+                    // below clears this screen's own ViewModel, which would cancel an in-flight
+                    // write), then land straight in the live workout session for today, the exact
+                    // same no-arg entry point the bottom-nav FAB uses — Gate 1d-i's today-anchored
+                    // offsets guarantee the plan just generated always has a trainable day today.
+                    onSubmit = {
+                        coroutineScope.launch {
+                            try {
+                                if (viewModel.submit()) {
+                                    navController.navigate(FitVietDestination.Home.route) {
+                                        popUpTo(FitVietDestination.Onboarding.route) { inclusive = true }
+                                    }
+                                    navController.navigate(FitVietDestination.Workout.createRoute())
                                 }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e("Onboarding", "submit() failed", e)
+                                Toast.makeText(
+                                    onboardingContext,
+                                    onboardingContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             }
-                        },
-                    )
-                }
+                        }
+                    },
+                )
             }
             composable(FitVietDestination.Home.route) {
                 val viewModel: DashboardViewModel = viewModel(
@@ -248,7 +245,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
                     // Await the write before navigating — same reasoning as onboarding's
-                    // completeOnboarding() above: popping this screen off the back stack would
+                    // submit() above: popping this screen off the back stack would
                     // otherwise risk cancelling the generation transaction mid-flight.
                     // A user-reported "tapping the button does nothing" bug traced to this call
                     // silently swallowing whatever monthlyPlanRepository.generate() throws (no
@@ -359,7 +356,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         // Explicit imperative nav back to onboarding — see SettingsViewModel's
                         // class doc for why the reactive onboardingCompleted check alone can't
                         // move an already-live NavController sitting deep in this back stack.
-                        navController.navigate(ONBOARDING_GRAPH_ROUTE) {
+                        navController.navigate(FitVietDestination.Onboarding.route) {
                             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                             launchSingleTop = true
                         }

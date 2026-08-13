@@ -1,8 +1,9 @@
 package com.fitviet.app.ui.navigation
 
 sealed class FitVietDestination(val route: String) {
-    data object OnboardingGoal : FitVietDestination("onboarding/goal")
-    data object OnboardingSplit : FitVietDestination("onboarding/split")
+    /** Redesign Gate 2a — the old 2-step OnboardingGoal/OnboardingSplit pair collapsed to this one
+     * screen (see [com.fitviet.app.ui.onboarding.OnboardingScreen]). */
+    data object Onboarding : FitVietDestination("onboarding/main")
     data object Home : FitVietDestination("home")
     data object Programs : FitVietDestination("programs")
     data object Nutrition : FitVietDestination("nutrition")

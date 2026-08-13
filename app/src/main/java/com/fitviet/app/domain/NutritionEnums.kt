@@ -23,6 +23,19 @@ enum class NutritionGoal {
     }
 }
 
+/** Redesign Gate 2a — the one-time seed from onboarding's [NutritionGoal] pill to a real
+ * [TrainingGoal] for the very first generate (before any [com.fitviet.app.data.local.entity
+ * .MonthlyPlanEntity] exists to read its own goal back from). Moved here from
+ * [com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel] (formerly a private `trainingGoalFor`)
+ * so onboarding's own submit — which now generates the first plan directly, matching the mock's
+ * "Tạo plan & vào tập →" single-tap CTA — can share the exact same mapping instead of duplicating
+ * it. Cutting is a nutrition strategy, not a distinct set/rep prescription, so both CUT and
+ * MAINTAIN seed the same GENERAL_FITNESS training goal — deliberately, not a rounding accident. */
+fun NutritionGoal.toInitialTrainingGoal(): TrainingGoal = when (this) {
+    NutritionGoal.BULK -> TrainingGoal.HYPERTROPHY
+    NutritionGoal.CUT, NutritionGoal.MAINTAIN -> TrainingGoal.GENERAL_FITNESS
+}
+
 /** Same history-preserving lifecycle as [MonthlyPlanStatus] (minus `ARCHIVED`, which that enum
  * never actually uses either) — a new [com.fitviet.app.data.local.entity.UserMealPlanEntity]
  * flips the previous ACTIVE row to SUPERSEDED rather than deleting it. */

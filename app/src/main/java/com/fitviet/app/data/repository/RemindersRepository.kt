@@ -20,7 +20,7 @@ class RemindersRepository(private val reminderDao: ReminderDao) {
      * controls: day pills, the enabled pill, snooze, time sheet) must never overwrite a sibling
      * field a concurrent tap already changed. No-ops if the row was deleted concurrently. Same
      * re-read-at-write-time shape as [ProfileRepository]'s `updateSettings`/
-     * [OnboardingViewModel]'s `updateSelection`. */
+     * [OnboardingRepository]'s `updateSelectedLevel`. */
     suspend fun update(id: Long, transform: (ReminderEntity) -> ReminderEntity) {
         val current = reminderDao.getById(id) ?: return
         reminderDao.update(transform(current))

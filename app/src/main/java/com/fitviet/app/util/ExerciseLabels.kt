@@ -34,9 +34,8 @@ fun ExerciseDifficulty.labelRes(): Int = when (this) {
 
 /** "Hit & Run" redesign (Gate 1b) — Profile's goal label, keyed by the enum
  * [com.fitviet.app.data.local.entity.SettingsEntity.selectedGoal] now stores directly, instead of
- * indexing [com.fitviet.app.ui.onboarding.GOAL_OPTIONS] positionally (that list is onboarding-only
- * UI copy and about to shrink/change shape independently of this enum). Reuses the exact same
- * string resources [com.fitviet.app.ui.onboarding.GOAL_OPTIONS] already pointed at. */
+ * indexing a positional onboarding option list (Gate 2a deleted that list entirely — onboarding's
+ * own goal pills now bind to [NutritionGoal] directly too, via the same string resources). */
 @StringRes
 fun NutritionGoal.titleRes(): Int = when (this) {
     NutritionGoal.BULK -> R.string.goal_muscle_gain_title

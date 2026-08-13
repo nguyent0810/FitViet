@@ -10,45 +10,40 @@
     <string name="nav_community">Cộng đồng</string>
     <string name="nav_handbook">Cẩm nang</string>
 
-    <!-- 1a Onboarding — goal & level -->
-    <string name="onboarding_goal_title">Mục tiêu của bạn là gì?</string>
-    <string name="onboarding_goal_subtitle">Giáo án sẽ được gợi ý theo mục tiêu này. Bạn có thể đổi bất cứ lúc nào.</string>
+    <!-- Redesign Gate 2a — single-screen onboarding (replaces GoalLevelScreen + SplitScreen) -->
+    <string name="onboarding_kicker">FITVIET · MIỄN PHÍ 100%</string>
+    <string name="onboarding_title">Trả lời 3 câu,\ntập luôn hôm nay</string>
+    <string name="onboarding_goal_label">MỤC TIÊU</string>
+    <!-- Mock's onboarding pill for MAINTAIN is the short "Khỏe mạnh", distinct from goal_health_title
+         ("Giữ dáng, khỏe mạnh") which Profile/Quick Generate show as a longer standalone label. -->
+    <string name="onboarding_goal_maintain_pill">Khỏe mạnh</string>
     <string name="goal_muscle_gain_title">Tăng cơ</string>
     <string name="goal_muscle_gain_sub">Xây dựng khối cơ, tăng cân sạch</string>
     <string name="goal_fat_loss_title">Giảm mỡ</string>
-    <string name="goal_fat_loss_sub">Đốt calo, giữ cơ khi siết</string>
     <string name="goal_strength_title">Tăng sức mạnh</string>
     <string name="goal_strength_sub">Tập trung các bài compound nặng</string>
     <string name="goal_health_title">Giữ dáng, khỏe mạnh</string>
     <string name="goal_health_sub">Duy trì vận động đều đặn</string>
-    <string name="onboarding_level_label">Trình độ hiện tại</string>
+    <string name="onboarding_equipment_label">BẠN TẬP Ở ĐÂU</string>
+    <string name="onboarding_days_label">SỐ BUỔI / TUẦN</string>
+    <string name="onboarding_note">Trình độ, kiểu chia buổi, cân nặng… app tự ước lượng và học dần từ các buổi tập — chỉnh sau trong Hồ sơ nếu muốn.</string>
+    <string name="onboarding_submit">Tạo plan &amp; vào tập →</string>
+    <string name="onboarding_footer">Không cần tài khoản · dữ liệu lưu trên máy</string>
     <string name="level_beginner">Mới bắt đầu</string>
     <string name="level_intermediate">Trung cấp</string>
     <string name="level_advanced">Nâng cao</string>
-    <string name="onboarding_continue">Tiếp tục</string>
-    <string name="onboarding_footer">Miễn phí 100%\u0020·\u0020Không cần tài khoản</string>
 
-    <!-- 2a Onboarding — training split -->
-    <string name="split_title">Bạn muốn chia lịch tập thế nào?</string>
-    <string name="split_days_label">Số buổi mỗi tuần</string>
-    <string name="split_subtitle_prefix">Gợi ý theo số buổi/tuần bạn đã chọn:\u0020</string>
-    <string name="split_subtitle_days">%1$d buổi</string>
-    <string name="split_recommended_badge">GỢI Ý</string>
+    <!-- Split templates — QuickGenerateScreen's own picker (onboarding no longer asks about split) -->
     <string name="split_ppl_title">Push – Pull – Legs</string>
     <string name="split_ppl_sub">Đẩy · Kéo · Chân — cân bằng, hợp 3 hoặc 6 buổi/tuần</string>
     <string name="split_upper_lower_title">Upper – Lower</string>
     <string name="split_upper_lower_sub">Thân trên · thân dưới — mỗi nhóm cơ 2 lần/tuần với 4 buổi</string>
-    <string name="split_chest_back_title">Ngực + tay sau / Xô + tay trước</string>
-    <string name="split_chest_back_sub">Ghép nhóm cơ hỗ trợ — tiết kiệm thời gian, cơ phụ đã nóng</string>
     <string name="split_bro_title">Bro split</string>
     <string name="split_bro_sub">Mỗi ngày 1–2 nhóm cơ — tập sâu, pump tốt</string>
     <string name="split_phul_title">PHUL</string>
     <string name="split_phul_sub">Sức mạnh &amp; Phì đại xen kẽ — hợp 4 buổi/tuần</string>
     <string name="split_fullbody_title">Full body</string>
     <string name="split_fullbody_sub">Toàn thân mỗi buổi — hợp người mới, 2–3 buổi/tuần</string>
-    <string name="split_info_prefix">Ưu tiên riêng:\u0020</string>
-    <string name="split_info_body">thêm 2 ngày ngực, 2 ngày tay… — tùy chỉnh ở bước sau.</string>
-    <string name="split_continue">Tiếp tục</string>
 
     <!-- "Hit &amp; Run" (Gate 63+) — Quick Generate screen -->
     <string name="quick_generate_title">Tạo lịch tháng</string>

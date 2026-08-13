@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,10 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fitviet.app.R
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
@@ -43,7 +40,6 @@ fun SelectionCard(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    recommended: Boolean = false,
     horizontalPadding: Dp = 18.dp,
     verticalPadding: Dp = 16.dp,
 ) {
@@ -63,26 +59,11 @@ fun SelectionCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = title, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                if (recommended) RecommendedBadge()
-            }
+            Text(text = title, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
             Text(text = subtitle, style = MaterialTheme.typography.labelMedium, color = TextMuted, modifier = Modifier.padding(top = 3.dp))
         }
         SelectionDot(selected = selected)
     }
-}
-
-@Composable
-private fun RecommendedBadge() {
-    Text(
-        text = stringResource(R.string.split_recommended_badge),
-        style = MaterialTheme.typography.labelSmall,
-        color = OnAccent,
-        modifier = Modifier
-            .background(color = Accent, shape = MaterialTheme.shapes.extraSmall)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    )
 }
 
 @Composable
@@ -163,21 +144,5 @@ fun OnboardingPrimaryButton(text: String, onClick: () -> Unit, modifier: Modifie
         contentAlignment = Alignment.Center,
     ) {
         Text(text = text, style = MaterialTheme.typography.titleMedium, color = OnAccent)
-    }
-}
-
-/** N-segment progress bar; [filledCount] segments render accent, the rest render idle. */
-@Composable
-fun OnboardingProgressBar(totalSteps: Int, filledCount: Int, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        repeat(totalSteps) { index ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(if (index < filledCount) Accent else CardBorder),
-            )
-        }
     }
 }

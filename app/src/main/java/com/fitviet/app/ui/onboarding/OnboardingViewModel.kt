@@ -2,82 +2,88 @@ package com.fitviet.app.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import com.fitviet.app.data.repository.MonthlyPlanRepository
+import com.fitviet.app.data.repository.MonthlyPlanUserChoices
 import com.fitviet.app.data.repository.OnboardingRepository
+import com.fitviet.app.domain.ExerciseDifficulty
+import com.fitviet.app.domain.NutritionGoal
+import com.fitviet.app.domain.defaultSplitTemplateFor
+import com.fitviet.app.domain.toInitialTrainingGoal
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 data class OnboardingUiState(
-    // Defaults mirror the prototype: goal/level/split each start on their first option pre-selected.
-    val selectedGoal: Int = 0,
-    val selectedLevel: Int = 0,
-    val selectedSplit: Int = 0,
-    val selectedDaysPerWeek: Int = 3,
+    val goal: NutritionGoal = NutritionGoal.BULK,
+    /** Redesign Gate 2a — null = "Phòng gym" (unconstrained), [com.fitviet.app.domain
+     * .EquipmentProfiles.HOME_DUMBBELLS] = "Tại nhà". Same semantics as [com.fitviet.app.data
+     * .local.entity.SettingsEntity.equipmentProfile]. */
+    val equipmentProfile: String? = null,
+    // Mock pre-selects "4" on the SỐ BUỔI/TUẦN row (see the onboarding mock section).
+    val daysPerWeek: Int = 4,
+    val isSubmitting: Boolean = false,
 )
 
-class OnboardingViewModel(private val repository: OnboardingRepository) : ViewModel() {
+/**
+ * "Hit & Run" redesign (Gate 2a) — the single-screen onboarding replacing the old
+ * GoalLevelScreen + SplitScreen pair. Purely local UI state: the old multi-step flow saved every
+ * tap to Room incrementally because progress could be lost navigating between two screens: with
+ * only one screen and one explicit submit action, [submit] just writes and generates atomically
+ * instead. Level and split are never asked here: level defaults to [ExerciseDifficulty.BEGINNER]
+ * (see [OnboardingRepository.updateSelectedLevel] for how Quick Generate later keeps it honest once
+ * the user actually picks a level there), and split is auto-derived via [defaultSplitTemplateFor].
+ */
+class OnboardingViewModel(
+    private val onboardingRepository: OnboardingRepository,
+    private val monthlyPlanRepository: MonthlyPlanRepository,
+) : ViewModel() {
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
-    // Guards every Room write below so concurrent selection taps can't land out of order
-    // and silently revert a newer choice — see Gate 2 codex review.
-    private val writeMutex = Mutex()
-
-    init {
-        viewModelScope.launch {
-            writeMutex.withLock {
-                val saved = repository.getSelectionsAsIndices()
-                _uiState.update {
-                    it.copy(
-                        selectedGoal = saved.goal,
-                        selectedLevel = saved.level,
-                        selectedSplit = saved.split,
-                        selectedDaysPerWeek = saved.daysPerWeek,
-                    )
-                }
-            }
-        }
-    }
-
-    fun selectGoal(index: Int) = updateSelection { it.copy(selectedGoal = index) }
-
-    fun selectLevel(index: Int) = updateSelection { it.copy(selectedLevel = index) }
-
-    fun selectSplit(index: Int) = updateSelection { it.copy(selectedSplit = index) }
-
-    fun selectDaysPerWeek(days: Int) = updateSelection { it.copy(selectedDaysPerWeek = days) }
+    fun selectGoal(goal: NutritionGoal) = _uiState.update { it.copy(goal = goal) }
+    fun selectEquipmentProfile(equipmentProfile: String?) = _uiState.update { it.copy(equipmentProfile = equipmentProfile) }
+    fun selectDaysPerWeek(days: Int) = _uiState.update { it.copy(daysPerWeek = days) }
 
     /**
-     * Marks onboarding done — call and await from the UI before navigating past 2a, so the write
-     * can't be cancelled by the graph-scoped ViewModel being cleared right after navigation.
+     * "Tạo plan & vào tập →" — writes the 3 answers, then generates the first monthly plan
+     * directly (the mock's single-tap CTA; the caller navigates straight into the live workout
+     * session on success — the exact same no-arg entry point Gate 1c's [com.fitviet.app.ui
+     * .workout.WorkoutViewModel] already resolves "today" through, guaranteed trainable by
+     * Gate 1d-i's today-anchored offsets). Returns false (a no-op) if already submitting, same
+     * double-tap guard [com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel.generate] uses;
+     * lets real exceptions propagate for the same reason — caught and toasted at the nav call site,
+     * not swallowed here.
      */
-    suspend fun completeOnboarding() {
-        writeMutex.withLock {
-            val state = _uiState.value
-            repository.completeOnboarding(state.selectedGoal, state.selectedLevel, state.selectedSplit, state.selectedDaysPerWeek)
+    suspend fun submit(): Boolean {
+        val state = _uiState.value
+        if (state.isSubmitting) return false
+        _uiState.update { it.copy(isSubmitting = true) }
+        return try {
+            onboardingRepository.completeOnboarding(state.goal, state.equipmentProfile, state.daysPerWeek)
+            monthlyPlanRepository.generate(
+                MonthlyPlanUserChoices(
+                    goal = state.goal.toInitialTrainingGoal(),
+                    level = ExerciseDifficulty.BEGINNER,
+                    splitTemplate = defaultSplitTemplateFor(state.daysPerWeek),
+                    daysPerWeek = state.daysPerWeek,
+                    equipmentProfile = state.equipmentProfile,
+                ),
+                LocalDate.now(),
+            )
+            true
+        } finally {
+            _uiState.update { it.copy(isSubmitting = false) }
         }
     }
 
-    private fun updateSelection(transform: (OnboardingUiState) -> OnboardingUiState) {
-        _uiState.update(transform)
-        viewModelScope.launch {
-            writeMutex.withLock {
-                // Re-read the freshest state at write time, not what was current when this
-                // coroutine was launched — keeps out-of-order writes from reverting a later tap.
-                val state = _uiState.value
-                repository.saveSelections(state.selectedGoal, state.selectedLevel, state.selectedSplit, state.selectedDaysPerWeek)
-            }
-        }
-    }
-
-    class Factory(private val repository: OnboardingRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val onboardingRepository: OnboardingRepository,
+        private val monthlyPlanRepository: MonthlyPlanRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            OnboardingViewModel(repository) as T
+            OnboardingViewModel(onboardingRepository, monthlyPlanRepository) as T
     }
 }

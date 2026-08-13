@@ -39,22 +39,24 @@ data class SettingsEntity(
      * with a fallback default (see each enum's own `fromStored`/`entries.find` helper) rather than
      * silently reinterpreting under a reordered/resized option list, which is exactly what a
      * 4-option-to-3-option onboarding redesign would otherwise do to every already-stored row.
-     * Default is [NutritionGoal.BULK] to match the old default's `Int = 0` — `GOAL_OPTIONS[0]` was
-     * always "Tăng cơ" — so a fresh/pre-onboarding row's pre-highlighted pill doesn't silently
-     * change (caught in Phase 1 review: an earlier version of this default was `MAINTAIN`, which
-     * would have pre-highlighted "Khỏe mạnh" instead for a brand-new install). */
+     * Default is [NutritionGoal.BULK] to match the old default's `Int = 0`, which always meant
+     * "Tăng cơ" (the pre-redesign onboarding's first goal option) — so a fresh/pre-onboarding row's
+     * pre-highlighted pill doesn't silently change (caught in Phase 1 review: an earlier version of
+     * this default was `MAINTAIN`, which would have pre-highlighted "Khỏe mạnh" instead for a
+     * brand-new install). */
     val selectedGoal: String = NutritionGoal.BULK.name,
     val selectedLevel: String = ExerciseDifficulty.BEGINNER.name,
     val selectedSplit: String = SplitTemplate.PPL.name,
     /** "Hit & Run" redesign (Gate 1b) — onboarding's "BẠN TẬP Ở ĐÂU" (Phòng gym/Tại nhà) answer,
      * same name/semantics as [com.fitviet.app.data.local.entity.MonthlyPlanEntity.equipmentProfile]
      * (a key into [com.fitviet.app.domain.EquipmentProfiles]). Null = unconstrained (Phòng gym).
-     * Previously nothing wrote this anywhere — every generated plan's own `equipmentProfile` column
-     * was always null — this is the first real source for it (Gate 1d-ii). */
+     * Gate 1d-ii wired the read side through generation; Gate 2a's single-screen onboarding
+     * ("BẠN TẬP Ở ĐÂU") is the first real writer. */
     val equipmentProfile: String? = null,
-    /** Feature #3 (Gate 39) — days/week chosen on the split step, 2..6. Drives the "GỢI Ý" badge
-     * on [com.fitviet.app.ui.onboarding.SplitScreen]'s split cards via
-     * [com.fitviet.app.ui.onboarding.SplitOption.recommendedFor]. */
+    /** Feature #3 (Gate 39) — days/week chosen during onboarding, 2..6 (Gate 2a's onboarding only
+     * offers 2..5; the wider stored range stays valid for values written by the older multi-step
+     * flow this replaced). Also drives [com.fitviet.app.domain.defaultSplitTemplateFor]'s
+     * auto-derived split at generation time. */
     val selectedDaysPerWeek: Int = 3,
     /** Set once, when onboarding completes — powers 1i's "N tuần đồng hành" (weeks with the app). */
     val onboardingCompletedAtEpochDay: Long? = null,
