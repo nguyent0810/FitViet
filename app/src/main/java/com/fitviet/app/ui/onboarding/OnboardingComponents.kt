@@ -128,10 +128,11 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
     }
 }
 
-/** Filled accent CTA used at the bottom of every onboarding step. Reused by
- * [com.fitviet.app.ui.quickgenerate.QuickGenerateScreen] and
- * [com.fitviet.app.ui.nutrition.createplan.CreatePlanScreen] too, so this single
- * [pressScale] rollout (Gate D1) covers every one of those call sites at once. */
+/** Filled accent CTA used at the bottom of every onboarding step. Also reused by
+ * [com.fitviet.app.ui.nutrition.createplan.CreatePlanScreen], so this single
+ * [pressScale] rollout (Gate D1) covers both call sites at once. Redesign Gate 3c retired
+ * the old full-screen `QuickGenerateScreen`, whose own CTA used to reuse this too — the new
+ * [com.fitviet.app.ui.quickgenerate.GenerateSheet] has its own bottom-sheet-scoped CTA instead. */
 @Composable
 fun OnboardingPrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(

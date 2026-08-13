@@ -80,10 +80,6 @@ sealed class FitVietDestination(val route: String) {
         fun createRoute(category: String) = "handbook/food-category/${android.net.Uri.encode(category)}"
     }
 
-    /** "Hit & Run" (Gate 63+) — no args; reached from Dashboard's empty-state CTA and Programs'
-     * header card, both of which just want "go generate a plan," not a specific plan/day. */
-    data object QuickGenerate : FitVietDestination("quick_generate")
-
     /** "Hit & Run" (Gate 63+) Regenerate UI — the plan's simple day list (see the plan's scope
      * note: not a full calendar). No arg — always shows the one active plan. */
     data object MonthlyPlanDetail : FitVietDestination("monthly_plan")

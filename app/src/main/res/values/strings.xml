@@ -44,14 +44,16 @@
     <string name="split_fullbody_title">Full body</string>
     <string name="split_fullbody_sub">Toàn thân mỗi buổi — hợp người mới, 2–3 buổi/tuần</string>
 
-    <!-- "Hit &amp; Run" (Gate 63+) — Quick Generate screen -->
-    <string name="quick_generate_title">Tạo lịch tháng</string>
-    <string name="quick_generate_subtitle">Chọn mục tiêu, kiểu chia lịch và số buổi/tuần — hệ thống tự lên lịch cả tháng cho bạn</string>
-    <string name="quick_generate_goal_label">Mục tiêu</string>
-    <string name="quick_generate_level_label">Trình độ</string>
-    <string name="quick_generate_split_label">Kiểu chia lịch</string>
-    <string name="quick_generate_days_label">Số buổi/tuần</string>
-    <string name="quick_generate_cta">Tạo lịch tháng</string>
+    <!-- "Hit &amp; Run" (Gate 63+) — Generate sheet (redesign Gate 3c: was a full-screen "Quick
+         Generate" destination, now a bottom sheet — see GenerateSheet.kt's own doc). -->
+    <string name="quick_generate_title">Plan tháng mới</string>
+    <string name="quick_generate_subtitle">Điền sẵn từ hồ sơ — sửa nếu muốn, hoặc tạo luôn</string>
+    <string name="quick_generate_goal_label">MỤC TIÊU</string>
+    <string name="quick_generate_split_label">KIỂU CHIA BUỔI</string>
+    <string name="quick_generate_days_label">SỐ BUỔI / TUẦN</string>
+    <string name="quick_generate_split_readonly">Kiểu chia buổi: %1$s — app chọn theo số buổi</string>
+    <string name="quick_generate_change_split">Đổi kiểu chia</string>
+    <string name="quick_generate_cta_with_month">Tạo plan tháng %1$d →</string>
     <string name="quick_generate_generating">Đang tạo lịch…</string>
     <string name="quick_generate_error">Không thể tạo lịch tháng: %1$s</string>
     <!-- Redesign Gate 2c — Dashboard's empty-state card (mock's exact copy). -->

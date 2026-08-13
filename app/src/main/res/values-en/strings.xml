@@ -42,14 +42,16 @@
     <string name="split_phul_title">PHUL</string>
     <string name="split_phul_sub">Alternating Power &amp; Hypertrophy — fits 4 sessions/week</string>
 
-    <!-- "Hit &amp; Run" (Gate 63+) — Quick Generate screen -->
-    <string name="quick_generate_title">Generate monthly plan</string>
-    <string name="quick_generate_subtitle">Pick a goal, split, and days per week — we\'ll schedule the whole month for you</string>
-    <string name="quick_generate_goal_label">Goal</string>
-    <string name="quick_generate_level_label">Level</string>
-    <string name="quick_generate_split_label">Split</string>
-    <string name="quick_generate_days_label">Days/week</string>
-    <string name="quick_generate_cta">Generate monthly plan</string>
+    <!-- "Hit &amp; Run" (Gate 63+) — Generate sheet (redesign Gate 3c: was a full-screen "Quick
+         Generate" destination, now a bottom sheet — see GenerateSheet.kt's own doc). -->
+    <string name="quick_generate_title">New monthly plan</string>
+    <string name="quick_generate_subtitle">Prefilled from your profile — edit if you like, or just generate</string>
+    <string name="quick_generate_goal_label">GOAL</string>
+    <string name="quick_generate_split_label">SPLIT</string>
+    <string name="quick_generate_days_label">DAYS / WEEK</string>
+    <string name="quick_generate_split_readonly">Split: %1$s — picked from your days/week</string>
+    <string name="quick_generate_change_split">Change split</string>
+    <string name="quick_generate_cta_with_month">Generate month %1$d plan →</string>
     <string name="quick_generate_generating">Generating…</string>
     <string name="quick_generate_error">Couldn\'t create the monthly plan: %1$s</string>
     <!-- Redesign Gate 2c — Dashboard's empty-state card (mock's exact copy). -->

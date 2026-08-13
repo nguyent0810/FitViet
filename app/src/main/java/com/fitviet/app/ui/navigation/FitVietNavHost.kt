@@ -76,7 +76,6 @@ import com.fitviet.app.ui.profile.ProfileScreen
 import com.fitviet.app.ui.profile.ProfileViewModel
 import com.fitviet.app.ui.programs.ProgramsListScreen
 import com.fitviet.app.ui.programs.ProgramsViewModel
-import com.fitviet.app.ui.quickgenerate.QuickGenerateScreen
 import com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel
 import com.fitviet.app.ui.reminders.RemindersScreen
 import com.fitviet.app.ui.reminders.RemindersViewModel
@@ -191,6 +190,14 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 val viewModel: DashboardViewModel = viewModel(
                     factory = DashboardViewModel.Factory(container.dashboardRepository, container.monthlyPlanRepository),
                 )
+                // Redesign Gate 3c — GenerateSheet's own state holder, scoped to this route (see
+                // GenerateSheet.kt's own doc for why it's hosted per-screen rather than behind a
+                // shared nav destination the way the retired QuickGenerateScreen was).
+                val dashboardQuickGenerateViewModel: QuickGenerateViewModel = viewModel(
+                    factory = QuickGenerateViewModel.Factory(container.onboardingRepository, container.monthlyPlanRepository),
+                )
+                val dashboardCoroutineScope = rememberCoroutineScope()
+                val dashboardContext = LocalContext.current
                 DashboardScreen(
                     viewModel = viewModel,
                     onOpenProfile = { navController.navigate(FitVietDestination.Profile.route) },
@@ -201,34 +208,16 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     onStartMonthlyPlanDay = { dayId ->
                         navController.navigate(FitVietDestination.Workout.createRoute(monthlyPlanDayId = dayId))
                     },
-                    onGenerateMonthlyPlan = { navController.navigate(FitVietDestination.QuickGenerate.route) },
-                    onViewMonthlyPlan = { navController.navigate(FitVietDestination.MonthlyPlanDetail.route) },
-                    // Redesign Gate 2c — Today card's "Chi tiết" link reuses the Regenerate UI's
-                    // own day-detail screen rather than a new monthly-plan-aware preview.
-                    onPreviewToday = { dayId -> navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId)) },
-                )
-            }
-            composable(FitVietDestination.QuickGenerate.route) {
-                val quickGenerateCoroutineScope = rememberCoroutineScope()
-                val quickGenerateContext = LocalContext.current
-                val viewModel: QuickGenerateViewModel = viewModel(
-                    factory = QuickGenerateViewModel.Factory(container.onboardingRepository, container.monthlyPlanRepository),
-                )
-                QuickGenerateScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() },
-                    // Await the write before navigating — same reasoning as onboarding's
-                    // submit() above: popping this screen off the back stack would
-                    // otherwise risk cancelling the generation transaction mid-flight.
-                    // A user-reported "tapping the button does nothing" bug traced to this call
-                    // silently swallowing whatever monthlyPlanRepository.generate() throws (no
-                    // catch here previously, and the exception apparently didn't surface as a
-                    // visible crash) — this now logs and shows a Toast on failure instead of
-                    // leaving the UI looking unresponsive with zero feedback.
-                    onGenerateClick = {
-                        quickGenerateCoroutineScope.launch {
+                    quickGenerateViewModel = dashboardQuickGenerateViewModel,
+                    // Same await-the-write-before-navigating reasoning the retired QuickGenerateScreen
+                    // call site used — a user-reported "tapping the button does nothing" bug once
+                    // traced to this exact call silently swallowing whatever
+                    // monthlyPlanRepository.generate() throws, so this logs and Toasts on failure
+                    // rather than leaving the UI looking unresponsive with zero feedback.
+                    onGenerateConfirmed = {
+                        dashboardCoroutineScope.launch {
                             try {
-                                if (viewModel.generate()) {
+                                if (dashboardQuickGenerateViewModel.generate()) {
                                     navController.navigate(FitVietDestination.Home.route) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                         launchSingleTop = true
@@ -238,15 +227,19 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (e: Exception) {
-                                Log.e("QuickGenerate", "monthlyPlanRepository.generate() failed", e)
+                                Log.e("Dashboard", "monthlyPlanRepository.generate() failed", e)
                                 Toast.makeText(
-                                    quickGenerateContext,
-                                    quickGenerateContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
+                                    dashboardContext,
+                                    dashboardContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
                                     Toast.LENGTH_LONG,
                                 ).show()
                             }
                         }
                     },
+                    onViewMonthlyPlan = { navController.navigate(FitVietDestination.MonthlyPlanDetail.route) },
+                    // Redesign Gate 2c — Today card's "Chi tiết" link reuses the Regenerate UI's
+                    // own day-detail screen rather than a new monthly-plan-aware preview.
+                    onPreviewToday = { dayId -> navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId)) },
                 )
             }
             composable(FitVietDestination.MonthlyPlanDetail.route) {
@@ -284,6 +277,12 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         container.databaseReady,
                     ),
                 )
+                // Redesign Gate 3c — GenerateSheet's own state holder, scoped to this route — a
+                // separate instance from Dashboard's own, per-screen hosting (see GenerateSheet.kt's
+                // own doc).
+                val programsQuickGenerateViewModel: QuickGenerateViewModel = viewModel(
+                    factory = QuickGenerateViewModel.Factory(container.onboardingRepository, container.monthlyPlanRepository),
+                )
                 ProgramsListScreen(
                     viewModel = viewModel,
                     // Same await-then-navigate/try-catch-Toast pattern as onboarding's `onSubmit`/
@@ -320,7 +319,31 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     onExerciseClick = { exercise ->
                         navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
                     },
-                    onGenerateMonthlyPlan = { navController.navigate(FitVietDestination.QuickGenerate.route) },
+                    quickGenerateViewModel = programsQuickGenerateViewModel,
+                    // Same await-the-write-before-navigating/error-Toast pattern as
+                    // onGenerateFromProgram above and Dashboard's own onGenerateConfirmed.
+                    onGenerateConfirmed = {
+                        programsCoroutineScope.launch {
+                            try {
+                                if (programsQuickGenerateViewModel.generate()) {
+                                    navController.navigate(FitVietDestination.Home.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e("Programs", "monthlyPlanRepository.generate() failed", e)
+                                Toast.makeText(
+                                    programsContext,
+                                    programsContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                        }
+                    },
                     // Redesign Phase 3a — the plan progress/today card cluster's own nav targets.
                     onStartMonthlyPlanDay = { dayId ->
                         navController.navigate(FitVietDestination.Workout.createRoute(monthlyPlanDayId = dayId))
@@ -466,12 +489,15 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         }
                     },
                     // Redesign Gate 1c — the no-arg entry point's "no active plan" outcome. Pops
-                    // this dead-end Workout screen off the back stack first (there's no session to
-                    // return to), landing on Home, then pushes Quick Generate on top — so system
-                    // Back from there goes straight to Home instead of bouncing back through here.
+                    // this dead-end Workout screen off the back stack (there's no session to return
+                    // to), landing on Home. Redesign Gate 3c — used to push the (now-retired)
+                    // full-screen Quick Generate on top of Home automatically; the generate flow is
+                    // a per-screen sheet now (see GenerateSheet.kt's own doc on why there's no single
+                    // shared host to push into from here), so this deliberately stops at Home and
+                    // lets its own empty-state CTA be the affordance — one extra tap on a dead-end
+                    // error path, not a stranded user (Home's EmptyPlanCard is always right there).
                     onNoPlan = {
                         navController.popBackStack(FitVietDestination.Home.route, inclusive = false)
-                        navController.navigate(FitVietDestination.QuickGenerate.route)
                     },
                 )
             }

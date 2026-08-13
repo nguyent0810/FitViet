@@ -60,6 +60,8 @@ import com.fitviet.app.domain.SplitTemplate
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.tiltOnDrag
+import com.fitviet.app.ui.quickgenerate.GenerateSheet
+import com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HrBody
 import com.fitviet.app.ui.theme.HrColors
@@ -97,12 +99,16 @@ fun ProgramsListScreen(
     // read-only look at the program, never a "start" action.
     onPreviewProgram: (ProgramEntity) -> Unit,
     onExerciseClick: (ExerciseEntity) -> Unit,
-    // "Hit & Run" (Gate 63+) — the header card below the title row, per the plan's Quick Generate
-    // entry-point list (Dashboard's empty state + this screen's own header, both reachable
-    // independent of whether the user has ever generated a plan before). Redesign Phase 3a also
-    // reuses this for the plan progress card's "Tạo lại ⟳" link (see the mock's own `openGenerate`
-    // binding on that link — it reopens generation, not a bare regenerate-in-place).
-    onGenerateMonthlyPlan: () -> Unit,
+    // Redesign Gate 3c — [com.fitviet.app.ui.quickgenerate.GenerateSheet]'s own state holder,
+    // hosted locally by this screen (see that file's own doc for why it's per-screen rather than a
+    // shared nav destination the old full-screen "Quick Generate" was). Opened by the header card
+    // and, via the same confirm dialog [pendingReplaceConfirm] already uses, the plan progress
+    // card's "Tạo lại ⟳" link (see the mock's own `openGenerate` binding on that link — it reopens
+    // generation, not a bare regenerate-in-place).
+    quickGenerateViewModel: QuickGenerateViewModel,
+    // Redesign Gate 3c — the sheet's own CTA tap: generate + await + navigate-to-Home + error-Toast,
+    // same logic the retired Quick Generate screen's nav-host call site used to own.
+    onGenerateConfirmed: () -> Unit,
     // Redesign Phase 3a — the plan card's "TẬP ›" CTA, same action Dashboard's Today card uses.
     onStartMonthlyPlanDay: (dayId: Long) -> Unit,
     // Redesign Phase 3a — tapping the today card (when not startable) or an upcoming-day row opens
@@ -121,9 +127,16 @@ fun ProgramsListScreen(
     // program is showing (see [ProgramCard]'s own tap handling below).
     var pendingReplaceConfirm by remember { mutableStateOf<ProgramEntity?>(null) }
     // Redesign Phase 3a — same confirm gate as [pendingReplaceConfirm], for the plan progress
-    // card's "Tạo lại ⟳" link (regenerating also replaces the active plan, via [onGenerateMonthlyPlan]
+    // card's "Tạo lại ⟳" link (regenerating also replaces the active plan, via [openGenerateSheet]
     // rather than a specific program).
     var pendingRegenerateConfirm by remember { mutableStateOf(false) }
+    // Redesign Gate 3c — mirrors [com.fitviet.app.ui.dashboard.DashboardScreen]'s own local sheet
+    // state exactly (see [GenerateSheet]'s doc for why each host owns its own instance).
+    var isGenerateSheetOpen by remember { mutableStateOf(false) }
+    val openGenerateSheet = {
+        quickGenerateViewModel.refreshPrefill()
+        isGenerateSheetOpen = true
+    }
     val readErrorText = stringResource(R.string.programs_import_read_error)
     val invalidFormatText = stringResource(R.string.programs_import_invalid)
     val failedText = stringResource(R.string.programs_import_failed)
@@ -226,7 +239,7 @@ fun ProgramsListScreen(
             // own, so guarding only one of the two entry points into it would leave the other a
             // silent, unguarded way to replace the active plan.
             GenerateMonthlyPlanHeaderCard(
-                onClick = { if (uiState.hasActivePlan) pendingRegenerateConfirm = true else onGenerateMonthlyPlan() },
+                onClick = { if (uiState.hasActivePlan) pendingRegenerateConfirm = true else openGenerateSheet() },
             )
         }
         importMessage?.let { message ->
@@ -337,7 +350,7 @@ fun ProgramsListScreen(
             confirmButton = {
                 TextButton(onClick = {
                     pendingRegenerateConfirm = false
-                    onGenerateMonthlyPlan()
+                    openGenerateSheet()
                 }) {
                     Text(text = stringResource(R.string.programs_replace_plan_confirm))
                 }
@@ -346,6 +359,17 @@ fun ProgramsListScreen(
                 TextButton(onClick = { pendingRegenerateConfirm = false }) {
                     Text(text = stringResource(R.string.profile_history_delete_confirm_cancel))
                 }
+            },
+        )
+    }
+
+    if (isGenerateSheetOpen) {
+        GenerateSheet(
+            viewModel = quickGenerateViewModel,
+            onDismiss = { isGenerateSheetOpen = false },
+            onGenerateClick = {
+                isGenerateSheetOpen = false
+                onGenerateConfirmed()
             },
         )
     }

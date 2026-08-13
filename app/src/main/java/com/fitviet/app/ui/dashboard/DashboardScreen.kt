@@ -26,6 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +53,8 @@ import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.tiltOnDrag
 import com.fitviet.app.ui.profile.MonogramAvatar
 import com.fitviet.app.ui.profile.avatarInitial
+import com.fitviet.app.ui.quickgenerate.GenerateSheet
+import com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel
 import com.fitviet.app.ui.theme.HrBody
 import com.fitviet.app.ui.theme.HrColors
 import com.fitviet.app.ui.theme.HrDimens
@@ -95,8 +100,15 @@ fun DashboardScreen(
     // screen for monthly-plan days is deferred to a later gate, and going straight to the live
     // session is arguably closer to the feature's own "1-2 taps, no re-choosing" goal anyway.
     onStartMonthlyPlanDay: (dayId: Long) -> Unit,
-    // "Hit & Run" (Gate 63+) — the empty-state CTA shown when there's no active monthly plan yet.
-    onGenerateMonthlyPlan: () -> Unit,
+    // Redesign Gate 3c — [GenerateSheet]'s own state holder, hosted locally by this screen (see
+    // that file's own doc for why it's per-screen rather than a shared nav destination the old
+    // full-screen "Quick Generate" was). Opened by the empty-state CTA and the Today card's
+    // PlanFinished CTA (both previously navigated to that screen via a plain `onGenerateMonthlyPlan`
+    // callback).
+    quickGenerateViewModel: QuickGenerateViewModel,
+    // Redesign Gate 3c — the sheet's own CTA tap: generate + await + navigate-to-Home + error-Toast,
+    // same logic the retired Quick Generate screen's nav-host call site used to own.
+    onGenerateConfirmed: () -> Unit,
     // "Hit & Run" (Gate 63+) Regenerate UI — the missed-day dialog's own "Xem lịch tháng" link.
     // Redesign Gate 2c also wires this into TodayCard's own "Xem kế hoạch tháng" link — without
     // that second wiring, MonthlyPlanDetailScreen was reachable only by way of an unresolved
@@ -116,6 +128,15 @@ fun DashboardScreen(
     // Not `remember`ed: recomputed each recomposition (including the ones the repository's
     // midnight tick triggers) so the greeting date doesn't freeze at whatever day this opened on.
     val today = LocalDate.now()
+
+    // Redesign Gate 3c — local to this screen, not hoisted into DashboardViewModel: it's pure UI
+    // state (which sheet is showing), the same "screen owns its own dialog visibility" pattern
+    // MissedDayDialog's own null-check below already uses, just for a sheet instead of a dialog.
+    var isGenerateSheetOpen by remember { mutableStateOf(false) }
+    val openGenerateSheet = {
+        quickGenerateViewModel.refreshPrefill()
+        isGenerateSheetOpen = true
+    }
 
     Column(
         modifier = Modifier
@@ -144,10 +165,10 @@ fun DashboardScreen(
                     dayId?.let(onPreviewToday)
                 },
                 onViewMonthlyPlan = onViewMonthlyPlan,
-                onGenerateMonthlyPlan = onGenerateMonthlyPlan,
+                onGenerateMonthlyPlan = openGenerateSheet,
             )
         } else {
-            EmptyPlanCard(onClick = onGenerateMonthlyPlan)
+            EmptyPlanCard(onClick = openGenerateSheet)
         }
 
         StatTilesRow(
@@ -195,6 +216,24 @@ fun DashboardScreen(
                 },
             )
         }
+    }
+
+    if (isGenerateSheetOpen) {
+        // Closes immediately on tap rather than waiting for onGenerateConfirmed's async
+        // generate()+navigate to finish — generation is a fast local DB write (no network round
+        // trip), the mock's own demo shows no loading state either, and a failure still surfaces
+        // via onGenerateConfirmed's error Toast after the sheet is gone. Keeping the sheet open
+        // through the whole async call would need a success/failure signal threaded back from the
+        // NavHost-owned onGenerateConfirmed into this screen's local sheet state, which isn't
+        // worth the plumbing for an operation this fast.
+        GenerateSheet(
+            viewModel = quickGenerateViewModel,
+            onDismiss = { isGenerateSheetOpen = false },
+            onGenerateClick = {
+                isGenerateSheetOpen = false
+                onGenerateConfirmed()
+            },
+        )
     }
 }
 

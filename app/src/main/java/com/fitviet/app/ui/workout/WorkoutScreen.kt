@@ -43,7 +43,9 @@ fun WorkoutScreen(
     onFinishToHome: () -> Unit,
     // Redesign Gate 1c — fires once when the no-arg entry point resolves to "no active plan"
     // (WorkoutPhase.AwaitingPlanGeneration). This ViewModel has no navigation of its own, so the
-    // caller (FitVietNavHost) supplies where "go set one up" actually goes (Quick Generate).
+    // caller (FitVietNavHost) supplies where "go set one up" actually goes. Redesign Gate 3c
+    // retired the dedicated Quick Generate destination this used to target — see FitVietNavHost's
+    // own call site doc for where it lands now.
     onNoPlan: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

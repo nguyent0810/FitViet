@@ -13,6 +13,7 @@ import com.fitviet.app.domain.TrainingGoal
 import com.fitviet.app.domain.defaultSplitTemplateFor
 import com.fitviet.app.domain.toInitialTrainingGoal
 import java.time.LocalDate
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +48,15 @@ data class QuickGenerateUiState(
  * (3 options, no "Sức mạnh"): a user can't reach `TrainingGoal.STRENGTH` from onboarding's own
  * first-ever seed — only from this screen's picker, or from a sample-program-seeded plan's real
  * stored goal.
+ *
+ * Redesign Gate 3c — the dedicated screen this ViewModel used to back was retired in favor of
+ * [com.fitviet.app.ui.quickgenerate.GenerateSheet], a `ModalBottomSheet` hosted per-screen (Kế
+ * hoạch tab, Dashboard's empty state) rather than a separate nav destination — see that file's own
+ * doc for why. Each host's `viewModel()` call gets its own instance scoped to that route, kept
+ * alive across the sheet's own open/close cycles rather than recreated per-open — so [refreshPrefill]
+ * exists specifically to re-run the one-shot prefill logic on every sheet open, not just the
+ * first, since a stale `_uiState.value` from a prior open (e.g. an outdated active-plan goal/split
+ * after the user just regenerated) would otherwise silently persist.
  */
 class QuickGenerateViewModel(
     private val onboardingRepository: OnboardingRepository,
@@ -55,7 +65,18 @@ class QuickGenerateViewModel(
     private val _uiState = MutableStateFlow(QuickGenerateUiState())
     val uiState: StateFlow<QuickGenerateUiState> = _uiState.asStateFlow()
 
-    private val initialization = viewModelScope.launch {
+    private var prefillJob: Job = viewModelScope.launch { loadPrefill() }
+
+    /** Redesign Gate 3c — called by each sheet host right before opening it. Cancels any
+     * still-in-flight prior load first (rapid open/close/open shouldn't race two writes into
+     * `_uiState`). */
+    fun refreshPrefill() {
+        prefillJob.cancel()
+        _uiState.update { it.copy(isLoading = true) }
+        prefillJob = viewModelScope.launch { loadPrefill() }
+    }
+
+    private suspend fun loadPrefill() {
         try {
             val saved = onboardingRepository.getSelections()
             // "Hit & Run" redesign (Gate 1b, split prefill fixed Gate 2a) — prefer the active
@@ -96,7 +117,7 @@ class QuickGenerateViewModel(
     suspend fun generate(): Boolean {
         // Preserve the user's first tap if it happens before prefill completes instead of
         // returning false and requiring an unexplained second tap.
-        initialization.join()
+        prefillJob.join()
         val state = _uiState.value
         if (state.isGenerating) return false
         _uiState.update { it.copy(isGenerating = true) }
