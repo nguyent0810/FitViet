@@ -37,7 +37,17 @@ import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatOneDecimal
 
 /** Gate E7 — the foods inside one ingredient category (real macros/description card content,
- * moved here unchanged from the old flat by-category list on HandbookScreen). */
+ * moved here unchanged from the old flat by-category list on HandbookScreen).
+ *
+ * Redesign Gate 5e — still deliberately on legacy tokens, not an oversight: this screen's own
+ * food-knowledge content (categories/macros/descriptions) was flagged during Phase 3's plan-check
+ * as a candidate for absorption into the Nutrition module's own consolidated library screen "in a
+ * later phase." Phase 5 was that later phase and kept this screen instead — see
+ * [com.fitviet.app.ui.nutrition.library.NutritionLibraryScreen]'s own Gate 5b-i doc comment: the
+ * library surfaces individual foods by name search only (Judgment Call A), so browsing by category,
+ * [FoodEntity.nameEn], and [FoodEntity.descriptionVi] stay exclusive to this tab. So there is no
+ * future gate expected to re-skin or absorb this screen; it stays legacy-token by design until a
+ * real reason to revisit it exists. */
 @Composable
 fun HandbookFoodCategoryScreen(viewModel: HandbookFoodCategoryViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

@@ -79,9 +79,11 @@ import kotlinx.coroutines.launch
  * One review-confirmed capability regression, accepted rather than silently dropped: the retired
  * `DiscoverScreen`'s 5 tag filter chips (deliberate AND-across-chips narrowing) and `FoodsScreen`'s
  * category chips have no replacement here. Foods stay reachable by category via the Handbook's own
- * Foods tab; recipe tag filtering has none. Revisit if this turns out to matter in practice —
- * search-by-name plus the new goal-ranked suggestion order cover the common case, but a user
- * looking for e.g. "≤15 phút" specifically has no way to ask for that anymore.
+ * Foods tab (see [com.fitviet.app.ui.handbook.HandbookFoodCategoryScreen]'s own Gate 5e doc for the
+ * closed decision not to absorb that content here); recipe tag filtering has none. Revisit if this
+ * turns out to matter in practice — search-by-name plus the new goal-ranked suggestion order cover
+ * the common case, but a user looking for e.g. "≤15 phút" specifically has no way to ask for that
+ * anymore.
  *
  * Gate 5b-ii adds the third pill, [LibraryTab.PLAN] — state-dependent per the Phase 5 plan-check's
  * Judgment Call B: no active plan shows the create-plan wizard (merged in from the retired

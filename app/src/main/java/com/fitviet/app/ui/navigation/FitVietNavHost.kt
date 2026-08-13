@@ -132,8 +132,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
         // Gate D1 — a snappier app-wide screen-to-screen crossfade (220/180ms; nav-compose 2.8.5's
         // own NavHost default is already a 700ms fadeIn/fadeOut, not an abrupt cut, but the brief
         // called for shorter transitions) plus a SharedTransitionLayout scope for the single
-        // Discover->RecipeDetail card-title shared element below; wrapping the whole graph here
-        // means every OTHER composable() block in this file needed zero changes.
+        // Library->RecipeDetail card-title shared element below (the source moved from the retired
+        // DiscoverScreen to NutritionLibraryScreen's own RecipeRow in Gate 5b-i, same shared-element
+        // key); wrapping the whole graph here means every OTHER composable() block in this file
+        // needed zero changes.
         SharedTransitionLayout {
             NavHost(
                 navController = navController,

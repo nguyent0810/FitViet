@@ -40,11 +40,16 @@ import com.fitviet.app.util.labelRes
  * [HandbookScreen] is a single screen whose page background, back chip, title, tab row, and
  * empty-state text are shared by both tabs, so a token swap on only one tab would show a jarring
  * accent/surface change on tab switch under a header that didn't change. The Foods tab's own
- * drill-down destination, [HandbookFoodCategoryScreen], is deliberately left on legacy tokens —
- * per the Phase 3 plan-check, the handoff doc's "kiến thức món ăn" (food knowledge) content is
- * slated to be absorbed into Nutrition's own consolidated screen in a later phase, not re-skinned
- * in place here.
- */
+ * drill-down destination, [HandbookFoodCategoryScreen], is deliberately left on legacy tokens.
+ *
+ * Gate 3d's plan-check (Phase 3) had flagged the handoff doc's "kiến thức món ăn" (food knowledge)
+ * content as a candidate for absorption into Nutrition's own consolidated screen "in a later
+ * phase." Phase 5 was that later phase, and it decided against absorbing it: per
+ * `NutritionLibraryScreen`'s own Gate 5b-i doc, the library folded in a name-search-only food list
+ * (Judgment Call A — name/kcal/macros, hidden entirely with no active query), but left the
+ * by-category browsing, English names, and descriptions that only [HandbookFoodCategoryScreen]
+ * offers. So [HandbookFoodCategoryScreen] staying on legacy tokens is now a closed scope decision,
+ * not a pending migration — see [HandbookFoodCategoryScreen]'s own doc for the re-defer note. */
 @Composable
 fun HandbookScreen(
     viewModel: HandbookViewModel,
