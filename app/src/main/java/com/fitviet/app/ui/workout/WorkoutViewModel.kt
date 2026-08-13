@@ -89,6 +89,13 @@ class WorkoutViewModel(
      * Room. Access is confined to the main dispatcher used by [viewModelScope]. */
     private val pendingSetLogJobs = mutableListOf<Job>()
     private var lastActionAtMillis = 0L
+    /** Phase 2 checkpoint fix — only ever set by [resolveTodaySessionAndStart] (the bare `workout`
+     * route's own "today" resolution), never by the [monthlyPlanDayId]-carrying entry point (which
+     * already knows its own day id). Lets [resetWorkout]'s bare-route "Làm lại" branch restart the
+     * SAME day it originally resolved, bypassing `observeTodaySession`'s fresh re-resolution — which
+     * would otherwise now correctly report `Completed` for a day the user just finished, refusing
+     * the very redo "Làm lại" exists to allow. */
+    private var resolvedTodayDayId: Long? = null
 
     init {
         loadInitialSession()
@@ -109,12 +116,17 @@ class WorkoutViewModel(
     /** Resolves [monthlyPlanDayId]'s exercises and starts logging immediately — the plan already
      * determines every set, nothing for the user to choose. Passes [monthlyPlanDayId] through to
      * [WorkoutRepository.startSession] so the created session row carries the FK the regenerate
-     * lock rule depends on — see [com.fitviet.app.data.repository.MonthlyPlanRepository]. */
-    private fun startMonthlyPlanDaySession(monthlyPlanDayId: Long) {
+     * lock rule depends on — see [com.fitviet.app.data.repository.MonthlyPlanRepository]. Phase 2
+     * checkpoint — [allowRestart] must be true for [resetWorkout]'s "Làm lại" call (an explicit,
+     * intentional redo of a day the user just finished/abandoned on this very screen) and false
+     * everywhere else, so a fresh navigation into an already-locked day (e.g. a stale Dashboard
+     * card tapped in the brief window before it re-resolves to `Completed`) can't insert a second
+     * session row the way "Làm lại" is deliberately allowed to. */
+    private fun startMonthlyPlanDaySession(monthlyPlanDayId: Long, allowRestart: Boolean = false) {
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
-            runMonthlyPlanDaySession(monthlyPlanDayId)
+            runMonthlyPlanDaySession(monthlyPlanDayId, allowRestart)
         }
     }
 
@@ -126,8 +138,15 @@ class WorkoutViewModel(
      * ([NoSessionReason.UNAVAILABLE]) if the day somehow has no resolvable exercises (e.g. a
      * stale/deleted plan) — should be unreachable when the caller already resolved a `Training`
      * outcome via [com.fitviet.app.data.repository.MonthlyPlanRepository.observeTodaySession], but
-     * stays defensive rather than leaving a blank screen. */
-    private suspend fun runMonthlyPlanDaySession(monthlyPlanDayId: Long) {
+     * stays defensive rather than leaving a blank screen. Also defensive against a second session
+     * row for an already-locked day (see [startMonthlyPlanDaySession]'s [allowRestart] doc) — should
+     * likewise be unreachable via [resolveTodaySessionAndStart] now that `observeTodaySession`
+     * itself resolves a locked day to `Completed` before this is ever called with its id. */
+    private suspend fun runMonthlyPlanDaySession(monthlyPlanDayId: Long, allowRestart: Boolean = false) {
+        if (!allowRestart && monthlyPlanRepository.observeIsDayCompleted(monthlyPlanDayId).first()) {
+            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.ALREADY_COMPLETED))
+            return
+        }
         val resolved = MonthlyPlanDayWorkoutPlanner.resolveDay(monthlyPlanDayId, monthlyPlanRepository, exerciseRepository, workoutRepository)
         val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
         if (resolved == null || blocks.isEmpty()) {
@@ -159,11 +178,21 @@ class WorkoutViewModel(
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
             when (val card = monthlyPlanRepository.observeTodaySession(LocalDate.now()).first()) {
-                is TodayMonthlyPlanCard.Training -> runMonthlyPlanDaySession(card.dayId)
+                is TodayMonthlyPlanCard.Training -> {
+                    resolvedTodayDayId = card.dayId
+                    runMonthlyPlanDaySession(card.dayId)
+                }
                 TodayMonthlyPlanCard.RestDay ->
                     _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.REST_DAY))
                 is TodayMonthlyPlanCard.Unavailable ->
                     _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE))
+                is TodayMonthlyPlanCard.Completed -> {
+                    // Captured so "Làm lại" (reached from the session-finished screen right after
+                    // this same day was resolved via the Training branch above, on an earlier
+                    // emission) can still redo it — see [resolvedTodayDayId]'s own doc.
+                    resolvedTodayDayId = card.dayId
+                    _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.ALREADY_COMPLETED))
+                }
                 TodayMonthlyPlanCard.PlanFinished ->
                     _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.PLAN_FINISHED))
                 TodayMonthlyPlanCard.NoPlan ->
@@ -190,17 +219,31 @@ class WorkoutViewModel(
      * way the initial load did (via [resolveTodaySessionAndStart]) rather than dropping to the
      * deleted duration picker. The branches are kept explicit (rather than always routing through
      * [loadInitialSession]) so the monthly-plan-day flow keeps resetting synchronously with no
-     * loading-state frame, exactly as it did before Gate 24. */
+     * loading-state frame, exactly as it did before Gate 24.
+     *
+     * Phase 2 checkpoint fix — the no-arg branch used to always call [resolveTodaySessionAndStart],
+     * which re-resolves "today" from scratch via `observeTodaySession`. Once that resolution
+     * correctly reports `Completed` for a day the user just finished (this same gate's `Completed`
+     * fix), that re-resolution refused the very redo this button exists to perform. Now it restarts
+     * [resolvedTodayDayId] directly with `allowRestart = true` when known — the same day this
+     * ViewModel already resolved earlier in its lifetime — and only falls back to a fresh
+     * `observeTodaySession` resolution if that's somehow still null (shouldn't happen: "Làm lại" is
+     * only reachable after a session already ran, which is exactly what sets it). */
     fun resetWorkout() = debounced {
         restJob?.cancel()
         elapsedJob?.cancel()
         sessionInitJob?.cancel()
         if (monthlyPlanDayId != null) {
             _uiState.value = WorkoutUiState()
-            startMonthlyPlanDaySession(monthlyPlanDayId)
+            startMonthlyPlanDaySession(monthlyPlanDayId, allowRestart = true)
         } else {
             _uiState.value = WorkoutUiState()
-            resolveTodaySessionAndStart()
+            val dayId = resolvedTodayDayId
+            if (dayId != null) {
+                startMonthlyPlanDaySession(dayId, allowRestart = true)
+            } else {
+                resolveTodaySessionAndStart()
+            }
         }
     }
 

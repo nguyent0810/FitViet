@@ -30,6 +30,17 @@ interface WorkoutSessionDao {
     @Query("SELECT COUNT(*) FROM workout_sessions WHERE monthlyPlanDayId = :monthlyPlanDayId")
     fun observeCountForMonthlyPlanDay(monthlyPlanDayId: Long): Flow<Int>
 
+    /** Phase 2 checkpoint fix — deliberately narrower than [observeCountForMonthlyPlanDay]:
+     * "does this day have a genuinely finished session" (Dashboard's Today card / the
+     * duplicate-start guard) is a different question from "does this day have ANY linked row, so a
+     * regenerate would reinterpret its logged sets" ([countForMonthlyPlanDay]'s own doc). Reusing
+     * the broader lock predicate for the narrower question turned "started a session then hit
+     * Thoát without finishing" into a same-day lockout — the Today card claimed the day was done
+     * (contradicting the "Tuần này" card, which correctly still shows today as untrained) and the
+     * bare `workout` route's "Làm lại" refused to start a new attempt. */
+    @Query("SELECT COUNT(*) FROM workout_sessions WHERE monthlyPlanDayId = :monthlyPlanDayId AND completedAt IS NOT NULL")
+    fun observeCompletedCountForMonthlyPlanDay(monthlyPlanDayId: Long): Flow<Int>
+
     /** "Hit & Run" (Gate 63+) Regenerate UI — the bulk form of [countForMonthlyPlanDay] for
      * rendering a whole plan's day list with lock badges without one query per day. */
     @Query(

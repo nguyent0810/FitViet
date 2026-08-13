@@ -116,13 +116,14 @@
     <string name="dashboard_start_workout_today">TRAIN NOW →</string>
     <!-- Redesign Gate 2c — Today card's two faint links below the CTA. -->
     <string name="dashboard_preview_link">Details</string>
-    <string name="dashboard_change_session_link">Swap session</string>
     <string name="dashboard_rest_day_title">Today is a rest day</string>
     <string name="dashboard_rest_day_meta">Recover today so you\'re ready for the next session</string>
     <string name="dashboard_unavailable_title">No exercises for today yet</string>
     <string name="dashboard_unavailable_meta">Try loosening the muscle-group limits in your monthly plan</string>
     <string name="dashboard_plan_finished_title">Monthly plan complete</string>
     <string name="dashboard_plan_finished_meta">Create a new monthly plan to keep going</string>
+    <string name="dashboard_already_completed_title">Already completed today</string>
+    <string name="dashboard_already_completed_meta">See you at the next session</string>
     <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
     <string name="dashboard_stat_streak">Day streak</string>
     <string name="dashboard_stat_sessions_this_week">Sessions this week</string>

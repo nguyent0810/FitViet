@@ -118,7 +118,6 @@
     <string name="dashboard_start_workout_today">TẬP NGAY →</string>
     <!-- Redesign Gate 2c — Today card's two faint links below the CTA. -->
     <string name="dashboard_preview_link">Chi tiết</string>
-    <string name="dashboard_change_session_link">Đổi buổi</string>
     <string name="dashboard_rest_day_title">Hôm nay là ngày nghỉ</string>
     <string name="dashboard_rest_day_meta">Nghỉ ngơi để phục hồi cho buổi tập tiếp theo</string>
     <!-- "Hit & Run" redesign (Gate 1c) — a training day that resolved to zero exercises (every
@@ -128,6 +127,8 @@
     <!-- The active plan has no row left for today (every day after the block ended). -->
     <string name="dashboard_plan_finished_title">Lịch tháng đã hoàn thành</string>
     <string name="dashboard_plan_finished_meta">Tạo lịch tháng mới để tiếp tục</string>
+    <string name="dashboard_already_completed_title">Đã hoàn thành hôm nay</string>
+    <string name="dashboard_already_completed_meta">Hẹn gặp lại vào buổi tiếp theo</string>
     <string name="dashboard_workout_in_progress">Đang tập · %1$s — chạm để kết thúc</string>
     <string name="dashboard_stat_streak">Chuỗi ngày</string>
     <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>

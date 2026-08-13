@@ -65,6 +65,13 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Phase 2 checkpoint fix — ProgramTransferTest/MealPlanTemplateCodecTest call real
+    // org.json.JSONObject methods (put/getString/...), which the android.jar unit-test stub throws
+    // on unconditionally. A real implementation ahead of the stub on the test classpath is used
+    // (rather than `unitTests.isReturnDefaultValues = true`) specifically so these codecs' actual
+    // parsing/validation logic — including the new goal/splitTemplate/CUSTOM-rejection rules — is
+    // genuinely exercised, not just made to not-throw.
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

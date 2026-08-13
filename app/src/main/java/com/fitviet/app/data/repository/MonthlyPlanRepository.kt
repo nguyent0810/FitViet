@@ -42,6 +42,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -115,6 +116,13 @@ interface MonthlyPlanRepository {
     /** Single-day reactive form of [observeLockedDayIds], for the day-detail screen (which only
      * ever needs one day's lock state, not a whole plan's). */
     fun observeIsDayLocked(dayId: Long): Flow<Boolean>
+
+    /** Phase 2 checkpoint fix — "has this day's session actually been finished," NOT [observeIsDayLocked]'s
+     * broader "does any session row exist at all (completed or abandoned)." Backs
+     * [TodayMonthlyPlanCard.Completed]'s resolution and [com.fitviet.app.ui.workout.WorkoutViewModel]'s
+     * duplicate-start guard — see [com.fitviet.app.data.local.dao.WorkoutSessionDao.observeCompletedCountForMonthlyPlanDay]'s
+     * own doc for why conflating the two turned an abandoned session into a same-day lockout. */
+    fun observeIsDayCompleted(dayId: Long): Flow<Boolean>
 
     /** One-shot lookup for [com.fitviet.app.ui.workout.MonthlyPlanDayWorkoutPlanner.resolveDay] —
      * that planner is given a specific day id already picked by the caller (e.g. via
@@ -210,6 +218,9 @@ class RoomMonthlyPlanRepository(
     override fun observeIsDayLocked(dayId: Long): Flow<Boolean> =
         workoutSessionDao.observeCountForMonthlyPlanDay(dayId).map { it > 0 }
 
+    override fun observeIsDayCompleted(dayId: Long): Flow<Boolean> =
+        workoutSessionDao.observeCompletedCountForMonthlyPlanDay(dayId).map { it > 0 }
+
     override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = monthlyPlanExerciseDao.observeForDay(dayId)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -223,11 +234,21 @@ class RoomMonthlyPlanRepository(
                         TodayPlanDayState.NoPlan -> flowOf(TodayMonthlyPlanCard.NoPlan)
                         TodayPlanDayState.PlanFinished -> flowOf(TodayMonthlyPlanCard.PlanFinished)
                         TodayPlanDayState.RestDay -> flowOf(TodayMonthlyPlanCard.RestDay)
-                        is TodayPlanDayState.HasSession -> observeExercisesForDay(state.dayId).map { exercises ->
-                            if (exercises.isEmpty()) {
-                                TodayMonthlyPlanCard.Unavailable(dayId = state.dayId, sessionType = state.sessionType)
-                            } else {
-                                TodayMonthlyPlanCard.Training(
+                        // Phase 2 checkpoint fix — a genuinely completed day (see
+                        // TodayMonthlyPlanCard.Completed's own doc) always resolves to Completed
+                        // regardless of its exercise list, checked before the empty-exercises
+                        // branch so a finished day never falls back through to Training/Unavailable.
+                        // observeIsDayCompleted, not observeIsDayLocked — the broader "any session
+                        // row, including abandoned" predicate turned an abandoned attempt into a
+                        // same-day lockout (see that method's own doc).
+                        is TodayPlanDayState.HasSession -> combine(
+                            observeExercisesForDay(state.dayId),
+                            observeIsDayCompleted(state.dayId),
+                        ) { exercises, isCompleted ->
+                            when {
+                                isCompleted -> TodayMonthlyPlanCard.Completed(dayId = state.dayId, sessionType = state.sessionType)
+                                exercises.isEmpty() -> TodayMonthlyPlanCard.Unavailable(dayId = state.dayId, sessionType = state.sessionType)
+                                else -> TodayMonthlyPlanCard.Training(
                                     dayId = state.dayId,
                                     sessionType = state.sessionType,
                                     exerciseCount = exercises.size,

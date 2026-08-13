@@ -206,16 +206,6 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     // Redesign Gate 2c — Today card's "Chi tiết" link reuses the Regenerate UI's
                     // own day-detail screen rather than a new monthly-plan-aware preview.
                     onPreviewToday = { dayId -> navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId)) },
-                    // Redesign Gate 2c — "Đổi buổi" just switches tabs (see DashboardScreen's own
-                    // doc for why, confirmed against the mock's own `goPlanTab` binding) — same
-                    // popUpTo/launchSingleTop/restoreState pattern BottomNavBar's own tab switch uses.
-                    onGoToPlanTab = {
-                        navController.navigate(FitVietDestination.Programs.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
                 )
             }
             composable(FitVietDestination.QuickGenerate.route) {

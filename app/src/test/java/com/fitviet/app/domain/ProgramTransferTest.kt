@@ -116,6 +116,26 @@ class ProgramTransferTest {
     }
 
     @Test
+    fun `encode then decode round-trips a present goal and splitTemplate`() {
+        // Phase 2 checkpoint — Gate 2b added these two optional fields; the base `sample` above
+        // deliberately leaves both null (the pre-Gate-2b / hand-crafted-file case), so this test
+        // covers the "present and valid" path separately.
+        val withGoalAndSplit = sample.copy(goal = TrainingGoal.HYPERTROPHY.name, splitTemplate = SplitTemplate.PPL.name)
+        assertEquals(withGoalAndSplit, ProgramTransfer.decode(ProgramTransfer.encode(withGoalAndSplit)))
+    }
+
+    @Test
+    fun `decode rejects an unrecognized goal or splitTemplate value`() {
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(goal = "NOT_A_REAL_GOAL"))))
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(splitTemplate = "NOT_A_REAL_SPLIT"))))
+    }
+
+    @Test
+    fun `decode rejects splitTemplate CUSTOM specifically, since generateFromProgram would crash on it`() {
+        assertNull(ProgramTransfer.decode(ProgramTransfer.encode(sample.copy(splitTemplate = SplitTemplate.CUSTOM.name))))
+    }
+
+    @Test
     fun `a well-formed sample still round-trips under the new validation rules`() {
         // Pure domain-layer check only -- this doesn't exercise ProgramRepository.exportProgram()
         // itself (this project doesn't Room-test repositories). The actual guarantee that a real

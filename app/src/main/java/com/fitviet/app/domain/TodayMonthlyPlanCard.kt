@@ -9,7 +9,8 @@ package com.fitviet.app.domain
  * next non-rest day on a rest day; that lookahead isn't part of this phase's scope (see the "Hit &
  * Run" plan's Phase 5 note).
  *
- * "Hit & Run" redesign (Gate 1c) — expanded from 2 cases to a total 5-case classification so
+ * "Hit & Run" redesign (Gate 1c) — expanded from 2 cases to a total 5-case classification (6 as of
+ * the Phase 2 checkpoint's [Completed] addition) so
  * [com.fitviet.app.data.repository.MonthlyPlanRepository.observeTodaySession] can be the single
  * shared resolution both [com.fitviet.app.data.repository.DashboardRepository] (Today card) and
  * [com.fitviet.app.ui.workout.WorkoutViewModel] (the bare `workout` route's single entry point)
@@ -34,6 +35,21 @@ sealed interface TodayMonthlyPlanCard {
      * was excluded, or none resolved against the exercise catalog) — a real, generator-permitted
      * state, not an error. Never route this to Generate; there's nothing a regenerate would fix. */
     data class Unavailable(val dayId: Long, val sessionType: String) : TodayMonthlyPlanCard
+
+    /** Today is a training day that already has a genuinely finished
+     * [com.fitviet.app.data.local.entity.WorkoutSessionEntity] (`completedAt` set) — deliberately
+     * narrower than the "locked" predicate
+     * [com.fitviet.app.data.local.dao.WorkoutSessionDao.countForMonthlyPlanDay] backs for the
+     * regenerate-lock banner (which also counts merely-abandoned sessions, on purpose, so a
+     * regenerate can't silently reinterpret their logged sets — a different question from "did the
+     * user finish today"). Added at the Phase 2 checkpoint review — before this case existed,
+     * [Training] kept being resolved after the user finished today's session (nothing about
+     * date/rest-flag/session-type resolution changes on completion), so the Today card kept
+     * showing its full "start" CTA on the same screen as the "Tuần này" card's already-filled-in ✓
+     * for today, and tapping it inserted a second session row for the same day, double-counting
+     * rolling-7-day stats. Never routes to a "start" CTA — an explicit "Làm lại" redo goes through
+     * a separate `allowRestart` path in [com.fitviet.app.ui.workout.WorkoutViewModel] instead. */
+    data class Completed(val dayId: Long, val sessionType: String) : TodayMonthlyPlanCard
 
     /** No active plan at all (never generated one, or [com.fitviet.app.data.local.entity
      * .SettingsEntity.activeMonthlyPlanId] is null for any other reason). */

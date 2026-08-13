@@ -43,11 +43,13 @@ enum class SetTechnique { STRAIGHT, SUPERSET, DROP_SET, PYRAMID, REST_PAUSE }
  * mechanics for them beyond the picker itself, so selecting one is informational only for now.
  */
 
-/** Redesign Gate 1c's reason for [WorkoutPhase.NoSessionToday] — reuses the exact same three
- * "nothing to train today" outcomes Dashboard's [com.fitviet.app.domain.TodayMonthlyPlanCard]
- * already distinguishes, so [com.fitviet.app.ui.workout.NoSessionTodayContent] can show the same
- * copy the hero card would have shown instead of inventing separate wording. */
-enum class NoSessionReason { REST_DAY, UNAVAILABLE, PLAN_FINISHED }
+/** Redesign Gate 1c's reason for [WorkoutPhase.NoSessionToday] — reuses the exact same "nothing to
+ * train today" outcomes Dashboard's [com.fitviet.app.domain.TodayMonthlyPlanCard] already
+ * distinguishes, so [com.fitviet.app.ui.workout.NoSessionTodayContent] can show the same copy the
+ * hero card would have shown instead of inventing separate wording. [ALREADY_COMPLETED] (Phase 2
+ * checkpoint) mirrors [com.fitviet.app.domain.TodayMonthlyPlanCard.Completed] — reached only if the
+ * bare `workout` entry point is opened after today's session is already locked. */
+enum class NoSessionReason { REST_DAY, UNAVAILABLE, PLAN_FINISHED, ALREADY_COMPLETED }
 
 sealed class WorkoutPhase {
     /** Redesign Gate 1c replaced the old "pick a time budget" duration picker: a no-arg entry

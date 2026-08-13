@@ -39,6 +39,7 @@ fun NoSessionTodayContent(reason: NoSessionReason, onExit: () -> Unit) {
         NoSessionReason.REST_DAY -> R.string.dashboard_rest_day_title to R.string.dashboard_rest_day_meta
         NoSessionReason.UNAVAILABLE -> R.string.dashboard_unavailable_title to R.string.dashboard_unavailable_meta
         NoSessionReason.PLAN_FINISHED -> R.string.dashboard_plan_finished_title to R.string.dashboard_plan_finished_meta
+        NoSessionReason.ALREADY_COMPLETED -> R.string.dashboard_already_completed_title to R.string.dashboard_already_completed_meta
     }
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

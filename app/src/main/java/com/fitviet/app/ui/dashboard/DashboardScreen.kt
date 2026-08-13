@@ -102,7 +102,7 @@ fun DashboardScreen(
     // that second wiring, MonthlyPlanDetailScreen was reachable only by way of an unresolved
     // missed day surfacing the dialog (the app's sole `navigate(...MonthlyPlanDetail...)` call
     // site was this one), stranding the whole screen the same way the Diary link above was
-    // almost stranded. Unrelated to the Today card's own "Đổi buổi" (see [onGoToPlanTab] below).
+    // almost stranded.
     onViewMonthlyPlan: () -> Unit,
     // Redesign Gate 2c — Today card's "Chi tiết" link (labeled "Xem trước"/Preview in an earlier
     // draft, corrected — see the review that caught it: the destination screen has a regenerate
@@ -111,12 +111,6 @@ fun DashboardScreen(
     // preview screen from scratch (that screen is program-day-only post-Gate-2b). Only ever called
     // with a real dayId (the link is hidden otherwise).
     onPreviewToday: (dayId: Long) -> Unit,
-    // Redesign Gate 2c — Today card's "Đổi buổi" link. The mock's own interactive prototype wires
-    // this to just switching to the Kế hoạch tab (`goPlanTab`), not an inline regenerate call —
-    // confirmed against the HTML's own `onClick="{{ goPlanTab }}"` binding, not a `regenerateDay`
-    // call. Bottom-nav tab-switching itself isn't touched this gate (that's Phase 8), so this reuses
-    // whatever mechanism the caller already has for switching to the Programs/Kế hoạch tab.
-    onGoToPlanTab: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Not `remember`ed: recomputed each recomposition (including the ones the repository's
@@ -144,12 +138,13 @@ fun DashboardScreen(
                     val dayId = when (monthlyPlanCard) {
                         is TodayMonthlyPlanCard.Training -> monthlyPlanCard.dayId
                         is TodayMonthlyPlanCard.Unavailable -> monthlyPlanCard.dayId
+                        is TodayMonthlyPlanCard.Completed -> monthlyPlanCard.dayId
                         else -> null
                     }
                     dayId?.let(onPreviewToday)
                 },
-                onGoToPlanTab = onGoToPlanTab,
                 onViewMonthlyPlan = onViewMonthlyPlan,
+                onGenerateMonthlyPlan = onGenerateMonthlyPlan,
             )
         } else {
             EmptyPlanCard(onClick = onGenerateMonthlyPlan)
@@ -242,12 +237,22 @@ private fun GreetingHeader(today: LocalDate, displayName: String, avatarId: Int,
 }
 
 /** The mock's Today card (variant "2a"). [onPreview] is only ever wired when the resolved card
- * carries a real day id (`Training`/`Unavailable`) — [TodayMonthlyPlanCard.RestDay]/[TodayMonthlyPlanCard.PlanFinished]
- * hide the link entirely rather than calling it with nothing to preview. Equipment ("· Phòng gym"
- * in the mock's meta line) isn't threaded through here — [TodayMonthlyPlanCard.Training] doesn't
- * carry it, and adding it would mean widening that type just for this one label; the meta line
- * reads "X bài · ~Y phút" without it, matching the design HTML's own static (non-interactive)
- * comparison block, which already omits it. */
+ * carries a real day id (`Training`/`Unavailable`/`Completed`) — [TodayMonthlyPlanCard.RestDay]/
+ * [TodayMonthlyPlanCard.PlanFinished] hide the link entirely rather than calling it with nothing to
+ * preview. Equipment ("· Phòng gym" in the mock's meta line) isn't threaded through here —
+ * [TodayMonthlyPlanCard.Training] doesn't carry it, and adding it would mean widening that type
+ * just for this one label; the meta line reads "X bài · ~Y phút" without it, matching the design
+ * HTML's own static (non-interactive) comparison block, which already omits it.
+ *
+ * Phase 2 checkpoint — the mock's own "Đổi buổi" link (bound to `goPlanTab`, a plain tab switch)
+ * was dropped: post-Gate-2b the "Kế hoạch"/Programs tab it pointed at is a read-only
+ * generation-input browser whose only two actions replace the whole active plan, not change
+ * today's session — see [com.fitviet.app.ui.dashboard.DashboardViewModel]'s own
+ * `dismissMissedDayToViewPlan` doc, which already documents that a real day-swap picker
+ * ([com.fitviet.app.data.repository.MonthlyPlanRepository.swapTwoDays]) has no production caller
+ * yet. "Chi tiết" already opens the one screen that actually can change today's session
+ * (regenerate/swap), so the mock's two links' *destinations* survive under one label rather than
+ * two mismatched ones. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TodayCard(
@@ -256,8 +261,8 @@ private fun TodayCard(
     totalDaysInPlan: Int?,
     onStart: () -> Unit,
     onPreview: () -> Unit,
-    onGoToPlanTab: () -> Unit,
     onViewMonthlyPlan: () -> Unit,
+    onGenerateMonthlyPlan: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -301,22 +306,33 @@ private fun TodayCard(
             }
             TodayMonthlyPlanCard.RestDay -> TodayCardStatusText(R.string.dashboard_rest_day_title, R.string.dashboard_rest_day_meta)
             is TodayMonthlyPlanCard.Unavailable -> TodayCardStatusText(R.string.dashboard_unavailable_title, R.string.dashboard_unavailable_meta)
+            is TodayMonthlyPlanCard.Completed -> TodayCardStatusText(R.string.dashboard_already_completed_title, R.string.dashboard_already_completed_meta)
             TodayMonthlyPlanCard.PlanFinished, TodayMonthlyPlanCard.NoPlan ->
                 TodayCardStatusText(R.string.dashboard_plan_finished_title, R.string.dashboard_plan_finished_meta)
         }
-        if (card is TodayMonthlyPlanCard.Training) {
+        // Phase 2 checkpoint fix — PlanFinished used to have no CTA at all, only the (now-removed,
+        // wrong-destination — see this composable's own doc) "Đổi buổi" link as its sole onward
+        // path; that made a finished 4-week plan a dead end on Dashboard. Reuses the CTA's exact
+        // shell, just re-labeled/re-targeted, rather than a smaller secondary-looking button —
+        // "make a new plan" deserves the same visual weight "start today's session" gets.
+        val ctaLabelRes = when (card) {
+            is TodayMonthlyPlanCard.Training -> R.string.dashboard_start_workout_today
+            TodayMonthlyPlanCard.PlanFinished -> R.string.dashboard_generate_cta_button
+            else -> null
+        }
+        if (ctaLabelRes != null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 14.dp)
-                    .pressScale(onClick = onStart)
+                    .pressScale(onClick = if (card is TodayMonthlyPlanCard.Training) onStart else onGenerateMonthlyPlan)
                     .clip(HrShapes.ButtonCta)
                     .background(HrColors.Accent)
                     .padding(vertical = 18.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.dashboard_start_workout_today),
+                    text = stringResource(ctaLabelRes),
                     fontFamily = HrDisplay,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 18.sp,
@@ -324,10 +340,10 @@ private fun TodayCard(
                 )
             }
         }
-        val hasPreviewTarget = card is TodayMonthlyPlanCard.Training || card is TodayMonthlyPlanCard.Unavailable
-        // FlowRow, not Row — 3 links + 2 separators can exceed the card's inner width at larger
-        // font scales / narrower devices (flagged at the Gate 2c review as width-fragile with a
-        // plain Row); wrapping to a second line beats an overflow clip.
+        val hasPreviewTarget = card is TodayMonthlyPlanCard.Training || card is TodayMonthlyPlanCard.Unavailable || card is TodayMonthlyPlanCard.Completed
+        // FlowRow, not Row — even 2 links + 1 separator can exceed the card's inner width at large
+        // font scales / narrow devices (flagged as width-fragile at the Gate 2c review with a plain
+        // Row, when there were 3 links); wrapping to a second line beats an overflow clip.
         FlowRow(
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
             horizontalArrangement = Arrangement.Center,
@@ -343,15 +359,6 @@ private fun TodayCard(
                 )
                 Text(text = "·", fontFamily = HrBody, fontSize = 13.sp, color = HrColors.BorderSoft, modifier = Modifier.padding(vertical = 6.dp))
             }
-            Text(
-                text = stringResource(R.string.dashboard_change_session_link),
-                fontFamily = HrBody,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                color = HrColors.TextLow,
-                modifier = Modifier.clickable(onClick = onGoToPlanTab).padding(horizontal = 9.dp, vertical = 6.dp),
-            )
-            Text(text = "·", fontFamily = HrBody, fontSize = 13.sp, color = HrColors.BorderSoft, modifier = Modifier.padding(vertical = 6.dp))
             // Redesign Gate 2c — not in the mock's own Today card; added so
             // MonthlyPlanDetailScreen stays reachable without an unresolved missed day (see
             // [DashboardScreen]'s own `onViewMonthlyPlan` doc). Reuses the pre-existing

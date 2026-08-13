@@ -170,6 +170,7 @@ class WorkoutViewModelTest {
         override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
         override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = flowOf(days[dayId])
         override fun observeIsDayLocked(dayId: Long): Flow<Boolean> = flowOf(false)
+        override fun observeIsDayCompleted(dayId: Long): Flow<Boolean> = flowOf(false)
         override suspend fun getDay(dayId: Long): MonthlyPlanDayEntity? = days[dayId]
         override suspend fun generate(choices: MonthlyPlanUserChoices, today: LocalDate): Long = 0L
         override suspend fun regenerateDay(dayId: Long, today: LocalDate): RegenerateResult = RegenerateResult.NotFound
