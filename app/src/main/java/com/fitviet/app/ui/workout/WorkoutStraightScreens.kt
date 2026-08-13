@@ -41,7 +41,6 @@ import com.fitviet.app.ui.theme.HrColors
 import com.fitviet.app.ui.theme.HrDimens
 import com.fitviet.app.ui.theme.HrDisplay
 import com.fitviet.app.ui.theme.HrShapes
-import com.fitviet.app.ui.theme.OnAccent
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
@@ -55,9 +54,9 @@ import com.fitviet.app.util.formatWeight
  * completed sets rendered as thin summary rows below. `WorkoutPhase.StraightBlockDone` — dead since
  * Gate 4a-i's ViewModel change, per that gate's own doc — and everything that only existed to
  * render it (the old `StraightBlockDoneContent` composable is removed here) are gone;
- * [PrimaryActionButton] stays, still legacy-token, since `SupersetScreens.kt` still depends on it
- * and its own re-skin is deferred to Gate 4c ([SessionFinishedContent] moved off it in Gate 4b,
- * onto the new `internal` [HrPrimaryActionButton] below). [SummaryTile] stays too, but
+ * the legacy `PrimaryActionButton` this file used to also host is deleted as of Gate 4c —
+ * `SupersetScreens.kt` was its last caller and now uses [HrPrimaryActionButton] below, same as
+ * [SessionFinishedContent] since Gate 4b. [SummaryTile] stays, but
  * permanently — see its own KDoc for the third, outside-Phase-4 dependant that rules out ever
  * removing it. [exerciseLabelFor] is a plain string
  * helper with no tokens of its own — it stays because `WorkoutScreen.kt` (this gate's own,
@@ -288,12 +287,11 @@ private fun DoneSetRow(setNumber: Int, weightKg: Double, reps: Int) {
     }
 }
 
-/** Hr-token CTA — distinct from the legacy [PrimaryActionButton] below, which stays legacy-token
- * for `SupersetScreens.kt`'s own still-unreskinned CTA (Gate 4c). 17sp, matching the established
- * Hr CTA size ([com.fitviet.app.ui.quickgenerate.GenerateSheet]'s own), not a new one-off.
- * `internal`, not `private` — [SessionFinishedContent] (Gate 4b) also uses this, since its own CTA
- * needed the same re-skin and there was no reason to duplicate the composable across two files in
- * the same package. */
+/** Hr-token CTA. 17sp, matching the established Hr CTA size
+ * ([com.fitviet.app.ui.quickgenerate.GenerateSheet]'s own), not a new one-off. `internal`, not
+ * `private` — both [SessionFinishedContent] (Gate 4b) and `SupersetScreens.kt` (Gate 4c) use this,
+ * since both needed the same re-skin and there was no reason to duplicate the composable across
+ * files in the same package. */
 @Composable
 internal fun HrPrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
@@ -309,30 +307,11 @@ internal fun HrPrimaryActionButton(text: String, onClick: () -> Unit, modifier: 
     }
 }
 
-/** Legacy-token CTA — kept for `SupersetScreens.kt`'s call sites (see [HrPrimaryActionButton]
- * above for the Hr-token version [SessionFinishedContent] now uses instead, as of Gate 4b).
- * Remove once Gate 4c re-skins the superset flow, its last remaining dependant. */
-@Composable
-internal fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .pressScale(onClick = onClick)
-            .clip(MaterialTheme.shapes.large)
-            .background(Accent)
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = text, style = MaterialTheme.typography.titleMedium, color = OnAccent)
-    }
-}
-
-/** Legacy-token summary tile — kept for `SupersetScreens.kt`'s call site, same reasoning as
- * [PrimaryActionButton] above ([SessionFinishedContent] moved off this in Gate 4b, onto its own
- * local Hr-token stat tile), PLUS a second, permanent dependant: `CommunityScreen`'s
- * `WorkoutSharePostCard` reuses this deliberately (see that file's own doc) so a shared workout
- * reads as a natural extension of the app's visual language — Community is outside Phase 4 entirely,
- * so this composable outlives Gate 4c too and should NOT be deleted once that lands. */
+/** Legacy-token summary tile — every workout-log call site moved to [HrPrimaryActionButton]/the
+ * local Hr-token stat tiles by the end of Gate 4c ([SessionFinishedContent] in Gate 4b,
+ * `SupersetScreens.kt` in Gate 4c), but this stays permanently for one dependant outside Phase 4:
+ * `CommunityScreen`'s `WorkoutSharePostCard` reuses this deliberately (see that file's own doc) so
+ * a shared workout reads as a natural extension of the app's visual language. Do NOT delete. */
 @Composable
 internal fun SummaryTile(value: String, label: String, modifier: Modifier = Modifier, accent: Boolean = false) {
     Column(
