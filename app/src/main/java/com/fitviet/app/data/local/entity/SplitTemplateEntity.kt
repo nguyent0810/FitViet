@@ -6,9 +6,8 @@ import androidx.room.PrimaryKey
 /** A user-authored Custom Split, referenced by [MonthlyPlanEntity.customSplitTemplateId] when
  * [MonthlyPlanEntity.splitTemplate] == CUSTOM. The 5 built-in templates (PPL/Upper-Lower/Full
  * Body/Bro Split/PHUL) are hardcoded in [com.fitviet.app.domain.MonthlyPlanGenerator], not rows
- * here — same "hardcoded curriculum data" idiom as
- * [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner.CURRICULUM_ORDER]. No authoring UI ships in
- * this pass; this table exists so the data model doesn't need a breaking change when one does. */
+ * here. No authoring UI ships in this pass; this table exists so the data model doesn't need a
+ * breaking change when one does. */
 @Entity(tableName = "split_templates")
 data class SplitTemplateEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

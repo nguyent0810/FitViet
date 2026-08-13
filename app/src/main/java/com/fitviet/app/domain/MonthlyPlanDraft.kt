@@ -15,7 +15,11 @@ data class MonthlyPlanDraft(
     val splitTemplate: SplitTemplate,
     val daysPerWeek: Int,
     val totalWeeks: Int,
-    /** The Monday week 1 anchors to. */
+    /** Redesign Gate 1d-i — the actual day [MonthlyPlanGenerator.generate] ran on (was "this
+     * week's Monday" before this gate). Every week's day-offsets are relative to this date, so
+     * offset 0 (today) is guaranteed to be a trainable day by construction; see
+     * [MonthlyPlanGenerator]'s `SPACING_TABLE` doc. Write-only today — nothing reads this column
+     * back to reconstruct a rotation, so redefining its meaning is not a breaking change. */
     val startEpochDay: Long,
     val equipmentProfile: String?,
     val exclusionExerciseIds: Set<Long>,
@@ -51,9 +55,8 @@ data class MonthlyPlanExerciseDraft(
     val targetRepsMax: Int,
     val targetWeightKg: Double?,
     /** Always null in this pass — [MonthlyPlanGenerator] doesn't auto-pair exercises into
-     * supersets (no specified pairing rule to generate from, same reasoning
-     * [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner] already documents for why its own
-     * generator is straight-sets-only). The column exists so a future manual "pair these two"
-     * regenerate action, or a later gate's auto-pairing rule, doesn't need a schema change. */
+     * supersets (no specified pairing rule to generate from). The column exists so a future
+     * manual "pair these two" regenerate action, or a later gate's auto-pairing rule, doesn't
+     * need a schema change. */
     val supersetGroup: String? = null,
 )

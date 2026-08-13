@@ -503,6 +503,14 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                             }
                         }
                     },
+                    // Redesign Gate 1c — the no-arg entry point's "no active plan" outcome. Pops
+                    // this dead-end Workout screen off the back stack first (there's no session to
+                    // return to), landing on Home, then pushes Quick Generate on top — so system
+                    // Back from there goes straight to Home instead of bouncing back through here.
+                    onNoPlan = {
+                        navController.popBackStack(FitVietDestination.Home.route, inclusive = false)
+                        navController.navigate(FitVietDestination.QuickGenerate.route)
+                    },
                 )
             }
             composable(FitVietDestination.Nutrition.route) {

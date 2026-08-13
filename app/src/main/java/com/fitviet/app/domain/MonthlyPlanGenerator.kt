@@ -5,7 +5,6 @@ import com.fitviet.app.data.local.seed.SeedExerciseNames
 import com.fitviet.app.ui.workout.DEFAULT_REST_SECONDS
 import com.fitviet.app.ui.workout.SECONDS_PER_REP
 import com.fitviet.app.ui.workout.TRANSITION_SECONDS
-import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlin.math.ceil
 import kotlin.math.round
@@ -37,6 +36,12 @@ data class MonthlyPlanGenerationInput(
     /** [EquipmentProfiles] key, or null = unconstrained. */
     val equipmentProfile: String? = null,
     val sessionDurationTargetMinutes: Int,
+    /** Redesign Gate 1d-ii — defaults to [DEFAULT_REST_SECONDS] (the same fixed value the live
+     * session's rest timer counts down from), threaded through rather than hardcoded so
+     * [computeExerciseCount]'s duration-implied exercise count can never silently drift from
+     * whatever rest duration the app actually runs, the moment a future settings screen makes it
+     * configurable — no schema/API change needed then, only a new value flowing in here. */
+    val restSeconds: Int = DEFAULT_REST_SECONDS,
     val exclusionExerciseIds: Set<Long> = emptySet(),
     /** [MuscleGroup.name] values — a session whose every muscle group is excluded generates with
      * zero exercises for that slot rather than crashing (a degenerate but valid input). */
@@ -61,8 +66,8 @@ data class MonthlyPlanGenerationInput(
  * Reuses [SECONDS_PER_REP]/[TRANSITION_SECONDS]/[DEFAULT_REST_SECONDS] from
  * `com.fitviet.app.ui.workout` (internal, module-visible, no Android dependency themselves) rather
  * than duplicating them, so this generator's session-duration estimate can never silently drift
- * from [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner]'s or
- * [ProgramDayWorkoutPlanner.estimateDurationMinutes]'s.
+ * from [ProgramDayWorkoutPlanner.estimateDurationMinutes]'s or
+ * [com.fitviet.app.domain.MonthlyPlanDayCardEstimator]'s.
  *
  * Exercise selection is fixed once per distinct session-type label for the whole 4-5 week block —
  * only sets/reps/weight vary week to week (see [applyProgression]) — because the spec's own
@@ -77,11 +82,7 @@ object MonthlyPlanGenerator {
         require(input.totalWeeks == 4 || input.totalWeeks == 5) { "totalWeeks must be 4 or 5, was ${input.totalWeeks}" }
 
         val rotation = rotationFor(input.splitTemplate, input.customSplitDays)
-        val trainingDows = SPACING_TABLE.getValue(input.daysPerWeek)
-        // Week 1 always anchors to the current calendar week, even mid-week — days already past
-        // in week 1 are simply inert (MissedWorkoutDetector only scans SCHEDULED days going
-        // forward from a live plan, so a day that was never reachable is never flagged missed).
-        val startMonday = input.today.with(DayOfWeek.MONDAY)
+        val trainingOffsets = SPACING_TABLE.getValue(input.daysPerWeek)
         val phases = phaseTableFor(input.totalWeeks)
 
         val usedThisGeneration = input.recentExerciseUsage.toMutableMap()
@@ -95,13 +96,16 @@ object MonthlyPlanGenerator {
 
         var rotationIndex = 0
         val weeks = phases.mapIndexed { weekIndex, phase ->
-            val weekMonday = startMonday.plusWeeks(weekIndex.toLong())
-            val days = DayOfWeek.values().map { dow ->
-                val date = weekMonday.plusDays((dow.value - 1).toLong())
-                if (dow !in trainingDows) {
+            // Redesign Gate 1d-i — anchored to [input.today] itself, not the calendar week's
+            // Monday: offset 0 of week 0 is always today, so [trainingOffsets] containing 0
+            // guarantees today is a trainable day by construction (see SPACING_TABLE's doc).
+            val weekStart = input.today.plusDays(weekIndex.toLong() * 7)
+            val days = (0..6).map { offset ->
+                val date = weekStart.plusDays(offset.toLong())
+                if (offset !in trainingOffsets) {
                     MonthlyPlanDayDraft(
                         epochDay = date.toEpochDay(),
-                        dayOfWeek = dow,
+                        dayOfWeek = date.dayOfWeek,
                         isRestDay = true,
                         sessionType = null,
                         muscleGroupCodes = emptyList(),
@@ -117,7 +121,7 @@ object MonthlyPlanGenerator {
                     }
                     MonthlyPlanDayDraft(
                         epochDay = date.toEpochDay(),
-                        dayOfWeek = dow,
+                        dayOfWeek = date.dayOfWeek,
                         isRestDay = false,
                         sessionType = slot.label,
                         muscleGroupCodes = slot.muscleGroups.map { it.name },
@@ -134,7 +138,7 @@ object MonthlyPlanGenerator {
             splitTemplate = input.splitTemplate,
             daysPerWeek = input.daysPerWeek,
             totalWeeks = input.totalWeeks,
-            startEpochDay = startMonday.toEpochDay(),
+            startEpochDay = input.today.toEpochDay(),
             equipmentProfile = input.equipmentProfile,
             exclusionExerciseIds = input.exclusionExerciseIds,
             excludedMuscleGroupCodes = input.excludedMuscleGroupCodes,
@@ -177,15 +181,19 @@ object MonthlyPlanGenerator {
 
     // ---- (a) day-of-week assignment ----
 
-    private val SPACING_TABLE: Map<Int, Set<DayOfWeek>> = mapOf(
-        2 to setOf(DayOfWeek.MONDAY, DayOfWeek.THURSDAY),
-        3 to setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
-        4 to setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY),
-        5 to setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY),
-        6 to setOf(
-            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
-        ),
+    /** Redesign Gate 1d-i — relative day-offsets (0 = generation day) within each 7-day week,
+     * replacing the old fixed-weekday table (`{MONDAY, WEDNESDAY, FRIDAY}` etc.) that could place
+     * every trainable day in the past for a plan generated mid-week or later. Every entry still
+     * includes 0 and keeps the old table's exact same relative spacing — Monday was the minimum
+     * weekday in every old set, so `dayOfWeek.value - 1` for each translates 1:1 to an offset from
+     * that set's own Monday. The only behavioral change is the anchor: "this week's Monday" (which
+     * could be days before generation) becomes "today" (always reachable). */
+    private val SPACING_TABLE: Map<Int, Set<Int>> = mapOf(
+        2 to setOf(0, 3),
+        3 to setOf(0, 2, 4),
+        4 to setOf(0, 1, 3, 4),
+        5 to setOf(0, 1, 2, 4, 5),
+        6 to setOf(0, 1, 2, 3, 4, 5),
     )
 
     private fun rotationFor(template: SplitTemplate, custom: List<CustomSplitDay>?): List<SessionTypeSlot> = when (template) {
@@ -255,15 +263,14 @@ object MonthlyPlanGenerator {
         TrainingGoal.GENERAL_FITNESS -> 10
     }
 
-    /** Solves `count * (avgSets*avgReps*SECONDS_PER_REP + (avgSets-1)*DEFAULT_REST_SECONDS +
+    /** Solves `count * (avgSets*avgReps*SECONDS_PER_REP + (avgSets-1)*restSeconds +
      * TRANSITION_SECONDS) <= sessionDurationTargetMinutes*60` for count, using the goal's
      * midpoint rep target and a flat 3-set assumption per exercise as the estimate's average
-     * block shape — the same constants [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner]
-     * already uses for its own greedy time-budget fill. */
-    private fun durationImpliedMaxCount(goal: TrainingGoal, durationTargetMinutes: Int): Int {
+     * block shape. */
+    private fun durationImpliedMaxCount(goal: TrainingGoal, durationTargetMinutes: Int, restSeconds: Int): Int {
         val avgReps = midpointRepsFor(goal)
         val avgSets = 3
-        val blockSeconds = avgSets * avgReps * SECONDS_PER_REP + (avgSets - 1) * DEFAULT_REST_SECONDS + TRANSITION_SECONDS
+        val blockSeconds = avgSets * avgReps * SECONDS_PER_REP + (avgSets - 1) * restSeconds + TRANSITION_SECONDS
         return (durationTargetMinutes * 60 / blockSeconds).coerceAtLeast(3)
     }
 
@@ -273,10 +280,11 @@ object MonthlyPlanGenerator {
         muscleGroupCount: Int,
         sessionDurationTargetMinutes: Int,
         recentSetCountForPrimaryMuscle: Int,
+        restSeconds: Int = DEFAULT_REST_SECONDS,
     ): Int {
         val base = BASE_COUNT_RANGE.getValue(goal to level)
         val breadthBonus = (muscleGroupCount - 2).coerceIn(0, 3)
-        val durationMax = durationImpliedMaxCount(goal, sessionDurationTargetMinutes)
+        val durationMax = durationImpliedMaxCount(goal, sessionDurationTargetMinutes, restSeconds)
         val maxCount = minOf(base.last + breadthBonus, durationMax)
         val minCount = base.first
         val recovering = recentSetCountForPrimaryMuscle > recoveryThresholdFor(level)
@@ -286,11 +294,11 @@ object MonthlyPlanGenerator {
 
     // ---- (c) exercise selection ----
 
-    /** Curated "big lift" allowlist per muscle group, reusing [SeedExerciseNames] — same idiom as
-     * [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner.CURRICULUM_ORDER]. Stands in for a real
-     * [ExerciseEntity.tierCode] classification column, deferred per the "Hit & Run" plan's scope
-     * note; groups with no curated entry here (FOREARM/ABS/FUNCTIONAL/CARDIO/STRETCHING) simply
-     * never produce a MAIN_COMPOUND pick and fall through to SECONDARY_COMPOUND/accessory tiers. */
+    /** Curated "big lift" allowlist per muscle group, reusing [SeedExerciseNames]. Stands in for a
+     * real [ExerciseEntity.tierCode] classification column, deferred per the "Hit & Run" plan's
+     * scope note; groups with no curated entry here (FOREARM/ABS/FUNCTIONAL/CARDIO/STRETCHING)
+     * simply never produce a MAIN_COMPOUND pick and fall through to SECONDARY_COMPOUND/accessory
+     * tiers. */
     private val MAIN_COMPOUND_NAMES: Map<MuscleGroup, List<String>> = mapOf(
         MuscleGroup.CHEST to listOf(SeedExerciseNames.BENCH_PRESS),
         MuscleGroup.BACK to listOf(SeedExerciseNames.BENT_OVER_ROW, SeedExerciseNames.LAT_PULLDOWN, SeedExerciseNames.DEADLIFT),
@@ -323,6 +331,7 @@ object MonthlyPlanGenerator {
             muscleGroupCount = groups.size,
             sessionDurationTargetMinutes = input.sessionDurationTargetMinutes,
             recentSetCountForPrimaryMuscle = input.recentSetCountByMuscleGroup[primaryGroup.name] ?: 0,
+            restSeconds = input.restSeconds,
         )
         val tierPlan = buildTierPlan(groups, count, input.goal)
         val picked = mutableSetOf<Long>()

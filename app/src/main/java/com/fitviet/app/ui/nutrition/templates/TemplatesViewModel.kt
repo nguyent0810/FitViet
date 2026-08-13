@@ -16,8 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 data class TemplatesUiState(
     val templates: List<MealPlanTemplateEntity> = emptyList(),
     /** [MealPlanTemplateEntity.goalCode] value the "PHÙ HỢP MỤC TIÊU" hero badge highlights —
-     * derived from the user's own onboarding goal choice, same mapping
-     * [NutritionGoal.fromOnboardingIndex] already uses elsewhere. */
+     * derived from the user's own onboarding goal choice via [NutritionGoal.fromStored]. */
     val matchedGoalCode: String = NutritionGoal.MAINTAIN.name,
     val isGenerating: Boolean = false,
 )
@@ -35,7 +34,7 @@ class TemplatesViewModel(
     ) { templates, settings, generating ->
         TemplatesUiState(
             templates = templates,
-            matchedGoalCode = NutritionGoal.fromOnboardingIndex(settings?.selectedGoal ?: 0).name,
+            matchedGoalCode = NutritionGoal.fromStored(settings?.selectedGoal).name,
             isGenerating = generating,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TemplatesUiState())

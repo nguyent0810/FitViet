@@ -81,10 +81,9 @@ fun WorkoutPreviewScreen(
                     text = uiState.dayTitleVi.ifBlank { stringResource(R.string.workout_preview_title) },
                     style = MaterialTheme.typography.headlineMedium,
                 )
-                // Uses the same per-rep/rest assumptions WorkoutTimeBudgetPlanner's duration-picker
-                // flow already relies on, so committing to "Bắt đầu tập" isn't a blind guess — the
-                // one thing this screen's own purpose (reduce pre-workout commitment anxiety) most
-                // needed and didn't have.
+                // Uses the same per-rep/rest assumptions ProgramDayWorkoutPlanner.estimateDurationMinutes
+                // relies on, so committing to "Bắt đầu tập" isn't a blind guess — the one thing this
+                // screen's own purpose (reduce pre-workout commitment anxiety) most needed and didn't have.
                 if (uiState.estimatedDurationMinutes > 0) {
                     Text(
                         text = stringResource(R.string.workout_preview_estimated_duration, uiState.estimatedDurationMinutes),

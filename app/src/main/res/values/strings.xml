@@ -125,6 +125,13 @@
     <string name="dashboard_start_workout_today">Bắt đầu buổi hôm nay</string>
     <string name="dashboard_rest_day_title">Hôm nay là ngày nghỉ</string>
     <string name="dashboard_rest_day_meta">Nghỉ ngơi để phục hồi cho buổi tập tiếp theo</string>
+    <!-- "Hit & Run" redesign (Gate 1c) — a training day that resolved to zero exercises (every
+         candidate muscle group excluded); never offer to regenerate here, nothing would fix it. -->
+    <string name="dashboard_unavailable_title">Chưa có bài tập cho hôm nay</string>
+    <string name="dashboard_unavailable_meta">Thử bỏ bớt giới hạn nhóm cơ trong lịch tháng</string>
+    <!-- The active plan has no row left for today (every day after the block ended). -->
+    <string name="dashboard_plan_finished_title">Lịch tháng đã hoàn thành</string>
+    <string name="dashboard_plan_finished_meta">Tạo lịch tháng mới để tiếp tục</string>
     <string name="dashboard_workout_in_progress">Đang tập · %1$s — chạm để kết thúc</string>
     <string name="dashboard_stat_streak">Chuỗi ngày</string>
     <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>
@@ -244,13 +251,6 @@
     <string name="workout_share_button">Chia sẻ lên Cộng đồng</string>
     <string name="workout_share_button_done">Đã chia sẻ ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>
-
-    <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->
-    <string name="workout_duration_title">Bạn có bao nhiêu thời gian?</string>
-    <string name="workout_duration_subtitle">Chọn thời gian tập, chúng tôi sẽ chọn bài tập phù hợp.</string>
-    <string name="workout_duration_30">30 phút</string>
-    <string name="workout_duration_60">60 phút</string>
-    <string name="workout_duration_unlimited">Không giới hạn</string>
 
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>

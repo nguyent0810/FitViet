@@ -36,11 +36,12 @@ sealed class ResolvedGrouping {
 
 /**
  * Resolves a program's schedule for *today* into display/session-ready data, and builds a
- * [WorkoutBlockPlan] session from it — the Gate 24 counterpart to [WorkoutPlanSeed]/
- * [WorkoutTimeBudgetPlanner], which build sessions from the free-standing exercise catalog instead
- * of a specific program day. [resolveToday] does real I/O (schedule + personal-best lookups), so
- * unlike its siblings this isn't a pure function — kept in the same `ui/workout` package rather
- * than the pure `domain` layer for that reason.
+ * [WorkoutBlockPlan] session from it — the Gate 24 counterpart
+ * [com.fitviet.app.ui.workout.MonthlyPlanDayWorkoutPlanner] resolves a "Hit & Run" monthly-plan
+ * day into the exact same [ResolvedProgramDay]/[ProgramDayWorkoutItem] shape this object works
+ * against, so [buildBlocks]/[resolveGroupings]/[estimateDurationMinutes] serve both entry points
+ * unmodified. [resolveToday] does real I/O (schedule + personal-best lookups), so unlike a pure
+ * function this isn't kept in the `domain` layer.
  */
 object ProgramDayWorkoutPlanner {
 
@@ -127,8 +128,9 @@ object ProgramDayWorkoutPlanner {
     fun supersetRounds(a: ProgramDayWorkoutItem, b: ProgramDayWorkoutItem) = minOf(a.targetSets, b.targetSets).coerceAtLeast(1)
 
     /** Rough end-to-end estimate for the whole day, shown on the preview screen so "Bắt đầu tập"
-     * isn't a blind commitment — reuses [WorkoutTimeBudgetPlanner]'s exact per-rep/per-transition
-     * assumptions and [DEFAULT_REST_SECONDS] rather than inventing a second set of constants. A
+     * isn't a blind commitment — reuses [SECONDS_PER_REP]/[TRANSITION_SECONDS]'s exact per-rep/
+     * per-transition assumptions and [DEFAULT_REST_SECONDS] rather than inventing a second set of
+     * constants. A
      * paired group counts its rest once per round (shared between both exercises), not once per
      * exercise like a solo block — mirroring how [WorkoutViewModel]'s superset-rest phase actually
      * runs, so this estimate doesn't overcount rest for supersets versus straight sets. */

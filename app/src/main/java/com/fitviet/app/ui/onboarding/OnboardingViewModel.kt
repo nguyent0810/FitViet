@@ -31,13 +31,13 @@ class OnboardingViewModel(private val repository: OnboardingRepository) : ViewMo
     init {
         viewModelScope.launch {
             writeMutex.withLock {
-                val saved = repository.getSelections()
+                val saved = repository.getSelectionsAsIndices()
                 _uiState.update {
                     it.copy(
-                        selectedGoal = saved.selectedGoal,
-                        selectedLevel = saved.selectedLevel,
-                        selectedSplit = saved.selectedSplit,
-                        selectedDaysPerWeek = saved.selectedDaysPerWeek,
+                        selectedGoal = saved.goal,
+                        selectedLevel = saved.level,
+                        selectedSplit = saved.split,
+                        selectedDaysPerWeek = saved.daysPerWeek,
                     )
                 }
             }

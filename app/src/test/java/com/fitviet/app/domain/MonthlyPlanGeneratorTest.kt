@@ -2,19 +2,20 @@ package com.fitviet.app.domain
 
 import com.fitviet.app.data.local.seed.SeedData
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.DayOfWeek
 import java.time.LocalDate
 
 class MonthlyPlanGeneratorTest {
 
     /** [SeedData.exercises] is the raw pre-insertion seed list — every entry has the default
      * `id = 0` since Room only assigns real distinct ids on actual insertion (this is exactly why
-     * [com.fitviet.app.ui.workout.WorkoutTimeBudgetPlanner] keys its own lookups by `nameVi`, never
-     * `id`). [MonthlyPlanGenerator] is id-keyed throughout (matching the real post-insertion
-     * catalog it runs against in production), so tests need a fixture with real distinct ids —
-     * this reassigns sequential ones, standing in for what Room would actually hand back. */
+     * [MonthlyPlanGenerator] itself keys its curated allowlists by `nameVi`, never `id`, until a
+     * real post-insertion catalog is passed in). [MonthlyPlanGenerator]'s own generation logic is
+     * id-keyed throughout (matching the real post-insertion catalog it runs against in
+     * production), so tests need a fixture with real distinct ids — this reassigns sequential
+     * ones, standing in for what Room would actually hand back. */
     private val catalog = SeedData.exercises.mapIndexed { index, exercise -> exercise.copy(id = (index + 1).toLong()) }
 
     /** A real, fixed Monday — deterministic regardless of when the test runs. */
@@ -43,11 +44,16 @@ class MonthlyPlanGeneratorTest {
         draft.weeks[weekIndex].days.filterNot { it.isRestDay }
 
     @Test
-    fun `PPL at 3 days a week places Push, Pull, Legs on Mon, Wed, Fri`() {
+    fun `PPL at 3 days a week places Push, Pull, Legs at offsets 0, 2, 4 from generation day`() {
         val draft = MonthlyPlanGenerator.generate(baseInput(SplitTemplate.PPL, daysPerWeek = 3))
         val training = trainingDays(draft)
 
-        assertEquals(listOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY), training.map { it.dayOfWeek })
+        // Redesign Gate 1d-i — asserted as offsets from `monday` (today at generation time), not
+        // absolute weekdays: `monday` happening to actually be a Monday would otherwise let this
+        // pass even if generate() silently regressed back to a fixed-weekday table, since Mon/
+        // Wed/Fri offsets-from-Monday and offsets-from-today are identical in that one coincidental
+        // case. See the non-Monday test below for the property that actually matters.
+        assertEquals(listOf(0L, 2L, 4L), training.map { it.epochDay - monday.toEpochDay() })
         assertEquals(listOf("Push", "Pull", "Legs"), training.map { it.sessionType })
         training.forEach { assertTrue("${it.sessionType} should have exercises", it.exercises.isNotEmpty()) }
     }
@@ -65,12 +71,30 @@ class MonthlyPlanGeneratorTest {
     }
 
     @Test
-    fun `Upper-Lower at 4 days a week lands on Mon, Tue, Thu, Fri`() {
+    fun `Upper-Lower at 4 days a week lands on offsets 0, 1, 3, 4 from generation day`() {
         val draft = MonthlyPlanGenerator.generate(baseInput(SplitTemplate.UPPER_LOWER, daysPerWeek = 4))
         val training = trainingDays(draft)
 
-        assertEquals(listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY), training.map { it.dayOfWeek })
+        assertEquals(listOf(0L, 1L, 3L, 4L), training.map { it.epochDay - monday.toEpochDay() })
         assertEquals(listOf("Upper A", "Lower A", "Upper B", "Lower B"), training.map { it.sessionType })
+    }
+
+    @Test
+    fun `today is always a trainable day, even when generation happens on a non-Monday`() {
+        // Redesign Gate 1d-i's actual load-bearing property: offset 0 (today) must be trainable
+        // regardless of what day of the week generation runs on — this is the one thing the
+        // Monday-anchored fixture above can never prove, since every offset coincides with its old
+        // absolute-weekday equivalent when `today` already is a Monday.
+        val wednesday = LocalDate.of(2024, 1, 3)
+        val input = baseInput(SplitTemplate.PPL, daysPerWeek = 3).copy(today = wednesday)
+
+        val draft = MonthlyPlanGenerator.generate(input)
+        val firstDay = draft.weeks[0].days.first()
+
+        assertEquals(wednesday.toEpochDay(), firstDay.epochDay)
+        assertFalse("generation day must be trainable, not a rest day", firstDay.isRestDay)
+        assertEquals("Push", firstDay.sessionType)
+        assertEquals(wednesday.toEpochDay(), draft.startEpochDay)
     }
 
     @Test
@@ -221,6 +245,29 @@ class MonthlyPlanGeneratorTest {
         val allPicked = draft.weeks.flatMap { it.days }.flatMap { it.exercises }
         assertTrue(allPicked.isNotEmpty())
         assertTrue(allPicked.all { EquipmentProfiles.allows(EquipmentProfiles.NO_EQUIPMENT, catalogById.getValue(it.exerciseId).equipment) })
+    }
+
+    @Test
+    fun `every built-in split at 3 days a week under HOME_DUMBBELLS still assigns at least one exercise per training day`() {
+        // MAIN_COMPOUND_NAMES is barbell/machine-heavy (Bench Press, Bent-Over Row, Squat,
+        // Deadlift, Shoulder Press, Barbell Curl, Triceps Pushdown) — none of those are reachable
+        // under HOME_DUMBBELLS, so this only passes if pickExercise's fallbackTier chain
+        // (MAIN_COMPOUND -> SECONDARY_COMPOUND -> TARGETED_ACCESSORY -> ...) actually finds a
+        // dumbbell-compatible substitute for every muscle group rather than leaving a slot empty.
+        val builtInTemplates = SplitTemplate.entries.filterNot { it == SplitTemplate.CUSTOM }
+        for (template in builtInTemplates) {
+            val draft = MonthlyPlanGenerator.generate(
+                baseInput(template, daysPerWeek = 3, equipmentProfile = EquipmentProfiles.HOME_DUMBBELLS),
+            )
+            val training = trainingDays(draft)
+            assertTrue("$template should have training days", training.isNotEmpty())
+            training.forEach { day ->
+                assertTrue(
+                    "$template's ${day.sessionType} should have at least one exercise under HOME_DUMBBELLS",
+                    day.exercises.isNotEmpty(),
+                )
+            }
+        }
     }
 
     @Test

@@ -12,20 +12,14 @@ enum class NutritionGoal {
     CUT, MAINTAIN, BULK;
 
     companion object {
-        /** Best-effort default for the create-plan wizard's initial goal-card selection — the
-         * user still picks explicitly on that screen, so a wrong guess costs one tap, not a
-         * data-integrity problem. [selectedGoal] is
-         * [com.fitviet.app.data.local.entity.SettingsEntity.selectedGoal] (an index into
-         * onboarding's 4 goal options: 0=Tăng cơ, 1=Giảm mỡ, 2=Sức mạnh, 3=Sức khỏe — a
-         * workout-domain choice with no exact nutrition-goal equivalent). Out-of-range indices
-         * default to MAINTAIN. */
-        fun fromOnboardingIndex(selectedGoal: Int): NutritionGoal = when (selectedGoal) {
-            0 -> BULK
-            1 -> CUT
-            2 -> MAINTAIN
-            3 -> MAINTAIN
-            else -> MAINTAIN
-        }
+        /** "Hit & Run" redesign (Gate 1b) — [com.fitviet.app.data.local.entity.SettingsEntity
+         * .selectedGoal] stores this enum's `.name` directly (onboarding's 3 pills — Tăng cơ/Giảm
+         * mỡ/Khỏe mạnh — now map 1:1 onto BULK/CUT/MAINTAIN, replacing the old 4-option positional
+         * index this function used to decode). Safe-default parse, matching this codebase's other
+         * "unrecognized stored code degrades gracefully" call sites (`ExerciseDifficulty.entries
+         * .getOrElse`, `EquipmentProfiles`) rather than a bare `valueOf` that would throw on a
+         * corrupt/pre-migration value. */
+        fun fromStored(value: String?): NutritionGoal = entries.find { it.name == value } ?: MAINTAIN
     }
 }
 

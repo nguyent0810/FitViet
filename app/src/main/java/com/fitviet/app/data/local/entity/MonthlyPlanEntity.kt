@@ -28,8 +28,10 @@ import androidx.room.PrimaryKey
 data class MonthlyPlanEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val createdAtEpochMillis: Long,
-    /** The Monday week-1 anchors to — see [com.fitviet.app.domain.MonthlyPlanGenerator]'s
-     * "week 1 anchors to the current calendar week" rule. */
+    /** Redesign Gate 1d-i — the actual day generation ran on; every week's day-offsets are
+     * relative to this date, so today (offset 0) is always trainable by construction. See
+     * [com.fitviet.app.domain.MonthlyPlanGenerator]'s `SPACING_TABLE` doc. Write-only — nothing
+     * reads this column back today. */
     val startEpochDay: Long,
     val totalWeeks: Int,
     /** [com.fitviet.app.domain.TrainingGoal.name]. */

@@ -46,3 +46,40 @@ val DotBorderIdle = Color(0xFF3A443C)
 val Danger = Color(0xFFE5484D)
 val DangerSurfaceSelected = Color(0xFF2A1613)
 val DangerBorder = Color(0xFF4A2A2C)
+
+/** "Hit & Run" redesign (UI Handoff/Hit and Run app redesign) — new lime-on-near-black palette,
+ * added alongside the existing green palette above rather than replacing it (Gate 1a). Each
+ * screen swaps from the old tokens to these in its own redesign gate; the old tokens are only
+ * deleted once nothing references them (final nav-consolidation gate). [Danger]/[DangerBorder]
+ * above already match this palette's own danger spec (#E5484D/#4A2A2C) exactly, so there's no
+ * `HrColors.Danger` — reuse the existing one. */
+object HrColors {
+    val Bg = Color(0xFF0C0E08)
+    val BgDeep = Color(0xFF0A0C06)
+    val Surface = Color(0xFF12150C)
+    val SurfaceInput = Color(0xFF0F120A)
+    val SurfaceAccent = Color(0xFF161B08)
+
+    // Today card / hero card gradient — 150deg linear, matches [HeroGradientStart]/[HeroGradientEnd]'s
+    // existing "store the two endpoints, build the Brush at the call site" convention.
+    val GradientCardStart = Color(0xFF1B2408)
+    val GradientCardEnd = Color(0xFF10140A)
+
+    val Border = Color(0xFF202616)
+    val BorderSoft = Color(0xFF2A3020)
+    val BorderAccentDim = Color(0xFF4A5A28)
+    val BorderGradient = Color(0xFF2E3813)
+
+    val Accent = Color(0xFFB7F542)
+    val AccentHover = Color(0xFFCDFF6B)
+    val OnAccent = Color(0xFF141A05)
+
+    val BtnCircle = Color(0xFF1B2110)
+    val BtnCircleHover = Color(0xFF242C14)
+    val BarDim = Color(0xFF242C14)
+
+    val TextHi = Color(0xFFF1F4E8)
+    val TextMid = Color(0xFFC6CCB8)
+    val TextLow = Color(0xFF8F977F)
+    val TextFaint = Color(0xFF5F6650)
+}

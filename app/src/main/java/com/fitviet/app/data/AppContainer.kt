@@ -42,6 +42,22 @@ class AppContainer(context: Context) {
     )
     val exerciseRepository = RoomExerciseRepository(database.exerciseDao())
     val workoutRepository = RoomWorkoutRepository(database.workoutSessionDao(), database.setLogDao())
+    // Declared before dashboardRepository, which now takes it as a constructor dependency
+    // (Gate 1c — DashboardRepository's Today-card resolution moved to MonthlyPlanRepository
+    // .observeTodaySession, shared with WorkoutViewModel's single session entry point, so it no
+    // longer needs monthlyPlanDayDao/monthlyPlanExerciseDao directly).
+    val monthlyPlanRepository = RoomMonthlyPlanRepository(
+        database = database,
+        monthlyPlanDao = database.monthlyPlanDao(),
+        monthlyPlanWeekDao = database.monthlyPlanWeekDao(),
+        monthlyPlanDayDao = database.monthlyPlanDayDao(),
+        monthlyPlanExerciseDao = database.monthlyPlanExerciseDao(),
+        splitTemplateDao = database.splitTemplateDao(),
+        exerciseDao = database.exerciseDao(),
+        setLogDao = database.setLogDao(),
+        workoutSessionDao = database.workoutSessionDao(),
+        settingsDao = database.settingsDao(),
+    )
     val dashboardRepository = DashboardRepository(
         workoutSessionDao = database.workoutSessionDao(),
         mealDao = database.mealDao(),
@@ -52,8 +68,7 @@ class AppContainer(context: Context) {
         programExerciseDao = database.programExerciseDao(),
         exerciseDao = database.exerciseDao(),
         setLogDao = database.setLogDao(),
-        monthlyPlanDayDao = database.monthlyPlanDayDao(),
-        monthlyPlanExerciseDao = database.monthlyPlanExerciseDao(),
+        monthlyPlanRepository = monthlyPlanRepository,
     )
     val diaryRepository = DiaryRepository(
         workoutSessionDao = database.workoutSessionDao(),
@@ -74,18 +89,6 @@ class AppContainer(context: Context) {
         settingsDao = database.settingsDao(),
     )
     val remindersRepository = RemindersRepository(database.reminderDao())
-    val monthlyPlanRepository = RoomMonthlyPlanRepository(
-        database = database,
-        monthlyPlanDao = database.monthlyPlanDao(),
-        monthlyPlanWeekDao = database.monthlyPlanWeekDao(),
-        monthlyPlanDayDao = database.monthlyPlanDayDao(),
-        monthlyPlanExerciseDao = database.monthlyPlanExerciseDao(),
-        splitTemplateDao = database.splitTemplateDao(),
-        exerciseDao = database.exerciseDao(),
-        setLogDao = database.setLogDao(),
-        workoutSessionDao = database.workoutSessionDao(),
-        settingsDao = database.settingsDao(),
-    )
     val recipeRepository = RoomRecipeRepository(
         recipeDao = database.recipeDao(),
         recipeIngredientDao = database.recipeIngredientDao(),

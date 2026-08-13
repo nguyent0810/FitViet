@@ -4,12 +4,12 @@ import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.Deferred
@@ -18,12 +18,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Not private: WorkoutTimeBudgetPlanner's time estimate needs the same value the runtime rest
-// timer actually uses (see the comment at its estimateSeconds call site) so estimated session
-// length matches what the app really runs.
+// Not private: ProgramDayWorkoutPlanner.estimateDurationMinutes and
+// MonthlyPlanDayCardEstimator/MonthlyPlanGenerator's time estimates need the same value the
+// runtime rest timer actually uses so estimated session length matches what the app really runs.
 const val DEFAULT_REST_SECONDS = 60
 private const val SESSION_DAY_LABEL = "Thân trên"
 private const val ACTION_DEBOUNCE_MILLIS = 350L
@@ -33,7 +34,7 @@ data class WorkoutUiState(
     val dayLabel: String = SESSION_DAY_LABEL,
     val blocks: List<WorkoutBlockPlan> = emptyList(),
     val currentBlockIndex: Int = 0,
-    val phase: WorkoutPhase = WorkoutPhase.SelectingDuration,
+    val phase: WorkoutPhase = WorkoutPhase.AwaitingPlanGeneration,
     // Straight-block sub-state
     val currentSetIndex: Int = 0,
     val restSecondsRemaining: Int = 0,
@@ -50,9 +51,9 @@ data class WorkoutUiState(
     val sessionElapsedSeconds: Int = 0,
     val sessionTotalVolumeKg: Double = 0.0,
     val sessionTotalSets: Int = 0,
-    /** Feature #4 (Gate 40) — the program this session came from, null for an ad-hoc
-     * duration-picker session (mismatch #4: not every session has a program at all). Only
-     * meaningful once [phase] reaches [WorkoutPhase.SessionFinished]; used for the share card. */
+    /** Feature #4 (Gate 40) — the program this session came from, null for a non-program session
+     * (mismatch #4: not every session has a program at all). Only meaningful once [phase] reaches
+     * [WorkoutPhase.SessionFinished]; used for the share card. */
     val programTitle: String? = null,
     /** Computed once at session-finish time (see `finishSession()`), not observed live — matches
      * Dashboard's own streak definition via [com.fitviet.app.domain.DashboardStatsCalculator]. */
@@ -91,7 +92,6 @@ class WorkoutViewModel(
     val uiState: StateFlow<WorkoutUiState> = _uiState.asStateFlow()
 
     private var sessionId: Long = 0L
-    private var loadedExercises: List<ExerciseEntity> = emptyList()
     private var restJob: Job? = null
     private var elapsedJob: Job? = null
     private var sessionInitJob: Job? = null
@@ -107,23 +107,23 @@ class WorkoutViewModel(
     }
 
     /** Entry point for both the initial load and "Làm lại" (Gate 24 added the [programId] branch,
-     * Gate 63+ added the [monthlyPlanDayId] branch; the pre-existing picker flow below is
-     * otherwise unchanged). */
+     * Gate 63+ added the [monthlyPlanDayId] branch; redesign Gate 1c replaced the old
+     * duration-picker fallback with [resolveTodaySessionAndStart]). */
     private fun loadInitialSession() {
         if (monthlyPlanDayId != null) {
             startMonthlyPlanDaySession(monthlyPlanDayId)
         } else if (programId != null) {
             startProgramDaySession(programId)
         } else {
-            loadExercisesAndShowDurationPicker()
+            resolveTodaySessionAndStart()
         }
     }
 
     /** Resolves [programId]'s schedule for [dayOfWeek] (today, when null) and starts logging
-     * immediately — there's nothing for a duration picker to choose, the program already
-     * determines every set. Falls back to the generic picker if the program has no
-     * schedule/exercises for that day rather than stranding the user on a blank screen (e.g. a
-     * program whose schedule hasn't finished seeding yet). */
+     * immediately — the program already determines every set, nothing for the user to choose.
+     * Falls back to [WorkoutPhase.NoSessionToday] (defensively, [NoSessionReason.UNAVAILABLE])
+     * rather than stranding the user on a blank screen if the program has no schedule/exercises
+     * for that day (e.g. a program whose schedule hasn't finished seeding yet). */
     private fun startProgramDaySession(programId: Long) {
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
@@ -139,7 +139,7 @@ class WorkoutViewModel(
             }
             val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
             if (resolved == null || blocks.isEmpty()) {
-                showDurationPicker()
+                _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE))
                 return@launch
             }
             // Fetched here (not re-derived from the session row later) per the gate plan's mismatch
@@ -156,33 +156,69 @@ class WorkoutViewModel(
         }
     }
 
-    /** Resolves [monthlyPlanDayId]'s exercises and starts logging immediately — same "nothing for a
-     * duration picker to choose" reasoning as [startProgramDaySession], and the same picker
-     * fallback if the day somehow has no resolvable exercises (e.g. a stale/deleted plan). Unlike
-     * the program-day branch, this passes [monthlyPlanDayId] through to
+    /** Resolves [monthlyPlanDayId]'s exercises and starts logging immediately — same "nothing to
+     * choose" reasoning as [startProgramDaySession]. Passes [monthlyPlanDayId] through to
      * [WorkoutRepository.startSession] so the created session row carries the FK the regenerate
      * lock rule depends on — see [com.fitviet.app.data.repository.MonthlyPlanRepository]. */
     private fun startMonthlyPlanDaySession(monthlyPlanDayId: Long) {
         sessionInitJob?.cancel()
         sessionInitJob = viewModelScope.launch {
             databaseReady.await()
-            val resolved = MonthlyPlanDayWorkoutPlanner.resolveDay(monthlyPlanDayId, monthlyPlanRepository, exerciseRepository, workoutRepository)
-            val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
-            if (resolved == null || blocks.isEmpty()) {
-                showDurationPicker()
-                return@launch
+            runMonthlyPlanDaySession(monthlyPlanDayId)
+        }
+    }
+
+    /** The actual resolve/build/start work behind [startMonthlyPlanDaySession] — split out as a
+     * plain suspend helper (no job management of its own) so [resolveTodaySessionAndStart] can
+     * call it from inside its own already-launched job: calling [startMonthlyPlanDaySession]
+     * directly there would cancel that very job via its own `sessionInitJob?.cancel()`. Falls back
+     * to [WorkoutPhase.NoSessionToday]
+     * ([NoSessionReason.UNAVAILABLE]) if the day somehow has no resolvable exercises (e.g. a
+     * stale/deleted plan) — should be unreachable when the caller already resolved a `Training`
+     * outcome via [com.fitviet.app.data.repository.MonthlyPlanRepository.observeTodaySession], but
+     * stays defensive rather than leaving a blank screen. */
+    private suspend fun runMonthlyPlanDaySession(monthlyPlanDayId: Long) {
+        val resolved = MonthlyPlanDayWorkoutPlanner.resolveDay(monthlyPlanDayId, monthlyPlanRepository, exerciseRepository, workoutRepository)
+        val blocks = resolved?.let { ProgramDayWorkoutPlanner.buildBlocks(it.items) }.orEmpty()
+        if (resolved == null || blocks.isEmpty()) {
+            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE))
+            return
+        }
+        sessionId = workoutRepository.startSession(
+            dayLabel = resolved.titleVi,
+            startedAtMillis = System.currentTimeMillis(),
+            monthlyPlanDayId = monthlyPlanDayId,
+        )
+        _uiState.value = resetForBlock(
+            WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi),
+            0,
+            blocks.firstOrNull(),
+        )
+        startElapsedTicker()
+    }
+
+    /** Redesign Gate 1c — the no-arg entry point's replacement for the old duration picker. Reuses
+     * [com.fitviet.app.data.repository.MonthlyPlanRepository.observeTodaySession], the exact same
+     * resolution Dashboard's Today card uses, so the two never disagree about what "today" means.
+     * `Training` starts logging immediately via [runMonthlyPlanDaySession]; `RestDay`/`Unavailable`/
+     * `PlanFinished` land on [WorkoutPhase.NoSessionToday] (there's nothing to log); `NoPlan` lands
+     * on [WorkoutPhase.AwaitingPlanGeneration], which [WorkoutScreen] reacts to by navigating to
+     * Quick Generate — this ViewModel has no navigation of its own. */
+    private fun resolveTodaySessionAndStart() {
+        sessionInitJob?.cancel()
+        sessionInitJob = viewModelScope.launch {
+            databaseReady.await()
+            when (val card = monthlyPlanRepository.observeTodaySession(LocalDate.now()).first()) {
+                is TodayMonthlyPlanCard.Training -> runMonthlyPlanDaySession(card.dayId)
+                TodayMonthlyPlanCard.RestDay ->
+                    _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.REST_DAY))
+                is TodayMonthlyPlanCard.Unavailable ->
+                    _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE))
+                TodayMonthlyPlanCard.PlanFinished ->
+                    _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.NoSessionToday(NoSessionReason.PLAN_FINISHED))
+                TodayMonthlyPlanCard.NoPlan ->
+                    _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.AwaitingPlanGeneration)
             }
-            sessionId = workoutRepository.startSession(
-                dayLabel = resolved.titleVi,
-                startedAtMillis = System.currentTimeMillis(),
-                monthlyPlanDayId = monthlyPlanDayId,
-            )
-            _uiState.value = resetForBlock(
-                WorkoutUiState(blocks = blocks, isLoading = false, dayLabel = resolved.titleVi),
-                0,
-                blocks.firstOrNull(),
-            )
-            startElapsedTicker()
         }
     }
 
@@ -199,55 +235,12 @@ class WorkoutViewModel(
         action()
     }
 
-    /** Loads the catalog once and lands on the "chọn thời gian tập" picker (Gate 10, not part of the
-     * original 12-screen spec) — the actual session/blocks aren't built until [selectDuration], no
-     * point starting a Room session row for a workout the user hasn't configured yet. */
-    private fun loadExercisesAndShowDurationPicker() {
-        // Cancel any in-flight init so rapid "Làm lại" taps can't race to create multiple
-        // sessions and leave sessionId pointing at whichever insert happened to finish last.
-        sessionInitJob?.cancel()
-        sessionInitJob = viewModelScope.launch {
-            databaseReady.await()
-            showDurationPicker()
-        }
-    }
-
-    /** Plain suspend helper (no job management of its own) so [startProgramDaySession] can fall
-     * back to it from inside its own already-launched job — calling [loadExercisesAndShowDurationPicker]
-     * directly there would cancel that very job via its own `sessionInitJob?.cancel()`. */
-    private suspend fun showDurationPicker() {
-        loadedExercises = exerciseRepository.getAll()
-        _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
-    }
-
-    /** [minutes] is `null` for "Không giới hạn" (the original curated demo session, unchanged
-     * from before Gate 10); otherwise builds a session sized to fit that time budget from the
-     * full exercise catalog (Gate 9) via [WorkoutTimeBudgetPlanner]. */
-    fun selectDuration(minutes: Int?) = debounced {
-        if (_uiState.value.phase != WorkoutPhase.SelectingDuration) return@debounced
-        val blocks = if (minutes == null) {
-            WorkoutPlanSeed.buildBlocks(loadedExercises)
-        } else {
-            WorkoutTimeBudgetPlanner.buildBlocks(loadedExercises, minutes)
-        }
-        // Guards against a mismatched/empty catalog (e.g. a seeding gap) producing zero blocks —
-        // without this, resetForBlock's block == null branch jumps straight to SessionFinished
-        // without ever calling completeSession(), leaving a session row that's never marked
-        // complete while its elapsed ticker keeps running. Nothing to start, so stay on the picker.
-        if (blocks.isEmpty()) return@debounced
-        sessionInitJob?.cancel()
-        sessionInitJob = viewModelScope.launch {
-            sessionId = workoutRepository.startSession(dayLabel = SESSION_DAY_LABEL, startedAtMillis = System.currentTimeMillis())
-            _uiState.value = resetForBlock(WorkoutUiState(blocks = blocks, isLoading = false), 0, blocks.firstOrNull())
-            startElapsedTicker()
-        }
-    }
-
     /** For a program-day or monthly-plan-day session (Gate 24 / Gate 63+), "Làm lại" restarts that
-     * same day's session again rather than dropping to the generic picker, which these flows never
-     * show in the first place. The branches are kept explicit (rather than always routing through
-     * [loadInitialSession]) so the pre-existing picker flow keeps resetting synchronously with no
-     * loading-state frame, exactly as it did before Gate 24. */
+     * same day's session again; redesign Gate 1c's no-arg branch re-resolves today's monthly-plan
+     * session the same way the initial load did (via [resolveTodaySessionAndStart]) rather than
+     * dropping to the deleted duration picker. The branches are kept explicit (rather than always
+     * routing through [loadInitialSession]) so the program/monthly-plan-day flows keep resetting
+     * synchronously with no loading-state frame, exactly as they did before Gate 24. */
     fun resetWorkout() = debounced {
         restJob?.cancel()
         elapsedJob?.cancel()
@@ -259,7 +252,8 @@ class WorkoutViewModel(
             _uiState.value = WorkoutUiState()
             startProgramDaySession(programId)
         } else {
-            _uiState.value = WorkoutUiState(isLoading = false, phase = WorkoutPhase.SelectingDuration)
+            _uiState.value = WorkoutUiState()
+            resolveTodaySessionAndStart()
         }
     }
 

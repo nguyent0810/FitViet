@@ -5,10 +5,16 @@ import com.fitviet.app.R
 
 data class GoalOption(@StringRes val titleRes: Int, @StringRes val subRes: Int)
 
+/** "Hit & Run" redesign (Gate 1b) — trimmed from 4 entries to 3, matching the redesign mock's own
+ * onboarding pills (Tăng cơ/Giảm mỡ/Khỏe mạnh — no "Sức mạnh") and mapping 1:1 onto
+ * [com.fitviet.app.domain.NutritionGoal] (BULK/CUT/MAINTAIN) by position, so `SettingsEntity
+ * .selectedGoal`'s round-trip through this list is exact, not lossy. "Sức mạnh"/`STRENGTH` stays
+ * reachable from [com.fitviet.app.ui.quickgenerate.QuickGenerateScreen]'s own separate goal picker
+ * (a `TrainingGoal`, not a `NutritionGoal`, choice) and from the sample-program list once a program
+ * carries `STRENGTH` — this list is onboarding-only. */
 val GOAL_OPTIONS = listOf(
     GoalOption(R.string.goal_muscle_gain_title, R.string.goal_muscle_gain_sub),
     GoalOption(R.string.goal_fat_loss_title, R.string.goal_fat_loss_sub),
-    GoalOption(R.string.goal_strength_title, R.string.goal_strength_sub),
     GoalOption(R.string.goal_health_title, R.string.goal_health_sub),
 )
 

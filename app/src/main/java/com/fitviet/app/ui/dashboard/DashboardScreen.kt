@@ -116,8 +116,12 @@ fun DashboardScreen(
         GreetingHeader(today = today, displayName = uiState.displayName, avatarId = uiState.avatarId, onAvatarClick = onOpenProfile)
         // "Hit & Run" (Gate 63+) — an active monthly plan's Today card takes over the hero slot
         // entirely; the hand-authored-program hero card below is unchanged for everyone else.
+        // "Hit & Run" redesign (Gate 1c) — TodayMonthlyPlanCard is a total 5-case type now
+        // (Training/RestDay/Unavailable/NoPlan/PlanFinished); only NoPlan falls back to the old
+        // hand-authored-program hero card below — every other case, including a plan that just
+        // finished, still shows the monthly-plan hero (with its own no-action copy).
         val monthlyPlanCard = uiState.todayMonthlyPlanCard
-        if (monthlyPlanCard != null) {
+        if (monthlyPlanCard != TodayMonthlyPlanCard.NoPlan) {
             MonthlyPlanHeroCard(
                 card = monthlyPlanCard,
                 onStart = { (monthlyPlanCard as? TodayMonthlyPlanCard.Training)?.let { onStartMonthlyPlanDay(it.dayId) } },
@@ -369,6 +373,35 @@ private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit,
                     )
                     Text(
                         text = stringResource(R.string.dashboard_rest_day_meta),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                // "Hit & Run" redesign (Gate 1c) — Unavailable/PlanFinished are new cases; NoPlan
+                // is handled here only defensively (the caller routes NoPlan to the old HeroCard
+                // branch instead, this composable should never actually receive it).
+                is TodayMonthlyPlanCard.Unavailable -> {
+                    Text(
+                        text = stringResource(R.string.dashboard_unavailable_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.dashboard_unavailable_meta),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                TodayMonthlyPlanCard.PlanFinished, TodayMonthlyPlanCard.NoPlan -> {
+                    Text(
+                        text = stringResource(R.string.dashboard_plan_finished_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.dashboard_plan_finished_meta),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextMuted,
                         modifier = Modifier.padding(top = 2.dp),

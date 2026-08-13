@@ -1,5 +1,6 @@
 package com.fitviet.app.ui.workout
 
+import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.dao.CommunityPostDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.entity.CommunityPostEntity
@@ -27,10 +28,12 @@ import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.domain.ProgramScheduleDay
 import com.fitviet.app.domain.ProgramScheduleExercise
+import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -174,9 +177,16 @@ class WorkoutViewModelTest {
     private class FakeMonthlyPlanRepository(
         private val days: Map<Long, MonthlyPlanDayEntity> = emptyMap(),
         private val exercisesByDay: Map<Long, List<MonthlyPlanExerciseEntity>> = emptyMap(),
+        // Redesign Gate 1c — backs the no-arg entry point's resolution
+        // (WorkoutViewModel.resolveTodaySessionAndStart), the same source Dashboard's Today card
+        // reads. Defaults to NoPlan (the safest "nothing set up" default) so tests that don't care
+        // about the no-arg path (the explicit programId/monthlyPlanDayId tests below) don't need to
+        // configure it.
+        private val todayCard: TodayMonthlyPlanCard = TodayMonthlyPlanCard.NoPlan,
     ) : MonthlyPlanRepository {
         val completedDayIds = mutableListOf<Long>()
 
+        override fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard> = flowOf(todayCard)
         override fun observeActivePlanId(): Flow<Long?> = flowOf(null)
         override fun observePlan(planId: Long): Flow<MonthlyPlanEntity?> = flowOf(null)
         override fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>> = flowOf(emptyList())
@@ -225,6 +235,7 @@ class WorkoutViewModelTest {
         targetRepsMin: Int = 8,
         targetRepsMax: Int = 10,
         targetWeightKg: Double? = null,
+        supersetGroup: String? = null,
     ) = MonthlyPlanExerciseEntity(
         id = orderIndex.toLong() + dayId * 100,
         monthlyPlanDayId = dayId,
@@ -236,7 +247,7 @@ class WorkoutViewModelTest {
         targetRepsMin = targetRepsMin,
         targetRepsMax = targetRepsMax,
         targetWeightKg = targetWeightKg,
-        supersetGroup = null,
+        supersetGroup = supersetGroup,
     )
 
     private fun testExercise(id: Long, nameVi: String) = ExerciseEntity(
@@ -276,12 +287,28 @@ class WorkoutViewModelTest {
         testExercise(4, SeedExerciseNames.LATERAL_RAISE),
     )
 
-    /**
-     * [startSession]: most tests want the harness to land directly on the curated demo session
-     * (block 0, `StraightLog`) exactly as it did before Gate 10 added the duration picker in front
-     * of it — pass `false` only for tests that specifically cover the picker step itself.
-     */
-    private inner class Harness(startSession: Boolean = true) {
+    // Redesign Gate 1c — [Harness]'s default no-arg session used to reach a fixed curated demo
+    // (WorkoutPlanSeed) via the now-deleted duration picker. It now resolves through the same
+    // "Hit & Run" monthly-plan Today-session path a real no-arg entry (bottom-nav FAB) uses, via
+    // [FakeMonthlyPlanRepository]'s `todayCard`. Same 4-exercise/3-block shape as the old curated
+    // demo (straight bench, straight shoulder, cable-fly+lateral-raise superset) so the bulk of the
+    // block-by-block assertions below didn't need to change, just how the session gets created.
+    private val DEMO_DAY_ID = 1L
+
+    private fun demoExercises() = listOf(
+        testMonthlyPlanExercise(dayId = DEMO_DAY_ID, exerciseId = 1L, orderIndex = 0, targetSets = 4, targetRepsMin = 8, targetRepsMax = 8, targetWeightKg = 40.0),
+        testMonthlyPlanExercise(dayId = DEMO_DAY_ID, exerciseId = 2L, orderIndex = 1, targetSets = 3, targetRepsMin = 10, targetRepsMax = 10, targetWeightKg = 16.0),
+        testMonthlyPlanExercise(dayId = DEMO_DAY_ID, exerciseId = 3L, orderIndex = 2, targetSets = 3, targetRepsMin = 12, targetRepsMax = 12, targetWeightKg = 15.0, supersetGroup = "SS1"),
+        testMonthlyPlanExercise(dayId = DEMO_DAY_ID, exerciseId = 4L, orderIndex = 3, targetSets = 3, targetRepsMin = 15, targetRepsMax = 15, targetWeightKg = 8.0, supersetGroup = "SS1"),
+    )
+
+    private fun demoMonthlyPlanRepository() = FakeMonthlyPlanRepository(
+        days = mapOf(DEMO_DAY_ID to testMonthlyPlanDay(id = DEMO_DAY_ID, sessionType = "Đẩy")),
+        exercisesByDay = mapOf(DEMO_DAY_ID to demoExercises()),
+        todayCard = TodayMonthlyPlanCard.Training(dayId = DEMO_DAY_ID, sessionType = "Đẩy", exerciseCount = 4, estimatedDurationMinutes = 30),
+    )
+
+    private inner class Harness {
         val clock = FakeClock()
         val workoutRepository = FakeWorkoutRepository()
         val communityPostDao = FakeCommunityPostDao()
@@ -290,24 +317,16 @@ class WorkoutViewModelTest {
             workoutRepository = workoutRepository,
             programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
-            monthlyPlanRepository = FakeMonthlyPlanRepository(),
+            monthlyPlanRepository = demoMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
             elapsedRealtimeMillis = clock::now,
         )
 
         init {
+            // Unlike the old duration-picker flow, resolution isn't behind a debounced user action
+            // (loadInitialSession() runs straight from ViewModel init), so there's no starting
+            // timestamp to burn past here before the first real test action.
             testDispatcher.scheduler.runCurrent()
-            if (startSession) {
-                // null == "Không giới hạn" == WorkoutPlanSeed's curated demo, unchanged from before Gate 10.
-                viewModel.selectDuration(null)
-                testDispatcher.scheduler.runCurrent()
-                // selectDuration() is itself debounced, so it stamps lastActionAtMillis at the
-                // clock's starting value (10_000). Without advancing past that here, every test's
-                // very first action right after `Harness()` would land at the same instant and get
-                // silently dropped by the 350ms debounce window — the exact bug FakeClock's 10_000
-                // starting offset exists to avoid, reintroduced one level up by this setup call.
-                clock.advance()
-            }
         }
 
         /** Advances the debounce clock so the next action isn't silently dropped by the previous one. */
@@ -315,62 +334,103 @@ class WorkoutViewModelTest {
             clock.advance()
             testDispatcher.scheduler.runCurrent()
         }
+
+        /** Must run as the last statement of every test that reaches this Harness's constructor
+         * (i.e. every test below except the no-arg-resolution outcome tests that never start a
+         * session) — see [cancelTickerToAvoidRunTestHang]'s doc for why. */
+        fun finish() = viewModel.cancelTickerToAvoidRunTestHang()
     }
 
-    // ---- Gate 10: duration picker ----
+    // ---- Redesign Gate 1c: single session entry point (replaces Gate 10's duration picker) ----
 
     @Test
-    fun `initial state shows the duration picker before any session starts`() = runTest(testDispatcher) {
-        val h = Harness(startSession = false)
-        val state = h.viewModel.uiState.value
+    fun `no active plan lands on AwaitingPlanGeneration`() = runTest(testDispatcher) {
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(), // todayCard defaults to NoPlan
+            databaseReady = CompletableDeferred(Unit),
+        )
+        testDispatcher.scheduler.runCurrent()
 
-        assertEquals(WorkoutPhase.SelectingDuration, state.phase)
+        val state = vm.uiState.value
+        assertEquals(WorkoutPhase.AwaitingPlanGeneration, state.phase)
         assertTrue(state.blocks.isEmpty())
     }
 
     @Test
-    fun `selecting a time budget builds a session via the time-budget planner, not the curated demo`() = runTest(testDispatcher) {
-        val h = Harness(startSession = false)
-
-        // 5-minute (300s) budget: Bench Press alone is ~222s (3 sets x 8 reps x 3s + 2x60s rest +
-        // 30s transition, per the shared testExercise() fixture); Shoulder Press would push past
-        // 300s, so only Bench Press fits.
-        h.viewModel.selectDuration(5)
+    fun `a rest day lands on NoSessionToday with REST_DAY`() = runTest(testDispatcher) {
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(todayCard = TodayMonthlyPlanCard.RestDay),
+            databaseReady = CompletableDeferred(Unit),
+        )
         testDispatcher.scheduler.runCurrent()
 
-        val state = h.viewModel.uiState.value
-        assertEquals(WorkoutPhase.StraightLog, state.phase)
-        assertEquals(1, state.blocks.size)
-        val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
-        assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
-        assertEquals(3, block.plannedSets.size)
-        assertEquals(0.0, state.editableWeightKg, 0.0) // generated blocks start at 0kg, unlike the curated demo
-        assertEquals(1L, h.workoutRepository.nextSessionId - 1) // a Room session row was started
+        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.REST_DAY), vm.uiState.value.phase)
     }
 
     @Test
-    fun `selecting Khong gioi han builds the original curated demo, unchanged`() = runTest(testDispatcher) {
-        val h = Harness(startSession = false)
-
-        h.viewModel.selectDuration(null)
+    fun `a training day that resolves to zero exercises lands on NoSessionToday with UNAVAILABLE`() = runTest(testDispatcher) {
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(
+                todayCard = TodayMonthlyPlanCard.Unavailable(dayId = 5L, sessionType = "Đẩy"),
+            ),
+            databaseReady = CompletableDeferred(Unit),
+        )
         testDispatcher.scheduler.runCurrent()
 
+        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE), vm.uiState.value.phase)
+    }
+
+    @Test
+    fun `a finished plan lands on NoSessionToday with PLAN_FINISHED`() = runTest(testDispatcher) {
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            programRepository = FakeProgramRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = FakeMonthlyPlanRepository(todayCard = TodayMonthlyPlanCard.PlanFinished),
+            databaseReady = CompletableDeferred(Unit),
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.PLAN_FINISHED), vm.uiState.value.phase)
+    }
+
+    @Test
+    fun `a training day resolves through observeTodaySession straight into logging`() = runTest(testDispatcher) {
+        val h = Harness()
         val state = h.viewModel.uiState.value
+
         assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals("Đẩy", state.dayLabel)
         assertEquals(3, state.blocks.size) // bench, shoulder, superset(cable fly + lateral raise)
-        assertEquals(40.0, state.editableWeightKg, 0.0) // bench press's curated first-set weight, not 0
+        assertEquals(1L, h.workoutRepository.nextSessionId - 1) // a real session row was started
+        assertEquals(DEMO_DAY_ID, h.workoutRepository.startedMonthlyPlanDayId) // carrying the regenerate-lock FK
+        h.finish()
     }
 
     @Test
     fun `initial state starts on block 0 with the first planned set`() = runTest(testDispatcher) {
-        val vm = Harness().viewModel
-        val state = vm.uiState.value
+        val h = Harness()
+        val state = h.viewModel.uiState.value
 
         assertEquals(WorkoutPhase.StraightLog, state.phase)
         assertEquals(0, state.currentBlockIndex)
         assertEquals(0, state.currentSetIndex)
         assertEquals(40.0, state.editableWeightKg, 0.0)
         assertEquals(8, state.editableReps)
+        h.finish()
     }
 
     @Test
@@ -385,6 +445,7 @@ class WorkoutViewModelTest {
         assertEquals(60, state.restSecondsRemaining)
         assertEquals(40.0, state.editableWeightKg, 0.0) // bench press set 2 is also 40kg×8 in the plan
         assertEquals(1, h.workoutRepository.loggedSets.size)
+        h.finish()
     }
 
     @Test
@@ -397,6 +458,7 @@ class WorkoutViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(WorkoutPhase.StraightLog, h.viewModel.uiState.value.phase)
+        h.finish()
     }
 
     @Test
@@ -411,6 +473,7 @@ class WorkoutViewModelTest {
         val state = h.viewModel.uiState.value
         assertEquals(WorkoutPhase.StraightRest, state.phase)
         assertEquals(30, state.restSecondsRemaining)
+        h.finish()
     }
 
     @Test
@@ -426,6 +489,7 @@ class WorkoutViewModelTest {
         val state = h.viewModel.uiState.value
         assertEquals(WorkoutPhase.StraightLog, state.phase)
         assertEquals(0, state.restSecondsRemaining)
+        h.finish()
     }
 
     @Test
@@ -439,6 +503,7 @@ class WorkoutViewModelTest {
 
         assertEquals(75, h.viewModel.uiState.value.restSecondsRemaining)
         assertEquals(WorkoutPhase.StraightRest, h.viewModel.uiState.value.phase)
+        h.finish()
     }
 
     @Test
@@ -460,6 +525,7 @@ class WorkoutViewModelTest {
         assertEquals(WorkoutPhase.StraightBlockDone, state.phase)
         assertEquals(4, state.loggedSetsThisExercise.size)
         assertEquals(4, h.workoutRepository.loggedSets.size)
+        h.finish()
     }
 
     @Test
@@ -471,6 +537,7 @@ class WorkoutViewModelTest {
         assertEquals(WorkoutPhase.SessionFinished, state.phase)
         assertEquals(1L, h.workoutRepository.completedSessionId)
         assertTrue(h.workoutRepository.completedVolumeKg!! > 0.0)
+        h.finish()
     }
 
     // ---- Gate 40: workout-share ----
@@ -482,6 +549,7 @@ class WorkoutViewModelTest {
         advanceThroughEntireSession(h)
 
         assertEquals(5, h.viewModel.uiState.value.sessionStreakDays)
+        h.finish()
     }
 
     @Test
@@ -502,6 +570,7 @@ class WorkoutViewModelTest {
         assertEquals(state.sessionTotalVolumeKg, post.totalVolumeKg)
         assertEquals(3, post.streakDays)
         assertTrue(h.viewModel.uiState.value.sessionShared)
+        h.finish()
     }
 
     @Test
@@ -520,6 +589,7 @@ class WorkoutViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(1, h.communityPostDao.inserted.size)
+        h.finish()
     }
 
     @Test
@@ -539,6 +609,7 @@ class WorkoutViewModelTest {
         assertEquals(WorkoutPhase.SupersetWork, after.phase) // no rest between A and B
         assertEquals(1, after.supersetSub)
         assertEquals(8.0, after.editableWeightKg, 0.0) // lateral raise plan
+        h.finish()
     }
 
     @Test
@@ -555,6 +626,7 @@ class WorkoutViewModelTest {
         val state = h.viewModel.uiState.value
         assertEquals(WorkoutPhase.SupersetRest, state.phase)
         assertEquals(60, state.supersetRestSecondsRemaining)
+        h.finish()
     }
 
     @Test
@@ -576,6 +648,7 @@ class WorkoutViewModelTest {
         assertEquals(2, state.supersetRound)
         assertEquals(0, state.supersetSub)
         assertEquals(15.0, state.editableWeightKg, 0.0) // back to A's planned values for the new round
+        h.finish()
     }
 
     @Test
@@ -594,6 +667,7 @@ class WorkoutViewModelTest {
         val state = h.viewModel.uiState.value
         assertEquals(WorkoutPhase.SupersetBlockDone, state.phase)
         assertEquals(4, state.supersetRound) // totalRounds + 1
+        h.finish()
     }
 
     @Test
@@ -605,10 +679,11 @@ class WorkoutViewModelTest {
 
         assertEquals(1, h.workoutRepository.loggedSets.size)
         assertEquals(1, h.viewModel.uiState.value.currentSetIndex)
+        h.finish()
     }
 
     @Test
-    fun `reset returns to the duration picker, and picking again starts a fresh session at block 0`() = runTest(testDispatcher) {
+    fun `reset re-resolves today's session and starts a fresh one at block 0`() = runTest(testDispatcher) {
         val h = Harness()
         h.viewModel.completeCurrentSet()
         testDispatcher.scheduler.runCurrent()
@@ -617,18 +692,12 @@ class WorkoutViewModelTest {
         h.viewModel.resetWorkout()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(WorkoutPhase.SelectingDuration, h.viewModel.uiState.value.phase)
-        assertEquals(1L, h.workoutRepository.nextSessionId - 1) // no new session row yet, just back at the picker
-
-        h.tick()
-        h.viewModel.selectDuration(null)
-        testDispatcher.scheduler.runCurrent()
-
         val state = h.viewModel.uiState.value
         assertEquals(WorkoutPhase.StraightLog, state.phase)
         assertEquals(0, state.currentBlockIndex)
         assertEquals(0, state.currentSetIndex)
-        assertEquals(2L, h.workoutRepository.nextSessionId - 1) // a second session was started
+        assertEquals(2L, h.workoutRepository.nextSessionId - 1) // a fresh session row was started
+        h.finish()
     }
 
     // ---- Gate 24: program-day-driven session ----
@@ -671,6 +740,7 @@ class WorkoutViewModelTest {
         assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
         assertEquals(20.0, block.plannedSets.first().weightKg, 0.0) // no logged history -> default
         assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
+        vm.cancelTickerToAvoidRunTestHang()
     }
 
     @Test
@@ -713,10 +783,11 @@ class WorkoutViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertEquals("Chương trình kiểm thử", communityPostDao.inserted.single().programTitle)
+        vm.cancelTickerToAvoidRunTestHang()
     }
 
     @Test
-    fun `a program with no schedule for today falls back to the duration picker`() = runTest(testDispatcher) {
+    fun `a program with no schedule for today falls back to NoSessionToday`() = runTest(testDispatcher) {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
@@ -728,7 +799,7 @@ class WorkoutViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(WorkoutPhase.SelectingDuration, vm.uiState.value.phase)
+        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE), vm.uiState.value.phase)
     }
 
     // ---- Gate 63+: monthly-plan-day-driven session ----
@@ -761,6 +832,7 @@ class WorkoutViewModelTest {
         assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
         assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
         assertEquals(7L, workoutRepository.startedMonthlyPlanDayId) // carrying the regenerate-lock FK
+        vm.cancelTickerToAvoidRunTestHang()
     }
 
     @Test
@@ -769,6 +841,15 @@ class WorkoutViewModelTest {
             days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
             exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
         )
+        // Phase 1 checkpoint review — this test used to construct WorkoutViewModel without a fake
+        // clock, so its two back-to-back debounced() calls (completeCurrentSet then
+        // advanceToNextBlock) both compared against the real SystemClock.elapsedRealtime, which is
+        // stubbed to a constant 0 in a plain JVM unit test — every action silently dropped, the
+        // ViewModel never left StraightLog, and the assertion below failed before ever reaching
+        // this test's cancelTickerToAvoidRunTestHang() cleanup, leaving the still-running elapsed
+        // ticker to hang runTest's own implicit teardown. A real FakeClock (same pattern every
+        // other test in this file already uses) fixes both problems at once.
+        val clock = FakeClock()
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
@@ -777,16 +858,19 @@ class WorkoutViewModelTest {
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),
             monthlyPlanDayId = 7L,
+            elapsedRealtimeMillis = clock::now,
         )
         testDispatcher.scheduler.runCurrent()
 
         vm.completeCurrentSet() // this day's only set -> StraightBlockDone
         testDispatcher.scheduler.runCurrent()
+        clock.advance()
         vm.advanceToNextBlock() // no next block -> finishSession()
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
         assertEquals(listOf(7L), monthlyPlanRepository.completedDayIds)
+        vm.cancelTickerToAvoidRunTestHang()
     }
 
     @Test
@@ -796,6 +880,8 @@ class WorkoutViewModelTest {
             exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1))),
         )
         val workoutRepository = FakeWorkoutRepository().apply { logSetGate = CompletableDeferred() }
+        // See the sibling PR-bump test above for why a real clock is required here.
+        val clock = FakeClock()
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
@@ -804,11 +890,13 @@ class WorkoutViewModelTest {
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),
             monthlyPlanDayId = 7L,
+            elapsedRealtimeMillis = clock::now,
         )
         testDispatcher.scheduler.runCurrent()
 
         vm.completeCurrentSet()
         testDispatcher.scheduler.runCurrent()
+        clock.advance()
         vm.advanceToNextBlock()
         testDispatcher.scheduler.runCurrent()
 
@@ -820,10 +908,11 @@ class WorkoutViewModelTest {
 
         assertEquals(1, workoutRepository.loggedSets.size)
         assertEquals(listOf(7L), monthlyPlanRepository.completedDayIds)
+        vm.cancelTickerToAvoidRunTestHang()
     }
 
     @Test
-    fun `a monthly-plan rest day falls back to the duration picker`() = runTest(testDispatcher) {
+    fun `a monthly-plan rest day falls back to NoSessionToday`() = runTest(testDispatcher) {
         val monthlyPlanRepository = FakeMonthlyPlanRepository(
             days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = null, isRestDay = true)),
         )
@@ -838,7 +927,7 @@ class WorkoutViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(WorkoutPhase.SelectingDuration, vm.uiState.value.phase)
+        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE), vm.uiState.value.phase)
     }
 
     /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block. */
@@ -885,4 +974,24 @@ class WorkoutViewModelTest {
         h.viewModel.advanceToNextBlock()
         testDispatcher.scheduler.runCurrent()
     }
+}
+
+/**
+ * Phase 1 checkpoint review (HIGH 1) — pre-existing, not introduced by the Gate 1c rewrite, but it
+ * blocked verifying that rewrite: once a session actually starts, [WorkoutViewModel]'s
+ * `startElapsedTicker()` launches an unconditional `while (true) { delay(1_000); ... }` in
+ * `viewModelScope`. Because [Dispatchers.setMain] points `Dispatchers.Main` (and so
+ * `viewModelScope`) at the very same [StandardTestDispatcher] each test's `runTest(testDispatcher)`
+ * block runs on, that ticker's suspended `delay` sits on the identical [TestCoroutineScheduler]
+ * `runTest` drains to completion when the test body returns — and since the ticker always
+ * re-enqueues itself, that drain never reaches "idle" and spins forever (measured at 900s before
+ * being force-killed). `onCleared()` is `protected` (AndroidX's own contract), so it can't be
+ * called from here directly; `viewModelScope` itself is a public extension property, so cancelling
+ * it directly is the standard, non-hacky way to stop this without touching production code or
+ * resorting to reflection. Every test that starts a real session (directly or via [Harness.finish])
+ * must call this as its last statement so `runTest`'s implicit final drain has nothing left to spin
+ * on — see each test body below.
+ */
+private fun WorkoutViewModel.cancelTickerToAvoidRunTestHang() {
+    viewModelScope.cancel()
 }

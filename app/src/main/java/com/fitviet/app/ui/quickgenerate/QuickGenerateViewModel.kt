@@ -7,12 +7,14 @@ import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.MonthlyPlanUserChoices
 import com.fitviet.app.data.repository.OnboardingRepository
 import com.fitviet.app.domain.ExerciseDifficulty
+import com.fitviet.app.domain.NutritionGoal
 import com.fitviet.app.domain.SplitTemplate
 import com.fitviet.app.domain.TrainingGoal
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,14 +24,26 @@ data class QuickGenerateUiState(
     val level: ExerciseDifficulty = ExerciseDifficulty.BEGINNER,
     val splitTemplate: SplitTemplate = SplitTemplate.PPL,
     val daysPerWeek: Int = 3,
+    /** Redesign Gate 1d-ii — read straight from [com.fitviet.app.data.local.entity
+     * .SettingsEntity.equipmentProfile], which nothing writes yet (no onboarding question asks for
+     * it until Phase 2's single-screen redesign). Always null today in practice, but threading it
+     * through here means generation starts respecting it the moment that write path exists, with
+     * no further change needed on this screen. Not exposed as a picker on this screen — no UI here
+     * has ever let the user set it directly. */
+    val equipmentProfile: String? = null,
     val isGenerating: Boolean = false,
 )
 
 /**
- * "Hit & Run" (Gate 63+) — Goal → Split → Days/week, pre-filled from onboarding's saved selections
- * but freely editable (per the "Hit & Run" plan's judgment call #1: the mapping from onboarding's 4
- * goals/5 splits to the generator's 3 goals/5 templates is approximate, so it's always visible and
- * correctable here rather than hidden behind a "just trust onboarding" 1-tap flow).
+ * "Hit & Run" (Gate 63+) — Goal → Split → Days/week, pre-filled but freely editable. Goal prefers
+ * the active plan's own real `TrainingGoal` once one exists (an exact, honest value); before that,
+ * it's seeded from onboarding's cruder 3-option `NutritionGoal` question via [trainingGoalFor]
+ * (redesign Gate 1b — see that function's own doc comment). Split prefers onboarding's saved
+ * `SplitTemplate` directly (a 1:1 mapping, no approximation). Neither prefill is ever silently
+ * trusted — this screen's own picker is always visible and correctable, so a wrong guess costs one
+ * tap, never a wrong plan. One known gap from Gate 1b's onboarding-goal-list trim (3 options, no
+ * "Sức mạnh"): a user can't reach `TrainingGoal.STRENGTH` from onboarding's own first-ever seed —
+ * only from this screen's picker, or from a sample-program-seeded plan's real stored goal.
  */
 class QuickGenerateViewModel(
     private val onboardingRepository: OnboardingRepository,
@@ -41,12 +55,22 @@ class QuickGenerateViewModel(
     private val initialization = viewModelScope.launch {
         try {
             val saved = onboardingRepository.getSelections()
+            // "Hit & Run" redesign (Gate 1b) — prefer the active plan's own real `goal` (a
+            // TrainingGoal, already written on every generate) when one exists, since it's the
+            // exact value the redesign's "Kế hoạch" sheet should redisplay honestly; only seed
+            // from onboarding's cruder NutritionGoal question on the very first-ever generate,
+            // when no plan row exists yet to read from.
+            val planGoal = monthlyPlanRepository.observeActivePlanId().first()
+                ?.let { planId -> monthlyPlanRepository.observePlan(planId).first() }
+                ?.goal
+                ?.let { stored -> TrainingGoal.entries.find { it.name == stored } }
             _uiState.update {
                 it.copy(
-                    goal = mapOnboardingGoal(saved.selectedGoal),
-                    level = ExerciseDifficulty.entries.getOrElse(saved.selectedLevel) { ExerciseDifficulty.BEGINNER },
-                    splitTemplate = mapOnboardingSplit(saved.selectedSplit),
+                    goal = planGoal ?: trainingGoalFor(NutritionGoal.fromStored(saved.selectedGoal)),
+                    level = ExerciseDifficulty.entries.find { d -> d.name == saved.selectedLevel } ?: ExerciseDifficulty.BEGINNER,
+                    splitTemplate = SplitTemplate.entries.find { t -> t.name == saved.selectedSplit } ?: SplitTemplate.BRO_SPLIT,
                     daysPerWeek = saved.selectedDaysPerWeek.coerceIn(MIN_DAYS_PER_WEEK, MAX_DAYS_PER_WEEK),
+                    equipmentProfile = saved.equipmentProfile,
                 )
             }
         } finally {
@@ -77,6 +101,7 @@ class QuickGenerateViewModel(
                     level = state.level,
                     splitTemplate = state.splitTemplate,
                     daysPerWeek = state.daysPerWeek,
+                    equipmentProfile = state.equipmentProfile,
                 ),
                 LocalDate.now(),
             )
@@ -99,26 +124,16 @@ class QuickGenerateViewModel(
 private const val MIN_DAYS_PER_WEEK = 2
 private const val MAX_DAYS_PER_WEEK = 6
 
-/** Onboarding's 4 goals (index order: Tăng cơ, Giảm mỡ, Tăng sức mạnh, Giữ dáng — see
- * [com.fitviet.app.ui.onboarding.GOAL_OPTIONS]) map to the generator's 3 per the "Hit & Run"
- * plan's judgment call #1. An out-of-range index (shouldn't happen, but onboarding stores a raw
- * Int) falls back to GENERAL_FITNESS, same as the two goals that already map there. */
-private fun mapOnboardingGoal(index: Int): TrainingGoal = when (index) {
-    0 -> TrainingGoal.HYPERTROPHY
-    2 -> TrainingGoal.STRENGTH
-    else -> TrainingGoal.GENERAL_FITNESS
-}
-
-/** Onboarding's 5 split options (see [com.fitviet.app.ui.onboarding.SPLIT_OPTIONS]) don't line up
- * 1:1 with the generator's 5 [SplitTemplate]s — onboarding's index 2 ("Ngực + tay sau / Xô + tay
- * trước", a paired-muscle-group split) has no exact generator equivalent. Mapped to BRO_SPLIT as
- * the closest fit (both are muscle-group-focused, just different granularity) — an explicit,
- * flaggable judgment call, not an oversight; the split picker below is always shown and editable
- * so a wrong guess here costs the user one extra tap, not a wrong plan. */
-private fun mapOnboardingSplit(index: Int): SplitTemplate = when (index) {
-    0 -> SplitTemplate.PPL
-    1 -> SplitTemplate.UPPER_LOWER
-    3 -> SplitTemplate.BRO_SPLIT
-    4 -> SplitTemplate.FULL_BODY
-    else -> SplitTemplate.BRO_SPLIT
+/** "Hit & Run" redesign (Gate 1b) — onboarding only asks a body-composition question
+ * ([NutritionGoal]: BULK/CUT/MAINTAIN), not a training-prescription one; this is the one-time seed
+ * used only when no [com.fitviet.app.data.local.entity.MonthlyPlanEntity] exists yet to prefill
+ * from (first generate ever). Once any plan has been generated, `initialization` above prefers
+ * that plan's own real `goal` (see [com.fitviet.app.data.repository.MonthlyPlanRepository]) —
+ * this function never runs again after that, so a wrong guess here costs at most one tap on the
+ * always-visible, always-editable goal picker below, never a silently wrong plan. Cutting is a
+ * nutrition strategy, not a distinct set/rep prescription, so both CUT and MAINTAIN seed the same
+ * GENERAL_FITNESS training goal — deliberately, not a rounding accident. */
+private fun trainingGoalFor(nutritionGoal: NutritionGoal): TrainingGoal = when (nutritionGoal) {
+    NutritionGoal.BULK -> TrainingGoal.HYPERTROPHY
+    NutritionGoal.CUT, NutritionGoal.MAINTAIN -> TrainingGoal.GENERAL_FITNESS
 }

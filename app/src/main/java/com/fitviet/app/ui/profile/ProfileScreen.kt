@@ -55,8 +55,10 @@ import com.fitviet.app.ui.common.SettingsRow
 import com.fitviet.app.ui.common.entranceFade
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.rememberReducedMotion
-import com.fitviet.app.ui.onboarding.GOAL_OPTIONS
-import com.fitviet.app.ui.onboarding.LEVEL_OPTIONS
+import com.fitviet.app.domain.ExerciseDifficulty
+import com.fitviet.app.domain.NutritionGoal
+import com.fitviet.app.util.labelRes
+import com.fitviet.app.util.titleRes
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentBorderAlt
 import com.fitviet.app.ui.theme.Anton
@@ -157,8 +159,10 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileHeader(settings: SettingsEntity, onAvatarClick: () -> Unit) {
-    val goalTitle = stringResource(GOAL_OPTIONS[settings.selectedGoal].titleRes)
-    val levelTitle = stringResource(LEVEL_OPTIONS[settings.selectedLevel])
+    val goalTitle = stringResource(NutritionGoal.fromStored(settings.selectedGoal).titleRes())
+    val levelTitle = stringResource(
+        (ExerciseDifficulty.entries.find { it.name == settings.selectedLevel } ?: ExerciseDifficulty.BEGINNER).labelRes(),
+    )
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         MonogramAvatar(
             initial = avatarInitial(settings.displayName),

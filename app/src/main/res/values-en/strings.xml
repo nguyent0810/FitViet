@@ -125,6 +125,10 @@
     <string name="dashboard_start_workout_today">Start today\'s workout</string>
     <string name="dashboard_rest_day_title">Today is a rest day</string>
     <string name="dashboard_rest_day_meta">Recover today so you\'re ready for the next session</string>
+    <string name="dashboard_unavailable_title">No exercises for today yet</string>
+    <string name="dashboard_unavailable_meta">Try loosening the muscle-group limits in your monthly plan</string>
+    <string name="dashboard_plan_finished_title">Monthly plan complete</string>
+    <string name="dashboard_plan_finished_meta">Create a new monthly plan to keep going</string>
     <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
     <string name="dashboard_stat_streak">Day streak</string>
     <string name="dashboard_stat_sessions_this_week">Sessions this week</string>
@@ -244,13 +248,6 @@
     <string name="workout_share_button">Share to Community</string>
     <string name="workout_share_button_done">Shared ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>
-
-    <!-- Gate 10: choose a time budget before the session starts (not part of the original 12-screen spec) -->
-    <string name="workout_duration_title">How much time do you have?</string>
-    <string name="workout_duration_subtitle">Pick a time budget and we\'ll pick the exercises to match.</string>
-    <string name="workout_duration_30">30 min</string>
-    <string name="workout_duration_60">60 min</string>
-    <string name="workout_duration_unlimited">No limit</string>
 
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>

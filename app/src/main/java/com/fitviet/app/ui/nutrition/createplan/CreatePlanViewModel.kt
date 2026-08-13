@@ -49,7 +49,7 @@ class CreatePlanViewModel(
         try {
             val settings = settingsDao.get()
             val weightKg = measurementDao.observeLatest().first()?.weightKg ?: DEFAULT_BODY_WEIGHT_KG
-            val goal = NutritionGoal.fromOnboardingIndex(settings?.selectedGoal ?: 0)
+            val goal = NutritionGoal.fromStored(settings?.selectedGoal)
             _uiState.update {
                 it.copy(
                     goal = goal,

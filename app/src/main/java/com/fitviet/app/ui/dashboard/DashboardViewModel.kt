@@ -46,7 +46,9 @@ data class DashboardUiState(
     val showNutritionCard: Boolean = true,
     val displayName: String = "",
     val avatarId: Int = 0,
-    val todayMonthlyPlanCard: TodayMonthlyPlanCard? = null,
+    // "Hit & Run" redesign (Gate 1c) — non-nullable; TodayMonthlyPlanCard.NoPlan is now the "no
+    // active plan" case itself, not represented by a null card.
+    val todayMonthlyPlanCard: TodayMonthlyPlanCard = TodayMonthlyPlanCard.NoPlan,
     /** "Hit & Run" (Gate 63+) adaptive scheduling — the oldest still-unresolved missed training
      * day from the active plan, checked once per Dashboard load (not continuously re-scanned; see
      * [DashboardViewModel]'s `init` block), or null if there isn't one / there's no active plan.

@@ -134,7 +134,13 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // "content-only but a device already seeded needs a forced wipe+reseed" case as Gate 23's
     // MuscleGroup rename above, since DatabaseSeeder.seedMissingFoods() only backfills by name and
     // never repairs an existing row's category.
-    version = 20,
+    // "Hit & Run" redesign Gate 1b raised this from 20 to 21: `settings.selectedGoal`/`selectedLevel`
+    // /`selectedSplit` retyped from positional `Int` indices to each enum's own `.name` string (see
+    // SettingsEntity's doc comment — a resized/reordered onboarding option list would otherwise
+    // silently reinterpret every already-stored index), plus a new `settings.equipmentProfile`
+    // column. Batched as one gate/one wipe per the redesign's own decision record, rather than
+    // bumping separately for each schema need the redesign turns out to have.
+    version = 21,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

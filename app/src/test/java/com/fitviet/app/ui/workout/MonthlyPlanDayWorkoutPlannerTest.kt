@@ -14,6 +14,7 @@ import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
+import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -57,6 +58,7 @@ class MonthlyPlanDayWorkoutPlannerTest {
         override fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>> = flowOf(emptyList())
         override fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>> = flowOf(emptyList())
         override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = flowOf(exercisesByDay[dayId].orEmpty())
+        override fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard> = flowOf(TodayMonthlyPlanCard.NoPlan)
         override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
         override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = flowOf(days[dayId])
         override fun observeIsDayLocked(dayId: Long): Flow<Boolean> = flowOf(false)

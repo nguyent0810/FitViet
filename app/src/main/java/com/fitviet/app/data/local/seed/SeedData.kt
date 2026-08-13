@@ -13,8 +13,10 @@ import com.fitviet.app.domain.MealPlanTemplateCodec
 import com.fitviet.app.domain.MealPlanTemplateDay
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
+import com.fitviet.app.domain.SplitTemplate
+import com.fitviet.app.domain.TrainingGoal
 
-/** Stable lookup keys for exercises the workout flow (Gate 4) references by name — see WorkoutPlanSeed. */
+/** Stable lookup keys for exercises the workout flow (Gate 4) and generator reference by name. */
 object SeedExerciseNames {
     const val BENCH_PRESS = "Đẩy ngực tạ đòn"
     const val SHOULDER_PRESS = "Đẩy vai tạ đơn"
@@ -206,6 +208,8 @@ object SeedData {
             level = "Trung cấp",
             equipment = "Phòng gym",
             tags = listOf("Tăng cơ", "Phòng gym"),
+            goal = TrainingGoal.HYPERTROPHY.name,
+            splitTemplate = SplitTemplate.FULL_BODY.name,
         ),
         ProgramEntity(
             titleVi = "Giảm mỡ 30 ngày tại nhà",
@@ -215,6 +219,11 @@ object SeedData {
             level = "Mới bắt đầu",
             equipment = "Không thiết bị",
             tags = listOf("Giảm mỡ", "Tại nhà"),
+            // Fat-loss is a nutrition strategy (see NutritionGoal/TrainingGoal split, Gate 1b) —
+            // the training side is general fitness, same GENERAL_FITNESS a "Giảm mỡ" onboarding
+            // pick seeds. 5 sessions/week follows the generator's own days→split default rule.
+            goal = TrainingGoal.GENERAL_FITNESS.name,
+            splitTemplate = SplitTemplate.PPL.name,
         ),
         ProgramEntity(
             titleVi = "Sức mạnh cơ bản 5×5",
@@ -224,6 +233,11 @@ object SeedData {
             level = "Mọi trình độ",
             equipment = "Tạ đòn",
             tags = listOf("Tăng cơ", "Phòng gym"),
+            // The one seed program reachable only via STRENGTH — a classic 5×5 program (a real
+            // barbell method, e.g. StrongLifts/Starting Strength) is definitionally full-body,
+            // 3x/week, alternating compound lifts.
+            goal = TrainingGoal.STRENGTH.name,
+            splitTemplate = SplitTemplate.FULL_BODY.name,
         ),
     )
 
@@ -4383,8 +4397,7 @@ object SeedData {
     )
 
     /** One exercise target within a [ProgramDaySeed] — resolved to a real [ExerciseEntity] id by
-     * [exerciseName] (a [SeedExerciseNames] constant) at seed time, same name-lookup pattern
-     * [com.fitviet.app.ui.workout.WorkoutPlanSeed] already uses for the fixed workout demo.
+     * [exerciseName] (a [SeedExerciseNames] constant) at seed time.
      * [supersetGroup] mirrors [com.fitviet.app.data.local.entity.ProgramExerciseEntity.supersetGroup]
      * — left null (straight sets) unless deliberately hand-authored for a specific day. */
     data class ProgramExerciseSeed(
@@ -4422,10 +4435,9 @@ object SeedData {
                 dayOfWeek = 1,
                 titleVi = "Ngực & Vai",
                 // Compound presses first, then a hand-authored finishing superset (Gate 47) —
-                // Cable fly + Lateral raise, the same pairing as the no-program demo session
-                // (WorkoutPlanSeed), so both paths agree on what this pairing looks like. Adjacent
-                // and sharing a group value is what makes buildBlocks() treat them as one block;
-                // both already share targetSets/targetReps so no rounds are lost reconciling them.
+                // Cable fly + Lateral raise. Adjacent and sharing a group value is what makes
+                // buildBlocks() treat them as one block; both already share targetSets/targetReps
+                // so no rounds are lost reconciling them.
                 exercises = listOf(
                     ProgramExerciseSeed(SeedExerciseNames.BENCH_PRESS, 4, 8, 10),
                     ProgramExerciseSeed(SeedExerciseNames.SHOULDER_PRESS, 3, 8, 10),

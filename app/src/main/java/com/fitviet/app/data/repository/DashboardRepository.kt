@@ -3,8 +3,6 @@ package com.fitviet.app.data.repository
 import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
-import com.fitviet.app.data.local.dao.MonthlyPlanDayDao
-import com.fitviet.app.data.local.dao.MonthlyPlanExerciseDao
 import com.fitviet.app.data.local.dao.ProgramDao
 import com.fitviet.app.data.local.dao.ProgramDayDao
 import com.fitviet.app.data.local.dao.ProgramExerciseDao
@@ -17,8 +15,6 @@ import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.CompletedSet
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
-import com.fitviet.app.domain.MonthlyPlanDayCardEstimator
-import com.fitviet.app.domain.MonthlyPlanTodayResolver
 import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.NextTraining
 import com.fitviet.app.domain.NextTrainingCalculator
@@ -37,7 +33,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 
 data class DashboardData(
     val today: LocalDate,
@@ -69,12 +64,14 @@ data class DashboardData(
      * [com.fitviet.app.data.local.entity.SettingsEntity]. */
     val displayName: String,
     val avatarId: Int,
-    /** "Hit & Run" (Gate 63+) — null when there's no active monthly plan, in which case
-     * [featuredProgram]/[nextTraining]/[programProgress] drive the hero card exactly as before this
-     * feature. Independent of [featuredProgram]: both can be non-null at once (see
-     * [com.fitviet.app.data.repository.MonthlyPlanRepository]'s doc), but the hero card prefers
-     * this when present. */
-    val todayMonthlyPlanCard: TodayMonthlyPlanCard?,
+    /** "Hit & Run" (Gate 63+); redesign Gate 1c made this a total, always-non-null 5-case type
+     * (was nullable) — [TodayMonthlyPlanCard.NoPlan] is now the "no active plan" case itself, in
+     * which case [featuredProgram]/[nextTraining]/[programProgress] drive the hero card exactly
+     * as before this feature. Independent of [featuredProgram]: a hand-authored program can be
+     * featured at the same time a monthly plan is active (see [com.fitviet.app.data.repository
+     * .MonthlyPlanRepository]'s doc), but the hero card prefers this whenever it isn't
+     * [TodayMonthlyPlanCard.NoPlan]. */
+    val todayMonthlyPlanCard: TodayMonthlyPlanCard,
     /** Gate D4 — read straight from [com.fitviet.app.data.local.entity.SettingsEntity], threaded
      * through so [com.fitviet.app.ui.dashboard.DashboardViewModel] can derive
      * [com.fitviet.app.domain.StreakMilestones.crossedMilestone] without a second settings
@@ -112,7 +109,6 @@ private data class BaseDashboardData(
     val showNutritionCard: Boolean,
     val displayName: String,
     val avatarId: Int,
-    val activeMonthlyPlanId: Long?,
     val lastCelebratedStreakDays: Int,
 )
 
@@ -126,8 +122,10 @@ class DashboardRepository(
     private val programExerciseDao: ProgramExerciseDao,
     private val exerciseDao: ExerciseDao,
     private val setLogDao: SetLogDao,
-    private val monthlyPlanDayDao: MonthlyPlanDayDao,
-    private val monthlyPlanExerciseDao: MonthlyPlanExerciseDao,
+    // "Hit & Run" redesign (Gate 1c) — Today-card resolution moved to this repository's own
+    // observeTodaySession, shared with WorkoutViewModel's single session entry point; replaces
+    // this class's direct monthlyPlanDayDao/monthlyPlanExerciseDao dependencies.
+    private val monthlyPlanRepository: MonthlyPlanRepository,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observe(): Flow<DashboardData> {
@@ -197,7 +195,6 @@ class DashboardRepository(
                     showNutritionCard = stage1.settings.showNutritionCard,
                     displayName = stage1.settings.displayName,
                     avatarId = stage1.settings.avatarId,
-                    activeMonthlyPlanId = stage1.settings.activeMonthlyPlanId,
                     lastCelebratedStreakDays = stage1.settings.lastCelebratedStreakDays,
                 )
             }
@@ -213,7 +210,7 @@ class DashboardRepository(
             } else {
                 flowOf(emptyList())
             }
-            combine(scheduleFlow, observeTodayMonthlyPlanCard(base.activeMonthlyPlanId, base.today)) { schedule, monthlyPlanCard ->
+            combine(scheduleFlow, monthlyPlanRepository.observeTodaySession(base.today)) { schedule, monthlyPlanCard ->
                 DashboardData(
                     today = base.today,
                     completedSessions = base.completedSessions,
@@ -251,29 +248,4 @@ class DashboardRepository(
         settingsDao.upsert(current.copy(lastCelebratedStreakDays = newMark))
     }
 
-    /** [monthlyPlanId] null (no active plan) short-circuits to a constant `null` card without
-     * subscribing to anything — the common case for a user who hasn't tried "Hit & Run" yet. */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun observeTodayMonthlyPlanCard(monthlyPlanId: Long?, today: LocalDate): Flow<TodayMonthlyPlanCard?> {
-        if (monthlyPlanId == null) return flowOf(null)
-        return monthlyPlanDayDao.observeForPlan(monthlyPlanId).flatMapLatest { days ->
-            val todayDay = MonthlyPlanTodayResolver.resolve(days, today) ?: return@flatMapLatest flowOf<TodayMonthlyPlanCard?>(null)
-            if (todayDay.isRestDay || todayDay.sessionType == null) {
-                return@flatMapLatest flowOf<TodayMonthlyPlanCard?>(TodayMonthlyPlanCard.RestDay)
-            }
-            val sessionType = todayDay.sessionType
-            monthlyPlanExerciseDao.observeForDay(todayDay.id).map { exercises ->
-                if (exercises.isEmpty()) {
-                    null
-                } else {
-                    TodayMonthlyPlanCard.Training(
-                        dayId = todayDay.id,
-                        sessionType = sessionType,
-                        exerciseCount = exercises.size,
-                        estimatedDurationMinutes = MonthlyPlanDayCardEstimator.estimateDurationMinutes(exercises),
-                    )
-                }
-            }
-        }
-    }
 }

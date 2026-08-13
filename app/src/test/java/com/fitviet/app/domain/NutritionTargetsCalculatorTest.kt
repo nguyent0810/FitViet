@@ -27,16 +27,16 @@ class NutritionTargetsCalculatorTest {
     }
 
     @Test
-    fun `onboarding index maps to the documented goal for every valid index`() {
-        assertEquals(NutritionGoal.BULK, NutritionGoal.fromOnboardingIndex(0))
-        assertEquals(NutritionGoal.CUT, NutritionGoal.fromOnboardingIndex(1))
-        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromOnboardingIndex(2))
-        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromOnboardingIndex(3))
+    fun `stored goal name parses to the matching enum value`() {
+        assertEquals(NutritionGoal.BULK, NutritionGoal.fromStored("BULK"))
+        assertEquals(NutritionGoal.CUT, NutritionGoal.fromStored("CUT"))
+        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromStored("MAINTAIN"))
     }
 
     @Test
-    fun `onboarding index out of range defaults to maintain`() {
-        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromOnboardingIndex(-1))
-        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromOnboardingIndex(99))
+    fun `unrecognized or missing stored value defaults to maintain`() {
+        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromStored(null))
+        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromStored(""))
+        assertEquals(NutritionGoal.MAINTAIN, NutritionGoal.fromStored("STRENGTH"))
     }
 }

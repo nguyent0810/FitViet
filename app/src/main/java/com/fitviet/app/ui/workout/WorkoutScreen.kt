@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,10 @@ import com.fitviet.app.util.formatWeight
 fun WorkoutScreen(
     viewModel: WorkoutViewModel,
     onFinishToHome: () -> Unit,
+    // Redesign Gate 1c — fires once when the no-arg entry point resolves to "no active plan"
+    // (WorkoutPhase.AwaitingPlanGeneration). This ViewModel has no navigation of its own, so the
+    // caller (FitVietNavHost) supplies where "go set one up" actually goes (Quick Generate).
+    onNoPlan: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirm by remember { mutableStateOf(false) }
@@ -51,12 +56,22 @@ fun WorkoutScreen(
             return@Column
         }
 
-        if (uiState.phase != WorkoutPhase.SessionFinished && uiState.phase != WorkoutPhase.SelectingDuration) {
+        if (uiState.phase != WorkoutPhase.SessionFinished &&
+            uiState.phase !is WorkoutPhase.NoSessionToday &&
+            uiState.phase != WorkoutPhase.AwaitingPlanGeneration
+        ) {
             WorkoutHeader(uiState = uiState, onReset = { showResetConfirm = true }, onExit = { showExitConfirm = true })
         }
 
-        when (uiState.phase) {
-            WorkoutPhase.SelectingDuration -> WorkoutDurationPickerContent(onSelect = viewModel::selectDuration, onExit = onFinishToHome)
+        when (val phase = uiState.phase) {
+            is WorkoutPhase.NoSessionToday -> NoSessionTodayContent(reason = phase.reason, onExit = onFinishToHome)
+            WorkoutPhase.AwaitingPlanGeneration -> {
+                // Navigates away immediately (see onNoPlan's own doc) — this content only ever
+                // renders for the handful of frames between resolution and the nav actually
+                // landing, but a loading skeleton beats a blank frame in that window.
+                LoadingSkeleton(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp))
+                LaunchedEffect(Unit) { onNoPlan() }
+            }
             WorkoutPhase.StraightLog -> StraightLogContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.StraightRest -> {
                 val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan

@@ -22,21 +22,29 @@ import com.fitviet.app.domain.CustomSplitCodec
 import com.fitviet.app.domain.CustomSplitDay
 import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.MissedWorkoutDetector
+import com.fitviet.app.domain.MonthlyPlanDayCardEstimator
 import com.fitviet.app.domain.MonthlyPlanDayStatus
 import com.fitviet.app.domain.MonthlyPlanExerciseDraft
 import com.fitviet.app.domain.MonthlyPlanGenerationInput
 import com.fitviet.app.domain.MonthlyPlanGenerator
 import com.fitviet.app.domain.MonthlyPlanStatus
+import com.fitviet.app.domain.MonthlyPlanTodayResolver
 import com.fitviet.app.domain.MuscleGroup
 import com.fitviet.app.domain.PlanPhase
 import com.fitviet.app.domain.SplitTemplate
+import com.fitviet.app.domain.TodayMonthlyPlanCard
+import com.fitviet.app.domain.TodayPlanDayState
 import com.fitviet.app.domain.TrainingGoal
 import com.fitviet.app.domain.WorkoutCompositionCalculator
+import com.fitviet.app.ui.workout.DEFAULT_REST_SECONDS
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /** What the user actually picked on the Quick Generate screen (or its onboarding-prefilled
@@ -52,6 +60,15 @@ data class MonthlyPlanUserChoices(
     val customSplitDays: List<CustomSplitDay>? = null,
     val equipmentProfile: String? = null,
     val sessionDurationTargetMinutes: Int = 60,
+    /** Redesign Gate 1d-ii — see [com.fitviet.app.domain.MonthlyPlanGenerationInput.restSeconds]'s
+     * doc; no settings source exists for this yet, so every real call site leaves it at the
+     * default. Known future gap (Phase 1 review): unlike [equipmentProfile], this value is NOT
+     * persisted on [com.fitviet.app.data.local.entity.MonthlyPlanEntity], so [choicesFrom] can't
+     * restore whatever value a plan was originally generated with — a regenerate always re-derives
+     * the *current* default rather than the plan's own. Currently a no-op gap (every real path
+     * uses the same hardcoded default, so there's nothing to drift from yet); revisit by adding a
+     * persisted column once a real settings source exists. */
+    val restSeconds: Int = DEFAULT_REST_SECONDS,
     val exclusionExerciseIds: Set<Long> = emptySet(),
     val excludedMuscleGroupCodes: Set<String> = emptySet(),
 )
@@ -74,6 +91,15 @@ interface MonthlyPlanRepository {
     fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>>
     fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>>
     fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>>
+
+    /** "Hit & Run" redesign (Gate 1c) — the single shared "what's today's plan status" resolution,
+     * built entirely from this interface's own [observeActivePlanId]/[observeDaysForPlan]/
+     * [observeExercisesForDay] (no new DAO dependency). Both [com.fitviet.app.data.repository
+     * .DashboardRepository] (Today card) and [com.fitviet.app.ui.workout.WorkoutViewModel] (the
+     * bare `workout` route's single entry point) call this instead of each resolving "today"
+     * their own way — see [com.fitviet.app.domain.TodayMonthlyPlanCard]'s doc for why a shared,
+     * exhaustive 5-case type replaced two separate ad hoc null-based resolutions. */
+    fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard>
 
     /** "Hit & Run" (Gate 63+) Regenerate UI — every day in [planId] with at least one linked
      * [com.fitviet.app.data.local.entity.WorkoutSessionEntity], i.e. the same lock rule
@@ -185,6 +211,34 @@ class RoomMonthlyPlanRepository(
         workoutSessionDao.observeCountForMonthlyPlanDay(dayId).map { it > 0 }
 
     override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = monthlyPlanExerciseDao.observeForDay(dayId)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard> =
+        observeActivePlanId().flatMapLatest { activePlanId ->
+            if (activePlanId == null) {
+                flowOf(TodayMonthlyPlanCard.NoPlan)
+            } else {
+                observeDaysForPlan(activePlanId).flatMapLatest { days ->
+                    when (val state = MonthlyPlanTodayResolver.classify(activePlanId, days, today)) {
+                        TodayPlanDayState.NoPlan -> flowOf(TodayMonthlyPlanCard.NoPlan)
+                        TodayPlanDayState.PlanFinished -> flowOf(TodayMonthlyPlanCard.PlanFinished)
+                        TodayPlanDayState.RestDay -> flowOf(TodayMonthlyPlanCard.RestDay)
+                        is TodayPlanDayState.HasSession -> observeExercisesForDay(state.dayId).map { exercises ->
+                            if (exercises.isEmpty()) {
+                                TodayMonthlyPlanCard.Unavailable(dayId = state.dayId, sessionType = state.sessionType)
+                            } else {
+                                TodayMonthlyPlanCard.Training(
+                                    dayId = state.dayId,
+                                    sessionType = state.sessionType,
+                                    exerciseCount = exercises.size,
+                                    estimatedDurationMinutes = MonthlyPlanDayCardEstimator.estimateDurationMinutes(exercises),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
     override suspend fun getDay(dayId: Long): MonthlyPlanDayEntity? = monthlyPlanDayDao.getById(dayId)
 
@@ -436,6 +490,9 @@ class RoomMonthlyPlanRepository(
         sessionDurationTargetMinutes = plan.sessionDurationTargetMinutes,
         exclusionExerciseIds = plan.exclusionExerciseIds.toSet(),
         excludedMuscleGroupCodes = plan.excludedMuscleGroupCodes.toSet(),
+        // No persisted column for this yet (see MonthlyPlanUserChoices.restSeconds's doc) — a
+        // regenerate always re-derives it at the current default, same as every other real call
+        // site until a settings source exists.
     )
 
     /** Gathers everything [MonthlyPlanGenerator] needs beyond the user's own choices — the real
@@ -477,6 +534,7 @@ class RoomMonthlyPlanRepository(
             customSplitDays = choices.customSplitDays,
             equipmentProfile = choices.equipmentProfile,
             sessionDurationTargetMinutes = choices.sessionDurationTargetMinutes,
+            restSeconds = choices.restSeconds,
             exclusionExerciseIds = choices.exclusionExerciseIds,
             excludedMuscleGroupCodes = choices.excludedMuscleGroupCodes,
             catalog = catalog,
