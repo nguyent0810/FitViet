@@ -304,8 +304,9 @@ private fun MealRow(meal: MealEntity, onRemove: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             // `meal.slot` displayed as-is (no case transform / vocabulary remap) — the mock's own
             // 3-bucket SÁNG/TRƯA/TỐI vocabulary doesn't reconcile with this app's real slot data
-            // (4 buckets, including "Bữa phụ" with no "Bữa tối" at all); reconciling that is Gate
-            // 5c's own scoped work, not this token-rebuild gate's.
+            // (4 buckets, including "Bữa phụ" with no "Bữa tối" at all). Non-functional: slot
+            // values render verbatim with no grouping/bucketing, so nothing mis-sorts. Reconciling
+            // the display vocabulary itself is a known Phase 5 deferral, not scheduled to a gate.
             Text(text = meal.slot, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, color = HrColors.TextFaint)
             Text(
                 text = meal.nameVi,

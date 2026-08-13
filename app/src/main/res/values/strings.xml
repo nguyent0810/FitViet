@@ -425,8 +425,16 @@
     <string name="nutrition_ingredients_title">Nguyên liệu</string>
     <string name="nutrition_instructions_title">Cách làm</string>
     <string name="nutrition_recipe_prep_cook">Chuẩn bị %1$d phút · Nấu %2$d phút</string>
-    <string name="nutrition_recipe_macros">P %1$dg · C %2$dg · B %3$dg</string>
     <string name="nutrition_recipe_grams">%1$dg</string>
+
+    <!-- Redesign Gate 5c — Recipe Detail rebuild -->
+    <string name="nutrition_recipe_breadcrumb">Món ăn</string>
+    <string name="nutrition_recipe_stat_kcal">Kcal</string>
+    <string name="nutrition_recipe_stat_fat">Béo</string>
+    <string name="nutrition_recipe_servings_hint">Kcal và thành phần tự tính lại theo khẩu phần</string>
+    <string name="nutrition_recipe_fits_goal">Vừa với mục tiêu hôm nay — còn %1$s kcal</string>
+    <string name="nutrition_recipe_cta_snack">Bữa phụ</string>
+    <string name="nutrition_recipe_cta_lunch">+ Thêm vào bữa trưa</string>
 
     <!-- Templates -->
     <string name="nutrition_template_meta">%1$d kcal/ngày · %2$dg đạm · %3$d bữa</string>

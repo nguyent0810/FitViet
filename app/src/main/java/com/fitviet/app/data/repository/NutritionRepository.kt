@@ -49,18 +49,28 @@ class NutritionRepository(private val mealDao: MealDao) {
 
     // Gate 5b-i — a real recipe logged from the "Món & thực đơn" library, not a fixed preset.
     // Defaults to the same [ADDED_MEAL_SLOT] the preset-adder above uses; takes an explicit [slot]
-    // so Gate 5c's own slot-aware Recipe Detail CTAs ("Bữa phụ" / "+ Thêm vào bữa trưa") can reuse
-    // this same method rather than duplicating it once that gate needs a chosen slot.
+    // so the Recipe Detail screen's slot-aware CTAs ("Bữa phụ" / "+ Thêm vào bữa trưa") can reuse
+    // this same method rather than duplicating it. Delegates to the [NutritionTotals] overload
+    // below using [RecipeWithNutrition.standardTotals] — the library row's own unscaled totals,
+    // correct for that call site since the library never lets the user adjust servings/variant.
     suspend fun addMeal(recipe: RecipeWithNutrition, slot: String = ADDED_MEAL_SLOT) {
+        addMeal(recipe.nameVi, recipe.standardTotals, slot)
+    }
+
+    // Gate 5c — Recipe Detail's own add-to-meal action takes already-scaled [NutritionTotals]
+    // (servings stepper + variant pill applied) rather than [RecipeWithNutrition.standardTotals]
+    // directly, since that field is always the recipe's base/STANDARD numbers regardless of what
+    // the user picked on that screen.
+    suspend fun addMeal(nameVi: String, totals: NutritionTotals, slot: String) {
         mealDao.insert(
             MealEntity(
                 epochDay = LocalDate.now().toEpochDay(),
                 slot = slot,
-                nameVi = recipe.nameVi,
-                kcal = recipe.standardTotals.kcal,
-                proteinG = recipe.standardTotals.proteinG,
-                carbG = recipe.standardTotals.carbG,
-                fatG = recipe.standardTotals.fatG,
+                nameVi = nameVi,
+                kcal = totals.kcal,
+                proteinG = totals.proteinG,
+                carbG = totals.carbG,
+                fatG = totals.fatG,
             ),
         )
     }

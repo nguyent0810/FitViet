@@ -6,8 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /** A user-favorited recipe. No `userId` — single local user (same reasoning as
- * [UserMealPlanEntity]'s doc comment). Unique index on [recipeId] both enforces "favorite once"
- * and doubles as the fast existence check for the Recipe Detail screen's ♡ toggle. */
+ * [UserMealPlanEntity]'s doc comment). Unique index on [recipeId] enforces "favorite once".
+ * Gate 5c dropped Recipe Detail's ♡ toggle (confirmed write-only) — this entity, its DAO, and
+ * [com.fitviet.app.data.repository.RecipeRepository]'s favorite methods are left in place,
+ * unread, as a "compiling but unreached, cheap to resurrect" call rather than a schema removal. */
 @Entity(
     tableName = "favorite_recipes",
     foreignKeys = [

@@ -534,7 +534,7 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
             ) { backStackEntry ->
                 val recipeId = backStackEntry.arguments?.getLong(FitVietDestination.NutritionRecipeDetail.ARG_RECIPE_ID) ?: 0L
                 val viewModel: RecipeDetailViewModel = viewModel(
-                    factory = RecipeDetailViewModel.Factory(recipeId, container.recipeRepository),
+                    factory = RecipeDetailViewModel.Factory(recipeId, container.recipeRepository, container.nutritionRepository),
                 )
                 RecipeDetailScreen(
                     viewModel = viewModel,

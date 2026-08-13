@@ -61,10 +61,12 @@ data class RecipeFilter(
 )
 
 /** Real Room-backed Nutrition browse/detail repository — the Nutrition module's library/discover
- * (`NutritionLibraryScreen` as of Gate 5b-i), Recipe-Detail, and favorites surfaces all read
- * through this, never a mock. Translates the design brief's REST-endpoint list into local method
- * contracts (no server/accounts exist in this app — see the "Hit & Run" plan's precedent for the
- * same translation). */
+ * (`NutritionLibraryScreen` as of Gate 5b-i) and Recipe-Detail surfaces read through this, never a
+ * mock. Translates the design brief's REST-endpoint list into local method contracts (no
+ * server/accounts exist in this app — see the "Hit & Run" plan's precedent for the same
+ * translation). [observeFavorites]/[observeIsFavorite]/[toggleFavorite] have no surface reading
+ * them as of Gate 5c (Recipe Detail's ♡ toggle was confirmed write-only and dropped) — left in
+ * place rather than deleted, per [com.fitviet.app.data.local.entity.FavoriteRecipeEntity]'s doc. */
 interface RecipeRepository {
     fun observeRecipes(filter: RecipeFilter): Flow<List<RecipeWithNutrition>>
     fun observeFoods(category: String?): Flow<List<FoodEntity>>

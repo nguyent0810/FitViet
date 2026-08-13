@@ -406,8 +406,16 @@
     <string name="nutrition_ingredients_title">Ingredients</string>
     <string name="nutrition_instructions_title">Instructions</string>
     <string name="nutrition_recipe_prep_cook">Prep %1$d min · Cook %2$d min</string>
-    <string name="nutrition_recipe_macros">P %1$dg · C %2$dg · F %3$dg</string>
     <string name="nutrition_recipe_grams">%1$dg</string>
+
+    <!-- Redesign Gate 5c — Recipe Detail rebuild -->
+    <string name="nutrition_recipe_breadcrumb">Recipes</string>
+    <string name="nutrition_recipe_stat_kcal">Kcal</string>
+    <string name="nutrition_recipe_stat_fat">Fat</string>
+    <string name="nutrition_recipe_servings_hint">Kcal and ingredients recalculate with servings</string>
+    <string name="nutrition_recipe_fits_goal">Fits your goal today — %1$s kcal left</string>
+    <string name="nutrition_recipe_cta_snack">Snack</string>
+    <string name="nutrition_recipe_cta_lunch">+ Add to lunch</string>
 
     <!-- Templates -->
     <string name="nutrition_template_meta">%1$d kcal/day · %2$dg protein · %3$d meals</string>
