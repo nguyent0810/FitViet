@@ -554,7 +554,7 @@
 
     <!-- 1h Community -->
     <string name="community_title">Cộng đồng</string>
-    <string name="community_add_post">Chia sẻ từ trang hoàn thành buổi tập</string>
+    <string name="community_footer_note">Đăng bài từ màn hoàn thành buổi tập — không có nút đăng trống</string>
     <string name="community_tab_latest">Mới nhất</string>
     <string name="community_tab_qa">Hỏi đáp</string>
     <string name="community_tab_progress">Tiến bộ</string>

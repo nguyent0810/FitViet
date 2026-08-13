@@ -532,7 +532,7 @@
 
     <!-- 1h Community -->
     <string name="community_title">Community</string>
-    <string name="community_add_post">Share from a finished workout\'s screen</string>
+    <string name="community_footer_note">Posts come from the workout finished screen — no empty post button</string>
     <string name="community_tab_latest">Latest</string>
     <string name="community_tab_qa">Q&amp;A</string>
     <string name="community_tab_progress">Progress</string>

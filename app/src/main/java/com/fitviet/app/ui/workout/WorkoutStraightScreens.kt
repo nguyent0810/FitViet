@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +32,6 @@ import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
-import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HrBody
@@ -41,10 +39,6 @@ import com.fitviet.app.ui.theme.HrColors
 import com.fitviet.app.ui.theme.HrDimens
 import com.fitviet.app.ui.theme.HrDisplay
 import com.fitviet.app.ui.theme.HrShapes
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
-import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.util.formatWeight
 
 /**
@@ -56,9 +50,10 @@ import com.fitviet.app.util.formatWeight
  * render it (the old `StraightBlockDoneContent` composable is removed here) are gone;
  * the legacy `PrimaryActionButton` this file used to also host is deleted as of Gate 4c —
  * `SupersetScreens.kt` was its last caller and now uses [HrPrimaryActionButton] below, same as
- * [SessionFinishedContent] since Gate 4b. [SummaryTile] stays, but
- * permanently — see its own KDoc for the third, outside-Phase-4 dependant that rules out ever
- * removing it. [exerciseLabelFor] is a plain string
+ * [SessionFinishedContent] since Gate 4b. `SummaryTile` itself is gone as of Redesign Gate 6a —
+ * `CommunityScreen`'s `WorkoutSharePostCard` was its one remaining dependant outside Phase 4, and
+ * that call site moved to `HrSummaryTile` when Gate 6a re-skinned the Community screen.
+ * [exerciseLabelFor] is a plain string
  * helper with no tokens of its own — it stays because `WorkoutScreen.kt` (this gate's own,
  * already-re-skinned file) and `SupersetScreens.kt` both call it, not because of any deferred
  * re-skin.
@@ -120,8 +115,8 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
 /** 150dp exercise photo with the Vietnamese/English name overlaid bottom-left on a semi-opaque
  * scrim, per the mock (rgba(10,12,6,0.8), byte-exact as [HrColors.BgDeep] at 0.8 alpha). Wraps
  * [ExerciseMediaBox] rather than modifying it — that composable is shared with
- * [WorkoutPreviewScreen] and the superset log surface (both still legacy-token, the latter
- * deferred to Gate 4c), so its own 18dp-radius/[CardBorder] stay as they are for now; per the
+ * [WorkoutPreviewScreen] and the superset log surface (both still legacy-token), so its own
+ * 18dp-radius/[CardBorder] stay as they are for now; per the
  * Gate 3d review, that gap is visually imperceptible next to the Hr cards around it. No outer
  * `.clip()` here — [ExerciseMediaBox] already clips itself, and a looser radius on top of it would
  * be a no-op. */
@@ -304,26 +299,6 @@ internal fun HrPrimaryActionButton(text: String, onClick: () -> Unit, modifier: 
         contentAlignment = Alignment.Center,
     ) {
         Text(text = text, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, color = HrColors.OnAccent)
-    }
-}
-
-/** Legacy-token summary tile — every workout-log call site moved to [HrPrimaryActionButton]/the
- * local Hr-token stat tiles by the end of Gate 4c ([SessionFinishedContent] in Gate 4b,
- * `SupersetScreens.kt` in Gate 4c), but this stays permanently for one dependant outside Phase 4:
- * `CommunityScreen`'s `WorkoutSharePostCard` reuses this deliberately (see that file's own doc) so
- * a shared workout reads as a natural extension of the app's visual language. Do NOT delete. */
-@Composable
-internal fun SummaryTile(value: String, label: String, modifier: Modifier = Modifier, accent: Boolean = false) {
-    Column(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
-            .padding(horizontal = 12.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = value, style = MaterialTheme.typography.headlineMedium.copy(fontFamily = Anton), color = if (accent) Accent else TextPrimary)
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
     }
 }
 

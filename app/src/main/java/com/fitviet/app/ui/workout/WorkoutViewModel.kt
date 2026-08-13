@@ -616,7 +616,8 @@ class WorkoutViewModel(
                 // Redesign Gate 2b — no program-day session path remains to populate this (see
                 // this class's own constructor doc); a monthly-plan-day session never had a
                 // program title to begin with. `CommunityScreen`'s programTitle-present rendering
-                // branch is now permanently dead, left as-is pending a later gate's cleanup.
+                // branch was dead for the same reason and was deleted in Gate 6a; the entity/DAO
+                // column itself is left in place pending a later gate's own data-layer cleanup.
                 programTitle = null,
                 dayLabel = state.dayLabel,
                 durationSeconds = state.sessionElapsedSeconds,

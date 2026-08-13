@@ -302,13 +302,13 @@ private fun ShareToCommunityButton(shared: Boolean, onClick: () -> Unit, modifie
     }
 }
 
-/** Hr-token stat tile, per the mock's own dims (20sp value/11sp label vs. the legacy [SummaryTile]'s
- * 22sp/12sp). `internal`, not `private` — `SupersetScreens.kt` (Gate 4c) also uses this for its own
- * done-screen stat tiles, same reasoning as [HrPrimaryActionButton]'s own `internal` scoping;
- * [SummaryTile] itself stays legacy-token permanently only for `CommunityScreen`'s own reuse, see
- * that composable's own doc. [accent] mirrors [SummaryTile]'s own parameter — the mock gives
- * only the "Set" tile the lime value color, matching `SupersetScreens.kt`'s existing `accent = true`
- * on the same stat. */
+/** Hr-token stat tile, per the mock's own dims (20sp value/11sp label vs. the legacy `SummaryTile`'s
+ * former 22sp/12sp). `internal`, not `private` — `SupersetScreens.kt` (Gate 4c) also uses this for
+ * its own done-screen stat tiles, same reasoning as [HrPrimaryActionButton]'s own `internal`
+ * scoping; `CommunityScreen`'s `WorkoutSharePostCard` (Gate 6a) moved here too once that legacy
+ * composable's last remaining consumer was this one, so `SummaryTile` itself is now deleted. `accent` mirrors
+ * that legacy composable's own parameter — the mock gives only the "Set" tile the lime value
+ * color, matching `SupersetScreens.kt`'s existing `accent = true` on the same stat. */
 @Composable
 internal fun HrSummaryTile(value: String, label: String, modifier: Modifier = Modifier, accent: Boolean = false) {
     Column(

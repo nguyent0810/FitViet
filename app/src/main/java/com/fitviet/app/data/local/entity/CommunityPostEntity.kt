@@ -36,9 +36,12 @@ data class CommunityPostEntity(
     val likedByUser: Boolean = false,
     val commentCount: Int,
     /** [WORKOUT_SHARE]-only columns below, null for every other [postType]. [programTitle] is
-     * separately nullable even on a share post — an ad-hoc duration-picker session has no program
-     * at all (mismatch #4 in the gate plan), so "no program" and "not a share post" are both
-     * legitimately null, not conflated into one flag. */
+     * write-only as of Redesign Gate 2b — the only session path that could populate it (a
+     * program-day session) no longer exists (`WorkoutDurationPickerContent` and the program-day
+     * flow it belonged to were both cut), so `WorkoutViewModel.shareToCommunity()` always writes
+     * `null` here and no code reads it (the one reader, `CommunityScreen`'s programTitle-present
+     * branch, was deleted in Gate 6a since it was dead). Left in place pending a later gate's own
+     * data-layer cleanup rather than dropped alongside the UI branch. */
     val programTitle: String? = null,
     val dayLabel: String? = null,
     val durationSeconds: Int? = null,
