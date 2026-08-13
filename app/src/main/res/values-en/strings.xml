@@ -192,6 +192,21 @@
     <string name="programs_replace_plan_title">Replace your current plan?</string>
     <string name="programs_replace_plan_body">Generating from \"%1$s\" will replace your active monthly plan.</string>
     <string name="programs_replace_plan_confirm">Generate new plan</string>
+    <string name="programs_regenerate_body">Regenerating will replace your active monthly plan.</string>
+
+    <!-- Redesign Phase 3a — Kế hoạch tab's plan progress/today/upcoming cluster. -->
+    <string name="programs_plan_label">MONTH %1$d PLAN · %2$s · WEEK %3$d/%4$d</string>
+    <string name="programs_plan_regenerate_link">Regenerate ⟳</string>
+    <string name="programs_plan_sessions_completed">%1$d/%2$d sessions done</string>
+    <string name="programs_today_label_with_day">TODAY · DAY %1$d</string>
+    <string name="programs_today_label">TODAY</string>
+    <string name="programs_today_cta">GO ›</string>
+    <string name="programs_upcoming_day_label">%1$s · DAY %2$d</string>
+    <string name="programs_upcoming_hint">Tap a day to see details</string>
+    <string name="programs_view_full_month">View full month ›</string>
+    <string name="programs_library_title">Exercise library</string>
+    <string name="programs_library_subtitle">Browse by muscle group, technique</string>
+    <string name="split_custom_title">Custom</string>
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Restart</string>

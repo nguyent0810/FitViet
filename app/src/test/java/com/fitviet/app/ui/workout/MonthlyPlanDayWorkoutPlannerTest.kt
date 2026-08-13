@@ -60,6 +60,7 @@ class MonthlyPlanDayWorkoutPlannerTest {
         override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = flowOf(exercisesByDay[dayId].orEmpty())
         override fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard> = flowOf(TodayMonthlyPlanCard.NoPlan)
         override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
+        override fun observeCompletedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
         override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = flowOf(days[dayId])
         override fun observeIsDayLocked(dayId: Long): Flow<Boolean> = flowOf(false)
         override fun observeIsDayCompleted(dayId: Long): Flow<Boolean> = flowOf(false)

@@ -321,6 +321,17 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                         navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
                     },
                     onGenerateMonthlyPlan = { navController.navigate(FitVietDestination.QuickGenerate.route) },
+                    // Redesign Phase 3a — the plan progress/today card cluster's own nav targets.
+                    onStartMonthlyPlanDay = { dayId ->
+                        navController.navigate(FitVietDestination.Workout.createRoute(monthlyPlanDayId = dayId))
+                    },
+                    onOpenMonthlyPlanDay = { dayId ->
+                        navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId))
+                    },
+                    onViewFullMonth = { navController.navigate(FitVietDestination.MonthlyPlanDetail.route) },
+                    // Second entry point alongside the still-present Handbook bottom-nav tab —
+                    // removing that tab is Phase 3b's nav-consolidation job, not this gate's.
+                    onOpenExerciseLibrary = { navController.navigate(FitVietDestination.Handbook.route) },
                 )
             }
             composable(FitVietDestination.Diary.route) {

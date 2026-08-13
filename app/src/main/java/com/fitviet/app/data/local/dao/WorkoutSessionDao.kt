@@ -53,6 +53,20 @@ interface WorkoutSessionDao {
     )
     fun observeLockedMonthlyPlanDayIds(monthlyPlanId: Long): Flow<List<Long>>
 
+    /** Redesign Phase 3a — the Kế hoạch tab's "X/Y buổi hoàn thành" progress card. Bulk form of
+     * [observeCompletedCountForMonthlyPlanDay] for a whole plan, same "completed, not just locked"
+     * distinction that method's own doc explains — [observeLockedMonthlyPlanDayIds] answers a
+     * different question (any linked row) and would overcount an abandoned session as progress. */
+    @Query(
+        """
+        SELECT DISTINCT s.monthlyPlanDayId FROM workout_sessions s
+        INNER JOIN monthly_plan_days d ON d.id = s.monthlyPlanDayId
+        INNER JOIN monthly_plan_weeks w ON w.id = d.monthlyPlanWeekId
+        WHERE w.monthlyPlanId = :monthlyPlanId AND s.completedAt IS NOT NULL
+        """,
+    )
+    fun observeCompletedMonthlyPlanDayIds(monthlyPlanId: Long): Flow<List<Long>>
+
     @Insert
     suspend fun insert(session: WorkoutSessionEntity): Long
 

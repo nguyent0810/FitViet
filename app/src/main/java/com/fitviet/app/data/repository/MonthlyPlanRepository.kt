@@ -108,6 +108,12 @@ interface MonthlyPlanRepository {
      * show the guard *before* a tap rather than only reacting to a [RegenerateResult.Locked]. */
     fun observeLockedDayIds(planId: Long): Flow<Set<Long>>
 
+    /** Redesign Phase 3a — the Kế hoạch tab's progress card. Same "completed, not locked"
+     * distinction as [observeIsDayCompleted], at [observeLockedDayIds]'s whole-plan scale — see
+     * [com.fitviet.app.data.local.dao.WorkoutSessionDao.observeCompletedMonthlyPlanDayIds]'s own
+     * doc for why [observeLockedDayIds] is the wrong source for a completion count. */
+    fun observeCompletedDayIds(planId: Long): Flow<Set<Long>>
+
     /** Reactive counterpart to [getDay] for the day-detail screen, and [observeIsDayLocked]'s
      * sibling — a live day row so a reschedule/regenerate performed elsewhere (or from this same
      * screen) is reflected without a manual refresh. */
@@ -212,6 +218,9 @@ class RoomMonthlyPlanRepository(
 
     override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> =
         workoutSessionDao.observeLockedMonthlyPlanDayIds(planId).map { it.toSet() }
+
+    override fun observeCompletedDayIds(planId: Long): Flow<Set<Long>> =
+        workoutSessionDao.observeCompletedMonthlyPlanDayIds(planId).map { it.toSet() }
 
     override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = monthlyPlanDayDao.observeById(dayId)
 
