@@ -76,12 +76,34 @@ fun WorkoutScreen(
             }
             WorkoutPhase.StraightLog -> StraightLogContent(uiState = uiState, viewModel = viewModel)
             WorkoutPhase.StraightRest -> {
-                val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan
-                val planned = straightBlock?.plannedSets?.getOrNull(uiState.currentSetIndex)
-                val nextLabel = if (planned != null) {
-                    stringResource(R.string.workout_rest_next, uiState.currentSetIndex + 1, formatWeight(planned.weightKg), planned.reps)
+                // Redesign Gate 4a-i — a non-null pendingNextBlockIndex means this rest is the
+                // inter-exercise hand-off the old StraightBlockDone interstitial used to own (see
+                // WorkoutViewModel.completeCurrentSet's own doc): uiState.currentBlock/currentSetIndex
+                // still describe the block that JUST finished, not what's coming up, so the label
+                // must read from the pending block instead. Null means the ordinary same-exercise,
+                // next-set rest, unchanged from before this gate.
+                val pendingBlock = uiState.pendingNextBlockIndex?.let { uiState.blocks.getOrNull(it) }
+                val nextLabel = if (pendingBlock != null) {
+                    when (pendingBlock) {
+                        is WorkoutBlockPlan.Straight -> {
+                            val firstSet = pendingBlock.plan.plannedSets.first()
+                            stringResource(
+                                R.string.workout_rest_next_exercise,
+                                pendingBlock.plan.exercise.nameVi,
+                                formatWeight(firstSet.weightKg),
+                                firstSet.reps,
+                            )
+                        }
+                        is WorkoutBlockPlan.Superset -> stringResource(R.string.workout_next_exercise, exerciseLabelFor(pendingBlock))
+                    }
                 } else {
-                    ""
+                    val straightBlock = (uiState.currentBlock as? WorkoutBlockPlan.Straight)?.plan
+                    val planned = straightBlock?.plannedSets?.getOrNull(uiState.currentSetIndex)
+                    if (planned != null) {
+                        stringResource(R.string.workout_rest_next, uiState.currentSetIndex + 1, formatWeight(planned.weightKg), planned.reps)
+                    } else {
+                        ""
+                    }
                 }
                 RestContent(
                     title = stringResource(R.string.workout_rest_title).uppercase(),

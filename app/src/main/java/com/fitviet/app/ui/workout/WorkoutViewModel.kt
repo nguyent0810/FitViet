@@ -39,6 +39,15 @@ data class WorkoutUiState(
     val editableWeightKg: Double = 0.0,
     val editableReps: Int = 0,
     val loggedSetsThisExercise: List<LoggedSet> = emptyList(),
+    /** Redesign Gate 4a-i — set only while [WorkoutPhase.StraightRest] is the *inter-exercise* rest
+     * between the block just finished and this index's block (as opposed to an ordinary
+     * intra-exercise rest between two sets of the same block, where this stays null). Read by
+     * [WorkoutViewModel]'s own rest-completion paths ([WorkoutViewModel.skipRest], the rest
+     * timer's zero-out) to decide whether ending rest should hand off to [WorkoutViewModel.resetForBlock]
+     * (a new block) or just flip back to [WorkoutPhase.StraightLog] (same block, next set) — see the
+     * mock's own `completeSet`, which folds "advance to the next exercise" into the same rest
+     * transition rather than the old interstitial [WorkoutPhase.StraightBlockDone] screen. */
+    val pendingNextBlockIndex: Int? = null,
     // Superset sub-state
     val supersetRound: Int = 1,
     val supersetSub: Int = 0,
@@ -96,6 +105,18 @@ class WorkoutViewModel(
      * would otherwise now correctly report `Completed` for a day the user just finished, refusing
      * the very redo "Làm lại" exists to allow. */
     private var resolvedTodayDayId: Long? = null
+
+    /** Redesign Gate 4a-i — set synchronously, in the same call frame as the decision to finish
+     * (not inside [finishSession]'s own launched coroutine), the instant [completeCurrentSet]
+     * decides the just-logged set is the session's very last. Closes a real duplicate-write window
+     * the mock's "last set -> straight to finished, no interstitial" flow opened: [finishSession]
+     * awaits two Room round-trips before [WorkoutUiState.phase] actually flips away from
+     * [WorkoutPhase.StraightLog], so without this a second tap landing after the debounce window
+     * (but before those awaits resolve) would still pass [completeCurrentSet]'s `phase ==
+     * StraightLog` guard and log the same set a second time — [finishSession] itself already
+     * no-ops on reentry via `sessionFinishJob?.isActive`, but the duplicate [persistSet] call above
+     * it wouldn't. Reset in [resetWorkout] alongside every other per-session field. */
+    private var finishInFlight = false
 
     init {
         loadInitialSession()
@@ -233,6 +254,14 @@ class WorkoutViewModel(
         restJob?.cancel()
         elapsedJob?.cancel()
         sessionInitJob?.cancel()
+        // Review finding (Gate 4a-i) — without this, an in-flight finishSession() from the session
+        // being reset can still resolve afterward and slam the brand-new session straight to
+        // SessionFinished (it targets `sessionId` captured before the reset, but writes phase
+        // unconditionally). Worse with finishInFlight now latched: if the new session's own final
+        // set landed while the old job was still alive, finishSession() would no-op on the old
+        // job's `isActive` check and never clear the latch, silently swallowing every retry tap.
+        sessionFinishJob?.cancel()
+        finishInFlight = false
         if (monthlyPlanDayId != null) {
             _uiState.value = WorkoutUiState()
             startMonthlyPlanDaySession(monthlyPlanDayId, allowRestart = true)
@@ -249,9 +278,17 @@ class WorkoutViewModel(
 
     // ---- Straight block ----
 
+    /**
+     * Redesign Gate 4a-i — mirrors the mock's own `completeSet`: the last set of the *session's*
+     * last block goes straight to [finishSession] (no interstitial); the last set of any other
+     * block advances to rest, then hands off to the next block via [pendingNextBlockIndex] once
+     * that rest ends; otherwise it's the old same-block, next-set rest. [WorkoutPhase.StraightBlockDone]
+     * is never entered from here anymore — it's dead code left in place for Gate 4a-ii to remove
+     * alongside its own Composable cleanup, not resurrected by anything in this gate.
+     */
     fun completeCurrentSet() = debounced {
         val state = _uiState.value
-        if (state.phase != WorkoutPhase.StraightLog) return@debounced
+        if (state.phase != WorkoutPhase.StraightLog || finishInFlight) return@debounced
         val block = (state.currentBlock as? WorkoutBlockPlan.Straight)?.plan ?: return@debounced
         val order = exerciseOrdersForBlock(state.blocks, state.currentBlockIndex).first()
         val logged = LoggedSet(
@@ -265,7 +302,23 @@ class WorkoutViewModel(
 
         val loggedSets = state.loggedSetsThisExercise + logged
         if (state.currentSetIndex >= block.plannedSets.lastIndex) {
-            _uiState.update { it.copy(phase = WorkoutPhase.StraightBlockDone, loggedSetsThisExercise = loggedSets) }
+            val nextIndex = state.currentBlockIndex + 1
+            val nextBlock = state.blocks.getOrNull(nextIndex)
+            if (nextBlock == null) {
+                finishInFlight = true
+                _uiState.update { it.copy(loggedSetsThisExercise = loggedSets) }
+                finishSession()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        loggedSetsThisExercise = loggedSets,
+                        phase = WorkoutPhase.StraightRest,
+                        restSecondsRemaining = DEFAULT_REST_SECONDS,
+                        pendingNextBlockIndex = nextIndex,
+                    )
+                }
+                startRestTimer()
+            }
         } else {
             val nextIndex = state.currentSetIndex + 1
             val nextPlanned = block.plannedSets[nextIndex]
@@ -286,7 +339,13 @@ class WorkoutViewModel(
     fun skipRest() = debounced {
         if (_uiState.value.phase != WorkoutPhase.StraightRest) return@debounced
         restJob?.cancel()
-        _uiState.update { it.copy(phase = WorkoutPhase.StraightLog, restSecondsRemaining = 0) }
+        val state = _uiState.value
+        val pendingIndex = state.pendingNextBlockIndex
+        if (pendingIndex != null) {
+            _uiState.value = resetForBlock(state, pendingIndex, state.blocks.getOrNull(pendingIndex))
+        } else {
+            _uiState.update { it.copy(phase = WorkoutPhase.StraightLog, restSecondsRemaining = 0) }
+        }
     }
 
     fun addRest() {
@@ -298,7 +357,10 @@ class WorkoutViewModel(
     }
 
     fun adjustEditableReps(delta: Int) {
-        _uiState.update { it.copy(editableReps = (it.editableReps + delta).coerceAtLeast(0)) }
+        // Redesign Gate 4a-i — floors at 1, not 0, matching the mock's own `Math.max(1, …)`: a
+        // 0-rep set isn't a meaningful log entry to complete, unlike weight, which legitimately
+        // floors at 0 for bodyweight movements.
+        _uiState.update { it.copy(editableReps = (it.editableReps + delta).coerceAtLeast(1)) }
     }
 
     private fun startRestTimer() {
@@ -309,7 +371,13 @@ class WorkoutViewModel(
                 _uiState.update { it.copy(restSecondsRemaining = (it.restSecondsRemaining - 1).coerceAtLeast(0)) }
             }
             if (_uiState.value.phase == WorkoutPhase.StraightRest) {
-                _uiState.update { it.copy(phase = WorkoutPhase.StraightLog) }
+                val state = _uiState.value
+                val pendingIndex = state.pendingNextBlockIndex
+                if (pendingIndex != null) {
+                    _uiState.value = resetForBlock(state, pendingIndex, state.blocks.getOrNull(pendingIndex))
+                } else {
+                    _uiState.update { it.copy(phase = WorkoutPhase.StraightLog) }
+                }
             }
         }
     }
@@ -402,14 +470,20 @@ class WorkoutViewModel(
         }
     }
 
+    // Redesign Gate 4a-i — every branch clears `pendingNextBlockIndex`: this is the one place a
+    // pending inter-exercise hand-off is actually consumed (see `completeCurrentSet`/`skipRest`/
+    // `startRestTimer`'s own callers), so nothing downstream should ever see a stale value from a
+    // hand-off that already happened.
     private fun resetForBlock(state: WorkoutUiState, index: Int, block: WorkoutBlockPlan?): WorkoutUiState = when (block) {
         is WorkoutBlockPlan.Straight -> state.copy(
             currentBlockIndex = index,
             phase = WorkoutPhase.StraightLog,
             currentSetIndex = 0,
+            restSecondsRemaining = 0,
             editableWeightKg = block.plan.plannedSets.first().weightKg,
             editableReps = block.plan.plannedSets.first().reps,
             loggedSetsThisExercise = emptyList(),
+            pendingNextBlockIndex = null,
         )
         is WorkoutBlockPlan.Superset -> state.copy(
             currentBlockIndex = index,
@@ -418,8 +492,19 @@ class WorkoutViewModel(
             supersetSub = 0,
             editableWeightKg = block.plan.plannedA.weightKg,
             editableReps = block.plan.plannedA.reps,
+            // Review finding (Gate 4a-i) — the Straight branch above already resets these; this
+            // branch didn't, so a straight block handing off into a superset (now reachable via
+            // this same function, see completeCurrentSet's pending-index path) would carry the
+            // JUST-FINISHED straight block's leftover currentSetIndex/restSecondsRemaining/logged
+            // sets into the new superset block. Harmless today only because no current Composable
+            // reads them on the superset phases — Gate 4a-ii's rewrite is exactly the kind of change
+            // that would start reading loggedSetsThisExercise there and silently show stale data.
+            currentSetIndex = 0,
+            restSecondsRemaining = 0,
+            loggedSetsThisExercise = emptyList(),
+            pendingNextBlockIndex = null,
         )
-        null -> state.copy(phase = WorkoutPhase.SessionFinished)
+        null -> state.copy(phase = WorkoutPhase.SessionFinished, pendingNextBlockIndex = null)
     }
 
     /** Awaits [WorkoutRepository.completeSession] before reading the streak (rather than the old

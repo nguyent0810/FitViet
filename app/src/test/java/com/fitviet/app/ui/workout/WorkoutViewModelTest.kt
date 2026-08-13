@@ -468,7 +468,7 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `completing the final set of a block transitions to StraightBlockDone`() = runTest(testDispatcher) {
+    fun `completing the final set of a block starts rest pending a hand-off to the next block`() = runTest(testDispatcher) {
         val h = Harness()
         // Bench press has 4 planned sets: complete all, skipping rest between each.
         repeat(3) {
@@ -483,9 +483,62 @@ class WorkoutViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val state = h.viewModel.uiState.value
-        assertEquals(WorkoutPhase.StraightBlockDone, state.phase)
+        assertEquals(WorkoutPhase.StraightRest, state.phase)
+        assertEquals(1, state.pendingNextBlockIndex) // shoulder press, the next block
+        assertEquals(0, state.currentBlockIndex) // not advanced yet — only rest has started
         assertEquals(4, state.loggedSetsThisExercise.size)
         assertEquals(4, h.workoutRepository.loggedSets.size)
+        h.finish()
+    }
+
+    @Test
+    fun `skipping the inter-exercise rest hands off to the next block's log screen`() = runTest(testDispatcher) {
+        val h = Harness()
+        repeat(3) {
+            h.viewModel.completeCurrentSet()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+            h.viewModel.skipRest()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+        }
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        h.tick()
+
+        h.viewModel.skipRest()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(1, state.currentBlockIndex)
+        assertEquals(0, state.currentSetIndex)
+        assertEquals(null, state.pendingNextBlockIndex)
+        assertTrue(state.loggedSetsThisExercise.isEmpty()) // reset for the new block
+        h.finish()
+    }
+
+    @Test
+    fun `the inter-exercise rest timer auto-hands-off to the next block when it reaches zero`() = runTest(testDispatcher) {
+        val h = Harness()
+        repeat(3) {
+            h.viewModel.completeCurrentSet()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+            h.viewModel.skipRest()
+            testDispatcher.scheduler.runCurrent()
+            h.tick()
+        }
+        h.viewModel.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        testDispatcher.scheduler.advanceTimeBy(60_000)
+        testDispatcher.scheduler.runCurrent()
+
+        val state = h.viewModel.uiState.value
+        assertEquals(WorkoutPhase.StraightLog, state.phase)
+        assertEquals(1, state.currentBlockIndex)
+        assertEquals(null, state.pendingNextBlockIndex)
         h.finish()
     }
 
@@ -643,6 +696,66 @@ class WorkoutViewModelTest {
         h.finish()
     }
 
+    // Review finding (Gate 4a-i, MEDIUM-3) — the debounce guard alone does NOT protect the
+    // session-final tap: finishSession() awaits Room round-trips before `phase` flips away from
+    // StraightLog, so a second tap landing after the debounce window has cleared (but before those
+    // awaits resolve) would still pass the `phase == StraightLog` check. This test proves
+    // `finishInFlight` is what actually closes that window, not the phase guard — the middle
+    // assertion (phase is still StraightLog) is what makes this a real regression test rather than
+    // a tautology: remove `finishInFlight` and this still passes up to that line, but
+    // `loggedSets.size` becomes 2.
+    @Test
+    fun `a second session-final tap after the debounce window clears cannot log the set twice`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
+        )
+        // Holds the final set's Room insert open, so finishSession() stays suspended on its join
+        // and `phase` is still StraightLog when the second tap lands — the exact window
+        // finishInFlight owns.
+        val workoutRepository = FakeWorkoutRepository().apply { logSetGate = CompletableDeferred() }
+        val clock = FakeClock()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = workoutRepository,
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+            elapsedRealtimeMillis = clock::now,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        vm.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        // Load-bearing: proves the phase guard alone would NOT reject the second tap below.
+        assertEquals(WorkoutPhase.StraightLog, vm.uiState.value.phase)
+
+        clock.advance(5_000) // debounce window long since cleared
+        vm.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(1, vm.uiState.value.sessionTotalSets)
+
+        workoutRepository.logSetGate?.complete(Unit)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, workoutRepository.loggedSets.size)
+        assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
+        vm.cancelTickerToAvoidRunTestHang()
+    }
+
+    @Test
+    fun `reps floor at 1, matching the mock's Math_max(1, reps)`() = runTest(testDispatcher) {
+        val h = Harness()
+        repeat(20) { h.viewModel.adjustEditableReps(-1) }
+
+        assertEquals(1, h.viewModel.uiState.value.editableReps)
+
+        h.viewModel.adjustEditableReps(-5)
+        assertEquals(1, h.viewModel.uiState.value.editableReps)
+        h.finish()
+    }
+
     @Test
     fun `reset re-resolves today's session and starts a fresh one at block 0`() = runTest(testDispatcher) {
         val h = Harness()
@@ -700,13 +813,12 @@ class WorkoutViewModelTest {
             exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
         )
         // Phase 1 checkpoint review — this test used to construct WorkoutViewModel without a fake
-        // clock, so its two back-to-back debounced() calls (completeCurrentSet then
-        // advanceToNextBlock) both compared against the real SystemClock.elapsedRealtime, which is
-        // stubbed to a constant 0 in a plain JVM unit test — every action silently dropped, the
-        // ViewModel never left StraightLog, and the assertion below failed before ever reaching
-        // this test's cancelTickerToAvoidRunTestHang() cleanup, leaving the still-running elapsed
-        // ticker to hang runTest's own implicit teardown. A real FakeClock (same pattern every
-        // other test in this file already uses) fixes both problems at once.
+        // clock, comparing its debounced() completeCurrentSet() call against the real
+        // SystemClock.elapsedRealtime, which is stubbed to a constant 0 in a plain JVM unit test —
+        // the action was silently dropped, the ViewModel never left StraightLog, and the assertion
+        // below failed before ever reaching this test's cancelTickerToAvoidRunTestHang() cleanup,
+        // leaving the still-running elapsed ticker to hang runTest's own implicit teardown. A real
+        // FakeClock (same pattern every other test in this file already uses) fixes both problems.
         val clock = FakeClock()
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
@@ -719,10 +831,10 @@ class WorkoutViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        vm.completeCurrentSet() // this day's only set -> StraightBlockDone
-        testDispatcher.scheduler.runCurrent()
-        clock.advance()
-        vm.advanceToNextBlock() // no next block -> finishSession()
+        // Redesign Gate 4a-i — this day's only set is also the session's last, so
+        // completeCurrentSet() now calls finishSession() directly (no more separate
+        // advanceToNextBlock() step through a StraightBlockDone interstitial).
+        vm.completeCurrentSet()
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
@@ -750,10 +862,10 @@ class WorkoutViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
+        // Redesign Gate 4a-i — this day's only (and therefore session-final) set now triggers
+        // finishSession() directly from completeCurrentSet() itself; no separate advanceToNextBlock()
+        // call needed.
         vm.completeCurrentSet()
-        testDispatcher.scheduler.runCurrent()
-        clock.advance()
-        vm.advanceToNextBlock()
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(emptyList<Long>(), monthlyPlanRepository.completedDayIds)
@@ -785,15 +897,19 @@ class WorkoutViewModelTest {
         assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE), vm.uiState.value.phase)
     }
 
-    /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block. */
+    /** Completes bench press (4 sets) and shoulder press (3 sets), landing on the superset block.
+     * Redesign Gate 4a-i — completing a block's last set now lands on [WorkoutPhase.StraightRest]
+     * with a pending hand-off to the next block (no more [WorkoutPhase.StraightBlockDone]
+     * interstitial), so [WorkoutViewModel.skipRest] is what consumes that hand-off now, not
+     * [WorkoutViewModel.advanceToNextBlock] (which the straight path no longer reaches at all). */
     private fun advanceToSupersetBlock(h: Harness) {
         completeStraightBlock(h, setCount = 4)
-        h.viewModel.advanceToNextBlock()
+        h.viewModel.skipRest()
         testDispatcher.scheduler.runCurrent()
         h.tick()
 
         completeStraightBlock(h, setCount = 3)
-        h.viewModel.advanceToNextBlock()
+        h.viewModel.skipRest()
         testDispatcher.scheduler.runCurrent()
         h.tick()
     }

@@ -282,6 +282,12 @@ internal fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Mo
     }
 }
 
+/** Redesign Gate 4a-i — [WorkoutPhase.StraightBlockDone] is no longer reachable from the straight
+ * path (see [WorkoutViewModel.completeCurrentSet]'s own doc: the mock has no interstitial between
+ * exercises, just an inter-exercise rest that hands off directly to the next block's log screen).
+ * Left in place, unreachable, rather than deleted here — Gate 4a-ii's own Composable rewrite of
+ * this file is the right place to remove it alongside the rest of this screen's layout changes,
+ * not a ViewModel-only gate. Do not resurrect this as a real transition target. */
 @Composable
 fun StraightBlockDoneContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
     if (uiState.currentBlock !is WorkoutBlockPlan.Straight) return

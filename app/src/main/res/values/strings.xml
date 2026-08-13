@@ -232,6 +232,10 @@
     <string name="workout_tag_pending">Chờ</string>
     <string name="workout_rest_title">Nghỉ giữa set</string>
     <string name="workout_rest_next">Tiếp theo: Set %1$d · %2$s kg × %3$d reps</string>
+    <!-- Redesign Gate 4a-i — the inter-exercise rest that now precedes the NEXT block's first set
+         (replacing the old StraightBlockDone interstitial); needs the exercise name since, unlike
+         workout_rest_next above, the header hasn't switched to the new exercise yet. -->
+    <string name="workout_rest_next_exercise">Tiếp theo: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 giây</string>
     <string name="workout_skip_rest">Bỏ qua</string>
     <string name="workout_exercise_done_title">Hoàn thành bài tập!</string>

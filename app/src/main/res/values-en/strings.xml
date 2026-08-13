@@ -227,6 +227,7 @@
     <string name="workout_tag_pending">Waiting</string>
     <string name="workout_rest_title">Rest between sets</string>
     <string name="workout_rest_next">Next: Set %1$d · %2$s kg × %3$d reps</string>
+    <string name="workout_rest_next_exercise">Next: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 sec</string>
     <string name="workout_skip_rest">Skip</string>
     <string name="workout_exercise_done_title">Exercise complete!</string>
