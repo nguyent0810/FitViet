@@ -65,24 +65,15 @@ import com.fitviet.app.util.formatVi
  * footer. The old `QuickActionsRow` (4 separate entry chips to Discover/Foods/Templates/CreatePlan)
  * is deleted outright — the mock replaces all four with the single library link row below.
  *
- * One deliberate deviation from the literal mock, scoped and flagged during the Phase 5 plan-check
- * with the reviewer: [PlannedMealsSection] (today's meals from an active
- * [com.fitviet.app.data.local.entity.UserMealPlanEntity]) has no equivalent block in the mock's
- * markup at all, but this phase's own gate sequence doesn't land the "Kế hoạch tuần" tab (Gate
- * 5b-ii) — the only other place a link to `nutrition/plan` will exist — until one gate from now.
- * Dropping it here would leave `nutrition/plan` (a real, already-shipped screen) unreachable in
- * the interim. Kept for continuity, still re-skinned to Hr tokens; retire this whole section once
- * Gate 5b-ii ships its own entry point. [onOpenLibrary] itself already points at the real
- * `nutrition/library` destination as of Gate 5b-i — landed in the same push as this file's own
- * fixes so `nutrition/foods`/`nutrition/templates` were never shipped orphaned (see Gate 5a's own
- * review finding H2).
+ * Gate 5a kept a `PlannedMealsSection` here as a continuity carry-over (no mock equivalent, but the
+ * only entry point into `nutrition/plan` until the Kế hoạch tuần tab shipped) — Gate 5b-ii retires
+ * it now that `NutritionLibraryScreen`'s third tab provides that entry point (and a create-plan
+ * one) itself. [onOpenLibrary] points at the real `nutrition/library` destination as of Gate 5b-i.
  */
 @Composable
 fun NutritionScreen(
     viewModel: NutritionViewModel,
     onOpenLibrary: () -> Unit,
-    onOpenCreatePlan: () -> Unit,
-    onOpenPlan: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -116,13 +107,6 @@ fun NutritionScreen(
         uiState.meals.forEach { meal ->
             MealRow(meal = meal, onRemove = { viewModel.removeMeal(meal) })
         }
-
-        PlannedMealsSection(
-            hasActivePlan = uiState.hasActivePlan,
-            plannedMeals = uiState.plannedMeals,
-            onOpenCreatePlan = onOpenCreatePlan,
-            onOpenPlan = onOpenPlan,
-        )
 
         LibraryLinkRow(onClick = onOpenLibrary)
 
@@ -161,109 +145,6 @@ private fun LibraryLinkRow(onClick: () -> Unit) {
             )
         }
         Text(text = "›", fontFamily = HrBody, fontSize = 16.sp, color = HrColors.TextFaint)
-    }
-}
-
-/** Planned meals (from the active [com.fitviet.app.data.local.entity.UserMealPlanEntity]) shown
- * separately from the "Bữa ăn hôm nay" log above — a planned meal is never rendered as if it were
- * eaten just because it's in the plan; see [PlannedMealStatus]. Continuity carry-over as of Gate
- * 5a — see this file's own header doc for why it survives despite having no mock equivalent. */
-@Composable
-private fun PlannedMealsSection(
-    hasActivePlan: Boolean,
-    plannedMeals: List<PlannedMealUiItem>,
-    onOpenCreatePlan: () -> Unit,
-    onOpenPlan: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = stringResource(R.string.nutrition_planned_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
-            if (hasActivePlan) {
-                Text(
-                    text = stringResource(R.string.nutrition_view_plan),
-                    fontFamily = HrBody,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    color = HrColors.Accent,
-                    modifier = Modifier.clickable(onClick = onOpenPlan),
-                )
-            }
-        }
-        if (!hasActivePlan) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(HrShapes.CardSmall)
-                    .background(HrColors.SurfaceAccent)
-                    .border(1.dp, HrColors.BorderAccentDim, HrShapes.CardSmall)
-                    .clickable(onClick = onOpenCreatePlan)
-                    .padding(Dimens.CardPaddingSmall),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.nutrition_planned_empty),
-                    fontFamily = HrBody,
-                    fontSize = 13.sp,
-                    color = HrColors.TextMid,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(text = stringResource(R.string.nutrition_quick_create_plan), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.Accent)
-            }
-        } else if (plannedMeals.isEmpty()) {
-            // An active plan exists but today's slot happens to have no meals scheduled (or
-            // couldn't be resolved) — distinct from "no plan at all," so this reads as "check the
-            // full week" rather than re-offering the create-plan CTA for a plan that already exists.
-            Text(
-                text = stringResource(R.string.nutrition_planned_empty_today),
-                fontFamily = HrBody,
-                fontSize = 13.sp,
-                color = HrColors.TextLow,
-            )
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                plannedMeals.forEach { item -> PlannedMealRow(item) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlannedMealRow(item: PlannedMealUiItem) {
-    val isEaten = item.status == PlannedMealStatus.EATEN
-    val isNext = item.status == PlannedMealStatus.NEXT
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(HrShapes.CardSmall)
-            .background(if (isNext) HrColors.SurfaceAccent else HrColors.Surface)
-            .border(if (isNext) Dimens.SelectedBorderWidth else Dimens.IdleBorderWidth, if (isNext) HrColors.Accent else HrColors.Border, HrShapes.CardSmall)
-            .padding(horizontal = 16.dp, vertical = 13.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = item.slot, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, color = HrColors.TextFaint)
-            Text(
-                text = item.recipeName,
-                fontFamily = HrBody,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
-                color = if (isEaten) HrColors.TextLow else HrColors.TextHi,
-            )
-        }
-        if (isEaten) {
-            Text(text = stringResource(R.string.nutrition_planned_status_eaten), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = HrColors.Accent)
-        } else if (isNext) {
-            Text(text = stringResource(R.string.nutrition_planned_status_next), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = HrColors.Accent)
-        }
-        Text(
-            text = stringResource(R.string.nutrition_meal_kcal, formatVi(item.kcal)),
-            fontFamily = HrDisplay,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 15.sp,
-            color = if (isEaten) HrColors.TextLow else HrColors.TextHi,
-        )
     }
 }
 

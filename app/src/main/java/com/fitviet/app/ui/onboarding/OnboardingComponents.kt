@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.theme.Accent
 import com.fitviet.app.ui.theme.AccentSurfaceSelected
 import com.fitviet.app.ui.theme.CardBorder
@@ -125,25 +124,5 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
             style = MaterialTheme.typography.labelLarge,
             color = if (selected) OnAccent else TextMuted,
         )
-    }
-}
-
-/** Filled accent CTA used at the bottom of every onboarding step. Also reused by
- * [com.fitviet.app.ui.nutrition.createplan.CreatePlanScreen], so this single
- * [pressScale] rollout (Gate D1) covers both call sites at once. Redesign Gate 3c retired
- * the old full-screen `QuickGenerateScreen`, whose own CTA used to reuse this too — the new
- * [com.fitviet.app.ui.quickgenerate.GenerateSheet] has its own bottom-sheet-scoped CTA instead. */
-@Composable
-fun OnboardingPrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .pressScale(onClick = onClick)
-            .clip(MaterialTheme.shapes.large)
-            .background(Accent)
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = text, style = MaterialTheme.typography.titleMedium, color = OnAccent)
     }
 }

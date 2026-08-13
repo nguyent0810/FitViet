@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicTextField
@@ -80,6 +82,13 @@ import kotlinx.coroutines.launch
  * Foods tab; recipe tag filtering has none. Revisit if this turns out to matter in practice —
  * search-by-name plus the new goal-ranked suggestion order cover the common case, but a user
  * looking for e.g. "≤15 phút" specifically has no way to ask for that anymore.
+ *
+ * Gate 5b-ii adds the third pill, [LibraryTab.PLAN] — state-dependent per the Phase 5 plan-check's
+ * Judgment Call B: no active plan shows the create-plan wizard (merged in from the retired
+ * `CreatePlanScreen`/`CreatePlanViewModel`); an active plan shows a summary + "Xem thực đơn tuần ›"
+ * into [onOpenPlan] + a regenerate link, never both. [SearchField] is hidden on this tab — neither
+ * mode has anything for it to filter, and a visible-but-inert search field on the Thực đơn mẫu tab
+ * was exactly the kind of finding the Gate 5b-i review caught once already.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -87,6 +96,7 @@ fun NutritionLibraryScreen(
     viewModel: NutritionLibraryViewModel,
     onBack: () -> Unit,
     onOpenRecipe: (Long) -> Unit,
+    onOpenPlan: () -> Unit,
     onPlanGenerated: () -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -113,7 +123,9 @@ fun NutritionLibraryScreen(
                 HrBackChip(onClick = onBack)
                 Text(text = stringResource(R.string.nutrition_library_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = HrColors.TextHi)
             }
-            SearchField(query = uiState.searchQuery, onQueryChange = viewModel::onSearchQueryChange)
+            if (uiState.selectedTab != LibraryTab.PLAN) {
+                SearchField(query = uiState.searchQuery, onQueryChange = viewModel::onSearchQueryChange)
+            }
             TabRow(selected = uiState.selectedTab, onSelect = viewModel::selectTab)
         }
         LazyColumn(
@@ -209,6 +221,35 @@ fun NutritionLibraryScreen(
                         }
                     }
                 }
+                LibraryTab.PLAN -> {
+                    val summary = uiState.activePlanSummary
+                    if (summary != null) {
+                        item(key = "plan-summary") {
+                            ActivePlanManageCard(
+                                summary = summary,
+                                isRegenerating = uiState.isRegeneratingPlan,
+                                onView = onOpenPlan,
+                                // Review finding (Gate 5b-ii) — regenerating changes none of the
+                                // fields this card itself shows (goal/kcal/protein/meals), so a
+                                // successful regenerate was indistinguishable from a no-op beyond a
+                                // brief dim. Navigating into nutrition/plan on success makes the new
+                                // week actually visible, matching `PlanScreen`'s own regenerate
+                                // link, which sits right above the meal list it rewrites. Plain
+                                // `onOpenPlan` (not `onPlanGenerated`'s `popUpTo`) is deliberate —
+                                // back from the plan should return to this tab's own refreshed
+                                // manage card, not all the way out to Nutrition Home.
+                                onRegenerate = { coroutineScope.launch { if (viewModel.regenerateActivePlan(summary.planId)) onOpenPlan() } },
+                            )
+                        }
+                    } else {
+                        planWizardItems(
+                            wizard = uiState.wizard,
+                            isGenerating = uiState.isGeneratingPlan,
+                            viewModel = viewModel,
+                            onGenerate = { coroutineScope.launch { if (viewModel.generatePlan()) onPlanGenerated() } },
+                        )
+                    }
+                }
             }
         }
     }
@@ -249,6 +290,7 @@ private fun TabRow(selected: LibraryTab, onSelect: (LibraryTab) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
         TabPill(label = stringResource(R.string.nutrition_library_tab_recipes), selected = selected == LibraryTab.RECIPES, onClick = { onSelect(LibraryTab.RECIPES) })
         TabPill(label = stringResource(R.string.nutrition_quick_templates), selected = selected == LibraryTab.TEMPLATES, onClick = { onSelect(LibraryTab.TEMPLATES) })
+        TabPill(label = stringResource(R.string.nutrition_library_tab_plan), selected = selected == LibraryTab.PLAN, onClick = { onSelect(LibraryTab.PLAN) })
     }
 }
 
@@ -442,5 +484,230 @@ private fun PlainTemplateCard(template: MealPlanTemplateEntity, pending: Boolean
         ) {
             Text(text = stringResource(R.string.nutrition_library_template_apply), fontFamily = HrBody, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = HrColors.Accent, textAlign = TextAlign.Center)
         }
+    }
+}
+
+/** Kế hoạch tuần tab, "manage" mode (Gate 5b-ii) — an active plan already exists, so this is a
+ * summary + two actions rather than the wizard. Same gradient shell as [MatchedTemplatePromoCard]
+ * (both are "here's a plan, act on it" cards), distinct copy/actions. */
+@Composable
+private fun ActivePlanManageCard(summary: ActivePlanSummary, isRegenerating: Boolean, onView: () -> Unit, onRegenerate: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(HrShapes.CardRegular)
+            .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd), start = Offset(0f, 0f)))
+            .border(1.dp, HrColors.BorderGradient, HrShapes.CardRegular)
+            .padding(15.dp),
+    ) {
+        Text(text = stringResource(R.string.nutrition_library_plan_summary_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp, color = HrColors.Accent)
+        Text(
+            text = stringResource(
+                R.string.nutrition_library_plan_summary,
+                stringResource(wizardGoalLabelRes(summary.goal)),
+                formatVi(summary.kcalTarget),
+                summary.proteinTargetG,
+                summary.mealsPerDay,
+            ),
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 16.sp,
+            color = HrColors.TextHi,
+            modifier = Modifier.padding(top = 3.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = Dimens.MinTouchTarget)
+                    .alpha(if (isRegenerating) 0.6f else 1f)
+                    .clip(HrShapes.ButtonSmall)
+                    .border(1.5.dp, HrColors.BorderAccentDim, HrShapes.ButtonSmall)
+                    .clickable(enabled = !isRegenerating, onClick = onRegenerate)
+                    .padding(vertical = 11.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = stringResource(R.string.nutrition_plan_regenerate_week), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.Accent, textAlign = TextAlign.Center)
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = Dimens.MinTouchTarget)
+                    .clip(HrShapes.ButtonSmall)
+                    .background(HrColors.Accent)
+                    .clickable(onClick = onView)
+                    .padding(vertical = 11.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = stringResource(R.string.nutrition_library_plan_view), fontFamily = HrBody, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = HrColors.OnAccent, textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+
+/** Kế hoạch tuần tab, "create" mode (Gate 5b-ii) — no active plan, so the tab shows the wizard
+ * merged in from the retired `CreatePlanScreen`: same fields (goal/kcal/protein/meals-per-day/cook
+ * time), re-skinned to Hr tokens, one `item{}` per section so it lives inside the shared
+ * `LazyColumn` rather than its own scrollable `Column` the way the standalone screen had. */
+private fun LazyListScope.planWizardItems(
+    wizard: PlanWizardState,
+    isGenerating: Boolean,
+    viewModel: NutritionLibraryViewModel,
+    onGenerate: () -> Unit,
+) {
+    item(key = "wizard-goal") {
+        WizardSection(label = stringResource(R.string.nutrition_create_plan_goal)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WIZARD_GOAL_OPTIONS.forEach { (goal, labelRes) ->
+                    WizardPillChip(
+                        label = stringResource(labelRes),
+                        selected = wizard.goal == goal,
+                        onClick = { viewModel.selectWizardGoal(goal) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+    item(key = "wizard-kcal") {
+        WizardSection(label = stringResource(R.string.nutrition_create_plan_kcal)) {
+            WizardStepper(
+                valueText = stringResource(R.string.nutrition_meal_kcal, formatVi(wizard.kcalTarget)),
+                onDecrement = viewModel::decrementWizardKcal,
+                onIncrement = viewModel::incrementWizardKcal,
+            )
+        }
+    }
+    item(key = "wizard-protein") {
+        WizardSection(label = stringResource(R.string.nutrition_create_plan_protein)) {
+            WizardStepper(
+                valueText = stringResource(R.string.nutrition_recipe_grams, wizard.proteinTargetG),
+                onDecrement = viewModel::decrementWizardProtein,
+                onIncrement = viewModel::incrementWizardProtein,
+            )
+        }
+    }
+    item(key = "wizard-meals") {
+        WizardSection(label = stringResource(R.string.nutrition_create_plan_meals_per_day)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                (NutritionLibraryViewModel.MIN_MEALS_PER_DAY..NutritionLibraryViewModel.MAX_MEALS_PER_DAY).forEach { count ->
+                    WizardPillChip(
+                        label = formatVi(count),
+                        selected = wizard.mealsPerDay == count,
+                        onClick = { viewModel.selectWizardMealsPerDay(count) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+    item(key = "wizard-cook-time") {
+        WizardSection(label = stringResource(R.string.nutrition_create_plan_cook_time)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NutritionLibraryViewModel.COOK_TIME_OPTIONS.forEach { minutes ->
+                    WizardPillChip(
+                        label = if (minutes == null) {
+                            stringResource(R.string.nutrition_create_plan_cook_time_unlimited)
+                        } else {
+                            stringResource(R.string.nutrition_create_plan_cook_time_option, minutes)
+                        },
+                        selected = wizard.cookTimeCeilingMinutes == minutes,
+                        onClick = { viewModel.selectWizardCookTimeCeiling(minutes) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+    item(key = "wizard-generate") {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .alpha(if (isGenerating) 0.6f else 1f)
+                .clip(HrShapes.ButtonCta)
+                .background(HrColors.Accent)
+                .clickable(enabled = !isGenerating, onClick = onGenerate)
+                .padding(vertical = HrDimens.CtaPaddingVertical),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = stringResource(R.string.nutrition_create_plan_generate), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, color = HrColors.OnAccent, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+private val WIZARD_GOAL_OPTIONS = listOf(
+    NutritionGoal.CUT to R.string.nutrition_create_plan_goal_cut,
+    NutritionGoal.MAINTAIN to R.string.nutrition_create_plan_goal_maintain,
+    NutritionGoal.BULK to R.string.nutrition_create_plan_goal_bulk,
+)
+
+/** Review finding (Gate 5b-ii) — [ActivePlanManageCard] must NOT reuse [goalHeaderLabelRes]. That
+ * helper was written for the Món ăn tab's "GỢI Ý CHO MỤC TIÊU" eyebrow, using the onboarding
+ * goal vocabulary (`goal_muscle_gain_title`/`goal_fat_loss_title`/`onboarding_goal_maintain_pill`)
+ * — a plan's own summary instead reflects a choice the wizard itself offered
+ * ([WIZARD_GOAL_OPTIONS]'s "Tăng cân"/"Giảm mỡ"/"Duy trì"), a different string set entirely. Using
+ * the wrong one meant a plan generated as "Tăng cân" (Bulk) came back labeled "Tăng cơ" (Build
+ * muscle) on return to this tab — not synonyms in Vietnamese. */
+private fun wizardGoalLabelRes(goal: NutritionGoal): Int =
+    WIZARD_GOAL_OPTIONS.first { (option, _) -> option == goal }.second
+
+@Composable
+private fun WizardSection(label: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(text = label, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp, color = HrColors.TextLow)
+        content()
+    }
+}
+
+@Composable
+private fun WizardStepper(valueText: String, onDecrement: () -> Unit, onIncrement: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(PillShape)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, PillShape),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        WizardStepperButton(symbol = "−", onClick = onDecrement)
+        Text(text = valueText, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = HrColors.TextHi)
+        WizardStepperButton(symbol = "+", onClick = onIncrement)
+    }
+}
+
+@Composable
+private fun WizardStepperButton(symbol: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(Dimens.MinTouchTarget)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = symbol, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = HrColors.Accent)
+    }
+}
+
+@Composable
+private fun WizardPillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .heightIn(min = Dimens.MinTouchTarget)
+            .clip(PillShape)
+            .background(if (selected) HrColors.Accent else HrColors.Surface)
+            .border(1.dp, if (selected) HrColors.Accent else HrColors.Border, PillShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = if (selected) HrColors.OnAccent else HrColors.TextMid,
+            textAlign = TextAlign.Center,
+        )
     }
 }

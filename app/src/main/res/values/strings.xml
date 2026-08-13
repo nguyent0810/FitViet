@@ -411,13 +411,6 @@
 
     <!-- Nutrition module (real backend, Part C) -->
     <string name="nutrition_quick_templates">Thực đơn mẫu</string>
-    <string name="nutrition_quick_create_plan">Tạo thực đơn</string>
-    <string name="nutrition_planned_title">Thực đơn hôm nay</string>
-    <string name="nutrition_planned_empty">Chưa có thực đơn tuần này.</string>
-    <string name="nutrition_planned_empty_today">Không có bữa nào được lên lịch cho hôm nay.</string>
-    <string name="nutrition_planned_status_eaten">Đã ăn</string>
-    <string name="nutrition_planned_status_next">Tiếp theo</string>
-    <string name="nutrition_view_plan">Xem thực đơn tuần ›</string>
     <string name="nutrition_food_per_100g">%1$s kcal / 100g</string>
     <string name="nutrition_food_macros_per_100g">P %1$dg · C %2$dg · B %3$dg</string>
     <string name="nutrition_empty_discover">Không tìm thấy món phù hợp.</string>
@@ -450,8 +443,13 @@
     <string name="nutrition_library_template_apply">Áp thực đơn này →</string>
     <string name="nutrition_library_foods_header">NGUYÊN LIỆU</string>
 
-    <!-- Create-plan wizard -->
-    <string name="nutrition_create_plan_title">Tạo thực đơn</string>
+    <!-- Redesign Gate 5b-ii — Kế hoạch tuần tab, state-dependent (wizard vs. manage) -->
+    <string name="nutrition_library_tab_plan">Kế hoạch tuần</string>
+    <string name="nutrition_library_plan_summary_title">Kế hoạch đang hoạt động</string>
+    <string name="nutrition_library_plan_summary">%1$s · %2$s kcal/ngày · %3$dg đạm · %4$d bữa</string>
+    <string name="nutrition_library_plan_view">Xem thực đơn tuần ›</string>
+
+    <!-- Create-plan wizard (Gate C6; re-skinned as the Kế hoạch tuần tab's "create" mode, Gate 5b-ii) -->
     <string name="nutrition_create_plan_goal">Mục tiêu</string>
     <string name="nutrition_create_plan_goal_cut">Giảm mỡ</string>
     <string name="nutrition_create_plan_goal_maintain">Duy trì</string>

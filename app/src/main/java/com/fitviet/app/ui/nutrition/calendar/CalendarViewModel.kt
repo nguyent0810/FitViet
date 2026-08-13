@@ -32,7 +32,9 @@ data class CalendarUiState(
 /**
  * Gate C9 — the plan's week-at-a-glance calendar: a compact per-day kcal overview + week average,
  * "today" highlighted via [MealPlanTodayResolver] (the resolver itself landed in an earlier pass
- * of this gate, already consumed by [com.fitviet.app.ui.nutrition.NutritionViewModel]). Reads
+ * of this gate). This is now [MealPlanTodayResolver]'s only consumer as of Gate 5b-ii —
+ * `NutritionViewModel` no longer resolves "today" at all after its own planned-meals section was
+ * retired. Reads
  * [com.fitviet.app.data.local.entity.MealPlanDayEntity.totalKcalTarget] directly rather than
  * resolving every meal (unlike Gate C7's [com.fitviet.app.ui.nutrition.plan.PlanViewModel]) — this
  * screen only ever needs each day's kcal total, never per-meal detail.
@@ -45,9 +47,9 @@ class CalendarViewModel(private val mealPlanRepository: MealPlanRepository) : Vi
             flowOf(CalendarUiState())
         } else {
             // Re-derives "today" on every midnight tick, not just on a database emission — a
-            // calendar left open overnight must not keep yesterday's day highlighted (see
-            // com.fitviet.app.ui.nutrition.NutritionViewModel's identical use of dayTicker for
-            // the same "today" freshness concern).
+            // calendar left open overnight must not keep yesterday's day highlighted. (Not
+            // NutritionRepository's own dayTicker use — that one's for its own meal-log day
+            // boundary, a different concern this screen doesn't share.)
             combine(
                 mealPlanRepository.observeDaysForPlan(plan.id),
                 dayTicker(ZoneId.systemDefault()),

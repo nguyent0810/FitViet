@@ -92,18 +92,16 @@ sealed class FitVietDestination(val route: String) {
 
     // ---- Nutrition module (real backend, Part C) — Nutrition (above) is the module's Home. ----
 
-    /** Redesign Gate 5b-i — "Món & thực đơn", merging what used to be `NutritionDiscover`/
-     * `NutritionFoods`/`NutritionTemplates` (all three retired, routes and composables both) into
-     * one tabbed screen. No arg — always the one library, matching [NutritionPlan]'s own "one
-     * active thing, no id" convention. */
+    /** Redesign Gate 5b-i/5b-ii — "Món & thực đơn", merging what used to be `NutritionDiscover`/
+     * `NutritionFoods`/`NutritionTemplates`/`NutritionCreatePlan` (all four retired, routes and
+     * composables all) into one tabbed screen. No arg — always the one library, matching
+     * [NutritionPlan]'s own "one active thing, no id" convention. */
     data object NutritionLibrary : FitVietDestination("nutrition/library")
 
     data object NutritionRecipeDetail : FitVietDestination("nutrition/recipe/{recipeId}") {
         const val ARG_RECIPE_ID = "recipeId"
         fun createRoute(recipeId: Long) = "nutrition/recipe/$recipeId"
     }
-
-    data object NutritionCreatePlan : FitVietDestination("nutrition/create-plan")
 
     /** The active plan's generated week — no arg, always shows the one active
      * [com.fitviet.app.data.local.entity.UserMealPlanEntity], same "one active plan" convention as
