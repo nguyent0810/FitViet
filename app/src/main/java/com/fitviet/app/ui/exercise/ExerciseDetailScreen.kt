@@ -14,12 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,57 +29,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.domain.ExerciseHistoryEntry
+import com.fitviet.app.ui.common.HrBackChip
 import com.fitviet.app.ui.common.LoadingSkeleton
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.ChartBarIdle
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.MacroBarCarb
-import com.fitviet.app.ui.theme.MacroBarFat
-import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.PillShape
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatWeight
 
+/** Redesign Gate 3d — migrated to Hr tokens, same pass as [com.fitviet.app.ui.handbook.HandbookScreen]/
+ * [com.fitviet.app.ui.handbook.HandbookMuscleGroupScreen]. [ExerciseMediaBox] (the photo/gif box)
+ * is deliberately left untouched — per its own doc it's shared with the live-session logging screen,
+ * which isn't re-skinned until Phase 4, so changing it here would show the new look on an otherwise
+ * still-legacy screen. The multi-hue [InvolvementRow] bar palette (old `MacroBarCarb`/`MacroBarFat`)
+ * has no Hr equivalent — the Hr palette is single-accent by design (see `HrColors`'s own doc) — so
+ * tiers beyond the first now fade [HrColors.Accent]'s own alpha instead of switching hue, extending
+ * the pre-Gate-3d code's existing 4th-tier-and-beyond fallback to every tier rather than introducing
+ * a new pattern.
+ */
 @Composable
 fun ExerciseDetailScreen(viewModel: ExerciseDetailViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().background(HrColors.Bg)) {
         Row(
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
-            }
-            Text(text = stringResource(R.string.exercise_back), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            HrBackChip(onClick = onBack)
+            Text(text = stringResource(R.string.exercise_back), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         }
 
         if (uiState.isLoading) {
-            LoadingSkeleton(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal))
+            LoadingSkeleton(modifier = Modifier.padding(horizontal = HrDimens.ScreenPaddingHorizontal))
         } else {
             uiState.exercise?.let { exercise ->
                 ExerciseDetailContent(
@@ -122,14 +115,14 @@ private fun ExerciseDetailContent(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+                .padding(horizontal = HrDimens.ScreenPaddingHorizontal),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ExerciseMediaBox(exercise = exercise)
 
             Column {
-                Text(text = exercise.nameVi, style = MaterialTheme.typography.headlineMedium)
-                Text(text = exercise.nameEn, style = MaterialTheme.typography.bodySmall, color = TextFaint)
+                Text(text = exercise.nameVi, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = HrColors.TextHi)
+                Text(text = exercise.nameEn, fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextFaint)
             }
 
             ExerciseDetailTabRow(selected = selectedTab, onSelect = { selectedTab = it })
@@ -144,27 +137,29 @@ private fun ExerciseDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(if (isAdded) Color.Transparent else Accent)
-                .border(Dimens.SelectedBorderWidth, Accent, MaterialTheme.shapes.large)
+                .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp)
+                .clip(HrShapes.ButtonCta)
+                .background(if (isAdded) Color.Transparent else HrColors.Accent)
+                .border(Dimens.SelectedBorderWidth, HrColors.Accent, HrShapes.ButtonCta)
                 .clickable(onClick = onToggleAdded)
-                .padding(vertical = 15.dp),
+                .padding(vertical = HrDimens.CtaPaddingVertical),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(if (isAdded) R.string.exercise_added else R.string.exercise_add_to_workout),
-                style = MaterialTheme.typography.titleMedium,
-                color = if (isAdded) Accent else OnAccent,
+                fontFamily = HrBody,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = if (isAdded) HrColors.Accent else HrColors.OnAccent,
             )
         }
     }
 }
 
 /** Left-aligned, natural-width tabs with an 8dp gap (mockup — not stretched/centered across the
- * full row) over a 1dp [CardBorder] rail running the whole row's width, so unselected tabs still
- * sit on a visible baseline instead of floating with nothing under them; each tab's 2dp [Accent]
- * underline sits directly on top of that rail when selected.
+ * full row) over a 1dp [HrColors.Border] rail running the whole row's width, so unselected tabs
+ * still sit on a visible baseline instead of floating with nothing under them; each tab's 2dp
+ * [HrColors.Accent] underline sits directly on top of that rail when selected.
  *
  * Gate E6 — the tab's own vertical padding (was 10dp top+bottom around the label, plus another
  * 6dp before the underline) combined with the parent content Column's blanket 16dp inter-section
@@ -198,20 +193,27 @@ private fun ExerciseDetailTabRow(selected: ExerciseDetailTab, onSelect: (Exercis
                 ) {
                     Text(
                         text = tab.label(),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isSelected) Accent else TextMuted,
+                        fontFamily = HrBody,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        // Explicit, matching the doc comment's own "44dp = 10 + 18sp line height +
+                        // 4 + 2dp underline + 10" math below — HrBody's tight metrics default to
+                        // ~14sp here (Archivo's typo line-gap is unusually small), which would
+                        // silently drop the tap target to ~40dp without this.
+                        lineHeight = 18.sp,
+                        color = if (isSelected) HrColors.Accent else HrColors.TextLow,
                     )
                     Box(
                         modifier = Modifier
                             .padding(top = 4.dp)
                             .fillMaxWidth()
                             .height(2.dp)
-                            .background(if (isSelected) Accent else Color.Transparent),
+                            .background(if (isSelected) HrColors.Accent else Color.Transparent),
                     )
                 }
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(CardBorder))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HrColors.Border))
     }
 }
 
@@ -223,21 +225,34 @@ private fun HowToTabContent(exercise: ExerciseEntity) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .background(SurfaceCard)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+                .clip(HrShapes.CardRegular)
+                .background(HrColors.Surface)
+                .border(1.dp, HrColors.Border, HrShapes.CardRegular)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = stringResource(R.string.exercise_instructions_title), style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.exercise_instructions_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
             exercise.instructions.forEachIndexed { index, step ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = (index + 1).toString(),
-                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
-                        color = Accent,
+                        fontFamily = HrDisplay,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
+                        color = HrColors.Accent,
                     )
-                    Text(text = step, style = MaterialTheme.typography.bodyMedium, color = TextMuted, modifier = Modifier.weight(1f))
+                    Text(
+                        text = step,
+                        fontFamily = HrBody,
+                        fontSize = 13.sp,
+                        // Matches Gate 2a's own precedent (OnboardingScreen.kt's wrapped HrBody
+                        // card copy) — without it, Vietnamese diacritics on wrapped lines collide
+                        // with the line above's descenders (Archivo's tight metrics default to
+                        // ~14sp here, well under the glyphs' own ascent+descent).
+                        lineHeight = 20.sp,
+                        color = HrColors.TextLow,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -290,8 +305,10 @@ private fun ProgressTabContent(history: List<ExerciseHistoryEntry>) {
     if (history.isEmpty()) {
         Text(
             text = stringResource(R.string.exercise_progress_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            color = HrColors.TextLow,
             modifier = Modifier.padding(vertical = 24.dp),
         )
         return
@@ -299,9 +316,9 @@ private fun ProgressTabContent(history: List<ExerciseHistoryEntry>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -318,13 +335,15 @@ private fun ProgressHistoryRow(entry: ExerciseHistoryEntry) {
     ) {
         Text(
             text = "${entry.date.dayOfMonth}/${entry.date.monthValue}/${entry.date.year}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextPrimary,
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            color = HrColors.TextHi,
         )
         Text(
             text = "${formatWeight(entry.weightKg)} kg × ${stringResource(R.string.exercise_progress_reps, entry.reps)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            color = HrColors.TextLow,
         )
     }
 }
@@ -334,14 +353,16 @@ private fun MuscleChip(text: String, highlighted: Boolean) {
     Box(
         modifier = Modifier
             .clip(PillShape)
-            .background(if (highlighted) AccentSurfaceSelected else SurfaceCard)
-            .border(1.dp, if (highlighted) AccentBorder else CardBorder, PillShape)
+            .background(if (highlighted) HrColors.SurfaceAccent else HrColors.Surface)
+            .border(1.dp, if (highlighted) HrColors.BorderAccentDim else HrColors.Border, PillShape)
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (highlighted) Accent else TextMuted,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = if (highlighted) HrColors.Accent else HrColors.TextLow,
         )
     }
 }
@@ -357,21 +378,23 @@ private fun MuscleInvolvementCard(exercise: ExerciseEntity) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = stringResource(R.string.exercise_involvement_title), style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.exercise_involvement_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
         muscleLabels.forEachIndexed { index, label ->
             val percent = exercise.involvementPercents.getOrElse(index) { 0 }
             InvolvementRow(label = label, percent = percent, color = involvementBarColor(index))
         }
         Text(
             text = stringResource(R.string.exercise_involvement_caption),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextFaint,
+            fontFamily = HrBody,
+            fontSize = 11.sp,
+            lineHeight = 15.sp,
+            color = HrColors.TextFaint,
         )
     }
 }
@@ -381,8 +404,9 @@ private fun InvolvementRow(label: String, percent: Int, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 12.sp,
+            color = HrColors.TextLow,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(96.dp),
@@ -391,50 +415,62 @@ private fun InvolvementRow(label: String, percent: Int, color: Color) {
             modifier = Modifier
                 .weight(1f)
                 .height(8.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(ChartBarIdle),
+                .clip(HrShapes.CardSmall)
+                .background(HrColors.BarDim),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth((percent / 100f).coerceIn(0f, 1f))
-                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clip(HrShapes.CardSmall)
                     .background(color),
             )
         }
         Text(
             text = "$percent%",
-            style = MaterialTheme.typography.titleSmall.copy(fontFamily = Anton),
-            color = color,
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 14.sp,
+            // Fixed, not tied to the bar's own fill color (review finding) — a faded tier-3/4 bar
+            // color reads at ~2.7:1 against the card, below WCAG's 4.5:1 text minimum. The bar
+            // itself already encodes the tier via its fill length/color; this number doesn't need
+            // to repeat that encoding at the cost of legibility.
+            color = HrColors.TextMid,
             textAlign = TextAlign.End,
             modifier = Modifier.width(44.dp),
         )
     }
 }
 
-/** Descending Accent→[MacroBarCarb]→[MacroBarFat], per the plan — this app's existing macro-bar
- * palette, reused rather than introducing new hues (matches the single-accent-green convention
- * established since Gate 35's avatar colors). No seeded exercise (post Gate-44's `FUNCTIONAL`
- * exclusion) has more than 5 displayed muscles, but a 4th+ tier still degrades sensibly by fading
- * [MacroBarFat] further rather than repeating a color or crashing on an unmapped index. */
+/** Descending [HrColors.Accent] alpha, tier by tier — the Hr palette is single-accent by design
+ * (see `HrColors`'s own doc), unlike the old palette's separate `MacroBarCarb`/`MacroBarFat` hues,
+ * so every tier beyond the first now fades the one accent color rather than switching hue. No
+ * seeded exercise (post Gate-44's `FUNCTIONAL` exclusion) has more than 5 displayed muscles, but a
+ * 4th+ tier still degrades sensibly by fading further rather than repeating a color or crashing on
+ * an unmapped index.
+ *
+ * Review finding (Gate 3d) — the first version of this fade (starting at tier 1, floored at 0.35)
+ * dropped tier-3/4 bar fills to ~3:1 contrast against [HrColors.BarDim], below the 3:1 WCAG
+ * non-text minimum, and several seeded exercises (`SeedData.kt`) actually reach 5 tiers of
+ * near-equal-width bars where alpha is the only thing distinguishing them. A gentler slope with a
+ * higher floor keeps every tier's fill legible; see [InvolvementRow]'s own doc for why the `%`
+ * label text no longer reuses this color. */
 private fun involvementBarColor(index: Int): Color = when (index) {
-    0 -> Accent
-    1 -> MacroBarCarb
-    2 -> MacroBarFat
-    else -> MacroBarFat.copy(alpha = (1f - 0.15f * (index - 2)).coerceAtLeast(0.4f))
+    0 -> HrColors.Accent
+    else -> HrColors.Accent.copy(alpha = (1f - 0.15f * index).coerceAtLeast(0.55f))
 }
 
 @Composable
 private fun SuggestedTile(value: String, label: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = value, style = MaterialTheme.typography.headlineSmall.copy(fontFamily = Anton), color = TextPrimary)
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+        Text(text = value, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = HrColors.TextHi)
+        Text(text = label, fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextLow, modifier = Modifier.padding(top = 2.dp))
     }
 }

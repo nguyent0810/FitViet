@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.domain.PlanPhase
+import com.fitviet.app.ui.common.HrBackChip
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HrBody
 import com.fitviet.app.ui.theme.HrColors
@@ -59,7 +59,7 @@ fun MonthlyPlanDetailScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BackChip(onClick = onBack)
+                HrBackChip(onClick = onBack)
                 Text(text = stringResource(R.string.monthly_plan_detail_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = HrColors.TextHi)
             }
         }
@@ -232,21 +232,6 @@ private fun LockedMessageCard(onDismiss: () -> Unit) {
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Start,
         )
-    }
-}
-
-@Composable
-private fun BackChip(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(34.dp)
-            .clip(HrShapes.CardSmall)
-            .background(HrColors.Surface)
-            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextLow)
     }
 }
 
