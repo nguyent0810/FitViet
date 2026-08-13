@@ -131,7 +131,7 @@ class PlanViewModel(
         selectedDayIndex.value = index
     }
 
-    /** Re-entrancy-guarded on its own [isRegenerating] flag only — same care as [com.fitviet.app.ui.nutrition.templates.TemplatesViewModel.useTemplate]. */
+    /** Re-entrancy-guarded on its own [isRegenerating] flag only — same care as `NutritionLibraryViewModel.useTemplate`. */
     suspend fun regenerateDay(dayId: Long): Boolean = runRegenerate { mealPlanRepository.regenerateDay(dayId) }
 
     suspend fun regenerateWeek(planId: Long): Boolean = runRegenerate { mealPlanRepository.regenerateWeek(planId) }

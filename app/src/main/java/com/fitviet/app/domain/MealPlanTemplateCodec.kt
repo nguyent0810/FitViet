@@ -13,8 +13,11 @@ data class MealPlanTemplateDay(val slot: String, val kcalSharePercent: Int)
  * same pure, framework-free `org.json` idiom as [ProgramTransfer]/[CustomSplitCodec]. Unlike
  * [CustomSplitCodec] (empty list on failure), [decode] returns `null` on malformed input OR when
  * the shares don't sum to approximately 100% — a template whose day-structure doesn't validate
- * shouldn't silently degrade to "no meals," the caller ([com.fitviet.app.domain.MealPlanGenerator])
- * needs to treat it as unusable, not as a legitimately empty template.
+ * shouldn't silently degrade to "no meals," so a caller has to treat it as unusable rather than as
+ * a legitimately empty template. [decode] has no production caller as of Gate 5b-i: meal-plan
+ * generation derives its slots from `mealsPerDay` alone (see
+ * [com.fitviet.app.data.local.entity.MealPlanTemplateEntity.dayStructureJson]), so this contract
+ * exists for a future reader of that column and is exercised only by `MealPlanTemplateCodecTest`.
  */
 object MealPlanTemplateCodec {
     private const val SHARE_TOLERANCE_PERCENT = 5

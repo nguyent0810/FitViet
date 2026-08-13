@@ -383,15 +383,14 @@
     <string name="nutrition_macro_carb">Carbs</string>
     <string name="nutrition_macro_fat">Fat</string>
     <string name="nutrition_macro_value">%1$d/%2$dg</string>
-    <string name="nutrition_meals_title">Today\'s meals</string>
-    <string name="nutrition_add_meal">+ %1$s</string>
     <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Vietnamese food database · works offline</string>
+    <string name="nutrition_today_header">Today</string>
+    <string name="nutrition_add_meal_button">+ Add meal</string>
+    <string name="nutrition_library_link_title">Recipe &amp; meal plan library</string>
+    <string name="nutrition_library_link_subtitle">Vietnamese dishes · goal-matched plans · build a weekly plan</string>
 
     <!-- Nutrition module (real backend, Part C) -->
-    <string name="nutrition_quick_discover">Discover recipes</string>
-    <string name="nutrition_quick_discover_body">Find dishes by goal, cook time</string>
-    <string name="nutrition_quick_foods">Ingredients</string>
     <string name="nutrition_quick_templates">Meal templates</string>
     <string name="nutrition_quick_create_plan">Create meal plan</string>
     <string name="nutrition_planned_title">Today\'s plan</string>
@@ -400,19 +399,10 @@
     <string name="nutrition_planned_status_eaten">Eaten</string>
     <string name="nutrition_planned_status_next">Next</string>
     <string name="nutrition_view_plan">View week plan ›</string>
-    <string name="nutrition_search_placeholder">Search dishes…</string>
-    <string name="nutrition_filter_low_cal">Low calorie</string>
-    <string name="nutrition_filter_high_protein">High protein</string>
-    <string name="nutrition_filter_quick">≤15 min</string>
-    <string name="nutrition_filter_vietnamese">Vietnamese</string>
-    <string name="nutrition_filter_easy">Easy</string>
-    <string name="nutrition_recipe_kcal_per_serving">%1$s kcal / serving</string>
-    <string name="nutrition_recipe_meta">%1$d min · %2$s</string>
-    <string name="nutrition_foods_category_all">All</string>
     <string name="nutrition_food_per_100g">%1$s kcal / 100g</string>
     <string name="nutrition_food_macros_per_100g">P %1$dg · C %2$dg · F %3$dg</string>
     <string name="nutrition_empty_discover">No matching dishes found.</string>
-    <string name="nutrition_empty_foods">No matching ingredients found.</string>
+    <string name="nutrition_empty_templates">No matching meal plans found.</string>
 
     <!-- Recipe Detail -->
     <string name="nutrition_recipe_variant_standard">Standard</string>
@@ -427,10 +417,19 @@
     <string name="nutrition_recipe_grams">%1$dg</string>
 
     <!-- Templates -->
-    <string name="nutrition_templates_title">Meal templates</string>
-    <string name="nutrition_template_matches_goal">MATCHES YOUR GOAL</string>
     <string name="nutrition_template_meta">%1$d kcal/day · %2$dg protein · %3$d meals</string>
-    <string name="nutrition_template_use">Use this template</string>
+
+    <!-- Redesign Gate 5b-i — "Recipes & meal plans" library screen, merging Discover/Foods/Templates -->
+    <string name="nutrition_library_title">Recipes &amp; meal plans</string>
+    <string name="nutrition_library_search_placeholder">Search Vietnamese dishes… (pho, com tam, chicken breast)</string>
+    <string name="nutrition_library_tab_recipes">Recipes</string>
+    <string name="nutrition_library_suggested_header">%1$s SUGGESTIONS · %2$s KCAL LEFT TODAY</string>
+    <string name="nutrition_library_search_results_header">SEARCH RESULTS · %1$s KCAL LEFT TODAY</string>
+    <string name="nutrition_library_recipe_meta">%1$s kcal · %2$dg protein</string>
+    <string name="nutrition_library_add_button">+ Add</string>
+    <string name="nutrition_library_template_badge">MEAL TEMPLATE · ONE TAP</string>
+    <string name="nutrition_library_template_apply">Apply this plan →</string>
+    <string name="nutrition_library_foods_header">INGREDIENTS</string>
 
     <!-- Create-plan wizard -->
     <string name="nutrition_create_plan_title">Create meal plan</string>

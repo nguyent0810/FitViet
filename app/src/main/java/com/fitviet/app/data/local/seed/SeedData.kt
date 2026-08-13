@@ -4356,7 +4356,7 @@ object SeedData {
         MealPlanTemplateDay("Bữa tối", 30),
     )
 
-    /** Nutrition module's Templates screen catalog (Gate B5) — 7 curated starter plans, stored in
+    /** Nutrition module's "Thực đơn mẫu" catalog (Gate B5) — 7 curated starter plans, stored in
      * the database per the backend's explicit requirement (never hardcoded in UI). */
     val mealPlanTemplateSeeds: List<MealPlanTemplateSeed> = listOf(
         MealPlanTemplateSeed(

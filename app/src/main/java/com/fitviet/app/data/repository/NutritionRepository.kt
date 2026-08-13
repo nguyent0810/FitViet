@@ -5,6 +5,7 @@ import com.fitviet.app.data.local.entity.MealEntity
 import com.fitviet.app.data.local.seed.SeedData
 import com.fitviet.app.domain.NutritionCalculator
 import com.fitviet.app.domain.NutritionTotals
+import com.fitviet.app.domain.RecipeWithNutrition
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,6 +43,24 @@ class NutritionRepository(private val mealDao: MealDao) {
                 proteinG = preset.proteinG,
                 carbG = preset.carbG,
                 fatG = preset.fatG,
+            ),
+        )
+    }
+
+    // Gate 5b-i — a real recipe logged from the "Món & thực đơn" library, not a fixed preset.
+    // Defaults to the same [ADDED_MEAL_SLOT] the preset-adder above uses; takes an explicit [slot]
+    // so Gate 5c's own slot-aware Recipe Detail CTAs ("Bữa phụ" / "+ Thêm vào bữa trưa") can reuse
+    // this same method rather than duplicating it once that gate needs a chosen slot.
+    suspend fun addMeal(recipe: RecipeWithNutrition, slot: String = ADDED_MEAL_SLOT) {
+        mealDao.insert(
+            MealEntity(
+                epochDay = LocalDate.now().toEpochDay(),
+                slot = slot,
+                nameVi = recipe.nameVi,
+                kcal = recipe.standardTotals.kcal,
+                proteinG = recipe.standardTotals.proteinG,
+                carbG = recipe.standardTotals.carbG,
+                fatG = recipe.standardTotals.fatG,
             ),
         )
     }

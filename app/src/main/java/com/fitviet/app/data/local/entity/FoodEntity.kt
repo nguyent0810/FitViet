@@ -14,9 +14,9 @@ data class FoodEntity(
     val nameEn: String,
     /** Free-text ingredient-type grouping label (e.g. "Thịt", "Cá & hải sản", "Rau củ" — see the
      * curated list in [com.fitviet.app.data.local.seed.SeedData.foods], Gate E7 recategorized this
-     * from an earlier macro-nutrient taxonomy to real ingredient types). Used both as
-     * [com.fitviet.app.ui.nutrition.foods.FoodsScreen]'s filter chips and as the Handbook's
-     * (Gate 25/E7) category-drilldown grouping — not purely a static display label. */
+     * from an earlier macro-nutrient taxonomy to real ingredient types). Used both by the Handbook's
+     * (Gate 25/E7) category-drilldown grouping and, pre-Gate-5b-i, the retired `FoodsScreen`'s
+     * filter chips — not purely a static display label. */
     val category: String,
     val descriptionVi: String,
     val kcalPer100g: Int,
@@ -24,8 +24,8 @@ data class FoodEntity(
     val carbG: Double,
     val fatG: Double,
     /** Lowercase, diacritic-stripped [nameVi] (see [com.fitviet.app.util.normalizeVietnamese]) —
-     * computed once at insert time, used for accent-insensitive search (Gate B1, feeds the
-     * Nutrition Foods/Discover screens' search field in Part C). */
+     * computed once at insert time, used for accent-insensitive search (Gate B1; consumed by the
+     * Nutrition module's own search fields, e.g. `NutritionLibraryScreen`'s as of Gate 5b-i). */
     val normalizedName: String = "",
     /** Null for foods that only make sense "per 100g" (most raw ingredients); set for foods with a
      * natural discrete unit (e.g. "1 quả trứng" ≈ 50g), letting recipe authoring express quantities

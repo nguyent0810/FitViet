@@ -42,8 +42,6 @@ data class PlannedMealUiItem(
 data class NutritionUiState(
     val meals: List<MealEntity> = emptyList(),
     val totals: NutritionTotals = NutritionTotals(),
-    /** The preset "+ Thêm món" will add next — cycles through [SeedData.mealPresets] in order. */
-    val nextPresetName: String = SeedData.mealPresets.first().nameVi,
     val hasActivePlan: Boolean = false,
     val plannedMeals: List<PlannedMealUiItem> = emptyList(),
 )
@@ -88,10 +86,9 @@ class NutritionViewModel(
 
     val uiState: StateFlow<NutritionUiState> = combine(
         repository.observe(),
-        presetIndex,
         plannedMealsFlow,
         hasActivePlanFlow,
-    ) { data, index, planned, hasActivePlan ->
+    ) { data, planned, hasActivePlan ->
         val eatenSlots = data.meals.map { it.slot }.toSet()
         var nextAssigned = false
         val plannedItems = planned.map { (recipeName, meal) ->
@@ -105,7 +102,6 @@ class NutritionViewModel(
         NutritionUiState(
             meals = data.meals,
             totals = data.totals,
-            nextPresetName = SeedData.mealPresets[index % SeedData.mealPresets.size].nameVi,
             hasActivePlan = hasActivePlan,
             plannedMeals = plannedItems,
         )

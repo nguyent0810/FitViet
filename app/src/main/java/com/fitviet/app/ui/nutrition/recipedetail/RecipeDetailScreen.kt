@@ -92,8 +92,9 @@ fun RecipeDetailScreen(
                     overflow = TextOverflow.Ellipsis,
                     // Keyed by the nav-arg recipeId (available from frame 1), NOT detail?.recipeId
                     // (null while loading) — a null-derived key on the first frame(s) would
-                    // mismatch DiscoverScreen's already-real-id key and break the shared-element
-                    // continuity right as the transition starts.
+                    // mismatch the source row's already-real-id key (NutritionLibraryScreen's
+                    // RecipeRow as of Gate 5b-i) and break the shared-element continuity right as
+                    // the transition starts.
                     modifier = Modifier
                         .weight(1f)
                         .sharedElement(

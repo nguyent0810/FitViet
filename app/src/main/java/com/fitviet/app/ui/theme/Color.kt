@@ -82,4 +82,14 @@ object HrColors {
     val TextMid = Color(0xFFC6CCB8)
     val TextLow = Color(0xFF8F977F)
     val TextFaint = Color(0xFF5F6650)
+
+    // Nutrition macro bars (Gate 5a) — the ONE other deliberate exception to this palette's
+    // single-accent-hue rule (see [Danger] above for the first): the design doc gives these two
+    // literal hex values for carb/fat specifically, progressively lighter tints of the same lime
+    // rather than a real second hue, so they're real tokens here rather than [Accent]/[AccentHover]
+    // reuse — unlike e.g. `RestContent.kt`'s ring, which had no such doc-specified second color and
+    // stood in with [AccentHover]. Protein reuses [Accent] itself — the doc's own value for it
+    // (#B7F542) is byte-for-byte [Accent], so no separate token.
+    val MacroCarb = Color(0xFFD3F58E)
+    val MacroFat = Color(0xFFEDFBCF)
 }

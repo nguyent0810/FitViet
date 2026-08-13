@@ -189,7 +189,8 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
      * reasoning as [seedMissingRecipes]'s own doc comment). A malformed [MealPlanTemplateCodec.encode]
      * round trip can't happen here since [SeedData.MealPlanTemplateSeed.dayStructure] is authored
      * Kotlin data, not decoded external input, but every template's shares are still authored to
-     * sum to exactly 100 so [MealPlanTemplateCodec.decode] validates it correctly at read time.
+     * sum to exactly 100, well inside the +/-5-point tolerance [MealPlanTemplateCodec.decode] would
+     * hold them to if this column were ever decoded — which nothing in production does as of Gate 5b-i.
      */
     private suspend fun seedMissingMealPlanTemplates() {
         if (database.mealPlanTemplateDao().count() > 0) return

@@ -60,10 +60,11 @@ data class RecipeFilter(
     val maxCookTimeMinutes: Int? = null,
 )
 
-/** Real Room-backed Nutrition browse/detail repository — Discover/Foods/Recipe-Detail/Favorites
- * screens (Part C) read through this, never a mock. Translates the design brief's REST-endpoint
- * list into local method contracts (no server/accounts exist in this app — see the "Hit & Run"
- * plan's precedent for the same translation). */
+/** Real Room-backed Nutrition browse/detail repository — the Nutrition module's library/discover
+ * (`NutritionLibraryScreen` as of Gate 5b-i), Recipe-Detail, and favorites surfaces all read
+ * through this, never a mock. Translates the design brief's REST-endpoint list into local method
+ * contracts (no server/accounts exist in this app — see the "Hit & Run" plan's precedent for the
+ * same translation). */
 interface RecipeRepository {
     fun observeRecipes(filter: RecipeFilter): Flow<List<RecipeWithNutrition>>
     fun observeFoods(category: String?): Flow<List<FoodEntity>>

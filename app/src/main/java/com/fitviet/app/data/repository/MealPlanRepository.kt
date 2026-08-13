@@ -124,8 +124,11 @@ class RoomMealPlanRepository(
         // The template's own dayStructureJson isn't fed into the generator directly — its shares
         // are authored to already match MealPlanGenerator's own internal slotsFor(mealsPerDay)
         // table for the same mealsPerDay (see SeedData's FOUR_MEAL_STRUCTURE/THREE_MEAL_STRUCTURE),
-        // so passing mealsPerDay alone reproduces the same day structure. dayStructureJson exists
-        // for the Templates screen's own display purposes, decoded there, not here.
+        // so passing mealsPerDay alone reproduces the same day structure. dayStructureJson is
+        // written at seed time via MealPlanTemplateCodec.encode but never decoded anywhere in
+        // production code as of Gate 5b-i (no screen has ever displayed a template's day-by-day
+        // shares) — MealPlanTemplateCodec.decode's only call sites are in its own test. Kept for a
+        // future display use, not dead.
         val input = MealPlanGenerationInput(
             goal = NutritionGoal.valueOf(template.goalCode),
             kcalTarget = template.kcalPerDay,

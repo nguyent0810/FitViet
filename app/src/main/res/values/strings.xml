@@ -402,15 +402,14 @@
     <string name="nutrition_macro_carb">Tinh bột</string>
     <string name="nutrition_macro_fat">Chất béo</string>
     <string name="nutrition_macro_value">%1$d/%2$dg</string>
-    <string name="nutrition_meals_title">Bữa ăn hôm nay</string>
-    <string name="nutrition_add_meal">+ %1$s</string>
     <string name="nutrition_meal_kcal">%1$s kcal</string>
     <string name="nutrition_footer">Cơ sở dữ liệu món ăn Việt · hoạt động offline</string>
+    <string name="nutrition_today_header">Hôm nay</string>
+    <string name="nutrition_add_meal_button">+ Thêm món</string>
+    <string name="nutrition_library_link_title">Thư viện món &amp; thực đơn mẫu</string>
+    <string name="nutrition_library_link_subtitle">Món Việt · thực đơn theo mục tiêu · tạo kế hoạch tuần</string>
 
     <!-- Nutrition module (real backend, Part C) -->
-    <string name="nutrition_quick_discover">Khám phá món ăn</string>
-    <string name="nutrition_quick_discover_body">Tìm món theo mục tiêu, thời gian nấu</string>
-    <string name="nutrition_quick_foods">Nguyên liệu</string>
     <string name="nutrition_quick_templates">Thực đơn mẫu</string>
     <string name="nutrition_quick_create_plan">Tạo thực đơn</string>
     <string name="nutrition_planned_title">Thực đơn hôm nay</string>
@@ -419,19 +418,10 @@
     <string name="nutrition_planned_status_eaten">Đã ăn</string>
     <string name="nutrition_planned_status_next">Tiếp theo</string>
     <string name="nutrition_view_plan">Xem thực đơn tuần ›</string>
-    <string name="nutrition_search_placeholder">Tìm món ăn…</string>
-    <string name="nutrition_filter_low_cal">Giảm mỡ</string>
-    <string name="nutrition_filter_high_protein">Giàu protein</string>
-    <string name="nutrition_filter_quick">≤15 phút</string>
-    <string name="nutrition_filter_vietnamese">Món Việt</string>
-    <string name="nutrition_filter_easy">Dễ làm</string>
-    <string name="nutrition_recipe_kcal_per_serving">%1$s kcal / khẩu phần</string>
-    <string name="nutrition_recipe_meta">%1$d phút · %2$s</string>
-    <string name="nutrition_foods_category_all">Tất cả</string>
     <string name="nutrition_food_per_100g">%1$s kcal / 100g</string>
     <string name="nutrition_food_macros_per_100g">P %1$dg · C %2$dg · B %3$dg</string>
     <string name="nutrition_empty_discover">Không tìm thấy món phù hợp.</string>
-    <string name="nutrition_empty_foods">Không tìm thấy nguyên liệu.</string>
+    <string name="nutrition_empty_templates">Không tìm thấy thực đơn phù hợp.</string>
 
     <!-- Recipe Detail -->
     <string name="nutrition_recipe_variant_standard">Tiêu chuẩn</string>
@@ -446,10 +436,19 @@
     <string name="nutrition_recipe_grams">%1$dg</string>
 
     <!-- Templates -->
-    <string name="nutrition_templates_title">Thực đơn mẫu</string>
-    <string name="nutrition_template_matches_goal">PHÙ HỢP MỤC TIÊU</string>
     <string name="nutrition_template_meta">%1$d kcal/ngày · %2$dg đạm · %3$d bữa</string>
-    <string name="nutrition_template_use">Dùng thực đơn này</string>
+
+    <!-- Redesign Gate 5b-i — "Món & thực đơn" library screen, merging Discover/Foods/Templates -->
+    <string name="nutrition_library_title">Món &amp; thực đơn</string>
+    <string name="nutrition_library_search_placeholder">Tìm món Việt… (phở, cơm tấm, ức gà)</string>
+    <string name="nutrition_library_tab_recipes">Món ăn</string>
+    <string name="nutrition_library_suggested_header">GỢI Ý CHO MỤC TIÊU %1$s · CÒN %2$s KCAL HÔM NAY</string>
+    <string name="nutrition_library_search_results_header">KẾT QUẢ TÌM KIẾM · CÒN %1$s KCAL HÔM NAY</string>
+    <string name="nutrition_library_recipe_meta">%1$s kcal · %2$dg đạm</string>
+    <string name="nutrition_library_add_button">+ Thêm</string>
+    <string name="nutrition_library_template_badge">THỰC ĐƠN MẪU · 1 CHẠM</string>
+    <string name="nutrition_library_template_apply">Áp thực đơn này →</string>
+    <string name="nutrition_library_foods_header">NGUYÊN LIỆU</string>
 
     <!-- Create-plan wizard -->
     <string name="nutrition_create_plan_title">Tạo thực đơn</string>
