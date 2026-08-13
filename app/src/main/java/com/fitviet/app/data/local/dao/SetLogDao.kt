@@ -17,8 +17,12 @@ data class SetHistoryRow(val completedAt: Long, val weightKg: Double, val reps: 
 data class RecentExerciseUsageRow(val exerciseId: Long, val completedAt: Long)
 
 /** One completed set joined to its exercise's stable classification codes — feeds
- * [com.fitviet.app.domain.WorkoutCompositionCalculator] (features #8/#9). */
+ * [com.fitviet.app.domain.WorkoutCompositionCalculator] (features #8/#9). [exerciseId] is also
+ * used by redesign Gate 2c's weekly-PR count (`domain.PersonalRecordCalculator`) — a per-exercise
+ * grouping key `muscleGroupCode`/`movementType` alone can't provide, since two exercises can share
+ * a muscle group but have entirely different weight scales. */
 data class SetBreakdownRow(
+    val exerciseId: Long,
     val muscleGroupCode: String,
     val movementType: String,
     val weightKg: Double,
@@ -68,7 +72,7 @@ interface SetLogDao {
 
     @Query(
         """
-        SELECT e.muscleGroupCode AS muscleGroupCode, e.movementType AS movementType,
+        SELECT s.exerciseId AS exerciseId, e.muscleGroupCode AS muscleGroupCode, e.movementType AS movementType,
                s.weightKg AS weightKg, s.reps AS reps, w.completedAt AS completedAt
         FROM set_logs s
         INNER JOIN exercises e ON e.id = s.exerciseId

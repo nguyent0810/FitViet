@@ -193,8 +193,8 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 )
                 DashboardScreen(
                     viewModel = viewModel,
-                    onOpenDiary = { navController.navigate(FitVietDestination.Diary.route) },
                     onOpenProfile = { navController.navigate(FitVietDestination.Profile.route) },
+                    onOpenDiary = { navController.navigate(FitVietDestination.Diary.route) },
                     // "Hit & Run" (Gate 63+) — goes straight to the live session; see
                     // DashboardScreen's own doc comment on this param for why it skips WorkoutPreview
                     // unconditionally.
@@ -203,6 +203,19 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     },
                     onGenerateMonthlyPlan = { navController.navigate(FitVietDestination.QuickGenerate.route) },
                     onViewMonthlyPlan = { navController.navigate(FitVietDestination.MonthlyPlanDetail.route) },
+                    // Redesign Gate 2c — Today card's "Chi tiết" link reuses the Regenerate UI's
+                    // own day-detail screen rather than a new monthly-plan-aware preview.
+                    onPreviewToday = { dayId -> navController.navigate(FitVietDestination.MonthlyPlanDayDetail.createRoute(dayId)) },
+                    // Redesign Gate 2c — "Đổi buổi" just switches tabs (see DashboardScreen's own
+                    // doc for why, confirmed against the mock's own `goPlanTab` binding) — same
+                    // popUpTo/launchSingleTop/restoreState pattern BottomNavBar's own tab switch uses.
+                    onGoToPlanTab = {
+                        navController.navigate(FitVietDestination.Programs.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                 )
             }
             composable(FitVietDestination.QuickGenerate.route) {

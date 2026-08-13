@@ -15,7 +15,7 @@ interface MonthlyPlanDayDao {
         SELECT d.* FROM monthly_plan_days d
         INNER JOIN monthly_plan_weeks w ON w.id = d.monthlyPlanWeekId
         WHERE w.monthlyPlanId = :monthlyPlanId
-        ORDER BY d.effectiveEpochDay
+        ORDER BY d.effectiveEpochDay, d.id ASC
         """,
     )
     fun observeForPlan(monthlyPlanId: Long): Flow<List<MonthlyPlanDayEntity>>

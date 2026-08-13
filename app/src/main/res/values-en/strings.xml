@@ -53,9 +53,10 @@
     <string name="quick_generate_cta">Generate monthly plan</string>
     <string name="quick_generate_generating">Generating…</string>
     <string name="quick_generate_error">Couldn\'t create the monthly plan: %1$s</string>
-    <string name="dashboard_generate_cta_title">Try Hit &amp; Run</string>
-    <string name="dashboard_generate_cta_body">Generate a whole month of workouts in one tap, based on your goal and level</string>
-    <string name="dashboard_generate_cta_button">Generate monthly plan</string>
+    <!-- Redesign Gate 2c — Dashboard's empty-state card (mock's exact copy). -->
+    <string name="dashboard_generate_cta_title">No plan yet</string>
+    <string name="dashboard_generate_cta_body">Pre-filled from your profile — just confirm</string>
+    <string name="dashboard_generate_cta_button">Generate monthly plan · 30 sec</string>
     <string name="programs_generate_cta_title">Auto-generate a monthly plan</string>
     <string name="programs_generate_cta_body">No need to pick exercises yourself — Hit &amp; Run schedules the whole month for you</string>
     <string name="programs_generate_cta_button">Generate now</string>
@@ -107,10 +108,15 @@
 
     <!-- 1b Dashboard -->
     <string name="dashboard_greeting">Hi %1$s</string>
-    <string name="dashboard_hero_label">Today\'s workout</string>
+    <string name="dashboard_hero_label">TODAY\'S SESSION</string>
+    <!-- Redesign Gate 2c — the Today card's "DAY N/Y" label, only shown once both are known. -->
+    <string name="dashboard_hero_label_with_day">TODAY\'S SESSION · DAY %1$d/%2$d</string>
     <!-- "Hit & Run" (Gate 63+) -->
-    <string name="dashboard_hero_meta_monthly_plan">%1$d exercises · %2$d min</string>
-    <string name="dashboard_start_workout_today">Start today\'s workout</string>
+    <string name="dashboard_hero_meta_monthly_plan">%1$d exercises · ~%2$d min</string>
+    <string name="dashboard_start_workout_today">TRAIN NOW →</string>
+    <!-- Redesign Gate 2c — Today card's two faint links below the CTA. -->
+    <string name="dashboard_preview_link">Details</string>
+    <string name="dashboard_change_session_link">Swap session</string>
     <string name="dashboard_rest_day_title">Today is a rest day</string>
     <string name="dashboard_rest_day_meta">Recover today so you\'re ready for the next session</string>
     <string name="dashboard_unavailable_title">No exercises for today yet</string>
@@ -120,15 +126,18 @@
     <string name="dashboard_workout_in_progress">Training · %1$s — tap to finish</string>
     <string name="dashboard_stat_streak">Day streak</string>
     <string name="dashboard_stat_sessions_this_week">Sessions this week</string>
-    <string name="dashboard_stat_volume_this_week">Total kg this week</string>
-    <string name="dashboard_weekly_volume_title">7-day volume</string>
-    <string name="dashboard_volume_title_month">Volume, last 4 weeks</string>
-    <string name="dashboard_volume_title_all">Volume by week</string>
-    <string name="dashboard_stats_section_label">STATS</string>
-    <string name="dashboard_range_week">Week</string>
-    <string name="dashboard_range_month">Month</string>
-    <string name="dashboard_range_all">All</string>
+    <string name="dashboard_stat_volume_this_week">Kg this week</string>
+    <string name="dashboard_stat_pr">PR</string>
+    <string name="dashboard_weekly_volume_title">Volume</string>
     <string name="dashboard_bar_rest">Rest</string>
+    <!-- Redesign Gate 2c — "This week" 7-circle card. -->
+    <string name="dashboard_week_card_title">This week</string>
+    <string name="dashboard_week_detail_done">Today: trained ✓</string>
+    <string name="dashboard_week_detail_pending">Today: %1$s — not yet</string>
+    <string name="dashboard_week_detail_no_session">Today: not trained yet</string>
+    <string name="dashboard_volume_pill_week">Week</string>
+    <string name="dashboard_volume_pill_month">4 weeks</string>
+    <string name="dashboard_full_diary_link">Full log &amp; body measurements</string>
     <string name="dashboard_muscle_balance_title">Muscle balance this week</string>
     <string name="dashboard_muscle_balance_empty">No sessions yet this week</string>
     <string name="dashboard_muscle_balance_sets">%1$d sets</string>

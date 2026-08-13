@@ -55,9 +55,10 @@
     <string name="quick_generate_cta">Tạo lịch tháng</string>
     <string name="quick_generate_generating">Đang tạo lịch…</string>
     <string name="quick_generate_error">Không thể tạo lịch tháng: %1$s</string>
-    <string name="dashboard_generate_cta_title">Thử Hit &amp; Run</string>
-    <string name="dashboard_generate_cta_body">Tạo lịch tập cả tháng chỉ trong 1 chạm, dựa trên mục tiêu và trình độ của bạn</string>
-    <string name="dashboard_generate_cta_button">Tạo lịch tháng</string>
+    <!-- Redesign Gate 2c — Dashboard's empty-state card (mock's exact copy). -->
+    <string name="dashboard_generate_cta_title">Chưa có kế hoạch</string>
+    <string name="dashboard_generate_cta_body">Trả lời sẵn từ hồ sơ của bạn — chỉ cần xác nhận</string>
+    <string name="dashboard_generate_cta_button">Tạo plan tháng · 30 giây</string>
     <string name="programs_generate_cta_title">Tạo lịch tháng tự động</string>
     <string name="programs_generate_cta_body">Không cần tự chọn bài tập — Hit &amp; Run lên lịch cả tháng cho bạn</string>
     <string name="programs_generate_cta_button">Tạo ngay</string>
@@ -109,10 +110,15 @@
 
     <!-- 1b Dashboard -->
     <string name="dashboard_greeting">Chào %1$s</string>
-    <string name="dashboard_hero_label">Buổi tập hôm nay</string>
+    <string name="dashboard_hero_label">BUỔI HÔM NAY</string>
+    <!-- Redesign Gate 2c — the Today card's "NGÀY N/Y" label, only shown once both are known. -->
+    <string name="dashboard_hero_label_with_day">BUỔI HÔM NAY · NGÀY %1$d/%2$d</string>
     <!-- "Hit & Run" (Gate 63+) -->
-    <string name="dashboard_hero_meta_monthly_plan">%1$d bài tập · %2$d phút</string>
-    <string name="dashboard_start_workout_today">Bắt đầu buổi hôm nay</string>
+    <string name="dashboard_hero_meta_monthly_plan">%1$d bài · ~%2$d phút</string>
+    <string name="dashboard_start_workout_today">TẬP NGAY →</string>
+    <!-- Redesign Gate 2c — Today card's two faint links below the CTA. -->
+    <string name="dashboard_preview_link">Chi tiết</string>
+    <string name="dashboard_change_session_link">Đổi buổi</string>
     <string name="dashboard_rest_day_title">Hôm nay là ngày nghỉ</string>
     <string name="dashboard_rest_day_meta">Nghỉ ngơi để phục hồi cho buổi tập tiếp theo</string>
     <!-- "Hit & Run" redesign (Gate 1c) — a training day that resolved to zero exercises (every
@@ -125,15 +131,18 @@
     <string name="dashboard_workout_in_progress">Đang tập · %1$s — chạm để kết thúc</string>
     <string name="dashboard_stat_streak">Chuỗi ngày</string>
     <string name="dashboard_stat_sessions_this_week">Buổi tuần này</string>
-    <string name="dashboard_stat_volume_this_week">Tổng kg tuần</string>
-    <string name="dashboard_weekly_volume_title">Khối lượng 7 ngày</string>
-    <string name="dashboard_volume_title_month">Khối lượng 4 tuần gần nhất</string>
-    <string name="dashboard_volume_title_all">Khối lượng theo tuần</string>
-    <string name="dashboard_stats_section_label">THỐNG KÊ</string>
-    <string name="dashboard_range_week">Tuần</string>
-    <string name="dashboard_range_month">Tháng</string>
-    <string name="dashboard_range_all">Tất cả</string>
+    <string name="dashboard_stat_volume_this_week">Kg tuần</string>
+    <string name="dashboard_stat_pr">PR</string>
+    <string name="dashboard_weekly_volume_title">Khối lượng</string>
     <string name="dashboard_bar_rest">Nghỉ</string>
+    <!-- Redesign Gate 2c — "Tuần này" 7-circle card. -->
+    <string name="dashboard_week_card_title">Tuần này</string>
+    <string name="dashboard_week_detail_done">Hôm nay: đã tập ✓</string>
+    <string name="dashboard_week_detail_pending">Hôm nay: %1$s — chưa tập</string>
+    <string name="dashboard_week_detail_no_session">Hôm nay: chưa tập</string>
+    <string name="dashboard_volume_pill_week">Tuần</string>
+    <string name="dashboard_volume_pill_month">4 tuần</string>
+    <string name="dashboard_full_diary_link">Nhật ký đầy đủ &amp; số đo cơ thể</string>
     <string name="dashboard_muscle_balance_title">Cân bằng nhóm cơ tuần này</string>
     <string name="dashboard_muscle_balance_empty">Chưa có buổi tập nào tuần này</string>
     <string name="dashboard_muscle_balance_sets">%1$d set</string>

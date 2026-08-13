@@ -14,6 +14,7 @@ import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
 import com.fitviet.app.domain.StreakMilestones
 import com.fitviet.app.domain.TodayMonthlyPlanCard
+import com.fitviet.app.domain.WeekDayCell
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,6 +44,16 @@ data class DashboardUiState(
     // "Hit & Run" redesign (Gate 1c) — non-nullable; TodayMonthlyPlanCard.NoPlan is now the "no
     // active plan" case itself, not represented by a null card.
     val todayMonthlyPlanCard: TodayMonthlyPlanCard = TodayMonthlyPlanCard.NoPlan,
+    /** Redesign Gate 2c — the Today card's "NGÀY N/Y" label; both null with no active plan. */
+    val dayOfPlan: Int? = null,
+    val totalDaysInPlan: Int? = null,
+    /** Redesign Gate 2c — "Tuần này" card's 7 circles, always 7 entries (see
+     * [com.fitviet.app.domain.WeekDayCellCalculator]'s own doc for the window definition). */
+    val weekDayCells: List<WeekDayCell> = emptyList(),
+    val prCountThisWeek: Int = 0,
+    val sessionsRolling7Day: Int = 0,
+    val weeklySessionTarget: Int? = null,
+    val volumeRolling7DayKg: Double = 0.0,
     /** "Hit & Run" (Gate 63+) adaptive scheduling — the oldest still-unresolved missed training
      * day from the active plan, checked once per Dashboard load (not continuously re-scanned; see
      * [DashboardViewModel]'s `init` block), or null if there isn't one / there's no active plan.
@@ -104,6 +115,13 @@ class DashboardViewModel(
             displayName = data.displayName,
             avatarId = data.avatarId,
             todayMonthlyPlanCard = data.todayMonthlyPlanCard,
+            dayOfPlan = data.dayOfPlan,
+            totalDaysInPlan = data.totalDaysInPlan,
+            weekDayCells = data.weekDayCells,
+            prCountThisWeek = data.prCountThisWeek,
+            sessionsRolling7Day = data.sessionsRolling7Day,
+            weeklySessionTarget = data.weeklySessionTarget,
+            volumeRolling7DayKg = data.volumeRolling7DayKg,
             missedDay = missed,
             streakMilestone = StreakMilestones.crossedMilestone(data.stats.streakDays, data.lastCelebratedStreakDays),
         )

@@ -1,11 +1,14 @@
 package com.fitviet.app.ui.dashboard
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -27,70 +31,92 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
 import com.fitviet.app.domain.DayVolume
-import com.fitviet.app.domain.MuscleGroupWorkload
-import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
 import com.fitviet.app.domain.TodayMonthlyPlanCard
-import com.fitviet.app.ui.common.RangePills
+import com.fitviet.app.domain.WeekDayCell
+import com.fitviet.app.domain.WeekDayCellState
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.tiltOnDrag
 import com.fitviet.app.ui.profile.MonogramAvatar
 import com.fitviet.app.ui.profile.avatarInitial
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.ChartBarIdle
-import com.fitviet.app.ui.theme.DeepSurface2
-import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.HeroGradientEnd
-import com.fitviet.app.ui.theme.HeroGradientStart
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextBody
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
+import com.fitviet.app.ui.theme.PillShape
 import com.fitviet.app.util.formatCompactKg
-import com.fitviet.app.util.formatVi
 import com.fitviet.app.util.isoWeekNumber
-import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.longLabelRes
 import com.fitviet.app.util.shortLabelRes
 import java.time.LocalDate
 
+/**
+ * Redesign Gate 2c — full visual rebuild against mock variant "2a" (the one marked "ĐÃ CHỌN ✓" in
+ * the design HTML's own side-by-side comparison, spec taken from that file's *interactive*
+ * prototype block, not the simplified static comparison block — the two disagree in a few places,
+ * e.g. the Today card's meta line, and the prototype's real template bindings are authoritative).
+ * First real Dashboard consumer of [HrColors]/[HrDisplay]/[HrBody]/[HrShapes]/[HrDimens] — same
+ * per-screen migration pattern Gate 2a's onboarding started.
+ *
+ * The mock drops the old `RecommendationCard`/`MuscleBalanceCard`/`NutritionCard` widgets entirely
+ * — confirmed against the design HTML's own "TODAY" block, which has no equivalent element for any
+ * of the three. `showRecommendationCard`/`showMuscleBalanceCard`/`showNutritionCard` (and their
+ * Settings toggles) are left wired in the data layer but unrendered here rather than deleted in
+ * this gate — Settings' own toggle rows are a separate screen's cleanup (README §18 still lists
+ * them as a "MÀN HÔM NAY" group), out of scope for "rebuild DashboardScreen."
+ */
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    onOpenDiary: () -> Unit,
     onOpenProfile: () -> Unit,
+    // Redesign Gate 2c — the bottom "Nhật ký đầy đủ & số đo cơ thể" row. The mock's own HTML wires
+    // this row to `openProfile` (same target as the avatar tap), on the assumption Profile already
+    // has its own "Nhật ký & lịch tập đầy đủ" row through to Diary (README §14) — it doesn't yet;
+    // that's Phase 7's Profile-cluster redesign, not built. Wiring this to Profile today would
+    // leave Diary/WorkoutCalendar/WeeklyRecap completely unreachable (confirmed: nothing else in
+    // the app navigates to them), so this stays pointed at Diary directly, same as before this
+    // gate, until Phase 7 actually adds that onward link — a deliberate, temporary deviation from
+    // the mock's literal binding, not an oversight.
+    onOpenDiary: () -> Unit,
     // "Hit & Run" (Gate 63+) — starts today's monthly-plan-day session directly, bypassing
     // WorkoutPreview. A deliberate scope decision, not an oversight: retrofitting a preview
     // screen for monthly-plan days is deferred to a later gate, and going straight to the live
     // session is arguably closer to the feature's own "1-2 taps, no re-choosing" goal anyway.
-    // Redesign Gate 2b removed the `skipWorkoutPreview` setting that once applied to the (now also
-    // removed) hand-authored-program hero card's own start flow — this path never honored it.
     onStartMonthlyPlanDay: (dayId: Long) -> Unit,
-    // "Hit & Run" (Gate 63+) — the empty-state CTA shown when there's no active monthly plan yet
-    // (see the call site below, gated on the same `monthlyPlanCard == null` check as the hero-card
-    // branch). Deferred out of Phase 5 into this phase since Quick Generate's own destination
-    // didn't exist yet — see that gate's plan note.
+    // "Hit & Run" (Gate 63+) — the empty-state CTA shown when there's no active monthly plan yet.
     onGenerateMonthlyPlan: () -> Unit,
-    // "Hit & Run" (Gate 63+) Regenerate UI — the Today card's link into the plan's simple day
-    // list, only rendered once a plan is active (there's nothing to view otherwise).
+    // "Hit & Run" (Gate 63+) Regenerate UI — the missed-day dialog's own "Xem lịch tháng" link.
+    // Redesign Gate 2c also wires this into TodayCard's own "Xem kế hoạch tháng" link — without
+    // that second wiring, MonthlyPlanDetailScreen was reachable only by way of an unresolved
+    // missed day surfacing the dialog (the app's sole `navigate(...MonthlyPlanDetail...)` call
+    // site was this one), stranding the whole screen the same way the Diary link above was
+    // almost stranded. Unrelated to the Today card's own "Đổi buổi" (see [onGoToPlanTab] below).
     onViewMonthlyPlan: () -> Unit,
+    // Redesign Gate 2c — Today card's "Chi tiết" link (labeled "Xem trước"/Preview in an earlier
+    // draft, corrected — see the review that caught it: the destination screen has a regenerate
+    // button and per-exercise swap actions, so "preview" overclaimed read-only-ness). Reuses the
+    // existing Regenerate-UI day detail screen rather than building a new monthly-plan-aware
+    // preview screen from scratch (that screen is program-day-only post-Gate-2b). Only ever called
+    // with a real dayId (the link is hidden otherwise).
+    onPreviewToday: (dayId: Long) -> Unit,
+    // Redesign Gate 2c — Today card's "Đổi buổi" link. The mock's own interactive prototype wires
+    // this to just switching to the Kế hoạch tab (`goPlanTab`), not an inline regenerate call —
+    // confirmed against the HTML's own `onClick="{{ goPlanTab }}"` binding, not a `regenerateDay`
+    // call. Bottom-nav tab-switching itself isn't touched this gate (that's Phase 8), so this reuses
+    // whatever mechanism the caller already has for switching to the Programs/Kế hoạch tab.
+    onGoToPlanTab: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Not `remember`ed: recomputed each recomposition (including the ones the repository's
@@ -100,66 +126,52 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPage)
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(HrDimens.CardGapVertical),
     ) {
         GreetingHeader(today = today, displayName = uiState.displayName, avatarId = uiState.avatarId, onAvatarClick = onOpenProfile)
-        // "Hit & Run" redesign (Gate 1c) — TodayMonthlyPlanCard is a total 5-case type
-        // (Training/RestDay/Unavailable/NoPlan/PlanFinished); redesign Gate 2b retired the old
-        // hand-authored-program hero card NoPlan used to fall back to (see TodayMonthlyPlanCard's
-        // own doc) — only the empty-state "Tạo plan" CTA shows now. Every other case, including a
-        // plan that just finished, still shows the monthly-plan hero (with its own no-action copy).
+
         val monthlyPlanCard = uiState.todayMonthlyPlanCard
         if (monthlyPlanCard != TodayMonthlyPlanCard.NoPlan) {
-            MonthlyPlanHeroCard(
+            TodayCard(
                 card = monthlyPlanCard,
+                dayOfPlan = uiState.dayOfPlan,
+                totalDaysInPlan = uiState.totalDaysInPlan,
                 onStart = { (monthlyPlanCard as? TodayMonthlyPlanCard.Training)?.let { onStartMonthlyPlanDay(it.dayId) } },
-                onViewPlan = onViewMonthlyPlan,
+                onPreview = {
+                    val dayId = when (monthlyPlanCard) {
+                        is TodayMonthlyPlanCard.Training -> monthlyPlanCard.dayId
+                        is TodayMonthlyPlanCard.Unavailable -> monthlyPlanCard.dayId
+                        else -> null
+                    }
+                    dayId?.let(onPreviewToday)
+                },
+                onGoToPlanTab = onGoToPlanTab,
+                onViewMonthlyPlan = onViewMonthlyPlan,
             )
         } else {
-            GenerateMonthlyPlanCard(onClick = onGenerateMonthlyPlan)
+            EmptyPlanCard(onClick = onGenerateMonthlyPlan)
         }
-        if (uiState.showRecommendationCard) {
-            uiState.recommendation?.let { RecommendationCard(recommendation = it) }
-        }
+
         StatTilesRow(
             streakDays = uiState.stats.streakDays,
-            sessionsThisWeek = uiState.stats.sessionsThisWeek,
-            volumeThisWeekKg = uiState.stats.volumeThisWeekKg,
+            sessionsThisWeek = uiState.sessionsRolling7Day,
+            weeklySessionTarget = uiState.weeklySessionTarget,
+            volumeThisWeekKg = uiState.volumeRolling7DayKg,
+            prCountThisWeek = uiState.prCountThisWeek,
         )
-        // Feature #7 (Gate 43) — sits above both cards per the plan; only WeeklyVolumeCard's
-        // series actually changes with the range. MuscleBalanceCard stays a "this week" snapshot
-        // (it has no series concept, and the plan's range-bucketed-series wording is specific to
-        // the volume chart) — see PROGRESS.md's Gate 43 scope-decision note for the full reasoning.
-        // The "THỐNG KÊ" section-header label (mockup's `StatsRangeRow`) was missing entirely until
-        // this audit pass — the pills themselves were correct, but had nothing labeling the section.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_stats_section_label),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.08.em),
-                color = TextFaint,
-            )
-            RangePills(options = DASHBOARD_RANGES, selected = uiState.selectedRange, onSelect = viewModel::selectRange)
-        }
-        if (uiState.showMuscleBalanceCard) {
-            MuscleBalanceCard(workload = uiState.muscleGroupWorkloadThisWeek)
-        }
-        WeeklyVolumeCard(
+
+        WeekCard(cells = uiState.weekDayCells, todayCard = monthlyPlanCard)
+
+        VolumeCard(
             range = uiState.selectedRange,
             series = uiState.rangeSeries,
-            selectedIndex = uiState.selectedDayIndex,
-            onSelectDay = viewModel::selectDay,
-            onOpenDiary = onOpenDiary,
+            onSelectRange = viewModel::selectRange,
         )
-        if (uiState.showNutritionCard) {
-            NutritionCard(kcalToday = uiState.kcalToday, kcalGoal = uiState.kcalGoal)
-        }
+
+        FullDiaryLinkRow(onClick = onOpenDiary)
     }
 
     // "Hit & Run" (Gate 63+) adaptive scheduling — see DashboardViewModel's `missedDay` doc for
@@ -206,154 +218,222 @@ private fun GreetingHeader(today: LocalDate, displayName: String, avatarId: Int,
                     today.dayOfMonth,
                     today.monthValue,
                 ),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 13.sp,
+                color = HrColors.TextLow,
             )
             Text(
                 text = stringResource(R.string.dashboard_greeting, displayName),
-                style = MaterialTheme.typography.headlineMedium,
+                fontFamily = HrDisplay,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 30.sp,
+                letterSpacing = (-0.5).sp,
+                color = HrColors.TextHi,
             )
         }
         MonogramAvatar(
             initial = avatarInitial(displayName),
             avatarId = avatarId,
-            size = 42.dp,
+            size = 48.dp,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.clickable(onClick = onAvatarClick),
         )
     }
 }
 
-/** "Hit & Run" (Gate 63+) hero card, sourced from the active monthly plan's Today row. Redesign
- * Gate 2b retired the hand-authored-program hero card this used to render alongside/instead of —
- * see [DashboardScreen]'s call site for the current (monthly-plan-hero-or-empty-state) rule. */
+/** The mock's Today card (variant "2a"). [onPreview] is only ever wired when the resolved card
+ * carries a real day id (`Training`/`Unavailable`) — [TodayMonthlyPlanCard.RestDay]/[TodayMonthlyPlanCard.PlanFinished]
+ * hide the link entirely rather than calling it with nothing to preview. Equipment ("· Phòng gym"
+ * in the mock's meta line) isn't threaded through here — [TodayMonthlyPlanCard.Training] doesn't
+ * carry it, and adding it would mean widening that type just for this one label; the meta line
+ * reads "X bài · ~Y phút" without it, matching the design HTML's own static (non-interactive)
+ * comparison block, which already omits it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit, onViewPlan: () -> Unit) {
+private fun TodayCard(
+    card: TodayMonthlyPlanCard,
+    dayOfPlan: Int?,
+    totalDaysInPlan: Int?,
+    onStart: () -> Unit,
+    onPreview: () -> Unit,
+    onGoToPlanTab: () -> Unit,
+    onViewMonthlyPlan: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .tiltOnDrag()
-            .clip(MaterialTheme.shapes.large)
-            .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd), start = Offset(0f, 0f)))
-            .padding(Dimens.CardPaddingLarge),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapSmall),
+            .clip(HrShapes.CardHero)
+            .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd), start = Offset(0f, 0f)))
+            .border(1.dp, HrColors.BorderGradient, HrShapes.CardHero)
+            .padding(22.dp),
     ) {
-        Column {
-            Text(
-                text = stringResource(R.string.dashboard_hero_label),
-                style = MaterialTheme.typography.labelLarge,
-                color = Accent,
-            )
-            when (card) {
-                is TodayMonthlyPlanCard.Training -> {
-                    Text(
-                        text = card.sessionType,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_hero_meta_monthly_plan, card.exerciseCount, card.estimatedDurationMinutes),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                TodayMonthlyPlanCard.RestDay -> {
-                    Text(
-                        text = stringResource(R.string.dashboard_rest_day_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_rest_day_meta),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                // "Hit & Run" redesign (Gate 1c) — Unavailable/PlanFinished are new cases; NoPlan
-                // is handled here only defensively (the caller routes NoPlan to the old HeroCard
-                // branch instead, this composable should never actually receive it).
-                is TodayMonthlyPlanCard.Unavailable -> {
-                    Text(
-                        text = stringResource(R.string.dashboard_unavailable_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_unavailable_meta),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                TodayMonthlyPlanCard.PlanFinished, TodayMonthlyPlanCard.NoPlan -> {
-                    Text(
-                        text = stringResource(R.string.dashboard_plan_finished_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_plan_finished_meta),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
+        Text(
+            text = if (dayOfPlan != null && totalDaysInPlan != null) {
+                stringResource(R.string.dashboard_hero_label_with_day, dayOfPlan, totalDaysInPlan)
+            } else {
+                stringResource(R.string.dashboard_hero_label)
+            },
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp,
+            letterSpacing = 1.5.sp,
+            color = HrColors.Accent,
+        )
+        when (card) {
+            is TodayMonthlyPlanCard.Training -> {
+                Text(
+                    text = card.sessionType,
+                    fontFamily = HrDisplay,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 38.sp,
+                    lineHeight = 40.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = HrColors.TextHi,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                Text(
+                    text = stringResource(R.string.dashboard_hero_meta_monthly_plan, card.exerciseCount, card.estimatedDurationMinutes),
+                    fontFamily = HrBody,
+                    fontSize = 14.sp,
+                    color = HrColors.TextLow,
+                )
             }
+            TodayMonthlyPlanCard.RestDay -> TodayCardStatusText(R.string.dashboard_rest_day_title, R.string.dashboard_rest_day_meta)
+            is TodayMonthlyPlanCard.Unavailable -> TodayCardStatusText(R.string.dashboard_unavailable_title, R.string.dashboard_unavailable_meta)
+            TodayMonthlyPlanCard.PlanFinished, TodayMonthlyPlanCard.NoPlan ->
+                TodayCardStatusText(R.string.dashboard_plan_finished_title, R.string.dashboard_plan_finished_meta)
         }
         if (card is TodayMonthlyPlanCard.Training) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(top = 14.dp)
                     .pressScale(onClick = onStart)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(Accent)
-                    .padding(vertical = 14.dp),
+                    .clip(HrShapes.ButtonCta)
+                    .background(HrColors.Accent)
+                    .padding(vertical = 18.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(R.string.dashboard_start_workout_today),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = OnAccent,
+                    fontFamily = HrDisplay,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                    color = HrColors.OnAccent,
                 )
             }
         }
-        Text(
-            text = stringResource(R.string.dashboard_view_monthly_plan),
-            style = MaterialTheme.typography.labelMedium,
-            color = Accent,
-            modifier = Modifier.clickable(onClick = onViewPlan),
-        )
+        val hasPreviewTarget = card is TodayMonthlyPlanCard.Training || card is TodayMonthlyPlanCard.Unavailable
+        // FlowRow, not Row — 3 links + 2 separators can exceed the card's inner width at larger
+        // font scales / narrower devices (flagged at the Gate 2c review as width-fragile with a
+        // plain Row); wrapping to a second line beats an overflow clip.
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (hasPreviewTarget) {
+                Text(
+                    text = stringResource(R.string.dashboard_preview_link),
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    color = HrColors.TextLow,
+                    modifier = Modifier.clickable(onClick = onPreview).padding(horizontal = 9.dp, vertical = 6.dp),
+                )
+                Text(text = "·", fontFamily = HrBody, fontSize = 13.sp, color = HrColors.BorderSoft, modifier = Modifier.padding(vertical = 6.dp))
+            }
+            Text(
+                text = stringResource(R.string.dashboard_change_session_link),
+                fontFamily = HrBody,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = HrColors.TextLow,
+                modifier = Modifier.clickable(onClick = onGoToPlanTab).padding(horizontal = 9.dp, vertical = 6.dp),
+            )
+            Text(text = "·", fontFamily = HrBody, fontSize = 13.sp, color = HrColors.BorderSoft, modifier = Modifier.padding(vertical = 6.dp))
+            // Redesign Gate 2c — not in the mock's own Today card; added so
+            // MonthlyPlanDetailScreen stays reachable without an unresolved missed day (see
+            // [DashboardScreen]'s own `onViewMonthlyPlan` doc). Reuses the pre-existing
+            // "Xem lịch tháng ›" string the old hero card's link used, now otherwise unreferenced.
+            Text(
+                text = stringResource(R.string.dashboard_view_monthly_plan),
+                fontFamily = HrBody,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = HrColors.TextLow,
+                modifier = Modifier.clickable(onClick = onViewMonthlyPlan).padding(horizontal = 9.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 
-/** "Hit & Run" (Gate 63+) empty-state CTA — a compact, distinct card (not another gradient hero),
- * shown in place of [MonthlyPlanHeroCard] when there's no active plan yet (redesign Gate 2b — see
- * [DashboardScreen]'s call site). */
 @Composable
-private fun GenerateMonthlyPlanCard(onClick: () -> Unit) {
-    Row(
+private fun TodayCardStatusText(@StringRes titleRes: Int, @StringRes metaRes: Int) {
+    Text(
+        text = stringResource(titleRes),
+        fontFamily = HrDisplay,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 30.sp,
+        lineHeight = 32.sp,
+        color = HrColors.TextHi,
+        modifier = Modifier.padding(top = 2.dp),
+    )
+    Text(
+        text = stringResource(metaRes),
+        fontFamily = HrBody,
+        fontSize = 14.sp,
+        color = HrColors.TextLow,
+    )
+}
+
+/** "Hit & Run" (Gate 63+) empty-state CTA, shown in place of [TodayCard] when there's no active
+ * plan yet — redesign Gate 2c re-skinned this against the mock's exact "planEmpty" block (same
+ * gradient shell as the Today card itself, not the old accent-outline row treatment). */
+@Composable
+private fun EmptyPlanCard(onClick: () -> Unit) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .pressScale(onClick = onClick)
-            .clip(MaterialTheme.shapes.medium)
-            .background(AccentSurfaceSelected)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
-            .padding(Dimens.CardPaddingSmall),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .clip(HrShapes.CardHero)
+            .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd), start = Offset(0f, 0f)))
+            .border(1.dp, HrColors.BorderGradient, HrShapes.CardHero)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 10.dp)) {
-            Text(text = stringResource(R.string.dashboard_generate_cta_title), style = MaterialTheme.typography.labelLarge, color = Accent)
+        Text(
+            text = stringResource(R.string.dashboard_generate_cta_title),
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 26.sp,
+            lineHeight = 30.sp,
+            color = HrColors.TextHi,
+        )
+        Text(
+            text = stringResource(R.string.dashboard_generate_cta_body),
+            fontFamily = HrBody,
+            fontSize = 14.sp,
+            color = HrColors.TextLow,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .pressScale(onClick = onClick)
+                .clip(HrShapes.ButtonCta)
+                .background(HrColors.Accent)
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(
-                text = stringResource(R.string.dashboard_generate_cta_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextBody,
-                modifier = Modifier.padding(top = 2.dp),
+                text = stringResource(R.string.dashboard_generate_cta_button),
+                fontFamily = HrDisplay,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 16.sp,
+                color = HrColors.OnAccent,
             )
         }
-        Text(text = stringResource(R.string.dashboard_generate_cta_button), style = MaterialTheme.typography.labelLarge, color = Accent)
     }
 }
 
@@ -382,7 +462,7 @@ private fun MissedDayDialog(missedDay: MonthlyPlanDayEntity, onPushToday: () -> 
                 Text(
                     text = stringResource(R.string.dashboard_missed_day_view_plan),
                     style = MaterialTheme.typography.labelLarge,
-                    color = Accent,
+                    color = HrColors.Accent,
                     modifier = Modifier.clickable(onClick = onViewPlan),
                 )
             }
@@ -400,93 +480,17 @@ private fun MissedDayDialog(missedDay: MonthlyPlanDayEntity, onPushToday: () -> 
     )
 }
 
-// Index-matched to the recommendation_tip_1..8 string resources — must stay in sync with
-// RecommendationCalculator.GENERIC_TIP_COUNT.
-private val GENERIC_TIP_RES_IDS = listOf(
-    R.string.recommendation_tip_1,
-    R.string.recommendation_tip_2,
-    R.string.recommendation_tip_3,
-    R.string.recommendation_tip_4,
-    R.string.recommendation_tip_5,
-    R.string.recommendation_tip_6,
-    R.string.recommendation_tip_7,
-    R.string.recommendation_tip_8,
-)
-
 @Composable
-private fun RecommendationCard(recommendation: Recommendation) {
-    val text = when (recommendation) {
-        is Recommendation.ComeBackReminder -> stringResource(R.string.recommendation_come_back)
-        is Recommendation.StreakPraise -> stringResource(R.string.recommendation_streak_praise, recommendation.streakDays)
-        is Recommendation.MeasurementReminder -> stringResource(R.string.recommendation_measurement_reminder)
-        is Recommendation.GenericTip -> stringResource(GENERIC_TIP_RES_IDS[recommendation.tipIndex])
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(AccentSurfaceSelected)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.medium)
-            .padding(Dimens.CardPaddingSmall),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(text = stringResource(R.string.recommendation_title), style = MaterialTheme.typography.labelLarge, color = Accent)
-        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = TextBody)
-    }
-}
-
-@Composable
-private fun MuscleBalanceCard(workload: List<MuscleGroupWorkload>) {
-    val maxSets = workload.maxOfOrNull { it.setCount } ?: 0
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .padding(Dimens.CardPaddingSmall),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(text = stringResource(R.string.dashboard_muscle_balance_title), style = MaterialTheme.typography.titleSmall)
-        if (maxSets <= 0) {
-            Text(text = stringResource(R.string.dashboard_muscle_balance_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
-        } else {
-            workload.forEach { entry ->
-                val fraction = if (maxSets <= 0) 0f else entry.setCount.toFloat() / maxSets
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = stringResource(entry.muscleGroup.labelRes()),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextBody,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.width(80.dp),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(6.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
-                            .background(AccentBorder),
-                    ) {
-                        Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(Accent))
-                    }
-                    Text(
-                        text = stringResource(R.string.dashboard_muscle_balance_sets, entry.setCount),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatTilesRow(streakDays: Int, sessionsThisWeek: Int, volumeThisWeekKg: Double) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+private fun StatTilesRow(streakDays: Int, sessionsThisWeek: Int, weeklySessionTarget: Int?, volumeThisWeekKg: Double, prCountThisWeek: Int) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StatTile(value = streakDays.toString(), label = stringResource(R.string.dashboard_stat_streak), modifier = Modifier.weight(1f), accentValue = true)
-        StatTile(value = sessionsThisWeek.toString(), label = stringResource(R.string.dashboard_stat_sessions_this_week), modifier = Modifier.weight(1f))
+        StatTile(
+            value = if (weeklySessionTarget != null) "$sessionsThisWeek/$weeklySessionTarget" else sessionsThisWeek.toString(),
+            label = stringResource(R.string.dashboard_stat_sessions_this_week),
+            modifier = Modifier.weight(1f),
+        )
         StatTile(value = formatCompactKg(volumeThisWeekKg), label = stringResource(R.string.dashboard_stat_volume_this_week), modifier = Modifier.weight(1f))
+        StatTile(value = prCountThisWeek.toString(), label = stringResource(R.string.dashboard_stat_pr), modifier = Modifier.weight(1f))
     }
 }
 
@@ -494,114 +498,187 @@ private fun StatTilesRow(streakDays: Int, sessionsThisWeek: Int, volumeThisWeekK
 private fun StatTile(value: String, label: String, modifier: Modifier = Modifier, accentValue: Boolean = false) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .padding(horizontal = 12.dp, vertical = 14.dp),
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineMedium.copy(fontFamily = Anton),
-            color = if (accentValue) Accent else TextPrimary,
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 20.sp,
+            color = if (accentValue) HrColors.Accent else HrColors.TextHi,
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 11.sp,
+            color = HrColors.TextLow,
             modifier = Modifier.padding(top = 2.dp),
         )
     }
 }
 
-private val DASHBOARD_RANGES = listOf(
-    StatsRange.WEEK to R.string.dashboard_range_week,
-    StatsRange.MONTH to R.string.dashboard_range_month,
-    StatsRange.ALL to R.string.dashboard_range_all,
-)
-
-/** Feature #7 (Gate 43) — [range]'s bucket label: per-day for WEEK (unchanged from before this
- * gate), per-week-number for MONTH/ALL, matching Diary's own week-bucket chart's convention
- * (`R.string.diary_week_label` + [isoWeekNumber]) rather than inventing a new label style. */
+/** Redesign Gate 2c — the "Tuần này" card. [com.fitviet.app.domain.WeekDayCellCalculator]'s own
+ * doc covers the trailing-7-day window; this composable only maps states to the mock's exact
+ * colors/glyphs. The subtitle line (mock's `{{ weekDetail }}`, HTML line 79) is always shown, not
+ * just on completion — the mock's own JS (`s.todayDone ? '...' : 'Hôm nay: ... — chưa tập'`)
+ * branches on completion, it doesn't omit the line otherwise. [todayCard] supplies the real
+ * today session type (for [TodayMonthlyPlanCard.Training]/[TodayMonthlyPlanCard.Unavailable])
+ * rather than the mock's hardcoded "Lưng & Tay" placeholder; [TodayMonthlyPlanCard.RestDay]/
+ * [TodayMonthlyPlanCard.PlanFinished]/[TodayMonthlyPlanCard.NoPlan] have no session type to name,
+ * so they fall back to a generic "chưa tập" line rather than wrongly claiming today's a rest day
+ * when there might be no plan at all. */
 @Composable
-private fun barLabel(range: StatsRange, entry: DayVolume): String = if (range == StatsRange.WEEK) {
-    stringResource(entry.date.dayOfWeek.shortLabelRes())
-} else {
-    stringResource(R.string.diary_week_label, entry.date.isoWeekNumber())
-}
-
-@Composable
-private fun WeeklyVolumeCard(
-    range: StatsRange,
-    series: List<DayVolume>,
-    selectedIndex: Int,
-    onSelectDay: (Int) -> Unit,
-    onOpenDiary: () -> Unit,
-) {
-    val selected = series.getOrNull(selectedIndex)
-    val maxVolume = series.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 1.0
-    val titleRes = when (range) {
-        StatsRange.WEEK -> R.string.dashboard_weekly_volume_title
-        StatsRange.MONTH -> R.string.dashboard_volume_title_month
-        StatsRange.ALL -> R.string.dashboard_volume_title_all
-    }
-
+private fun WeekCard(cells: List<WeekDayCell>, todayCard: TodayMonthlyPlanCard) {
+    val todayCell = cells.lastOrNull()
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .padding(Dimens.CardPaddingSmall),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
+            .padding(16.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDiary),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(titleRes),
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
-            )
-            if (selected != null) {
-                val restLabel = stringResource(R.string.dashboard_bar_rest)
-                val valueLabel = if (selected.volumeKg <= 0.0) restLabel else "${formatVi(selected.volumeKg)} kg"
-                Text(
-                    text = "${barLabel(range, selected)} · $valueLabel",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Accent,
-                    maxLines = 1,
-                    softWrap = false,
+            Text(text = stringResource(R.string.dashboard_week_card_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = HrColors.TextHi)
+            when (todayCell?.state) {
+                WeekDayCellState.TODAY_DONE ->
+                    Text(text = stringResource(R.string.dashboard_week_detail_done), fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextLow)
+                WeekDayCellState.TODAY_PENDING -> {
+                    val sessionType = when (todayCard) {
+                        is TodayMonthlyPlanCard.Training -> todayCard.sessionType
+                        is TodayMonthlyPlanCard.Unavailable -> todayCard.sessionType
+                        else -> null
+                    }
+                    val subtitle = if (sessionType != null) {
+                        stringResource(R.string.dashboard_week_detail_pending, sessionType)
+                    } else {
+                        stringResource(R.string.dashboard_week_detail_no_session)
+                    }
+                    Text(text = subtitle, fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextLow)
+                }
+                else -> Unit
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            cells.forEach { cell ->
+                WeekDayCircle(cell = cell, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+private data class WeekDayCircleStyle(val bg: Color?, val border: Color, val glyphColor: Color, val glyph: String)
+
+@Composable
+private fun WeekDayCircle(cell: WeekDayCell, modifier: Modifier = Modifier) {
+    val isToday = cell.state == WeekDayCellState.TODAY_DONE || cell.state == WeekDayCellState.TODAY_PENDING
+    val labelColor = if (isToday) HrColors.Accent else HrColors.TextFaint
+    val style = when (cell.state) {
+        WeekDayCellState.TODAY_DONE -> WeekDayCircleStyle(HrColors.Accent, HrColors.Accent, HrColors.OnAccent, "✓")
+        WeekDayCellState.TODAY_PENDING -> WeekDayCircleStyle(null, HrColors.Accent, HrColors.Accent, "·")
+        WeekDayCellState.DONE -> WeekDayCircleStyle(null, HrColors.BorderAccentDim, HrColors.Accent, "✓")
+        WeekDayCellState.EMPTY -> WeekDayCircleStyle(null, HrColors.Border, HrColors.TextFaint, "–")
+    }
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = stringResource(cell.date.dayOfWeek.shortLabelRes()),
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 10.sp,
+            color = labelColor,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(style.bg ?: Color.Transparent)
+                .border(1.5.dp, style.border, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = style.glyph, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = style.glyphColor)
+        }
+    }
+}
+
+/** Redesign Gate 2c — "Khối lượng" card. Only 2 pills (Tuần/4 tuần), down from the pre-redesign
+ * card's 3 (week/month/all) — the mock's own volume card has exactly 2, and "all" isn't part of
+ * this screen's spec (Diary keeps its own full range picker; this card's job is just a Dashboard
+ * glance). Reuses [StatsRange.WEEK]/[StatsRange.MONTH] for the underlying series rather than
+ * introducing a parallel enum — [StatsRange.ALL] is simply never selectable from here. Bars are
+ * non-interactive (the mock's own `bars` never bind an `onClick`) — the pre-redesign card's
+ * tap-a-bar-to-preview-its-value interaction is dropped along with the header text it used to
+ * update; `DashboardViewModel.selectDay`/`explicitDayIndex` are left wired but now unused by any
+ * caller, same "not this gate's cleanup" deferral as the widget-toggle fields above. */
+@Composable
+private fun VolumeCard(
+    range: StatsRange,
+    series: List<DayVolume>,
+    onSelectRange: (StatsRange) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
+            .padding(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.dashboard_weekly_volume_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = HrColors.TextHi)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                VolumePill(
+                    label = stringResource(R.string.dashboard_volume_pill_week),
+                    selected = range == StatsRange.WEEK,
+                    onClick = { onSelectRange(StatsRange.WEEK) },
+                )
+                VolumePill(
+                    label = stringResource(R.string.dashboard_volume_pill_month),
+                    selected = range == StatsRange.MONTH,
+                    onClick = { onSelectRange(StatsRange.MONTH) },
                 )
             }
         }
+        val maxVolume = series.maxOfOrNull { it.volumeKg }?.takeIf { it > 0 } ?: 1.0
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
+            modifier = Modifier.fillMaxWidth().height(84.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
             series.forEachIndexed { index, entry ->
                 val fraction = if (entry.volumeKg <= 0.0) 0.08f else (entry.volumeKg / maxVolume).toFloat().coerceIn(0.15f, 1f)
+                val isLast = index == series.lastIndex
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .fillMaxHeight(fraction)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(if (index == selectedIndex) Accent else ChartBarIdle)
-                        .clickable { onSelectDay(index) },
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(if (isLast) HrColors.Accent else HrColors.BarDim),
                 )
             }
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            series.forEach { entry ->
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            series.forEachIndexed { index, entry ->
+                val isLast = index == series.lastIndex
                 Text(
                     text = barLabel(range, entry),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 10.sp,
+                    color = if (isLast) HrColors.Accent else HrColors.TextFaint,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     softWrap = false,
@@ -614,37 +691,51 @@ private fun WeeklyVolumeCard(
 }
 
 @Composable
-private fun NutritionCard(kcalToday: Int, kcalGoal: Int) {
-    val progress = (kcalToday.toFloat() / kcalGoal.toFloat()).coerceIn(0f, 1f)
-    Column(
+private fun VolumePill(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(PillShape)
+            .background(if (selected) HrColors.Accent else Color.Transparent)
+            .border(1.dp, if (selected) HrColors.Accent else HrColors.Border, PillShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 13.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = label,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            color = if (selected) HrColors.OnAccent else HrColors.TextLow,
+        )
+    }
+}
+
+/** [range]'s bucket label: per-day for WEEK, per-week-number for MONTH — same convention as
+ * Diary's own week-bucket chart. */
+@Composable
+private fun barLabel(range: StatsRange, entry: DayVolume): String = if (range == StatsRange.WEEK) {
+    stringResource(entry.date.dayOfWeek.shortLabelRes())
+} else {
+    stringResource(R.string.diary_week_label, entry.date.isoWeekNumber())
+}
+
+/** Redesign Gate 2c — the bottom "Nhật ký đầy đủ & số đo cơ thể" row. See [DashboardScreen]'s own
+ * `onOpenDiary` doc for why this routes to Diary rather than the mock's literal `openProfile`
+ * binding — Profile doesn't have an onward Diary link yet. */
+@Composable
+private fun FullDiaryLinkRow(onClick: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .padding(Dimens.CardPaddingSmall),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 15.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = stringResource(R.string.dashboard_nutrition_title), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = stringResource(R.string.dashboard_nutrition_progress, formatVi(kcalToday), formatVi(kcalGoal)),
-                style = MaterialTheme.typography.labelLarge,
-                color = Accent,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(DeepSurface2),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress)
-                    .background(Accent),
-            )
-        }
+        Text(text = stringResource(R.string.dashboard_full_diary_link), fontFamily = HrBody, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = HrColors.TextMid)
+        Text(text = "›", fontFamily = HrBody, fontSize = 16.sp, color = HrColors.TextFaint)
     }
 }
