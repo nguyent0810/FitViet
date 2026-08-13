@@ -228,15 +228,15 @@
     <string name="workout_tag_done">Done</string>
     <string name="workout_tag_current">In progress</string>
     <string name="workout_tag_pending">Waiting</string>
-    <string name="workout_rest_title">Rest between sets</string>
+    <string name="workout_rest_title">Rest</string>
     <string name="workout_rest_next">Next: Set %1$d · %2$s kg × %3$d reps</string>
     <string name="workout_rest_next_exercise">Next: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 sec</string>
-    <string name="workout_skip_rest">Skip</string>
+    <string name="workout_skip_rest">Skip →</string>
     <string name="workout_stat_sets">Sets</string>
     <string name="workout_stat_volume">Total kg</string>
     <string name="workout_stat_time">Time</string>
-    <string name="workout_stat_kcal">Kcal (est.)</string>
+    <string name="workout_stat_kcal">Kcal estimate</string>
     <string name="workout_next_exercise">Next: %1$s →</string>
     <string name="workout_finish_session">Finish workout</string>
 
@@ -249,9 +249,11 @@
     <string name="workout_preview_superset_hint_title">What\'s "back-to-back"?</string>
     <string name="workout_preview_superset_hint_body">A superset pair means you do these 2 exercises back-to-back with no rest in between — you only rest after finishing both.</string>
     <string name="workout_preview_superset_hint_dismiss">Got it</string>
-    <string name="workout_session_finished_title">WORKOUT\nCOMPLETE</string>
-    <string name="workout_session_finished_note">New PRs will be saved to your diary</string>
-    <string name="workout_back_to_home">Back to home</string>
+    <string name="workout_session_finished_title">DONE!</string>
+    <string name="workout_session_finished_subtitle_with_plan">Session %1$d/%2$d · %3$d-day streak</string>
+    <string name="workout_session_finished_subtitle_streak_only">%1$d-day streak</string>
+    <string name="workout_session_finished_note">New PRs are saved to your diary</string>
+    <string name="workout_back_to_home">Back to Today</string>
     <string name="workout_share_button">Share to Community</string>
     <string name="workout_share_button_done">Shared ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>

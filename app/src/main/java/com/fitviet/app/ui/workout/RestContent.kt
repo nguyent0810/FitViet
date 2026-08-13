@@ -8,15 +8,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,37 +34,49 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
+import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.rememberReducedMotion
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.ChartBarIdle
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.MacroBarCarb
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.Motion
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.util.formatMinutesSeconds
 
 private val RingSize = 260.dp
 private val RingStrokeWidth = 10.dp
-private const val PULSE_THRESHOLD_SECONDS = 3
+private const val PULSE_THRESHOLD_SECONDS = 4
 
 /**
  * Premium-pass Moment 2 (Gate A3, direction 1a) — shared full-screen rest countdown used by both
- * the straight-set rest phase and the superset rest phase. Redesigned as a 260dp progress ring
- * (sweep gradient stroke, breathing glow, last-5s pulse+haptic) replacing the old plain-text
- * countdown; signature unchanged from before this gate, so both call sites in [WorkoutScreen]
- * keep working without modification.
+ * the straight-set rest phase and the superset rest phase. A 260dp progress ring (sweep gradient
+ * stroke, breathing glow, last-5s pulse+haptic) rather than the old plain-text countdown; signature
+ * unchanged from before that gate, so both call sites in [WorkoutScreen] keep working unmodified.
  *
- * Progress is tracked against a running total that starts at the first [secondsRemaining] value
- * seen and grows by the exact delta every time the value jumps upward (the only way that
- * happens: the user taps "+15 giây", `onAddRest`) — re-basing the ring's total on the fly means
- * the arc always reflects "how far through the current, possibly-extended rest window" rather
- * than assuming a fixed 60s default.
+ * Redesign Gate 4b — the Hit & Run mock's own rest screen (design HTML lines 288-316, inside its
+ * interactive prototype, not just the static comparison — this genuinely is the mock's authoritative
+ * spec) is flatter: no ring, just a bare "NGHỈ" label and lime countdown numeral. This gate
+ * deliberately keeps the ring/glow/pulse mechanic rather than deleting it, on two grounds: the
+ * redesign handoff's own motion clause (README line 147) says to keep *existing* motion patterns
+ * and explicitly caps only *new* animation ("không thêm animation mới ngoài toast slide-up"), and
+ * the Premium Moments handoff that shipped this mechanic locks it by name ("2e Rest — chốt theo
+ * 1a"). Deleting an already-shipped, already-reviewed motion pattern to match a static screenshot
+ * would undo that earlier decision, not correct a bug. What DOES change here is every color/type
+ * token — legacy `Accent`/`Anton`/etc. swapped for `HrColors`/`HrDisplay`/etc. — so the retained
+ * ring reads as part of the new visual language rather than the old one.
+ *
+ * The mock's own 110sp countdown spec doesn't fit inside a 260dp ring with a 10dp stroke at the
+ * conventional "`M:SS`" width — [restCountdownLabel] adopts the mock's own leading-zero-free
+ * "`:SS`" format below 60s instead. Review finding (Gate 4b) — measured against the actual shipped
+ * font (Bricolage Grotesque 800), every label up to "9:59" clears the ring's inner chord at the
+ * full 110sp, so no dynamic shrink is needed (an earlier draft shrank past 60s remaining, which
+ * misfired on every rest's own starting value of 60 and bought nothing real values ever needed).
  */
 @Composable
 fun RestContent(
@@ -73,7 +85,7 @@ fun RestContent(
     nextLabel: String,
     onAddRest: () -> Unit,
     onSkipRest: () -> Unit,
-    countdownFontSize: androidx.compose.ui.unit.TextUnit = 96.sp,
+    countdownFontSize: TextUnit = 110.sp,
 ) {
     val reducedMotion = rememberReducedMotion()
     val haptics = LocalHapticFeedback.current
@@ -124,32 +136,37 @@ fun RestContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+            .background(HrColors.BgDeep)
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = title, style = MaterialTheme.typography.labelLarge, color = TextMuted)
+        Text(text = title, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 2.sp, color = HrColors.TextLow)
         Box(modifier = Modifier.padding(top = 16.dp).size(RingSize), contentAlignment = Alignment.Center) {
             if (!reducedMotion) {
                 Box(
                     modifier = Modifier
                         .scale(glowScale.value)
                         .size(RingSize)
-                        .clip(MaterialTheme.shapes.extraLarge)
-                        .background(Brush.radialGradient(listOf(Accent.copy(alpha = 0.15f), Accent.copy(alpha = 0f)))),
+                        .clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(HrColors.Accent.copy(alpha = 0.12f), HrColors.Accent.copy(alpha = 0f)))),
                 )
             }
             Canvas(modifier = Modifier.size(RingSize)) {
                 val strokeWidthPx = RingStrokeWidth.toPx()
                 drawArc(
-                    color = ChartBarIdle,
+                    color = HrColors.BarDim,
                     startAngle = -90f,
                     sweepAngle = 360f,
                     useCenter = false,
                     style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
                 )
                 drawArc(
-                    brush = Brush.sweepGradient(listOf(Accent, MacroBarCarb, Accent)),
+                    // AccentHover — a lighter shade of the same lime, not a second hue — stands in
+                    // for the old palette's separate MacroBarCarb mid-stop; HrColors has no
+                    // multi-hue chart palette to draw a real second color from (see HrColors' own
+                    // doc). Same reasoning as Gate 3d's involvementBarColor.
+                    brush = Brush.sweepGradient(listOf(HrColors.Accent, HrColors.AccentHover, HrColors.Accent)),
                     startAngle = -90f,
                     sweepAngle = 360f * progress,
                     useCenter = false,
@@ -157,34 +174,55 @@ fun RestContent(
                 )
             }
             Text(
-                text = formatMinutesSeconds(secondsRemaining),
-                style = MaterialTheme.typography.headlineLarge.copy(fontFamily = Anton, fontSize = countdownFontSize),
-                color = Accent,
+                text = restCountdownLabel(secondsRemaining),
+                fontFamily = HrDisplay,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = countdownFontSize,
+                color = HrColors.Accent,
                 modifier = Modifier.scale(pulseScale.value),
             )
         }
         if (nextLabel.isNotEmpty()) {
-            Text(text = nextLabel, style = MaterialTheme.typography.bodySmall, color = TextMuted, modifier = Modifier.padding(top = 8.dp))
+            Text(text = nextLabel, fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextMid, modifier = Modifier.padding(top = 8.dp))
         }
         Row(modifier = Modifier.padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .border(1.dp, AccentBorder, MaterialTheme.shapes.small)
-                    .clickable(onClick = onAddRest)
+                    .heightIn(min = Dimens.MinTouchTarget)
+                    .pressScale(onClick = onAddRest)
+                    .clip(HrShapes.CardSmall)
+                    .border(1.5.dp, HrColors.BorderAccentDim, HrShapes.CardSmall)
                     .padding(horizontal = 22.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.workout_add_rest), style = MaterialTheme.typography.titleSmall, color = Accent)
+                Text(text = stringResource(R.string.workout_add_rest), fontFamily = HrBody, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = HrColors.Accent)
             }
             Box(
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .background(Accent)
-                    .clickable(onClick = onSkipRest)
+                    .heightIn(min = Dimens.MinTouchTarget)
+                    .pressScale(onClick = onSkipRest)
+                    .clip(HrShapes.CardSmall)
+                    .background(HrColors.Accent)
                     .padding(horizontal = 22.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.workout_skip_rest), style = MaterialTheme.typography.titleMedium, color = OnAccent)
+                Text(text = stringResource(R.string.workout_skip_rest), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.OnAccent)
             }
         }
     }
+}
+
+/** The mock's own countdown format (design HTML: literal `":59"`) — no leading zero digit below a
+ * minute, `M:SS` at/above it. Deliberately NOT [com.fitviet.app.util.formatMinutesSeconds]: that
+ * shared helper backs the session header's elapsed-time display and the finished screen's own
+ * "Thời gian" tile, both of which want the conventional `0:59`/`1:05` form — this is a
+ * countdown-ring-specific display format, not a general duration formatter. Also deliberately not
+ * a port of the mock's own JS format function, which is buggy above 59 seconds (`':' +
+ * padStart(2)` on a value like 75 yields `":75"`) — `+15 giây` (README line 143) makes values over
+ * a minute a real, reachable case here, unlike the mock's own fixed demo data. */
+private fun restCountdownLabel(secondsRemaining: Int): String {
+    val clamped = secondsRemaining.coerceAtLeast(0)
+    val minutes = clamped / 60
+    val seconds = (clamped % 60).toString().padStart(2, '0')
+    return if (minutes > 0) "$minutes:$seconds" else ":$seconds"
 }

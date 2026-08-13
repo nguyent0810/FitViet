@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.ui.common.LoadingSkeleton
-import com.fitviet.app.ui.theme.BackgroundPage
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HrBody
 import com.fitviet.app.ui.theme.HrColors
@@ -54,7 +53,11 @@ fun WorkoutScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitConfirm by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
+    // Redesign Gate 4b — HrColors.Bg (#0C0E08), not the legacy BackgroundPage (#0D100E): visually
+    // near-identical (see Gate 3d's own finding on this exact pair), but 4b is the gate that
+    // introduces HrColors.BgDeep for the rest/finished screens, so the outer container should
+    // match rather than leave already-migrated Hr surfaces sitting on the old page background.
+    Column(modifier = Modifier.fillMaxSize().background(HrColors.Bg)) {
         if (uiState.isLoading) {
             LoadingSkeleton(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp))
             return@Column

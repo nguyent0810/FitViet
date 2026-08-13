@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,22 +31,21 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
 import com.fitviet.app.domain.CaloriesCalculator
+import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.rememberReducedMotion
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.MacroBarCarb
-import com.fitviet.app.ui.theme.MacroBarFat
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.Motion
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatMinutesSeconds
 import com.fitviet.app.util.formatVi
 import kotlinx.coroutines.launch
@@ -80,7 +77,16 @@ private data class ConfettiParticle(
 
 /**
  * Premium-pass Moment 3 (Gate A4, direction 1a) — session-finished summary with synced count-up
- * tiles and a falling-rain confetti backdrop. Signature unchanged from before this gate.
+ * tiles and a falling-rain confetti backdrop. Signature unchanged from before that gate.
+ *
+ * Redesign Gate 4b — same deliberate-deviation call as [RestContent]'s own doc: the mock's own
+ * finished screen (design HTML lines ~318-345, inside the interactive prototype) is a flat "XONG!"
+ * with no confetti, but the Premium Moments handoff locks this mechanic by name ("2f Finished —
+ * chốt theo 1a: confetti rơi + count-up đồng bộ") and the redesign's own motion clause protects
+ * *existing* motion from being removed (README line 147). Kept, re-skinned to Hr tokens. The
+ * `sessionShared` filled "Đã chia sẻ ✓" state on [ShareToCommunityButton] is a third retained
+ * non-mock behavior for the same reason — the mock shows the share button unconditionally, this
+ * app's own share-guard predates the mock and stays.
  */
 @Composable
 fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit, onShare: () -> Unit) {
@@ -120,41 +126,54 @@ fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit, on
     val t = countUp.value
     val kcalTotal = CaloriesCalculator.estimateKcal(uiState.sessionElapsedSeconds)
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(HrColors.BgDeep)) {
+        // Confetti must stay a sibling of (not painted over by) the Column below — see this file's
+        // own review history: an earlier draft put the background on the Column instead, which
+        // silently hid every particle since the Column is the later, opaque sibling in this Box.
         if (!reducedMotion) {
             ConfettiOverlay(modifier = Modifier.fillMaxSize())
         }
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+                .padding(horizontal = HrDimens.ScreenPaddingHorizontal),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(R.string.workout_session_finished_title),
-                style = MaterialTheme.typography.headlineLarge.copy(fontFamily = Anton, fontSize = 52.sp, lineHeight = 58.sp),
-                color = Accent,
+                fontFamily = HrDisplay,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 58.sp,
+                color = HrColors.Accent,
                 textAlign = TextAlign.Center,
             )
+            Text(
+                text = sessionFinishedSubtitle(uiState),
+                fontFamily = HrBody,
+                fontSize = 15.sp,
+                color = HrColors.TextMid,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp),
+            )
             Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SummaryTile(
+                HrSummaryTile(
                     value = (uiState.sessionTotalSets * t).roundToInt().toString(),
                     label = stringResource(R.string.workout_stat_sets),
                     accent = true,
                     modifier = Modifier.weight(1f).scale(tileScales[0].value),
                 )
-                SummaryTile(
+                HrSummaryTile(
                     value = formatVi(uiState.sessionTotalVolumeKg * t),
                     label = stringResource(R.string.workout_stat_volume),
                     modifier = Modifier.weight(1f).scale(tileScales[1].value),
                 )
-                SummaryTile(
+                HrSummaryTile(
                     value = formatMinutesSeconds((uiState.sessionElapsedSeconds * t).roundToInt()),
                     label = stringResource(R.string.workout_stat_time),
                     modifier = Modifier.weight(1f).scale(tileScales[2].value),
                 )
-                SummaryTile(
+                HrSummaryTile(
                     // Feature #10 — a rough estimate, not a precise measurement; see CaloriesCalculator's doc comment.
                     value = (kcalTotal * t).roundToInt().toString(),
                     label = stringResource(R.string.workout_stat_kcal),
@@ -163,8 +182,9 @@ fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit, on
             }
             Text(
                 text = stringResource(R.string.workout_session_finished_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 12.sp,
+                color = HrColors.TextLow,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -173,7 +193,7 @@ fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit, on
                 onClick = onShare,
                 modifier = Modifier.padding(top = 20.dp),
             )
-            PrimaryActionButton(
+            HrPrimaryActionButton(
                 text = stringResource(R.string.workout_back_to_home),
                 onClick = onBackToHome,
                 modifier = Modifier.padding(top = 12.dp),
@@ -182,11 +202,33 @@ fun SessionFinishedContent(uiState: WorkoutUiState, onBackToHome: () -> Unit, on
     }
 }
 
+/** "Buổi N/M · chuỗi X ngày liên tiếp" when [WorkoutUiState.sessionNumberInPlan]/`sessionTotalInPlan`
+ * resolved a plan row (see [WorkoutViewModel.readSessionPlanProgress]'s own doc for when they
+ * don't); streak-only otherwise — there's always a streak stat to show (0 on a first-ever session),
+ * so this never has a "nothing to say" case, unlike a true null-when-empty helper. */
+@Composable
+private fun sessionFinishedSubtitle(uiState: WorkoutUiState): String {
+    val number = uiState.sessionNumberInPlan
+    val total = uiState.sessionTotalInPlan
+    return if (number != null && total != null) {
+        stringResource(R.string.workout_session_finished_subtitle_with_plan, number, total, uiState.sessionStreakDays)
+    } else {
+        stringResource(R.string.workout_session_finished_subtitle_streak_only, uiState.sessionStreakDays)
+    }
+}
+
 /** One [withFrameNanos] clock drives every particle's position — particles are plain data
  * (no per-particle composition state), positions are a pure function of elapsed time. */
 @Composable
 private fun ConfettiOverlay(modifier: Modifier = Modifier) {
-    val colors = listOf(Accent, MacroBarCarb, MacroBarFat, AccentBorder, TextPrimary)
+    // HrColors has no multi-hue chart/macro palette (single-accent by design, see its own doc) —
+    // variety here comes from alpha/lightness variants of the one accent plus a couple of neutral
+    // text tokens, not a second or third hue, same reasoning as RestContent's ring gradient.
+    // Review finding (Gate 4b) — Color.copy(alpha=) REPLACES alpha, it doesn't multiply, so a
+    // color's own base alpha has to be tracked per-particle and combined with the fall-fade alpha
+    // at draw time (see the multiply below), not baked into this list via a second .copy() here.
+    val colors = listOf(HrColors.Accent, HrColors.AccentHover, HrColors.Accent, HrColors.TextHi, HrColors.BorderAccentDim)
+    val baseAlphas = listOf(1f, 1f, 0.7f, 1f, 1f)
     val particles = remember {
         val random = Random(seed = 42)
         List(CONFETTI_PARTICLE_COUNT) {
@@ -225,7 +267,7 @@ private fun ConfettiOverlay(modifier: Modifier = Modifier) {
 
             rotate(degrees = localElapsed * particle.rotationDegreesPerMs, pivot = Offset(x, y)) {
                 drawRect(
-                    color = colors[particle.colorIndex].copy(alpha = alpha),
+                    color = colors[particle.colorIndex].copy(alpha = alpha * baseAlphas[particle.colorIndex]),
                     topLeft = Offset(x - particle.sizePx / 2f, y - particle.sizePx / 2f),
                     size = androidx.compose.ui.geometry.Size(particle.sizePx, particle.sizePx),
                 )
@@ -243,17 +285,40 @@ private fun ShareToCommunityButton(shared: Boolean, onClick: () -> Unit, modifie
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(if (shared) AccentSurfaceSelected else Color.Transparent)
-            .border(Dimens.SelectedBorderWidth, Accent, MaterialTheme.shapes.large)
-            .then(if (shared) Modifier else Modifier.clickable(onClick = onClick))
+            .then(if (shared) Modifier else Modifier.pressScale(onClick = onClick))
+            .clip(HrShapes.ButtonCta)
+            .background(if (shared) HrColors.SurfaceAccent else Color.Transparent)
+            .border(Dimens.SelectedBorderWidth, HrColors.BorderAccentDim, HrShapes.ButtonCta)
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(if (shared) R.string.workout_share_button_done else R.string.workout_share_button),
-            style = MaterialTheme.typography.titleMedium,
-            color = Accent,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = HrColors.Accent,
         )
+    }
+}
+
+/** Hr-token stat tile, per the mock's own dims (20sp value/11sp label vs. the legacy [SummaryTile]'s
+ * 22sp/12sp). Kept local to this file rather than exported — nothing else needs an Hr-token stat
+ * tile yet; [SummaryTile] itself stays legacy-token permanently for `CommunityScreen`'s own reuse,
+ * see that composable's own doc. [accent] mirrors [SummaryTile]'s own parameter — the mock gives
+ * only the "Set" tile the lime value color, matching `SupersetScreens.kt`'s existing `accent = true`
+ * on the same stat. */
+@Composable
+private fun HrSummaryTile(value: String, label: String, modifier: Modifier = Modifier, accent: Boolean = false) {
+    Column(
+        modifier = modifier
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
+            .padding(horizontal = 10.dp, vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(text = value, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = if (accent) HrColors.Accent else HrColors.TextHi)
+        Text(text = label, fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow, modifier = Modifier.padding(top = 2.dp))
     }
 }

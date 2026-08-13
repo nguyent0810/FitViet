@@ -8,6 +8,8 @@ import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.WorkoutRepository
+import com.fitviet.app.domain.MonthlyPlanProgress
+import com.fitviet.app.domain.MonthlyPlanProgressSummary
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.Deferred
@@ -61,6 +63,15 @@ data class WorkoutUiState(
     /** Computed once at session-finish time (see `finishSession()`), not observed live — matches
      * Dashboard's own streak definition via [com.fitviet.app.domain.DashboardStatsCalculator]. */
     val sessionStreakDays: Int = 0,
+    /** Redesign Gate 4b — the finished screen's "Buổi N/M" line, via
+     * [com.fitviet.app.domain.MonthlyPlanProgress.summarize] (same source the Kế hoạch tab's own
+     * progress card uses, so the two never disagree). Both null together when there's no active
+     * plan row to read (shouldn't happen in practice — reaching [WorkoutPhase.SessionFinished] at
+     * all requires a monthly-plan-day session — but this stays a display helper: null means the
+     * screen omits the clause entirely rather than showing a wrong number, same convention
+     * [com.fitviet.app.domain.MonthlyPlanProgress.dayOfPlan] already sets). */
+    val sessionNumberInPlan: Int? = null,
+    val sessionTotalInPlan: Int? = null,
     /** Guards the "share to Community" action against a double-tap creating two posts — reset per
      * session since each new session is a fresh [WorkoutUiState]. */
     val sessionShared: Boolean = false,
@@ -546,8 +557,38 @@ class WorkoutViewModel(
             )
             monthlyPlanDayId?.let { monthlyPlanRepository.onMonthlyPlanSessionCompleted(it) }
             val streakDays = workoutRepository.getCurrentStreakDays(LocalDate.now())
-            _uiState.update { it.copy(phase = WorkoutPhase.SessionFinished, sessionStreakDays = streakDays) }
+            val planProgress = readSessionPlanProgress()
+            _uiState.update {
+                it.copy(
+                    phase = WorkoutPhase.SessionFinished,
+                    sessionStreakDays = streakDays,
+                    sessionNumberInPlan = planProgress?.completedSessions,
+                    sessionTotalInPlan = planProgress?.totalSessions,
+                )
+            }
         }
+    }
+
+    /** Redesign Gate 4b — one-shot read (not observed live, matching [sessionStreakDays]'s own
+     * pattern), run after [MonthlyPlanRepository.onMonthlyPlanSessionCompleted] so this session's
+     * own completion is already reflected in the summary's `completedSessions`. Reads the same
+     * source the Kế hoạch tab's own progress card does
+     * ([com.fitviet.app.domain.MonthlyPlanProgress.summarize]), so the finished screen's "Buổi N/M"
+     * line never disagrees with that tab. Null when there's no resolvable active plan.
+     *
+     * Review finding (Gate 4b) — this sits on [finishSession]'s critical path, ahead of the
+     * `phase = SessionFinished` flip, for purely display-only data; a throw here would strand the
+     * user on the last set behind [finishInFlight]'s latch (which only [resetWorkout] clears, and
+     * that affordance is currently unreachable from any screen — see [resolvedTodayDayId]'s own
+     * doc). All four reads are Room-backed flows/a settings flow that always emit at least once, so
+     * this isn't a live bug today, but a future data source added here should NOT go ahead of the
+     * phase flip without reconsidering this ordering. */
+    private suspend fun readSessionPlanProgress(): MonthlyPlanProgressSummary? {
+        val planId = monthlyPlanRepository.observeActivePlanId().first() ?: return null
+        val weeks = monthlyPlanRepository.observeWeeksForPlan(planId).first()
+        val days = monthlyPlanRepository.observeDaysForPlan(planId).first()
+        val completedDayIds = monthlyPlanRepository.observeCompletedDayIds(planId).first()
+        return MonthlyPlanProgress.summarize(weeks, days, completedDayIds, LocalDate.now())
     }
 
     /** Feature #4 (Gate 40) — creates a real workout-share Community post (via

@@ -238,18 +238,20 @@
     <string name="workout_tag_done">Xong</string>
     <string name="workout_tag_current">Đang tập</string>
     <string name="workout_tag_pending">Chờ</string>
-    <string name="workout_rest_title">Nghỉ giữa set</string>
+    <!-- Redesign Gate 4b — mock copy verbatim; the call site uppercases this to "NGHỈ" (matches
+         the design HTML exactly, replacing the old longer "NGHỈ GIỮA SET"). -->
+    <string name="workout_rest_title">Nghỉ</string>
     <string name="workout_rest_next">Tiếp theo: Set %1$d · %2$s kg × %3$d reps</string>
     <!-- Redesign Gate 4a-i — the inter-exercise rest that now precedes the NEXT block's first set
          (replacing the old StraightBlockDone interstitial); needs the exercise name since, unlike
          workout_rest_next above, the header hasn't switched to the new exercise yet. -->
     <string name="workout_rest_next_exercise">Tiếp theo: %1$s · %2$s kg × %3$d reps</string>
     <string name="workout_add_rest">+15 giây</string>
-    <string name="workout_skip_rest">Bỏ qua</string>
+    <string name="workout_skip_rest">Bỏ qua →</string>
     <string name="workout_stat_sets">Set</string>
     <string name="workout_stat_volume">Tổng kg</string>
     <string name="workout_stat_time">Thời gian</string>
-    <string name="workout_stat_kcal">Kcal (ước tính)</string>
+    <string name="workout_stat_kcal">Kcal ước tính</string>
     <string name="workout_next_exercise">Bài tiếp theo: %1$s →</string>
     <string name="workout_finish_session">Hoàn tất buổi tập</string>
 
@@ -262,9 +264,15 @@
     <string name="workout_preview_superset_hint_title">2 bài liên tiếp là gì?</string>
     <string name="workout_preview_superset_hint_body">Một cặp superset nghĩa là bạn tập 2 bài này liên tiếp, không nghỉ giữa chừng — chỉ nghỉ sau khi xong cả hai.</string>
     <string name="workout_preview_superset_hint_dismiss">Đã hiểu</string>
-    <string name="workout_session_finished_title">BUỔI TẬP\nHOÀN THÀNH</string>
-    <string name="workout_session_finished_note">PR mới sẽ được lưu vào nhật ký của bạn</string>
-    <string name="workout_back_to_home">Về trang chủ</string>
+    <!-- Redesign Gate 4b — mock copy verbatim ("XONG!", not the old two-line title; the 58sp spec
+         in design_handoff_hit_and_run_redesign/README.md §6 only works with the short one-liner). -->
+    <string name="workout_session_finished_title">XONG!</string>
+    <!-- "Buổi N/M" (this plan's session progress, see WorkoutViewModel.readSessionPlanProgress)
+         plus the existing streak stat, when a plan row is resolvable; streak-only otherwise. -->
+    <string name="workout_session_finished_subtitle_with_plan">Buổi %1$d/%2$d · chuỗi %3$d ngày liên tiếp</string>
+    <string name="workout_session_finished_subtitle_streak_only">Chuỗi %1$d ngày liên tiếp</string>
+    <string name="workout_session_finished_note">PR mới được lưu vào nhật ký</string>
+    <string name="workout_back_to_home">Về Hôm nay</string>
     <string name="workout_share_button">Chia sẻ lên Cộng đồng</string>
     <string name="workout_share_button_done">Đã chia sẻ ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>

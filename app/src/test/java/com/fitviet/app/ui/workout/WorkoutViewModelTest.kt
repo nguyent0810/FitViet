@@ -158,17 +158,29 @@ class WorkoutViewModelTest {
         // about the no-arg path (the explicit monthlyPlanDayId tests below) don't need to
         // configure it.
         private val todayCard: TodayMonthlyPlanCard = TodayMonthlyPlanCard.NoPlan,
+        // Redesign Gate 4b — backs WorkoutViewModel.readSessionPlanProgress()'s "Buổi N/M" read.
+        // Null activePlanId (the default) makes that read resolve to null, matching every test
+        // below that doesn't configure it — nothing else in this file calls observeActivePlanId/
+        // observeWeeksForPlan/observeDaysForPlan, so this is a purely additive default.
+        private val activePlanId: Long? = null,
+        private val weeksForActivePlan: List<MonthlyPlanWeekEntity> = emptyList(),
+        private val daysForActivePlan: List<MonthlyPlanDayEntity> = emptyList(),
     ) : MonthlyPlanRepository {
         val completedDayIds = mutableListOf<Long>()
 
         override fun observeTodaySession(today: LocalDate): Flow<TodayMonthlyPlanCard> = flowOf(todayCard)
-        override fun observeActivePlanId(): Flow<Long?> = flowOf(null)
+        override fun observeActivePlanId(): Flow<Long?> = flowOf(activePlanId)
         override fun observePlan(planId: Long): Flow<MonthlyPlanEntity?> = flowOf(null)
-        override fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>> = flowOf(emptyList())
-        override fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>> = flowOf(emptyList())
+        override fun observeWeeksForPlan(planId: Long): Flow<List<MonthlyPlanWeekEntity>> = flowOf(weeksForActivePlan)
+        override fun observeDaysForPlan(planId: Long): Flow<List<MonthlyPlanDayEntity>> = flowOf(daysForActivePlan)
         override fun observeExercisesForDay(dayId: Long): Flow<List<MonthlyPlanExerciseEntity>> = flowOf(exercisesByDay[dayId].orEmpty())
         override fun observeLockedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
-        override fun observeCompletedDayIds(planId: Long): Flow<Set<Long>> = flowOf(emptySet())
+        // Reflects completedDayIds live (not a fixed emptySet()) so a test can complete a session
+        // via onMonthlyPlanSessionCompleted and then see it counted by a later
+        // readSessionPlanProgress() read within the same test. WorkoutViewModel isn't this
+        // method's only production consumer (ProgramsViewModel reads it too), but no OTHER test in
+        // this file exercises it — this fake is file-local, so the change is still safely additive.
+        override fun observeCompletedDayIds(planId: Long): Flow<Set<Long>> = flowOf(completedDayIds.toSet())
         override fun observeDay(dayId: Long): Flow<MonthlyPlanDayEntity?> = flowOf(days[dayId])
         override fun observeIsDayLocked(dayId: Long): Flow<Boolean> = flowOf(false)
         override fun observeIsDayCompleted(dayId: Long): Flow<Boolean> = flowOf(false)
@@ -839,6 +851,82 @@ class WorkoutViewModelTest {
 
         assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
         assertEquals(listOf(7L), monthlyPlanRepository.completedDayIds)
+        vm.cancelTickerToAvoidRunTestHang()
+    }
+
+    // Redesign Gate 4b — the finished screen's "Buổi N/M" line, via
+    // WorkoutViewModel.readSessionPlanProgress(). Three training days (7L, 9L, 10L) and one rest
+    // day (8L, correctly excluded from both completedSessions/totalSessions per
+    // MonthlyPlanProgress.summarize's own "trainingDays only" doc) in a 1-week plan; day 9L is
+    // pre-seeded as already completed, day 10L is left NOT completed — this test's own completion
+    // of day 7L is deliberately the second of three, not the last, so sessionNumberInPlan (2) and
+    // sessionTotalInPlan (3) can't be satisfied by the same literal (a same-value fixture wouldn't
+    // catch the two fields being swapped — caught by review before this landed).
+    @Test
+    fun `finishing a monthly-plan-day session resolves this plan's session progress for the finished screen`() = runTest(testDispatcher) {
+        val planDays = listOf(
+            testMonthlyPlanDay(id = 7L, sessionType = "Push"),
+            testMonthlyPlanDay(id = 8L, sessionType = null, isRestDay = true),
+            testMonthlyPlanDay(id = 9L, sessionType = "Pull"),
+            testMonthlyPlanDay(id = 10L, sessionType = "Legs"),
+        )
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to planDays[0]),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
+            activePlanId = 1L,
+            weeksForActivePlan = listOf(MonthlyPlanWeekEntity(id = 1L, monthlyPlanId = 1L, weekIndex = 0, phase = "BASE")),
+            daysForActivePlan = planDays,
+        )
+        monthlyPlanRepository.completedDayIds += 9L // this plan's other training day, already done
+        // day 10L ("Legs") deliberately left incomplete — see this test's own comment above.
+        val clock = FakeClock()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+            elapsedRealtimeMillis = clock::now,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        vm.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = vm.uiState.value
+        assertEquals(WorkoutPhase.SessionFinished, state.phase)
+        assertEquals(2, state.sessionNumberInPlan) // day 9L (pre-seeded) + day 7L (this session)
+        assertEquals(3, state.sessionTotalInPlan) // 3 training days; the rest day doesn't count
+        vm.cancelTickerToAvoidRunTestHang()
+    }
+
+    @Test
+    fun `finishing a session with no active plan omits the session-in-plan progress`() = runTest(testDispatcher) {
+        val monthlyPlanRepository = FakeMonthlyPlanRepository(
+            days = mapOf(7L to testMonthlyPlanDay(id = 7L, sessionType = "Push")),
+            exercisesByDay = mapOf(7L to listOf(testMonthlyPlanExercise(dayId = 7L, exerciseId = 1L, targetSets = 1, targetRepsMin = 8, targetRepsMax = 8))),
+            // activePlanId defaults to null — no plan row for readSessionPlanProgress() to read.
+        )
+        val clock = FakeClock()
+        val vm = WorkoutViewModel(
+            exerciseRepository = FakeExerciseRepository(testExercises),
+            workoutRepository = FakeWorkoutRepository(),
+            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
+            monthlyPlanRepository = monthlyPlanRepository,
+            databaseReady = CompletableDeferred(Unit),
+            monthlyPlanDayId = 7L,
+            elapsedRealtimeMillis = clock::now,
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        vm.completeCurrentSet()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = vm.uiState.value
+        assertEquals(WorkoutPhase.SessionFinished, state.phase)
+        assertEquals(null, state.sessionNumberInPlan)
+        assertEquals(null, state.sessionTotalInPlan)
         vm.cancelTickerToAvoidRunTestHang()
     }
 

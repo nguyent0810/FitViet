@@ -55,10 +55,11 @@ import com.fitviet.app.util.formatWeight
  * completed sets rendered as thin summary rows below. `WorkoutPhase.StraightBlockDone` — dead since
  * Gate 4a-i's ViewModel change, per that gate's own doc — and everything that only existed to
  * render it (the old `StraightBlockDoneContent` composable is removed here) are gone;
- * [PrimaryActionButton] stays, still legacy-token, since both `SupersetScreens.kt` and
- * [SessionFinishedContent] still depend on it and their own re-skins are deferred to Gates 4c and
- * 4b respectively. [SummaryTile] stays too, but permanently — see its own KDoc for the third,
- * outside-Phase-4 dependant that rules out ever removing it. [exerciseLabelFor] is a plain string
+ * [PrimaryActionButton] stays, still legacy-token, since `SupersetScreens.kt` still depends on it
+ * and its own re-skin is deferred to Gate 4c ([SessionFinishedContent] moved off it in Gate 4b,
+ * onto the new `internal` [HrPrimaryActionButton] below). [SummaryTile] stays too, but
+ * permanently — see its own KDoc for the third, outside-Phase-4 dependant that rules out ever
+ * removing it. [exerciseLabelFor] is a plain string
  * helper with no tokens of its own — it stays because `WorkoutScreen.kt` (this gate's own,
  * already-re-skinned file) and `SupersetScreens.kt` both call it, not because of any deferred
  * re-skin.
@@ -287,14 +288,16 @@ private fun DoneSetRow(setNumber: Int, weightKg: Double, reps: Int) {
     }
 }
 
-/** Hr-token CTA, specific to this screen — distinct from the legacy [PrimaryActionButton] below,
- * which stays legacy-token for `SupersetScreens.kt`'s own still-unreskinned CTA (Gate 4c). 17sp,
- * matching the established Hr CTA size ([com.fitviet.app.ui.quickgenerate.GenerateSheet]'s own),
- * not a new one-off. */
+/** Hr-token CTA — distinct from the legacy [PrimaryActionButton] below, which stays legacy-token
+ * for `SupersetScreens.kt`'s own still-unreskinned CTA (Gate 4c). 17sp, matching the established
+ * Hr CTA size ([com.fitviet.app.ui.quickgenerate.GenerateSheet]'s own), not a new one-off.
+ * `internal`, not `private` — [SessionFinishedContent] (Gate 4b) also uses this, since its own CTA
+ * needed the same re-skin and there was no reason to duplicate the composable across two files in
+ * the same package. */
 @Composable
-private fun HrPrimaryActionButton(text: String, onClick: () -> Unit) {
+internal fun HrPrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .pressScale(onClick = onClick)
             .clip(HrShapes.ButtonCta)
@@ -306,9 +309,9 @@ private fun HrPrimaryActionButton(text: String, onClick: () -> Unit) {
     }
 }
 
-/** Legacy-token CTA — kept for `SupersetScreens.kt`'s and [SessionFinishedContent]'s call sites
- * (see [HrPrimaryActionButton] above for this screen's own Hr-token CTA). Remove once both of
- * those are re-skinned (Gate 4c for superset, Gate 4b for the finished screen). */
+/** Legacy-token CTA — kept for `SupersetScreens.kt`'s call sites (see [HrPrimaryActionButton]
+ * above for the Hr-token version [SessionFinishedContent] now uses instead, as of Gate 4b).
+ * Remove once Gate 4c re-skins the superset flow, its last remaining dependant. */
 @Composable
 internal fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
@@ -324,11 +327,12 @@ internal fun PrimaryActionButton(text: String, onClick: () -> Unit, modifier: Mo
     }
 }
 
-/** Legacy-token summary tile — kept for `SupersetScreens.kt`'s and [SessionFinishedContent]'s call
- * sites, same reasoning as [PrimaryActionButton] above, PLUS a third, permanent one: `CommunityScreen`'s
+/** Legacy-token summary tile — kept for `SupersetScreens.kt`'s call site, same reasoning as
+ * [PrimaryActionButton] above ([SessionFinishedContent] moved off this in Gate 4b, onto its own
+ * local Hr-token stat tile), PLUS a second, permanent dependant: `CommunityScreen`'s
  * `WorkoutSharePostCard` reuses this deliberately (see that file's own doc) so a shared workout
  * reads as a natural extension of the app's visual language — Community is outside Phase 4 entirely,
- * so this composable outlives Gates 4b/4c and should NOT be deleted once those land. */
+ * so this composable outlives Gate 4c too and should NOT be deleted once that lands. */
 @Composable
 internal fun SummaryTile(value: String, label: String, modifier: Modifier = Modifier, accent: Boolean = false) {
     Column(
