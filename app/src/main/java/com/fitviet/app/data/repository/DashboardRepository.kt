@@ -1,25 +1,16 @@
 package com.fitviet.app.data.repository
 
-import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.MealDao
 import com.fitviet.app.data.local.dao.MeasurementDao
-import com.fitviet.app.data.local.dao.ProgramDao
-import com.fitviet.app.data.local.dao.ProgramDayDao
-import com.fitviet.app.data.local.dao.ProgramExerciseDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.SettingsDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
-import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.domain.CompletedSession
 import com.fitviet.app.domain.CompletedSet
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
 import com.fitviet.app.domain.MuscleGroupWorkload
-import com.fitviet.app.domain.NextTraining
-import com.fitviet.app.domain.NextTrainingCalculator
-import com.fitviet.app.domain.ProgramProgress
-import com.fitviet.app.domain.ProgramScheduleCalculator
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.RecommendationCalculator
 import com.fitviet.app.domain.TodayMonthlyPlanCard
@@ -32,7 +23,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 
 data class DashboardData(
     val today: LocalDate,
@@ -43,15 +33,7 @@ data class DashboardData(
     val completedSessions: List<CompletedSession>,
     val stats: DashboardStats,
     val kcalToday: Int,
-    val featuredProgram: ProgramEntity?,
     val recommendation: Recommendation,
-    /** Feature #3: the active program's next scheduled non-rest day, null if there's no active
-     * program or its schedule has no training days (e.g. not yet seeded). */
-    val nextTraining: NextTraining?,
-    /** Feature #3: this week's session count vs. the active program's weekly target — null only
-     * when there's no featured program at all (see [NextTraining]/[ProgramProgress] docs for the
-     * "session count, not per-day tracking" scope note). */
-    val programProgress: ProgramProgress?,
     /** Feature #5 — this week's (Monday-start) set distribution across muscle groups, always 6
      * entries. A quick "balance" glance, distinct from Diary's #8 chart (that one's a 4-week
      * volume-based window; this one's set-count-based and scoped to just the current week). */
@@ -65,12 +47,10 @@ data class DashboardData(
     val displayName: String,
     val avatarId: Int,
     /** "Hit & Run" (Gate 63+); redesign Gate 1c made this a total, always-non-null 5-case type
-     * (was nullable) — [TodayMonthlyPlanCard.NoPlan] is now the "no active plan" case itself, in
-     * which case [featuredProgram]/[nextTraining]/[programProgress] drive the hero card exactly
-     * as before this feature. Independent of [featuredProgram]: a hand-authored program can be
-     * featured at the same time a monthly plan is active (see [com.fitviet.app.data.repository
-     * .MonthlyPlanRepository]'s doc), but the hero card prefers this whenever it isn't
-     * [TodayMonthlyPlanCard.NoPlan]. */
+     * (was nullable). Redesign Gate 2b made [TodayMonthlyPlanCard.NoPlan] the sole "nothing to
+     * train today" outcome — the old hand-authored-program hero-card fallback this used to defer
+     * to is gone; Dashboard shows its empty-state "Tạo plan" CTA instead (see
+     * [TodayMonthlyPlanCard]'s own doc). */
     val todayMonthlyPlanCard: TodayMonthlyPlanCard,
     /** Gate D4 — read straight from [com.fitviet.app.data.local.entity.SettingsEntity], threaded
      * through so [com.fitviet.app.ui.dashboard.DashboardViewModel] can derive
@@ -79,52 +59,32 @@ data class DashboardData(
     val lastCelebratedStreakDays: Int,
 )
 
-/** Output of the first 5-source `combine{}` below — everything except the completed-set breakdown
- * (a 6th independent source, chained on via a separate 2-flow `.combine()` since kotlinx.coroutines
- * has no typed `combine{}` overload past 5 flows). Named fields instead of nested `Pair`/`Triple`
- * so the chained `.combine()` below can destructure it without a multi-level positional-tuple trace. */
+/** Output of the first 5-source `combine{}` in [DashboardRepository.observe] — everything except
+ * the completed-set breakdown (a 6th independent source, chained on via a separate 2-flow
+ * `.combine()` since kotlinx.coroutines has no typed `combine{}` overload past 5 flows). Named
+ * fields instead of a positional tuple so the chained `.combine()` can destructure it clearly. */
 private data class Stage1Data(
     val today: LocalDate,
     val completedSessions: List<CompletedSession>,
     val stats: DashboardStats,
     val kcalToday: Int,
-    val featuredProgram: ProgramEntity?,
+    val monthlyPlanCard: TodayMonthlyPlanCard,
     val recommendation: Recommendation,
     val settings: SettingsEntity,
-)
-
-/** Everything computable before the active program's schedule is known — kept separate from
- * [DashboardData] because resolving the schedule needs [featuredProgram]'s id, which isn't known
- * until this stage's own `combine{}` runs (hence the second [Flow.flatMapLatest] stage below). */
-private data class BaseDashboardData(
-    val today: LocalDate,
-    val completedSessions: List<CompletedSession>,
-    val stats: DashboardStats,
-    val kcalToday: Int,
-    val featuredProgram: ProgramEntity?,
-    val recommendation: Recommendation,
-    val muscleGroupWorkloadThisWeek: List<MuscleGroupWorkload>,
-    val showRecommendationCard: Boolean,
-    val showMuscleBalanceCard: Boolean,
-    val showNutritionCard: Boolean,
-    val displayName: String,
-    val avatarId: Int,
-    val lastCelebratedStreakDays: Int,
 )
 
 class DashboardRepository(
     private val workoutSessionDao: WorkoutSessionDao,
     private val mealDao: MealDao,
-    private val programDao: ProgramDao,
     private val measurementDao: MeasurementDao,
     private val settingsDao: SettingsDao,
-    private val programDayDao: ProgramDayDao,
-    private val programExerciseDao: ProgramExerciseDao,
-    private val exerciseDao: ExerciseDao,
     private val setLogDao: SetLogDao,
     // "Hit & Run" redesign (Gate 1c) — Today-card resolution moved to this repository's own
     // observeTodaySession, shared with WorkoutViewModel's single session entry point; replaces
-    // this class's direct monthlyPlanDayDao/monthlyPlanExerciseDao dependencies.
+    // this class's direct monthlyPlanDayDao/monthlyPlanExerciseDao dependencies. Redesign Gate 2b
+    // removed the parallel program-schedule resolution this repository used to also run
+    // (featuredProgram/nextTraining/programProgress) — this is now the only plan source Dashboard
+    // reads at all.
     private val monthlyPlanRepository: MonthlyPlanRepository,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -137,10 +97,10 @@ class DashboardRepository(
             combine(
                 workoutSessionDao.observeCompleted(),
                 mealDao.observeForDay(today.toEpochDay()),
-                programDao.observeAll(),
+                monthlyPlanRepository.observeTodaySession(today),
                 measurementDao.observeLatest(),
                 settingsDao.observe(),
-            ) { sessions, meals, programs, latestMeasurement, settings ->
+            ) { sessions, meals, monthlyPlanCard, latestMeasurement, settings ->
                 val completedSessions = sessions.mapNotNull { session ->
                     val completedAt = session.completedAt ?: return@mapNotNull null
                     CompletedSession(
@@ -149,15 +109,12 @@ class DashboardRepository(
                     )
                 }
                 val stats = DashboardStatsCalculator.compute(completedSessions, today)
-                // Falls back to the first seeded program until the user explicitly picks one on
-                // 2b (see ProgramRepository.setActiveProgram) — matches the pre-Gate-15 default.
-                val featuredProgram = programs.firstOrNull { it.id == settings?.activeProgramId } ?: programs.firstOrNull()
                 Stage1Data(
                     today = today,
                     completedSessions = completedSessions,
                     stats = stats,
                     kcalToday = meals.sumOf { it.kcal },
-                    featuredProgram = featuredProgram,
+                    monthlyPlanCard = monthlyPlanCard,
                     recommendation = RecommendationCalculator.compute(
                         today = today,
                         last7Days = stats.last7Days,
@@ -179,12 +136,11 @@ class DashboardRepository(
                         volumeKg = row.weightKg * row.reps,
                     )
                 }
-                BaseDashboardData(
+                DashboardData(
                     today = stage1.today,
                     completedSessions = stage1.completedSessions,
                     stats = stage1.stats,
                     kcalToday = stage1.kcalToday,
-                    featuredProgram = stage1.featuredProgram,
                     recommendation = stage1.recommendation,
                     muscleGroupWorkloadThisWeek = WorkoutCompositionCalculator.muscleGroupWorkload(
                         completedSets,
@@ -195,39 +151,8 @@ class DashboardRepository(
                     showNutritionCard = stage1.settings.showNutritionCard,
                     displayName = stage1.settings.displayName,
                     avatarId = stage1.settings.avatarId,
+                    todayMonthlyPlanCard = stage1.monthlyPlanCard,
                     lastCelebratedStreakDays = stage1.settings.lastCelebratedStreakDays,
-                )
-            }
-        }.flatMapLatest { base ->
-            val program = base.featuredProgram
-            val scheduleFlow = if (program != null) {
-                combine(
-                    programDayDao.observeForProgram(program.id),
-                    programExerciseDao.observeForProgram(program.id),
-                    exerciseDao.observeAll(),
-                    ProgramScheduleCalculator::build,
-                )
-            } else {
-                flowOf(emptyList())
-            }
-            combine(scheduleFlow, monthlyPlanRepository.observeTodaySession(base.today)) { schedule, monthlyPlanCard ->
-                DashboardData(
-                    today = base.today,
-                    completedSessions = base.completedSessions,
-                    stats = base.stats,
-                    kcalToday = base.kcalToday,
-                    featuredProgram = program,
-                    recommendation = base.recommendation,
-                    nextTraining = NextTrainingCalculator.findNext(schedule, base.today.dayOfWeek),
-                    programProgress = program?.let { ProgramProgress(base.stats.sessionsThisWeek, it.sessionsPerWeek) },
-                    muscleGroupWorkloadThisWeek = base.muscleGroupWorkloadThisWeek,
-                    showRecommendationCard = base.showRecommendationCard,
-                    showMuscleBalanceCard = base.showMuscleBalanceCard,
-                    showNutritionCard = base.showNutritionCard,
-                    displayName = base.displayName,
-                    avatarId = base.avatarId,
-                    todayMonthlyPlanCard = monthlyPlanCard,
-                    lastCelebratedStreakDays = base.lastCelebratedStreakDays,
                 )
             }
         }

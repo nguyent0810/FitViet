@@ -74,8 +74,6 @@ class SettingsViewModel(
 
     fun toggleShowNutritionCard() = viewModelScope.launch { profileRepository.toggleShowNutritionCard() }
 
-    fun toggleSkipWorkoutPreview() = viewModelScope.launch { profileRepository.toggleSkipWorkoutPreview() }
-
     fun requestReset() {
         showResetConfirmDialog.value = true
     }

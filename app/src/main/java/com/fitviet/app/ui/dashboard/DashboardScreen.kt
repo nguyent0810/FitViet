@@ -37,16 +37,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
-import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.domain.DayVolume
 import com.fitviet.app.domain.MuscleGroupWorkload
-import com.fitviet.app.domain.NextTraining
-import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import com.fitviet.app.ui.common.RangePills
-import com.fitviet.app.ui.common.entranceFade
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.common.tiltOnDrag
 import com.fitviet.app.ui.profile.MonogramAvatar
@@ -62,7 +58,6 @@ import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HeroGradientEnd
 import com.fitviet.app.ui.theme.HeroGradientStart
 import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.premiumShadow
 import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.TextBody
 import com.fitviet.app.ui.theme.TextFaint
@@ -79,17 +74,14 @@ import java.time.LocalDate
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
-    onStartWorkout: (programId: Long) -> Unit,
-    onViewSchedule: (programId: Long) -> Unit,
-    onBrowsePrograms: () -> Unit,
     onOpenDiary: () -> Unit,
     onOpenProfile: () -> Unit,
     // "Hit & Run" (Gate 63+) — starts today's monthly-plan-day session directly, bypassing
-    // WorkoutPreview (unlike the hand-authored-program path above). A deliberate Phase 5 scope
-    // decision, not an oversight: retrofitting the preview screen for monthly-plan days is
-    // deferred to a later gate, and going straight to the live session is arguably closer to the
-    // feature's own "1-2 taps, no re-choosing" goal anyway. See the "Hit & Run" plan's Phase 9 note
-    // for where a skip-preview toggle would apply once a monthly-plan preview path exists.
+    // WorkoutPreview. A deliberate scope decision, not an oversight: retrofitting a preview
+    // screen for monthly-plan days is deferred to a later gate, and going straight to the live
+    // session is arguably closer to the feature's own "1-2 taps, no re-choosing" goal anyway.
+    // Redesign Gate 2b removed the `skipWorkoutPreview` setting that once applied to the (now also
+    // removed) hand-authored-program hero card's own start flow — this path never honored it.
     onStartMonthlyPlanDay: (dayId: Long) -> Unit,
     // "Hit & Run" (Gate 63+) — the empty-state CTA shown when there's no active monthly plan yet
     // (see the call site below, gated on the same `monthlyPlanCard == null` check as the hero-card
@@ -114,12 +106,11 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
         GreetingHeader(today = today, displayName = uiState.displayName, avatarId = uiState.avatarId, onAvatarClick = onOpenProfile)
-        // "Hit & Run" (Gate 63+) — an active monthly plan's Today card takes over the hero slot
-        // entirely; the hand-authored-program hero card below is unchanged for everyone else.
-        // "Hit & Run" redesign (Gate 1c) — TodayMonthlyPlanCard is a total 5-case type now
-        // (Training/RestDay/Unavailable/NoPlan/PlanFinished); only NoPlan falls back to the old
-        // hand-authored-program hero card below — every other case, including a plan that just
-        // finished, still shows the monthly-plan hero (with its own no-action copy).
+        // "Hit & Run" redesign (Gate 1c) — TodayMonthlyPlanCard is a total 5-case type
+        // (Training/RestDay/Unavailable/NoPlan/PlanFinished); redesign Gate 2b retired the old
+        // hand-authored-program hero card NoPlan used to fall back to (see TodayMonthlyPlanCard's
+        // own doc) — only the empty-state "Tạo plan" CTA shows now. Every other case, including a
+        // plan that just finished, still shows the monthly-plan hero (with its own no-action copy).
         val monthlyPlanCard = uiState.todayMonthlyPlanCard
         if (monthlyPlanCard != TodayMonthlyPlanCard.NoPlan) {
             MonthlyPlanHeroCard(
@@ -128,27 +119,6 @@ fun DashboardScreen(
                 onViewPlan = onViewMonthlyPlan,
             )
         } else {
-            HeroCard(
-                program = uiState.featuredProgram,
-                nextTraining = uiState.nextTraining,
-                programProgress = uiState.programProgress,
-                // WorkoutPreview only ever resolves *today*'s schedule (see its own doc comment), but
-                // this card's "Tiếp theo: <day>" label can name a later day when today is a rest day —
-                // routing that case into WorkoutPreview would land on an empty "no exercises today"
-                // screen despite the button naming a specific upcoming day. Route those to the weekly
-                // schedule instead, which already highlights the correct upcoming day.
-                onStart = {
-                    val program = uiState.featuredProgram
-                    when {
-                        program == null -> onBrowsePrograms()
-                        uiState.nextTraining?.isToday == false -> onViewSchedule(program.id)
-                        else -> onStartWorkout(program.id)
-                    }
-                },
-            )
-            // "Hit & Run" (Gate 63+) empty state — only shown once, right below the existing hero
-            // card, when there's no active monthly plan yet; disappears for good once one exists
-            // (the branch above then takes over the hero slot instead).
             GenerateMonthlyPlanCard(onClick = onGenerateMonthlyPlan)
         }
         if (uiState.showRecommendationCard) {
@@ -254,86 +224,9 @@ private fun GreetingHeader(today: LocalDate, displayName: String, avatarId: Int,
     }
 }
 
-@Composable
-private fun HeroCard(
-    program: ProgramEntity?,
-    nextTraining: NextTraining?,
-    programProgress: ProgramProgress?,
-    onStart: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .entranceFade()
-            // Gate D1 rollout — this is Dashboard's own hero card, the exact surface
-            // premiumShadow's Gate A1 doc comment names first, yet it never actually got the
-            // shadow applied until now.
-            .premiumShadow(radius = 18.dp, accentBloom = true)
-            .tiltOnDrag()
-            .clip(MaterialTheme.shapes.large)
-            .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd), start = Offset(0f, 0f)))
-            .padding(Dimens.CardPaddingLarge),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapSmall),
-    ) {
-        Column {
-            Text(
-                text = if (nextTraining != null && !nextTraining.isToday) {
-                    stringResource(R.string.dashboard_hero_label_next, stringResource(nextTraining.day.dayOfWeek.shortLabelRes()))
-                } else {
-                    stringResource(R.string.dashboard_hero_label)
-                },
-                style = MaterialTheme.typography.labelLarge,
-                color = Accent,
-            )
-            Text(
-                text = program?.titleVi ?: stringResource(R.string.dashboard_no_program_title),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-            Text(
-                // Feature #3: the real next scheduled day + exercise count (Gate 15's per-day
-                // assignment) when the active program's schedule resolves one; falls back to the
-                // program's general weekly cadence/level/equipment otherwise (schedule not yet
-                // seeded, or genuinely no active program).
-                text = when {
-                    nextTraining != null -> stringResource(
-                        R.string.dashboard_hero_meta_schedule,
-                        nextTraining.day.titleVi,
-                        nextTraining.day.exercises.size,
-                    )
-                    program != null -> stringResource(R.string.dashboard_hero_meta, program.sessionsPerWeek, program.level, program.equipment)
-                    else -> stringResource(R.string.dashboard_no_program_meta)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-        }
-        if (programProgress != null) {
-            ProgramProgressBar(progress = programProgress)
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pressScale(onClick = onStart)
-                .clip(MaterialTheme.shapes.small)
-                .background(Accent)
-                .padding(vertical = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = stringResource(if (program != null) R.string.dashboard_start_workout else R.string.dashboard_browse_programs),
-                style = MaterialTheme.typography.titleMedium,
-                color = OnAccent,
-            )
-        }
-    }
-}
-
-/** "Hit & Run" (Gate 63+) counterpart to [HeroCard] — same gradient/layout shell, sourced from the
- * active monthly plan's Today row instead of a hand-authored [ProgramEntity]. Shown instead of
- * [HeroCard] (not alongside it) whenever a monthly plan is active; see [DashboardScreen]'s call
- * site for the precedence rule. */
+/** "Hit & Run" (Gate 63+) hero card, sourced from the active monthly plan's Today row. Redesign
+ * Gate 2b retired the hand-authored-program hero card this used to render alongside/instead of —
+ * see [DashboardScreen]'s call site for the current (monthly-plan-hero-or-empty-state) rule. */
 @Composable
 private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit, onViewPlan: () -> Unit) {
     Column(
@@ -435,9 +328,9 @@ private fun MonthlyPlanHeroCard(card: TodayMonthlyPlanCard, onStart: () -> Unit,
     }
 }
 
-/** "Hit & Run" (Gate 63+) empty-state CTA — a compact, distinct card (not another gradient hero)
- * since it sits directly below [HeroCard], which already owns the "big gradient block" visual
- * weight on this screen. */
+/** "Hit & Run" (Gate 63+) empty-state CTA — a compact, distinct card (not another gradient hero),
+ * shown in place of [MonthlyPlanHeroCard] when there's no active plan yet (redesign Gate 2b — see
+ * [DashboardScreen]'s call site). */
 @Composable
 private fun GenerateMonthlyPlanCard(onClick: () -> Unit) {
     Row(
@@ -505,31 +398,6 @@ private fun MissedDayDialog(missedDay: MonthlyPlanDayEntity, onPushToday: () -> 
             }
         },
     )
-}
-
-@Composable
-private fun ProgramProgressBar(progress: ProgramProgress) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.dashboard_progress_label, progress.completedThisWeek, progress.targetPerWeek),
-            style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(AccentBorder),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress.fraction)
-                    .background(Accent),
-            )
-        }
-    }
 }
 
 // Index-matched to the recommendation_tip_1..8 string resources — must stay in sync with

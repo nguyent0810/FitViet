@@ -108,11 +108,6 @@
     <!-- 1b Dashboard -->
     <string name="dashboard_greeting">Hi %1$s</string>
     <string name="dashboard_hero_label">Today\'s workout</string>
-    <string name="dashboard_hero_label_next">Next up · %1$s</string>
-    <string name="dashboard_hero_meta">%1$d sessions/week · %2$s · %3$s</string>
-    <string name="dashboard_hero_meta_schedule">%1$s · %2$d exercises</string>
-    <string name="dashboard_progress_label">%1$d/%2$d sessions this week</string>
-    <string name="dashboard_start_workout">Start workout</string>
     <!-- "Hit & Run" (Gate 63+) -->
     <string name="dashboard_hero_meta_monthly_plan">%1$d exercises · %2$d min</string>
     <string name="dashboard_start_workout_today">Start today\'s workout</string>
@@ -139,9 +134,6 @@
     <string name="dashboard_muscle_balance_sets">%1$d sets</string>
     <string name="dashboard_nutrition_title">Nutrition today</string>
     <string name="dashboard_nutrition_progress">%1$s / %2$s kcal</string>
-    <string name="dashboard_no_program_title">No program yet</string>
-    <string name="dashboard_no_program_meta">Pick a program to start your first workout</string>
-    <string name="dashboard_browse_programs">Browse programs</string>
 
     <!-- Dashboard recommendation card (feature 6) -->
     <string name="recommendation_title">Today\'s tip</string>
@@ -182,19 +174,14 @@
     <string name="programs_import_read_error">Couldn\'t read the selected file.</string>
     <string name="programs_import_failed">Import failed, please try again.</string>
 
-    <!-- 2b Weekly schedule -->
-    <string name="schedule_title">Your weekly schedule</string>
-    <string name="schedule_today_badge">TODAY</string>
-    <string name="schedule_start_today">Start ›</string>
-    <string name="schedule_hint_rest">%1$s · Recovery day — light walk, stretching, 15 min</string>
-    <string name="schedule_hint_day">%1$s · %2$s — %3$s · %4$s</string>
-    <string name="schedule_rest_sub">Light walk, stretching</string>
-    <string name="schedule_exercise_count">%1$d exercises</string>
-    <string name="schedule_set_active">Set as current program</string>
-    <string name="schedule_active_badge">✓ Your current program</string>
-    <string name="schedule_empty">No detailed schedule for this program yet</string>
-    <string name="schedule_export_button">Share</string>
-    <string name="schedule_export_chooser_title">Share program</string>
+    <!-- Redesign Gate 2b — program card actions (schedule_export_* renamed from the retired
+         Weekly Schedule screen's own strings, now live on the program card itself). -->
+    <string name="programs_preview_button">Preview</string>
+    <string name="programs_export_button">Share</string>
+    <string name="programs_export_chooser_title">Share program</string>
+    <string name="programs_replace_plan_title">Replace your current plan?</string>
+    <string name="programs_replace_plan_body">Generating from \"%1$s\" will replace your active monthly plan.</string>
+    <string name="programs_replace_plan_confirm">Generate new plan</string>
 
     <!-- 1e Workout flow -->
     <string name="workout_reset">Restart</string>
@@ -485,7 +472,6 @@
     <string name="profile_widget_recommendation">Today\'s tip</string>
     <string name="profile_widget_muscle_balance">Muscle balance</string>
     <string name="profile_widget_nutrition">Nutrition</string>
-    <string name="profile_widget_skip_preview">Skip the workout preview screen</string>
     <string name="profile_donate_title">100% free app</string>
     <string name="profile_donate_body">No ads, no fees. If the app has been useful, you can chip in to help keep the servers running and fund new features.</string>
     <string name="profile_donate_cta">Support the project</string>

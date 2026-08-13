@@ -17,6 +17,8 @@ import com.fitviet.app.domain.ProgramTransfer
 import com.fitviet.app.domain.ProgramTransferData
 import com.fitviet.app.domain.ProgramTransferDay
 import com.fitviet.app.domain.ProgramTransferExercise
+import com.fitviet.app.domain.SplitTemplate
+import com.fitviet.app.domain.TrainingGoal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -41,15 +43,9 @@ sealed interface ImportProgramResult {
 interface ProgramRepository {
     fun observeAll(): Flow<List<ProgramEntity>>
 
-    suspend fun getById(id: Long): ProgramEntity?
-
     /** Empty until [com.fitviet.app.data.local.seed.DatabaseSeeder] has backfilled this program's
      * schedule rows — the UI falls back to an empty-state message in that case. */
     fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>>
-
-    fun observeActiveProgramId(): Flow<Long?>
-
-    suspend fun setActiveProgram(programId: Long)
 
     /** Feature #11b (Gate 48) — whether the "day exercise list" preview screen's first-run
      * superset explainer card has already been dismissed. */
@@ -80,21 +76,12 @@ class RoomProgramRepository(
 ) : ProgramRepository {
     override fun observeAll(): Flow<List<ProgramEntity>> = programDao.observeAll()
 
-    override suspend fun getById(id: Long): ProgramEntity? = programDao.getById(id)
-
     override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = combine(
         programDayDao.observeForProgram(programId),
         programExerciseDao.observeForProgram(programId),
         exerciseDao.observeAll(),
         ProgramScheduleCalculator::build,
     )
-
-    override fun observeActiveProgramId(): Flow<Long?> = settingsDao.observe().map { it?.activeProgramId }
-
-    override suspend fun setActiveProgram(programId: Long) {
-        val current = settingsDao.get() ?: SettingsEntity()
-        settingsDao.upsert(current.copy(activeProgramId = programId))
-    }
 
     override fun observeHasSeenSupersetHint(): Flow<Boolean> = settingsDao.observe().map { it?.hasSeenSupersetHint ?: false }
 
@@ -113,6 +100,8 @@ class RoomProgramRepository(
                 sessionsPerWeek = program.sessionsPerWeek,
                 level = program.level,
                 equipment = program.equipment,
+                goal = program.goal,
+                splitTemplate = program.splitTemplate,
                 days = schedule.map { day ->
                     ProgramTransferDay(
                         dayOfWeek = day.dayOfWeek.value,
@@ -162,6 +151,12 @@ class RoomProgramRepository(
                     level = data.level,
                     equipment = data.equipment,
                     tags = emptyList(),
+                    // Redesign Gate 2b — falls back to ProgramEntity's own defaults when the
+                    // imported file predates this gate's goal/splitTemplate export fields (see
+                    // ProgramTransferData's doc); a decode()-validated non-null value is always a
+                    // real, non-CUSTOM enum name by construction.
+                    goal = data.goal ?: TrainingGoal.HYPERTROPHY.name,
+                    splitTemplate = data.splitTemplate ?: SplitTemplate.FULL_BODY.name,
                 ),
             )
             data.days.forEach { day ->

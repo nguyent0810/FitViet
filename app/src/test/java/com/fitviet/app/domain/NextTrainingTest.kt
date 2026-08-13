@@ -76,26 +76,3 @@ class NextTrainingCalculatorTest {
         assertEquals(DayOfWeek.FRIDAY, result?.day?.dayOfWeek)
     }
 }
-
-class ProgramProgressTest {
-
-    @Test
-    fun `fraction is the completed share of the weekly target`() {
-        assertEquals(0.5f, ProgramProgress(completedThisWeek = 2, targetPerWeek = 4).fraction, 0.0001f)
-    }
-
-    @Test
-    fun `fraction caps at 1 when the target is exceeded`() {
-        assertEquals(1f, ProgramProgress(completedThisWeek = 6, targetPerWeek = 4).fraction, 0.0001f)
-    }
-
-    @Test
-    fun `fraction is 0 for a zero weekly target, not a division error`() {
-        assertEquals(0f, ProgramProgress(completedThisWeek = 3, targetPerWeek = 0).fraction, 0.0001f)
-    }
-
-    @Test
-    fun `fraction is 0 when nothing has been completed yet`() {
-        assertEquals(0f, ProgramProgress(completedThisWeek = 0, targetPerWeek = 4).fraction, 0.0001f)
-    }
-}

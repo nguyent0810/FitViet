@@ -13,19 +13,13 @@ import com.fitviet.app.domain.SplitTemplate
     tableName = "settings",
     foreignKeys = [
         ForeignKey(
-            entity = ProgramEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["activeProgramId"],
-            onDelete = ForeignKey.SET_NULL,
-        ),
-        ForeignKey(
             entity = MonthlyPlanEntity::class,
             parentColumns = ["id"],
             childColumns = ["activeMonthlyPlanId"],
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("activeProgramId"), Index("activeMonthlyPlanId")],
+    indices = [Index("activeMonthlyPlanId")],
 )
 data class SettingsEntity(
     @PrimaryKey val id: Int = SINGLETON_ID,
@@ -60,9 +54,6 @@ data class SettingsEntity(
     val selectedDaysPerWeek: Int = 3,
     /** Set once, when onboarding completes — powers 1i's "N tuần đồng hành" (weeks with the app). */
     val onboardingCompletedAtEpochDay: Long? = null,
-    /** The program the user has chosen as "current" (2b's "Đặt làm giáo án hiện tại"). Null before
-     * any explicit choice — the dashboard falls back to the first seeded program in that case. */
-    val activeProgramId: Long? = null,
     /** Feature #12 — per-widget Dashboard visibility toggles, all on by default. The hero card and
      * the weekly-volume/stat-tile row are always shown (core content, not optional widgets). */
     val showRecommendationCard: Boolean = true,
@@ -77,13 +68,10 @@ data class SettingsEntity(
      * preview screen's first-run superset explainer card, so it doesn't show again. */
     val hasSeenSupersetHint: Boolean = false,
     /** "Hit & Run" (Gate 63+) — the generated monthly plan currently driving the Dashboard "Today"
-     * card, independent of [activeProgramId]: a user can have both a hand-picked program and an
-     * active monthly plan at once, only the Today card prefers this one when non-null. */
+     * card. Redesign Gate 2b made this the app's sole "active plan" concept — `ProgramEntity` is
+     * read-only generation input now (see its own doc comment), with no "active program" state of
+     * its own anymore. */
     val activeMonthlyPlanId: Long? = null,
-    /** "Hit & Run" — power-user toggle to skip [com.fitviet.app.ui.workout.WorkoutPreviewScreen]
-     * entirely and go straight from a Start action into the live session. Off by default so the
-     * first-run "day exercise list" screen still shows until the user opts out. */
-    val skipWorkoutPreview: Boolean = false,
     /** Gate D4 — the highest workout streak length (in days) a milestone overlay has already been
      * shown for. [com.fitviet.app.domain.StreakMilestones.crossedMilestone] compares this against
      * the live streak to decide whether a new milestone just came into range; dismissing the

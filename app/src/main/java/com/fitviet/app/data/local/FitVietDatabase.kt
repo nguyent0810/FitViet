@@ -140,7 +140,13 @@ import com.fitviet.app.data.local.entity.WorkoutSessionEntity
     // silently reinterpret every already-stored index), plus a new `settings.equipmentProfile`
     // column. Batched as one gate/one wipe per the redesign's own decision record, rather than
     // bumping separately for each schema need the redesign turns out to have.
-    version = 21,
+    // "Hit & Run" redesign Gate 2b raised this from 21 to 22: collapsed the two parallel "active
+    // plan" systems into one — dropped `settings.activeProgramId` (ProgramEntity has no more
+    // "active" concept, it's read-only generation input now) and `settings.skipWorkoutPreview`
+    // (its only two honoring call sites were both retired this gate; the one remaining
+    // WorkoutPreview entry point, a program's optional "Xem trước" link, never honored it even
+    // before this gate). Also removes `settings`' foreign key to `programs`.
+    version = 22,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

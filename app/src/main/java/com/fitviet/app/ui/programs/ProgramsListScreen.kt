@@ -1,5 +1,6 @@
 package com.fitviet.app.ui.programs
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -22,8 +23,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -78,7 +82,15 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ProgramsListScreen(
     viewModel: ProgramsViewModel,
-    onProgramClick: (ProgramEntity) -> Unit,
+    // Redesign Gate 2b — tapping a program card's own doc (see [ProgramsViewModel
+    // .generateFromProgram]): a confirm dialog gates the call when a plan is already active, but
+    // once confirmed (or when there's nothing to lose), this is the trigger — the caller does the
+    // actual generate()+navigate()+error-Toast, same "screen signals, nav host performs" split as
+    // onboarding's `onSubmit`/Quick Generate's `onGenerateClick`.
+    onGenerateFromProgram: (ProgramEntity) -> Unit,
+    // The optional, demoted "Xem trước" link (see `WorkoutPreviewViewModel`'s own doc) — a
+    // read-only look at the program, never a "start" action.
+    onPreviewProgram: (ProgramEntity) -> Unit,
     onExerciseClick: (ExerciseEntity) -> Unit,
     // "Hit & Run" (Gate 63+) — the header card below the title row, per the plan's Quick Generate
     // entry-point list (Dashboard's empty state + this screen's own header, both reachable
@@ -89,9 +101,13 @@ fun ProgramsListScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var importMessage by remember { mutableStateOf<String?>(null) }
+    // Redesign Gate 2b — non-null while the "replace your active plan?" confirm dialog for this
+    // program is showing (see [ProgramCard]'s own tap handling below).
+    var pendingReplaceConfirm by remember { mutableStateOf<ProgramEntity?>(null) }
     val readErrorText = stringResource(R.string.programs_import_read_error)
     val invalidFormatText = stringResource(R.string.programs_import_invalid)
     val failedText = stringResource(R.string.programs_import_failed)
+    val exportChooserTitle = stringResource(R.string.programs_export_chooser_title)
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
@@ -172,9 +188,56 @@ fun ProgramsListScreen(
             }
         } else {
             items(uiState.visiblePrograms, key = { it.id }) { program ->
-                ProgramCard(program = program, onClick = { onProgramClick(program) })
+                ProgramCard(
+                    program = program,
+                    isGenerating = uiState.isGenerating,
+                    onClick = {
+                        if (uiState.hasActivePlan) {
+                            pendingReplaceConfirm = program
+                        } else {
+                            onGenerateFromProgram(program)
+                        }
+                    },
+                    onPreviewClick = { onPreviewProgram(program) },
+                    onExportClick = {
+                        scope.launch {
+                            val json = viewModel.exportProgram(program.id) ?: return@launch
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, json)
+                                putExtra(Intent.EXTRA_SUBJECT, program.titleVi)
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, exportChooserTitle))
+                        }
+                    },
+                )
             }
         }
+    }
+
+    // Redesign Gate 2b — generating from a program card replaces the currently-active plan
+    // ([MonthlyPlanRepository.generate] marks it SUPERSEDED), so a tap in this browse list needs
+    // an explicit confirm the same way a QuickGenerate-style dedicated screen doesn't (that
+    // screen's whole purpose already signals "generate," this list's doesn't).
+    pendingReplaceConfirm?.let { program ->
+        AlertDialog(
+            onDismissRequest = { pendingReplaceConfirm = null },
+            title = { Text(text = stringResource(R.string.programs_replace_plan_title)) },
+            text = { Text(text = stringResource(R.string.programs_replace_plan_body, program.titleVi)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingReplaceConfirm = null
+                    onGenerateFromProgram(program)
+                }) {
+                    Text(text = stringResource(R.string.programs_replace_plan_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingReplaceConfirm = null }) {
+                    Text(text = stringResource(R.string.profile_history_delete_confirm_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -412,8 +475,20 @@ private fun ProgramCoverIcon(glyph: ProgramCoverGlyph) {
     }
 }
 
+/** Redesign Gate 2b — the card's own tap ([onClick]) is now a real "commit" action (generates a
+ * monthly plan from this program, see [ProgramsViewModel.generateFromProgram]), not pure
+ * navigation. [onPreviewClick]/[onExportClick] are separate, smaller tap targets below the main
+ * card body so they don't fall through to the card's own generate tap (Compose routes a touch to
+ * whichever `clickable` is innermost at that point — a child's own modifier always wins over an
+ * ancestor's, so no extra plumbing is needed to keep these independent). */
 @Composable
-private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
+private fun ProgramCard(
+    program: ProgramEntity,
+    isGenerating: Boolean,
+    onClick: () -> Unit,
+    onPreviewClick: () -> Unit,
+    onExportClick: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -424,7 +499,11 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
             // effect with no such replay risk. accentBloom = false — this isn't a donate/PR-style
             // hero surface, just an ambient lift to match Dashboard's hero card now having one.
             .premiumShadow(radius = 18.dp, accentBloom = false)
-            .pressScale(onClick = onClick)
+            // No dedicated per-card loading state (isGenerating is screen-wide — only one
+            // generation ever runs at a time) — dimming every card is a small, honest "something
+            // is happening" signal so a multi-second generation doesn't look like a dead tap.
+            .alpha(if (isGenerating) 0.6f else 1f)
+            .pressScale(onClick = { if (!isGenerating) onClick() })
             .tiltOnDrag(maxDegrees = 6f)
             .clip(MaterialTheme.shapes.large)
             .background(SurfaceCard)
@@ -448,6 +527,30 @@ private fun ProgramCard(program: ProgramEntity, onClick: () -> Unit) {
                 style = MaterialTheme.typography.labelMedium,
                 color = TextMuted,
             )
+            // Redesign Gate 2b review — these sit right next to a destructive action (the card's
+            // own tap replaces the active plan), so a near-miss must land on a genuine touch
+            // target, not a bare ~18dp-tall Text: heightIn + horizontal padding, same
+            // Dimens.MinTouchTarget floor ImportButton above already uses.
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.programs_preview_button),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Accent,
+                    modifier = Modifier
+                        .heightIn(min = Dimens.MinTouchTarget)
+                        .clickable(onClick = onPreviewClick)
+                        .padding(horizontal = 12.dp),
+                )
+                Text(
+                    text = stringResource(R.string.programs_export_button),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextMuted,
+                    modifier = Modifier
+                        .heightIn(min = Dimens.MinTouchTarget)
+                        .clickable(onClick = onExportClick)
+                        .padding(horizontal = 12.dp),
+                )
+            }
         }
     }
 }

@@ -10,15 +10,12 @@ import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanExerciseEntity
 import com.fitviet.app.data.local.entity.MonthlyPlanWeekEntity
-import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
-import com.fitviet.app.data.repository.ImportProgramResult
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.MonthlyPlanUserChoices
-import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.RegenerateResult
 import com.fitviet.app.data.repository.WorkoutRepository
 import com.fitviet.app.domain.ExerciseDifficulty
@@ -26,8 +23,6 @@ import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.MonthlyPlanDayStatus
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
-import com.fitviet.app.domain.ProgramScheduleDay
-import com.fitviet.app.domain.ProgramScheduleExercise
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
@@ -149,26 +144,6 @@ class WorkoutViewModelTest {
         override suspend fun setLiked(id: Long, liked: Boolean) {}
     }
 
-    /** [schedules] maps programId -> its schedule; empty/missing means "no schedule for this
-     * program", which [ProgramDayWorkoutPlanner.resolveToday] treats as nothing to preview/start.
-     * [programs] maps programId -> its full entity, for [getById] — previously always null
-     * regardless of id, which left Gate 40's `programTitle` threading with no way to be tested at
-     * all (independent review flagged this as a real coverage gap). */
-    private class FakeProgramRepository(
-        private val schedules: Map<Long, List<ProgramScheduleDay>> = emptyMap(),
-        private val programs: Map<Long, ProgramEntity> = emptyMap(),
-    ) : ProgramRepository {
-        override fun observeAll(): Flow<List<ProgramEntity>> = flowOf(emptyList())
-        override suspend fun getById(id: Long): ProgramEntity? = programs[id]
-        override fun observeSchedule(programId: Long): Flow<List<ProgramScheduleDay>> = flowOf(schedules[programId].orEmpty())
-        override fun observeActiveProgramId(): Flow<Long?> = flowOf(null)
-        override suspend fun setActiveProgram(programId: Long) {}
-        override fun observeHasSeenSupersetHint(): Flow<Boolean> = flowOf(false)
-        override suspend fun dismissSupersetHint() {}
-        override suspend fun exportProgram(programId: Long): String? = null
-        override suspend fun importProgram(json: String): ImportProgramResult = ImportProgramResult.Failed
-    }
-
     /** [days]/[exercisesByDay] fake a single monthly plan's persisted state, keyed by day id —
      * enough for [MonthlyPlanDayWorkoutPlanner.resolveDay] to run against without a real Room
      * database. Every other [MonthlyPlanRepository] method (regenerate/adaptive-scheduling/PR
@@ -180,7 +155,7 @@ class WorkoutViewModelTest {
         // Redesign Gate 1c — backs the no-arg entry point's resolution
         // (WorkoutViewModel.resolveTodaySessionAndStart), the same source Dashboard's Today card
         // reads. Defaults to NoPlan (the safest "nothing set up" default) so tests that don't care
-        // about the no-arg path (the explicit programId/monthlyPlanDayId tests below) don't need to
+        // about the no-arg path (the explicit monthlyPlanDayId tests below) don't need to
         // configure it.
         private val todayCard: TodayMonthlyPlanCard = TodayMonthlyPlanCard.NoPlan,
     ) : MonthlyPlanRepository {
@@ -269,17 +244,6 @@ class WorkoutViewModelTest {
         difficultyCode = ExerciseDifficulty.BEGINNER.name,
     )
 
-    private fun testProgram(id: Long, titleVi: String) = ProgramEntity(
-        id = id,
-        titleVi = titleVi,
-        imageAsset = "test.png",
-        durationWeeks = 4,
-        sessionsPerWeek = 3,
-        level = "Mới bắt đầu",
-        equipment = "Phòng gym",
-        tags = emptyList(),
-    )
-
     private val testExercises = listOf(
         testExercise(1, SeedExerciseNames.BENCH_PRESS),
         testExercise(2, SeedExerciseNames.SHOULDER_PRESS),
@@ -315,7 +279,6 @@ class WorkoutViewModelTest {
         val viewModel = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
             monthlyPlanRepository = demoMonthlyPlanRepository(),
             databaseReady = CompletableDeferred(Unit),
@@ -348,7 +311,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = FakeMonthlyPlanRepository(), // todayCard defaults to NoPlan
             databaseReady = CompletableDeferred(Unit),
@@ -365,7 +327,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = FakeMonthlyPlanRepository(todayCard = TodayMonthlyPlanCard.RestDay),
             databaseReady = CompletableDeferred(Unit),
@@ -380,7 +341,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = FakeMonthlyPlanRepository(
                 todayCard = TodayMonthlyPlanCard.Unavailable(dayId = 5L, sessionType = "Đẩy"),
@@ -397,7 +357,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = FakeMonthlyPlanRepository(todayCard = TodayMonthlyPlanCard.PlanFinished),
             databaseReady = CompletableDeferred(Unit),
@@ -700,108 +659,6 @@ class WorkoutViewModelTest {
         h.finish()
     }
 
-    // ---- Gate 24: program-day-driven session ----
-
-    private fun todaySchedule(exerciseId: Long, nameVi: String, sets: Int, repsMin: Int, repsMax: Int) = listOf(
-        ProgramScheduleDay(
-            dayOfWeek = LocalDate.now().dayOfWeek,
-            titleVi = "Ngày kiểm thử",
-            isRestDay = false,
-            exercises = listOf(ProgramScheduleExercise(exerciseId, nameVi, sets, repsMin, repsMax)),
-        ),
-    )
-
-    @Test
-    fun `a program-day session skips the picker and builds blocks from today's real schedule`() = runTest(testDispatcher) {
-        val programRepository = FakeProgramRepository(
-            schedules = mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)),
-            programs = mapOf(42L to testProgram(42L, "Chương trình kiểm thử")),
-        )
-        val workoutRepository = FakeWorkoutRepository()
-        val vm = WorkoutViewModel(
-            exerciseRepository = FakeExerciseRepository(testExercises),
-            workoutRepository = workoutRepository,
-            programRepository = programRepository,
-            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
-            monthlyPlanRepository = FakeMonthlyPlanRepository(),
-            databaseReady = CompletableDeferred(Unit),
-            programId = 42L,
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        val state = vm.uiState.value
-        assertEquals(WorkoutPhase.StraightLog, state.phase)
-        assertEquals("Ngày kiểm thử", state.dayLabel)
-        assertEquals("Chương trình kiểm thử", state.programTitle)
-        assertEquals(1, state.blocks.size)
-        val block = (state.blocks.first() as WorkoutBlockPlan.Straight).plan
-        assertEquals(SeedExerciseNames.BENCH_PRESS, block.exercise.nameVi)
-        assertEquals(3, block.plannedSets.size)
-        assertEquals(9, block.plannedSets.first().reps) // midpoint of 8-10
-        assertEquals(20.0, block.plannedSets.first().weightKg, 0.0) // no logged history -> default
-        assertEquals(1L, workoutRepository.nextSessionId - 1) // a real session row was started
-        vm.cancelTickerToAvoidRunTestHang()
-    }
-
-    @Test
-    fun `sharing a program-day session's post includes the program title`() = runTest(testDispatcher) {
-        val clock = FakeClock()
-        val programRepository = FakeProgramRepository(
-            schedules = mapOf(42L to todaySchedule(1L, SeedExerciseNames.BENCH_PRESS, sets = 3, repsMin = 8, repsMax = 10)),
-            programs = mapOf(42L to testProgram(42L, "Chương trình kiểm thử")),
-        )
-        val communityPostDao = FakeCommunityPostDao()
-        val vm = WorkoutViewModel(
-            exerciseRepository = FakeExerciseRepository(testExercises),
-            workoutRepository = FakeWorkoutRepository(),
-            programRepository = programRepository,
-            communityRepository = CommunityRepository(communityPostDao, FakeSettingsDao()),
-            monthlyPlanRepository = FakeMonthlyPlanRepository(),
-            databaseReady = CompletableDeferred(Unit),
-            programId = 42L,
-            elapsedRealtimeMillis = clock::now,
-        )
-        testDispatcher.scheduler.runCurrent()
-        fun tick() {
-            clock.advance()
-            testDispatcher.scheduler.runCurrent()
-        }
-        // One straight block with 3 planned sets — complete all 3, then finish the session.
-        repeat(2) {
-            vm.completeCurrentSet()
-            tick()
-            vm.skipRest()
-            tick()
-        }
-        vm.completeCurrentSet()
-        tick()
-        vm.advanceToNextBlock()
-        tick()
-        assertEquals(WorkoutPhase.SessionFinished, vm.uiState.value.phase)
-
-        vm.shareToCommunity()
-        testDispatcher.scheduler.runCurrent()
-
-        assertEquals("Chương trình kiểm thử", communityPostDao.inserted.single().programTitle)
-        vm.cancelTickerToAvoidRunTestHang()
-    }
-
-    @Test
-    fun `a program with no schedule for today falls back to NoSessionToday`() = runTest(testDispatcher) {
-        val vm = WorkoutViewModel(
-            exerciseRepository = FakeExerciseRepository(testExercises),
-            workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(), // no schedule for programId 99 at all
-            communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
-            monthlyPlanRepository = FakeMonthlyPlanRepository(),
-            databaseReady = CompletableDeferred(Unit),
-            programId = 99L,
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        assertEquals(WorkoutPhase.NoSessionToday(NoSessionReason.UNAVAILABLE), vm.uiState.value.phase)
-    }
-
     // ---- Gate 63+: monthly-plan-day-driven session ----
 
     @Test
@@ -814,7 +671,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),
@@ -853,7 +709,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),
@@ -885,7 +740,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = workoutRepository,
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),
@@ -919,7 +773,6 @@ class WorkoutViewModelTest {
         val vm = WorkoutViewModel(
             exerciseRepository = FakeExerciseRepository(testExercises),
             workoutRepository = FakeWorkoutRepository(),
-            programRepository = FakeProgramRepository(),
             communityRepository = CommunityRepository(FakeCommunityPostDao(), FakeSettingsDao()),
             monthlyPlanRepository = monthlyPlanRepository,
             databaseReady = CompletableDeferred(Unit),

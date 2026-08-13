@@ -28,6 +28,13 @@ data class ProgramTransferData(
     val level: String,
     val equipment: String,
     val days: List<ProgramTransferDay>,
+    /** Redesign Gate 2b — [TrainingGoal]/[SplitTemplate] `.name`, the same generation-input columns
+     * [com.fitviet.app.data.local.entity.ProgramEntity.goal]/`.splitTemplate` carry. Optional (not
+     * present in a pre-Gate-2b export, or a hand-crafted file) so [decode] doesn't reject those —
+     * `RoomProgramRepository.importTransaction` falls back to `ProgramEntity`'s own defaults
+     * (HYPERTROPHY/FULL_BODY) when either is null, exactly as a fresh row would without this gate. */
+    val goal: String? = null,
+    val splitTemplate: String? = null,
 )
 
 /**
@@ -48,6 +55,8 @@ object ProgramTransfer {
         root.put("sessionsPerWeek", data.sessionsPerWeek)
         root.put("level", data.level)
         root.put("equipment", data.equipment)
+        data.goal?.let { root.put("goal", it) }
+        data.splitTemplate?.let { root.put("splitTemplate", it) }
         root.put(
             "days",
             JSONArray().apply {
@@ -88,8 +97,8 @@ object ProgramTransfer {
      * `ProgramDayEntity`'s unique `(programId, dayOfWeek)` index mid-import), or content that
      * decodes structurally but is nonsensical — non-positive `durationWeeks`/`sessionsPerWeek`,
      * blank names, non-positive `targetSets`/`targetRepsMin`, `targetRepsMin > targetRepsMax`, a
-     * training day with no exercises, or a rest day with exercises. Not rejected: a program with
-     * zero days — a legitimate empty schedule (see `ProgramRepository.exportProgram`'s doc
+     * training day with no exercises, or a rest day with exercises, or a present-but-unrecognized
+     * `goal`/`splitTemplate` (or `splitTemplate` == CUSTOM). Not rejected: a program with zero days — a legitimate empty schedule (see `ProgramRepository.exportProgram`'s doc
      * comment), just not a useful one until edited. Catches broadly on purpose — this parses
      * arbitrary external content, not internal app state.
      */
@@ -124,12 +133,21 @@ object ProgramTransfer {
             val sessionsPerWeek = root.getInt("sessionsPerWeek")
             val level = root.getString("level")
             val equipment = root.getString("equipment")
+            // Redesign Gate 2b — optional (absent in a pre-2b export or a hand-crafted file, see
+            // ProgramTransferData's own doc). If present, must resolve to a real enum value the
+            // generator can use — CUSTOM is rejected specifically, since it requires
+            // customSplitDays a plain program transfer never carries, and generateFromProgram would
+            // otherwise crash trying to generate from it.
+            val goal = if (root.has("goal")) root.getString("goal") else null
+            val splitTemplate = if (root.has("splitTemplate")) root.getString("splitTemplate") else null
 
             val dayOfWeekValues = days.map { it.dayOfWeek }
             val isValid = dayOfWeekValues.all { it in 1..7 } &&
                 dayOfWeekValues.size == dayOfWeekValues.distinct().size &&
                 titleVi.isNotBlank() && level.isNotBlank() && equipment.isNotBlank() &&
                 durationWeeks > 0 && sessionsPerWeek > 0 &&
+                (goal == null || TrainingGoal.entries.any { it.name == goal }) &&
+                (splitTemplate == null || SplitTemplate.entries.any { it.name == splitTemplate && it != SplitTemplate.CUSTOM }) &&
                 days.all { day ->
                     day.titleVi.isNotBlank() &&
                         (if (day.isRestDay) day.exercises.isEmpty() else day.exercises.isNotEmpty()) &&
@@ -149,6 +167,8 @@ object ProgramTransfer {
                     level = level,
                     equipment = equipment,
                     days = days,
+                    goal = goal,
+                    splitTemplate = splitTemplate,
                 )
             } else {
                 null

@@ -61,12 +61,8 @@ class AppContainer(context: Context) {
     val dashboardRepository = DashboardRepository(
         workoutSessionDao = database.workoutSessionDao(),
         mealDao = database.mealDao(),
-        programDao = database.programDao(),
         measurementDao = database.measurementDao(),
         settingsDao = database.settingsDao(),
-        programDayDao = database.programDayDao(),
-        programExerciseDao = database.programExerciseDao(),
-        exerciseDao = database.exerciseDao(),
         setLogDao = database.setLogDao(),
         monthlyPlanRepository = monthlyPlanRepository,
     )
@@ -112,12 +108,6 @@ class AppContainer(context: Context) {
      * cross-cutting app-level concern, not Profile-feature business logic, so it lives here rather
      * than on [ProfileRepository]. */
     val languageIsEnglish: Flow<Boolean> = database.settingsDao().observe().map { it?.languageIsEnglish ?: false }
-
-    /** "Hit & Run" (Gate 63+) Phase 9 — the power-user toggle read at every call site that
-     * currently always routes through [com.fitviet.app.ui.workout.WorkoutPreviewScreen]; same
-     * cross-cutting-concern reasoning as [languageIsEnglish] above for why this lives here rather
-     * than being re-derived per screen. */
-    val skipWorkoutPreview: Flow<Boolean> = database.settingsDao().observe().map { it?.skipWorkoutPreview ?: false }
 
     /** Seeding runs once on first launch; callers that read seed content (e.g. the workout flow's
      * exercise catalog) must await this first so they don't race an empty, not-yet-seeded table. */

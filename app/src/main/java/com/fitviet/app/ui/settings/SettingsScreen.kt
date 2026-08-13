@@ -211,14 +211,6 @@ private fun DisplaySection(settings: SettingsEntity, viewModel: SettingsViewMode
             label = stringResource(R.string.profile_widget_nutrition),
             enabled = settings.showNutritionCard,
             onClick = viewModel::toggleShowNutritionCard,
-        )
-        // "Hit & Run" (Gate 63+) Phase 9 — lives in the widgets group visually (same toggle-row
-        // treatment) but is a workout-flow behavior, not a Dashboard widget; kept last since it's
-        // the newest addition and doesn't fit either existing section's own theme precisely.
-        WidgetToggleRow(
-            label = stringResource(R.string.profile_widget_skip_preview),
-            enabled = settings.skipWorkoutPreview,
-            onClick = viewModel::toggleSkipWorkoutPreview,
             showDivider = false,
         )
     }

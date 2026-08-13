@@ -9,48 +9,26 @@ sealed class FitVietDestination(val route: String) {
     data object Nutrition : FitVietDestination("nutrition")
     data object Community : FitVietDestination("community")
 
-    /** [programId] is optional — absent for the free-standing entry points (bottom-nav FAB,
-     * dashboard "Start workout"), present when started from [WorkoutPreview]'s "Begin workout",
-     * in which case the session is built from that program's real schedule for [dayOfWeek]
-     * (absent = today, matching this route's original today-only behavior) instead of the generic
-     * duration-picker flow. */
-    data object Workout : FitVietDestination("workout?programId={programId}&monthlyPlanDayId={monthlyPlanDayId}&dayOfWeek={dayOfWeek}") {
-        const val ARG_PROGRAM_ID = "programId"
-        // "Hit & Run" (Gate 63+) — mutually exclusive with programId at every real call site (see
-        // WorkoutViewModel's own doc on the two params), both optional so the bare "workout" route
-        // (bottom-nav FAB, dashboard "Start workout" for the duration-picker flow) keeps working.
+    /** [monthlyPlanDayId] is optional — absent for the free-standing entry points (bottom-nav FAB,
+     * the no-arg "resolve today" path), present when started from a specific monthly-plan day
+     * (the Today card, a regenerate/preview flow). Redesign Gate 2b removed this route's other
+     * former optional arg (`programId`) — every program-triggered session now goes through
+     * `MonthlyPlanRepository.generate()` instead (see `ProgramsViewModel.generateFromProgram`),
+     * so there's no longer a program-day session this route can be asked to start directly. */
+    data object Workout : FitVietDestination("workout?monthlyPlanDayId={monthlyPlanDayId}") {
         const val ARG_MONTHLY_PLAN_DAY_ID = "monthlyPlanDayId"
-        // Gate E4 — only ever paired with [programId] (WorkoutPreview's "Begin workout" for a
-        // specific tapped day, not just today); [java.time.DayOfWeek.getValue], 1-7.
-        const val ARG_DAY_OF_WEEK = "dayOfWeek"
-        fun createRoute(programId: Long? = null, monthlyPlanDayId: Long? = null, dayOfWeek: Int? = null): String {
-            val params = buildList {
-                if (programId != null) add("programId=$programId")
-                if (monthlyPlanDayId != null) add("monthlyPlanDayId=$monthlyPlanDayId")
-                if (dayOfWeek != null) add("dayOfWeek=$dayOfWeek")
-            }
-            return if (params.isEmpty()) "workout" else "workout?${params.joinToString("&")}"
-        }
+        fun createRoute(monthlyPlanDayId: Long? = null): String =
+            if (monthlyPlanDayId != null) "workout?monthlyPlanDayId=$monthlyPlanDayId" else "workout"
     }
 
-    data object ProgramSchedule : FitVietDestination("programs/{programId}/schedule") {
+    /** The "Xem trước" (preview) screen for a sample program (Gate 24; redesign Gate 2b demoted
+     * it to this one optional, read-only link — the Weekly Schedule screen it used to also be
+     * reachable from, with a per-day tap, is retired). Always resolves the program's own nearest
+     * upcoming training day — see `WorkoutPreviewViewModel`'s own doc for why a specific
+     * `dayOfWeek` arg is no longer meaningful once there's no day-list left to tap into one from. */
+    data object WorkoutPreview : FitVietDestination("workout_preview/{programId}") {
         const val ARG_PROGRAM_ID = "programId"
-        fun createRoute(programId: Long) = "programs/$programId/schedule"
-    }
-
-    /** The "day exercise list" screen (Gate 24), shown either for *today* (the FAB/dashboard
-     * "start workout" entry points, and the Weekly Schedule's own inline today-only quick-start
-     * text) or for a specific tapped day (Gate E4 — the Weekly Schedule's day rows now open this
-     * screen for whichever day was tapped, not just today). [dayOfWeek] is the ISO day-of-week
-     * value 1-7 ([java.time.DayOfWeek.getValue]); absent/null means "resolve today", matching this
-     * screen's original today-only behavior. */
-    data object WorkoutPreview : FitVietDestination("workout_preview/{programId}?dayOfWeek={dayOfWeek}") {
-        const val ARG_PROGRAM_ID = "programId"
-        const val ARG_DAY_OF_WEEK = "dayOfWeek"
-        fun createRoute(programId: Long, dayOfWeek: Int? = null): String {
-            val base = "workout_preview/$programId"
-            return if (dayOfWeek != null) "$base?dayOfWeek=$dayOfWeek" else base
-        }
+        fun createRoute(programId: Long) = "workout_preview/$programId"
     }
 
     data object ExerciseDetail : FitVietDestination("exercises/{exerciseId}") {

@@ -84,6 +84,11 @@ class DatabaseSeeder(private val database: FitVietDatabase) {
      * `(programId, dayOfWeek)` unique index the moment it hit an already-seeded day). Matches
      * programs by [SeedData.programs]'s stable `titleVi`, not by id (real ids are assigned at
      * insert time, unknown to this seed data).
+     *
+     * Redesign Gate 2b made [com.fitviet.app.data.local.entity.ProgramEntity] read-only generation
+     * input — these rows are no longer directly logged — but they're still exactly what backs a
+     * program's "Xem trước" preview and `exportProgram`'s fidelity, so this stays live, not
+     * orphaned infrastructure.
      */
     private suspend fun seedMissingProgramSchedules() {
         val existingPrograms = database.programDao().getAllOnce()

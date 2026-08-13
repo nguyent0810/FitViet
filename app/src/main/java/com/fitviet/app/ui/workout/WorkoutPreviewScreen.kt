@@ -49,15 +49,15 @@ import com.fitviet.app.ui.theme.TextMuted
 import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatWeight
 
-/** The "day exercise list" screen (Gate 24) shown after tapping today's row on the Weekly Schedule
- * screen — lists what today's session holds before the user commits to starting it. */
+/** The "Xem trước" (preview) screen for a sample program (Gate 24; redesign Gate 2b made it purely
+ * read-only — see [WorkoutPreviewViewModel]'s own doc for why generation, not a direct session
+ * start, is now this program's only "commit" action, and lives on the program card itself). */
 @Composable
 fun WorkoutPreviewScreen(
     viewModel: WorkoutPreviewViewModel,
     onBack: () -> Unit,
-    onBeginWorkout: () -> Unit,
     // Gate E4 — tapping an exercise card opens its "cách tập" (how-to) detail, so this overview
-    // isn't a dead-end that only offers committing to the whole session.
+    // isn't a dead-end.
     onExerciseClick: (exerciseId: Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,9 +81,10 @@ fun WorkoutPreviewScreen(
                     text = uiState.dayTitleVi.ifBlank { stringResource(R.string.workout_preview_title) },
                     style = MaterialTheme.typography.headlineMedium,
                 )
-                // Uses the same per-rep/rest assumptions ProgramDayWorkoutPlanner.estimateDurationMinutes
-                // relies on, so committing to "Bắt đầu tập" isn't a blind guess — the one thing this
-                // screen's own purpose (reduce pre-workout commitment anxiety) most needed and didn't have.
+                // Uses ProgramDayWorkoutPlanner.estimateDurationMinutes' own per-rep/rest
+                // assumptions, so this program gives a real sense of session length before the
+                // user commits to generating a plan from it on the card itself (redesign Gate 2b
+                // — this screen no longer has its own "start" action).
                 if (uiState.estimatedDurationMinutes > 0) {
                     Text(
                         text = stringResource(R.string.workout_preview_estimated_duration, uiState.estimatedDurationMinutes),
@@ -106,12 +107,6 @@ fun WorkoutPreviewScreen(
                         }
                     }
                 }
-            }
-        }
-
-        if (uiState.groupings.isNotEmpty()) {
-            Box(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp)) {
-                PrimaryActionButton(text = stringResource(R.string.dashboard_start_workout), onClick = onBeginWorkout)
             }
         }
     }

@@ -76,8 +76,6 @@ import com.fitviet.app.ui.profile.ProfileScreen
 import com.fitviet.app.ui.profile.ProfileViewModel
 import com.fitviet.app.ui.programs.ProgramsListScreen
 import com.fitviet.app.ui.programs.ProgramsViewModel
-import com.fitviet.app.ui.programs.WeeklyScheduleScreen
-import com.fitviet.app.ui.programs.WeeklyScheduleViewModel
 import com.fitviet.app.ui.quickgenerate.QuickGenerateScreen
 import com.fitviet.app.ui.quickgenerate.QuickGenerateViewModel
 import com.fitviet.app.ui.reminders.RemindersScreen
@@ -90,7 +88,6 @@ import com.fitviet.app.ui.workout.WorkoutPreviewViewModel
 import com.fitviet.app.ui.workout.WorkoutScreen
 import com.fitviet.app.ui.workout.WorkoutViewModel
 import com.fitviet.app.util.LocaleController
-import java.time.DayOfWeek
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -121,9 +118,6 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val startDestination = if (startAtOnboarding) FitVietDestination.Onboarding.route else FitVietDestination.Home.route
-    // "Hit & Run" (Gate 63+) Phase 9 — read once here, at the graph level, so every "start a
-    // program-day session" call site below applies the same toggle consistently.
-    val skipWorkoutPreview by container.skipWorkoutPreview.collectAsStateWithLifecycle(initialValue = false)
 
     Scaffold(
         bottomBar = {
@@ -199,35 +193,11 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 )
                 DashboardScreen(
                     viewModel = viewModel,
-                    // Routes through the same "day exercise list" preview (Gate 24) the
-                    // Programs-tab entry point already uses, instead of jumping straight into
-                    // logging — the hero card already names today's program day, so the user
-                    // should see what it contains before committing, exactly like every other
-                    // entry into a program-day session. Unless "Hit & Run" (Gate 63+) Phase 9's
-                    // skip-preview toggle is on, in which case this goes straight to Workout.
-                    onStartWorkout = { programId ->
-                        if (skipWorkoutPreview) {
-                            navController.navigate(FitVietDestination.Workout.createRoute(programId))
-                        } else {
-                            navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId))
-                        }
-                    },
-                    onViewSchedule = { programId ->
-                        navController.navigate(FitVietDestination.ProgramSchedule.createRoute(programId))
-                    },
-                    onBrowsePrograms = {
-                        navController.navigate(FitVietDestination.Programs.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
                     onOpenDiary = { navController.navigate(FitVietDestination.Diary.route) },
                     onOpenProfile = { navController.navigate(FitVietDestination.Profile.route) },
                     // "Hit & Run" (Gate 63+) — goes straight to the live session; see
                     // DashboardScreen's own doc comment on this param for why it skips WorkoutPreview
-                    // unconditionally (Phase 9's skipWorkoutPreview toggle above doesn't apply here —
-                    // there's no monthly-plan-aware preview path to skip in the first place yet).
+                    // unconditionally.
                     onStartMonthlyPlanDay = { dayId ->
                         navController.navigate(FitVietDestination.Workout.createRoute(monthlyPlanDayId = dayId))
                     },
@@ -300,13 +270,49 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 )
             }
             composable(FitVietDestination.Programs.route) {
+                val programsCoroutineScope = rememberCoroutineScope()
+                val programsContext = LocalContext.current
                 val viewModel: ProgramsViewModel = viewModel(
-                    factory = ProgramsViewModel.Factory(container.programRepository, container.exerciseRepository, container.databaseReady),
+                    factory = ProgramsViewModel.Factory(
+                        container.programRepository,
+                        container.monthlyPlanRepository,
+                        container.onboardingRepository,
+                        container.exerciseRepository,
+                        container.databaseReady,
+                    ),
                 )
                 ProgramsListScreen(
                     viewModel = viewModel,
-                    onProgramClick = { program ->
-                        navController.navigate(FitVietDestination.ProgramSchedule.createRoute(program.id))
+                    // Same await-then-navigate/try-catch-Toast pattern as onboarding's `onSubmit`/
+                    // Quick Generate's `onGenerateClick` — straight into the live session on
+                    // success, matching the redesign's "one tap, into training" ethos for a
+                    // deliberate program pick (as opposed to Quick Generate's own customize-first
+                    // sheet, which returns to Home instead).
+                    onGenerateFromProgram = { program ->
+                        programsCoroutineScope.launch {
+                            try {
+                                if (viewModel.generateFromProgram(program)) {
+                                    navController.navigate(FitVietDestination.Home.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                    navController.navigate(FitVietDestination.Workout.createRoute())
+                                }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e("Programs", "generateFromProgram() failed", e)
+                                Toast.makeText(
+                                    programsContext,
+                                    programsContext.getString(R.string.quick_generate_error, e.message ?: e.javaClass.simpleName),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                        }
+                    },
+                    onPreviewProgram = { program ->
+                        navController.navigate(FitVietDestination.WorkoutPreview.createRoute(program.id))
                     },
                     onExerciseClick = { exercise ->
                         navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exercise.id))
@@ -379,55 +385,15 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 ExerciseDetailScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(
-                route = FitVietDestination.ProgramSchedule.route,
-                arguments = listOf(navArgument(FitVietDestination.ProgramSchedule.ARG_PROGRAM_ID) { type = NavType.LongType }),
-            ) { backStackEntry ->
-                val programId = backStackEntry.arguments?.getLong(FitVietDestination.ProgramSchedule.ARG_PROGRAM_ID) ?: 0L
-                val viewModel: WeeklyScheduleViewModel = viewModel(
-                    factory = WeeklyScheduleViewModel.Factory(programId, container.programRepository),
-                )
-                WeeklyScheduleScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() },
-                    // Same "Hit & Run" (Gate 63+) Phase 9 skip-preview toggle as Dashboard's
-                    // onStartWorkout above.
-                    onStartToday = {
-                        if (skipWorkoutPreview) {
-                            navController.navigate(FitVietDestination.Workout.createRoute(programId))
-                        } else {
-                            navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId))
-                        }
-                    },
-                    // Gate E4 — tapping a day row now opens that day's overview (today or any
-                    // other day), matching the requested Programs -> schedule -> day overview
-                    // flow; skipWorkoutPreview intentionally does NOT apply here (unlike
-                    // onStartToday above) — an explicit tap on a specific day is asking to see
-                    // what's in it, not to jump straight into a session.
-                    onOpenDayDetail = { dayOfWeek ->
-                        navController.navigate(FitVietDestination.WorkoutPreview.createRoute(programId, dayOfWeek.value))
-                    },
-                )
-            }
-            composable(
                 route = FitVietDestination.WorkoutPreview.route,
                 arguments = listOf(
                     navArgument(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) { type = NavType.LongType },
-                    navArgument(FitVietDestination.WorkoutPreview.ARG_DAY_OF_WEEK) { type = NavType.IntType; defaultValue = -1 },
                 ),
             ) { backStackEntry ->
                 val programId = backStackEntry.arguments?.getLong(FitVietDestination.WorkoutPreview.ARG_PROGRAM_ID) ?: 0L
-                // Gate E4 — -1 sentinel (same "absent optional arg" convention as Workout's own
-                // programId/monthlyPlanDayId below) means "resolve today", matching this screen's
-                // original today-only entry points (the FAB/dashboard start, and Weekly Schedule's
-                // own inline today-only quick-start text) — only the Weekly Schedule's day-ROW tap
-                // (Gate E4) ever supplies a real dayOfWeek value.
-                val dayOfWeek = backStackEntry.arguments?.getInt(FitVietDestination.WorkoutPreview.ARG_DAY_OF_WEEK)
-                    ?.takeIf { it != -1 }
-                    ?.let { DayOfWeek.of(it) }
                 val viewModel: WorkoutPreviewViewModel = viewModel(
                     factory = WorkoutPreviewViewModel.Factory(
                         programId,
-                        dayOfWeek,
                         container.programRepository,
                         container.exerciseRepository,
                         container.workoutRepository,
@@ -437,42 +403,26 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                 WorkoutPreviewScreen(
                     viewModel = viewModel,
                     onBack = { navController.popBackStack() },
-                    // Gate E4 fix — thread the SAME dayOfWeek this preview is showing through to
-                    // the live session, so "Bắt đầu tập" starts the day the user was actually
-                    // looking at, not always today (a real bug: opening a non-today day's preview
-                    // and tapping this previously silently started today's session instead).
-                    onBeginWorkout = { navController.navigate(FitVietDestination.Workout.createRoute(programId, dayOfWeek = dayOfWeek?.value)) },
                     // Gate E4 — lets a user tap into an exercise's "cách tập" (how-to) detail
-                    // straight from the day overview, per the requested Programs -> schedule ->
-                    // day overview -> exercise detail flow, instead of the overview being a
-                    // dead-end that only offers "start the whole session."
+                    // straight from the preview, instead of it being a dead-end.
                     onExerciseClick = { exerciseId -> navController.navigate(FitVietDestination.ExerciseDetail.createRoute(exerciseId)) },
                 )
             }
             composable(
                 route = FitVietDestination.Workout.route,
                 arguments = listOf(
-                    navArgument(FitVietDestination.Workout.ARG_PROGRAM_ID) { type = NavType.LongType; defaultValue = -1L },
                     navArgument(FitVietDestination.Workout.ARG_MONTHLY_PLAN_DAY_ID) { type = NavType.LongType; defaultValue = -1L },
-                    navArgument(FitVietDestination.Workout.ARG_DAY_OF_WEEK) { type = NavType.IntType; defaultValue = -1 },
                 ),
             ) { backStackEntry ->
-                val programId = backStackEntry.arguments?.getLong(FitVietDestination.Workout.ARG_PROGRAM_ID)?.takeIf { it != -1L }
                 val monthlyPlanDayId = backStackEntry.arguments?.getLong(FitVietDestination.Workout.ARG_MONTHLY_PLAN_DAY_ID)?.takeIf { it != -1L }
-                val workoutDayOfWeek = backStackEntry.arguments?.getInt(FitVietDestination.Workout.ARG_DAY_OF_WEEK)
-                    ?.takeIf { it != -1 }
-                    ?.let { DayOfWeek.of(it) }
                 val viewModel: WorkoutViewModel = viewModel(
                     factory = WorkoutViewModel.Factory(
                         exerciseRepository = container.exerciseRepository,
                         workoutRepository = container.workoutRepository,
-                        programRepository = container.programRepository,
                         communityRepository = container.communityRepository,
                         monthlyPlanRepository = container.monthlyPlanRepository,
                         databaseReady = container.databaseReady,
-                        programId = programId,
                         monthlyPlanDayId = monthlyPlanDayId,
-                        dayOfWeek = workoutDayOfWeek,
                     ),
                 )
                 WorkoutScreen(
@@ -481,9 +431,10 @@ private fun FitVietNavGraph(startAtOnboarding: Boolean, container: AppContainer)
                     // launchSingleTop+restoreState dance used by BottomNavBar's tab switches:
                     // Home is always already sitting lower in the back stack by the time a
                     // session reaches SessionFinished (reached either directly from the FAB, or
-                    // via Programs -> WeeklySchedule -> WorkoutPreview -> Workout), so this only
-                    // needs to pop back down to it, not re-navigate to a possibly-saved instance
-                    // of it. Confirmed via manual testing that the popUpTo/restoreState combo
+                    // via Programs' onGenerateFromProgram, which explicitly navigates through
+                    // Home on its way here — see that call site above), so this only needs to pop
+                    // back down to it, not re-navigate to a possibly-saved instance of it.
+                    // Confirmed via manual testing that the popUpTo/restoreState combo
                     // silently failed to navigate here even though the identical pattern works
                     // for BottomNavBar; a direct popBackStack is what the system Back button
                     // already does successfully from this same screen.

@@ -5,7 +5,6 @@ import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import java.time.DayOfWeek
-import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 
 /** One program-day exercise, resolved to its real [ExerciseEntity] (for photo/English name) and a
@@ -35,13 +34,14 @@ sealed class ResolvedGrouping {
 }
 
 /**
- * Resolves a program's schedule for *today* into display/session-ready data, and builds a
- * [WorkoutBlockPlan] session from it — the Gate 24 counterpart
- * [com.fitviet.app.ui.workout.MonthlyPlanDayWorkoutPlanner] resolves a "Hit & Run" monthly-plan
- * day into the exact same [ResolvedProgramDay]/[ProgramDayWorkoutItem] shape this object works
- * against, so [buildBlocks]/[resolveGroupings]/[estimateDurationMinutes] serve both entry points
- * unmodified. [resolveToday] does real I/O (schedule + personal-best lookups), so unlike a pure
- * function this isn't kept in the `domain` layer.
+ * Resolves a program's schedule for a given day into display-ready data (redesign Gate 2b: this
+ * program-day preview is read-only now — see [resolveDay]'s own doc — no live session is ever
+ * built directly from it anymore; [buildBlocks] stays for
+ * [com.fitviet.app.ui.workout.MonthlyPlanDayWorkoutPlanner]'s own generated-day sessions, which use
+ * the same [ResolvedProgramDay]/[ProgramDayWorkoutItem] shape this object works against, so
+ * [buildBlocks]/[resolveGroupings]/[estimateDurationMinutes] serve both). [resolveDay] does real
+ * I/O (schedule + personal-best lookups), so unlike a pure function this isn't kept in the
+ * `domain` layer.
  */
 object ProgramDayWorkoutPlanner {
 
@@ -49,19 +49,13 @@ object ProgramDayWorkoutPlanner {
      * 0kg, which would read as "no weight" instead of "not yet tried." */
     const val DEFAULT_RECOMMENDED_WEIGHT_KG = 20.0
 
-    /** Null if this program has no schedule yet, has no non-rest day matching today, or that
-     * day's exercises don't resolve against the local exercise library — callers show an empty
-     * state in all three cases, so they're collapsed into one result rather than distinguished. */
-    suspend fun resolveToday(
-        programId: Long,
-        programRepository: ProgramRepository,
-        exerciseRepository: ExerciseRepository,
-        workoutRepository: WorkoutRepository,
-    ): ResolvedProgramDay? = resolveDay(programId, LocalDate.now().dayOfWeek, programRepository, exerciseRepository, workoutRepository)
-
-    /** Same resolution as [resolveToday], generalized to an arbitrary [dayOfWeek] — backs the
-     * Weekly Schedule screen's "tap any day, not just today" day-overview flow. [resolveToday]
-     * is just this called with the real current day, so both stay in sync by construction. */
+    /** Null if this program has no non-rest day matching [dayOfWeek], or that day's exercises
+     * don't resolve against the local exercise library — callers show an empty state in both
+     * cases, so they're collapsed into one result rather than distinguished. Redesign Gate 2b's
+     * `WorkoutPreviewViewModel` is the sole remaining caller, resolving whatever day
+     * `NextTrainingCalculator.findNext` picks (today if trainable, else the next upcoming one) —
+     * the old bare "always today" `resolveToday` overload this generalized is gone with the
+     * Weekly Schedule screen that used to call it directly. */
     suspend fun resolveDay(
         programId: Long,
         dayOfWeek: DayOfWeek,

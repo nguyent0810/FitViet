@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.ProgramRepository
 import com.fitviet.app.data.repository.WorkoutRepository
-import java.time.DayOfWeek
+import com.fitviet.app.domain.NextTrainingCalculator
+import java.time.LocalDate
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,15 +30,18 @@ data class WorkoutPreviewUiState(
     val estimatedDurationMinutes: Int = 0,
 )
 
-/** Backs the "day exercise list" preview screen (Gate 24) shown after tapping today's row on the
- * Weekly Schedule screen, before the user commits to starting the live logging session.
- * [dayOfWeek] null (the original entry point) resolves *today*'s schedule; non-null (Gate E4 —
- * the Weekly Schedule's own day rows now navigate here for ANY tapped day, not just today) shows
- * that specific day's exercises instead, so the overview a user sees always matches the day they
- * actually tapped rather than silently substituting today's session. */
+/** Backs the "Xem trước" (preview) screen for a sample program (Gate 24, demoted to an optional
+ * read-only link by redesign Gate 2b — see `ProgramsListScreen`'s own doc). Resolves the nearest
+ * upcoming training day in the program's schedule (today if it's a training day, otherwise the
+ * next non-rest day — [NextTrainingCalculator.findNext]'s same lookahead the old hero card used)
+ * rather than strictly today: since Gate 2b retired the Weekly Schedule day-list this screen used
+ * to be reachable from, the only remaining entry point is a program card's "Xem trước" link, which
+ * always means "show me what this program actually looks like," not "show me today specifically" —
+ * strictly-today would land on an empty screen on any of a program's rest days (most seed programs
+ * rest more than half the week). Purely a look, never a "start" action — see `ProgramsListScreen`'s
+ * doc for why generation is the card's own tap, not this screen's job. */
 class WorkoutPreviewViewModel(
     private val programId: Long,
-    private val dayOfWeek: DayOfWeek?,
     private val programRepository: ProgramRepository,
     private val exerciseRepository: ExerciseRepository,
     private val workoutRepository: WorkoutRepository,
@@ -49,10 +53,10 @@ class WorkoutPreviewViewModel(
     init {
         viewModelScope.launch {
             databaseReady.await()
-            val resolved = if (dayOfWeek == null) {
-                ProgramDayWorkoutPlanner.resolveToday(programId, programRepository, exerciseRepository, workoutRepository)
-            } else {
-                ProgramDayWorkoutPlanner.resolveDay(programId, dayOfWeek, programRepository, exerciseRepository, workoutRepository)
+            val schedule = programRepository.observeSchedule(programId).first()
+            val nextTraining = NextTrainingCalculator.findNext(schedule, LocalDate.now().dayOfWeek)
+            val resolved = nextTraining?.let {
+                ProgramDayWorkoutPlanner.resolveDay(programId, it.day.dayOfWeek, programRepository, exerciseRepository, workoutRepository)
             }
             val groupings = ProgramDayWorkoutPlanner.resolveGroupings(resolved?.items.orEmpty())
             val hasSeenHint = programRepository.observeHasSeenSupersetHint().first()
@@ -78,7 +82,6 @@ class WorkoutPreviewViewModel(
 
     class Factory(
         private val programId: Long,
-        private val dayOfWeek: DayOfWeek?,
         private val programRepository: ProgramRepository,
         private val exerciseRepository: ExerciseRepository,
         private val workoutRepository: WorkoutRepository,
@@ -86,6 +89,6 @@ class WorkoutPreviewViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            WorkoutPreviewViewModel(programId, dayOfWeek, programRepository, exerciseRepository, workoutRepository, databaseReady) as T
+            WorkoutPreviewViewModel(programId, programRepository, exerciseRepository, workoutRepository, databaseReady) as T
     }
 }

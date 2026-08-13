@@ -19,7 +19,7 @@ object MonthlyPlanDayWorkoutPlanner {
 
     /** Null if [dayId] doesn't resolve, is a rest day, or has no exercises resolving against the
      * local exercise library — callers show an empty state / fall back the same way
-     * [ProgramDayWorkoutPlanner.resolveToday] does. */
+     * [ProgramDayWorkoutPlanner.resolveDay] does. */
     suspend fun resolveDay(
         dayId: Long,
         monthlyPlanRepository: MonthlyPlanRepository,

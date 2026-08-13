@@ -15,4 +15,16 @@ object ProgramDifficulty {
         "Nâng cao" -> 3
         else -> null
     }
+
+    /** Redesign Gate 2b — reuses [levelSteps]'s exact same literals so tapping a sample program to
+     * generate a monthly plan (see `ProgramsViewModel.generateFromProgram`) picks a real
+     * [ExerciseDifficulty] instead of always hardcoding [ExerciseDifficulty.BEGINNER]; `null`
+     * (unrated/unrecognized, same cases [levelSteps] returns null for) also falls back to
+     * `BEGINNER` — the safest default, matching onboarding's own precedent of defaulting there. */
+    fun exerciseDifficultyFor(level: String): ExerciseDifficulty = when (levelSteps(level)) {
+        1 -> ExerciseDifficulty.BEGINNER
+        2 -> ExerciseDifficulty.INTERMEDIATE
+        3 -> ExerciseDifficulty.ADVANCED
+        else -> ExerciseDifficulty.BEGINNER
+    }
 }

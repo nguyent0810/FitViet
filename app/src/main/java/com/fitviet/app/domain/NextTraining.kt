@@ -3,9 +3,12 @@ package com.fitviet.app.domain
 import java.time.DayOfWeek
 
 /**
- * The next non-rest day in the active program's schedule, found by scanning forward from [today]
- * inclusive (wraps into next week if nothing training-worthy remains this week) — feature #3's
- * dynamic "what's next" content for the 1b hero card.
+ * The next non-rest day in a program's schedule, found by scanning forward from [today] inclusive
+ * (wraps into next week if nothing training-worthy remains this week) — feature #3's original
+ * "what's next" content for the pre-redesign hero card; redesign Gate 2b repurposed it for
+ * [com.fitviet.app.ui.workout.WorkoutPreviewViewModel]'s "Xem trước" lookahead (today if
+ * trainable, else the nearest upcoming training day) once the old hero card/Weekly Schedule that
+ * originally called this were retired.
  */
 data class NextTraining(val day: ProgramScheduleDay, val isToday: Boolean)
 
@@ -19,17 +22,4 @@ object NextTrainingCalculator {
         }
         return null // unreachable once byDayOfWeek isn't empty — 7 offsets cover every DayOfWeek
     }
-}
-
-/**
- * This week's session count vs. the active program's weekly target — feature #3's "completion %".
- * Deliberately session-count-based, not tied to specific scheduled days: no completed
- * [com.fitviet.app.data.local.entity.WorkoutSessionEntity] is currently linked back to which
- * program day it was for (that would need the workout-start flow to know which day was tapped —
- * a larger change than this feature's scope; see PROGRESS.md). So this counts "did you train this
- * many times this week," not "did you do the specific prescribed exercises on the right days."
- */
-data class ProgramProgress(val completedThisWeek: Int, val targetPerWeek: Int) {
-    val fraction: Float
-        get() = if (targetPerWeek <= 0) 0f else (completedThisWeek.toFloat() / targetPerWeek).coerceIn(0f, 1f)
 }

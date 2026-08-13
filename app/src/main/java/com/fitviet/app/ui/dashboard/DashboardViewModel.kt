@@ -4,15 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fitviet.app.data.local.entity.MonthlyPlanDayEntity
-import com.fitviet.app.data.local.entity.ProgramEntity
 import com.fitviet.app.data.repository.DashboardRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.domain.DashboardStats
 import com.fitviet.app.domain.DashboardStatsCalculator
 import com.fitviet.app.domain.DayVolume
 import com.fitviet.app.domain.MuscleGroupWorkload
-import com.fitviet.app.domain.NextTraining
-import com.fitviet.app.domain.ProgramProgress
 import com.fitviet.app.domain.Recommendation
 import com.fitviet.app.domain.StatsRange
 import com.fitviet.app.domain.StreakMilestones
@@ -30,10 +27,7 @@ data class DashboardUiState(
     val stats: DashboardStats = DashboardStats(0, 0, 0.0, emptyList()),
     val kcalToday: Int = 0,
     val kcalGoal: Int = 2200,
-    val featuredProgram: ProgramEntity? = null,
     val recommendation: Recommendation? = null,
-    val nextTraining: NextTraining? = null,
-    val programProgress: ProgramProgress? = null,
     /** Feature #7 (Gate 43) — the series [selectedRange] currently produces, and which bar within
      * it is highlighted. Defaults to the series' most recent bar whenever the user hasn't
      * explicitly tapped one for the current range (see [DashboardViewModel]'s `explicitDayIndex`). */
@@ -99,10 +93,7 @@ class DashboardViewModel(
         DashboardUiState(
             stats = data.stats,
             kcalToday = data.kcalToday,
-            featuredProgram = data.featuredProgram,
             recommendation = data.recommendation,
-            nextTraining = data.nextTraining,
-            programProgress = data.programProgress,
             selectedRange = range,
             rangeSeries = series,
             selectedDayIndex = explicitIndex ?: series.lastIndex.coerceAtLeast(0),

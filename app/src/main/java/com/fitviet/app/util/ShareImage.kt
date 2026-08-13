@@ -22,8 +22,8 @@ fun saveBitmapForSharing(context: Context, bitmap: Bitmap, fileName: String): an
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }
 
-/** Same "share via the system chooser" idiom [com.fitviet.app.ui.programs.WeeklyScheduleScreen]'s
- * `ExportButton` already uses for text — this is the image-attachment equivalent. */
+/** Same "share via the system chooser" idiom [com.fitviet.app.ui.programs.ProgramsListScreen]'s
+ * program export action already uses for text — this is the image-attachment equivalent. */
 fun shareImageIntent(imageUri: android.net.Uri, chooserTitle: String): Intent {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"
