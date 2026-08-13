@@ -278,8 +278,11 @@ private fun ConfettiOverlay(modifier: Modifier = Modifier) {
 
 /** Outlined while unshared (matches the app's established secondary-action style, e.g.
  * `RemindersScreen`'s "+ Thêm nhắc nhở"); once shared, flips to a filled/inert confirmation state
- * with no click handler — [WorkoutViewModel.shareToCommunity] already guards against a repeat
- * share, so there's nothing left for a second tap to do. */
+ * with no click handler. [onClick] is [WorkoutViewModel.openShareComposer] (Gate 6c) — this button
+ * itself no longer posts directly, it opens the composer, but `shared` still gates it correctly:
+ * [WorkoutViewModel.submitShareComposer] is what actually sets [WorkoutUiState.sessionShared], and
+ * only a real post (not opening or cancelling the composer) can flip it, so there's still nothing
+ * left for a second tap to do once it's true. */
 @Composable
 private fun ShareToCommunityButton(shared: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(

@@ -258,6 +258,20 @@
     <string name="workout_share_button_done">Shared ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
+    <!-- Redesign Gate 6c — Share composer -->
+    <string name="share_composer_title">Share workout</string>
+    <string name="share_composer_cancel">Cancel</string>
+    <string name="share_composer_date">FITVIET · %1$d/%2$d/%3$d</string>
+    <string name="share_composer_workout_done">%1$s ✓</string>
+    <string name="share_composer_stat_kg">Kg</string>
+    <string name="share_composer_stat_minutes">Min</string>
+    <string name="share_composer_placeholder">Write a few words… (optional)</string>
+    <string name="share_composer_category_progress">Progress</string>
+    <string name="share_composer_category_qa">Q&amp;A</string>
+    <string name="share_composer_category_share">Share</string>
+    <string name="share_composer_submit">Post →</string>
+    <string name="share_composer_footer">The result card is auto-generated — no need to write from scratch</string>
+
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 EXERCISES BACK-TO-BACK</string>

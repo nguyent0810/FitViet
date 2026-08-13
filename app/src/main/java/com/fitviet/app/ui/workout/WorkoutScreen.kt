@@ -137,7 +137,7 @@ fun WorkoutScreen(
                 )
             }
             WorkoutPhase.SupersetBlockDone -> SupersetBlockDoneContent(uiState = uiState, viewModel = viewModel)
-            WorkoutPhase.SessionFinished -> SessionFinishedContent(uiState = uiState, onBackToHome = onFinishToHome, onShare = viewModel::shareToCommunity)
+            WorkoutPhase.SessionFinished -> SessionFinishedContent(uiState = uiState, onBackToHome = onFinishToHome, onShare = viewModel::openShareComposer)
         }
     }
 
@@ -146,6 +146,16 @@ fun WorkoutScreen(
             selected = uiState.selectedTechnique,
             onSelect = viewModel::selectTechnique,
             onDismiss = viewModel::closeTechniquePicker,
+        )
+    }
+
+    if (uiState.isShareComposerOpen) {
+        ShareComposerOverlay(
+            uiState = uiState,
+            onTextChange = viewModel::updateShareComposerText,
+            onSelectCategory = viewModel::selectShareComposerCategory,
+            onSubmit = viewModel::submitShareComposer,
+            onDismiss = viewModel::closeShareComposer,
         )
     }
 

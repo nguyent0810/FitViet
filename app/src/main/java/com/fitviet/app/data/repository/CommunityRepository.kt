@@ -20,13 +20,15 @@ class CommunityRepository(
      * read from the persisted profile (Gate 35), not a placeholder, so a shared post looks like it
      * actually came from the signed-in user.
      *
-     * Redesign Gate 6b — [userText]/[category] are the share composer's own inputs (Gate 6c wires
-     * the actual composer; until then every call site omits both, so the fallback static copy below
-     * is what every current share gets). [category] omitted means a post visible only under "Mới
-     * nhất" per [CommunityPostEntity.category]'s own doc. [userText] falls back to the static copy
-     * when null or blank rather than posting an empty body — no `$dayLabel` in that fallback despite
-     * `WorkoutSharePostCard` rendering `bodyText` right above the stat panel's own day-label line
-     * (Gate 6b) — repeating it there would read like the same fact stated twice. */
+     * Redesign Gate 6b/6c — [userText]/[category] are the share composer's own inputs
+     * (`ShareComposerOverlay`, Gate 6c). [userText] falls back to the static copy below when null
+     * or blank (a draft the user never typed into) rather than posting an empty body — no
+     * `$dayLabel` in that fallback despite `WorkoutSharePostCard` rendering `bodyText` right above
+     * the stat panel's own day-label line (Gate 6b) — repeating it there would read like the same
+     * fact stated twice. [category] omitted means a post visible only under "Mới nhất" per
+     * [CommunityPostEntity.category]'s own doc, though the composer always sends a non-null value
+     * (defaulting to `PROGRESS`) — the `= null` defaults on both parameters exist for callers other
+     * than the composer, none of which currently exist. */
     suspend fun shareWorkout(
         dayLabel: String,
         durationSeconds: Int,

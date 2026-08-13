@@ -277,6 +277,20 @@
     <string name="workout_share_button_done">Đã chia sẻ ✓</string>
     <string name="workout_weight_kg">%1$s kg</string>
 
+    <!-- Redesign Gate 6c — Share composer -->
+    <string name="share_composer_title">Chia sẻ buổi tập</string>
+    <string name="share_composer_cancel">Huỷ</string>
+    <string name="share_composer_date">FITVIET · %1$d/%2$d/%3$d</string>
+    <string name="share_composer_workout_done">%1$s ✓</string>
+    <string name="share_composer_stat_kg">Kg</string>
+    <string name="share_composer_stat_minutes">Phút</string>
+    <string name="share_composer_placeholder">Viết vài dòng… (tuỳ chọn)</string>
+    <string name="share_composer_category_progress">Tiến bộ</string>
+    <string name="share_composer_category_qa">Hỏi đáp</string>
+    <string name="share_composer_category_share">Chia sẻ</string>
+    <string name="share_composer_submit">Đăng bài →</string>
+    <string name="share_composer_footer">Thẻ kết quả tự sinh — không cần soạn từ đầu</string>
+
     <!-- 2c Superset flow + technique picker -->
     <string name="superset_title">Superset A</string>
     <string name="superset_badge">2 BÀI LIÊN TIẾP</string>

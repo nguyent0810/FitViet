@@ -43,13 +43,14 @@ data class CommunityPostEntity(
     val durationSeconds: Int? = null,
     val totalVolumeKg: Double? = null,
     val streakDays: Int? = null,
-    /** Redesign Gate 6b — the share composer's category pill (Tiến bộ/Hỏi đáp/Chia sẻ, i.e.
+    /** Redesign Gate 6b/6c — the share composer's category pill (Tiến bộ/Hỏi đáp/Chia sẻ, i.e.
      * [CommunityPostType.PROGRESS]/[CommunityPostType.QA]/[CommunityPostType.SHARE]), tagged onto
      * a [WORKOUT_SHARE] post without changing its own [postType] — [postType] stays [WORKOUT_SHARE]
      * so the post keeps its stat-grid rendering (`WorkoutSharePostCard`, an app extension beyond
      * the mock's own plain-text feed), while [category] alone drives `CommunityFilter.byTab`'s
-     * PROGRESS/QA tab membership. Null until Gate 6c's composer exists to populate it — a share
-     * posted before then (or from any code path that never sets it) shows only under "Mới nhất",
-     * matching a [WORKOUT_SHARE] post's pre-Gate-6b behavior exactly. */
+     * PROGRESS/QA tab membership. Every share created via `ShareComposerOverlay` (Gate 6c) now
+     * carries a non-null value, defaulting to [CommunityPostType.PROGRESS]; this column stays
+     * nullable because a [WORKOUT_SHARE] post with no category (any future code path that omits
+     * it) shows only under "Mới nhất", matching a [WORKOUT_SHARE] post's pre-Gate-6b behavior. */
     val category: Int? = null,
 )

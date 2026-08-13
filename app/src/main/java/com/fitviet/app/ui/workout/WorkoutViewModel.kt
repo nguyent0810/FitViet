@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.fitviet.app.data.local.entity.CommunityPostType
 import com.fitviet.app.data.repository.CommunityRepository
 import com.fitviet.app.data.repository.ExerciseRepository
 import com.fitviet.app.data.repository.MonthlyPlanRepository
@@ -75,6 +76,16 @@ data class WorkoutUiState(
     /** Guards the "share to Community" action against a double-tap creating two posts — reset per
      * session since each new session is a fresh [WorkoutUiState]. */
     val sessionShared: Boolean = false,
+    /** Redesign Gate 6c — the share composer (`ShareComposerOverlay`), rendered as a full-screen
+     * [androidx.compose.ui.window.Dialog] overlay while true, same pattern
+     * [com.fitviet.app.ui.dashboard.StreakMilestoneOverlay] already established (draws over system
+     * chrome, `onDismissRequest` intercepts back-press for free — no manual `BackHandler` needed).
+     * [shareComposerText]/[shareComposerCategory] are the composer's own draft inputs, reset to
+     * their defaults on every [WorkoutViewModel.openShareComposer]/[WorkoutViewModel.closeShareComposer]
+     * so a cancelled composer never leaks its draft into a later open. */
+    val isShareComposerOpen: Boolean = false,
+    val shareComposerText: String = "",
+    val shareComposerCategory: Int = CommunityPostType.PROGRESS,
 ) {
     val currentBlock: WorkoutBlockPlan? get() = blocks.getOrNull(currentBlockIndex)
 }
@@ -591,8 +602,38 @@ class WorkoutViewModel(
         return MonthlyPlanProgress.summarize(weeks, days, completedDayIds, LocalDate.now())
     }
 
-    /** Feature #4 (Gate 40) — creates a real workout-share Community post (via
-     * [CommunityRepository.shareWorkout]) from this session's already-computed summary.
+    /** Redesign Gate 6c — opens the share composer instead of posting immediately (Gate 40's
+     * original `shareToCommunity()`, which this replaces, posted directly on tap). Only reachable
+     * in practice from [WorkoutScreen]'s `SessionFinished`-phase branch, but the phase guard is
+     * enforced here too — this ViewModel shouldn't rely solely on its one current UI call site to
+     * keep an in-progress/abandoned session from opening the composer at all. [WorkoutUiState.sessionShared]
+     * is checked (not set) here — the actual guard-and-post still happens in [submitShareComposer],
+     * this just stops a second open once a share has already gone through. */
+    fun openShareComposer() {
+        val state = _uiState.value
+        if (state.phase != WorkoutPhase.SessionFinished) return
+        if (state.sessionShared) return
+        _uiState.update { it.copy(isShareComposerOpen = true, shareComposerText = "", shareComposerCategory = CommunityPostType.PROGRESS) }
+    }
+
+    /** Cancel ("Huỷ" / system back, both routed here — see [WorkoutUiState.isShareComposerOpen]'s
+     * own doc) — discards the draft. Nothing was posted, so there's nothing to undo, just state to
+     * reset for the next open. */
+    fun closeShareComposer() {
+        _uiState.update { it.copy(isShareComposerOpen = false, shareComposerText = "", shareComposerCategory = CommunityPostType.PROGRESS) }
+    }
+
+    fun updateShareComposerText(text: String) {
+        _uiState.update { it.copy(shareComposerText = text) }
+    }
+
+    fun selectShareComposerCategory(category: Int) {
+        _uiState.update { it.copy(shareComposerCategory = category) }
+    }
+
+    /** Feature #4 (Gate 40), rewired Gate 6c — creates a real workout-share Community post (via
+     * [CommunityRepository.shareWorkout]) from this session's already-computed summary plus the
+     * composer's own draft text/category.
      *
      * The check-and-set for [WorkoutUiState.sessionShared] happens synchronously here, in the
      * caller's own call frame, *before* [viewModelScope.launch] ever runs — not inside the
@@ -602,24 +643,23 @@ class WorkoutViewModel(
      * `shareWorkout` genuinely suspend) for a second rapid tap to also read `sessionShared ==
      * false` and create a duplicate post — caught by independent review. Doing the check-and-set
      * synchronously closes that window entirely, which a debounce (real-time-clock-based, used
-     * elsewhere in this file) only would have narrowed. */
-    /** Only reachable in practice from [WorkoutScreen]'s `SessionFinished`-phase branch, but the
-     * phase guard is enforced here too — this ViewModel shouldn't rely solely on its one current UI
-     * call site to keep an in-progress/abandoned session from posting a partial summary. */
-    fun shareToCommunity() {
+     * elsewhere in this file) only would have narrowed. [WorkoutUiState.sessionShared] is the
+     * actual guard against a rapid double-tap on "Đăng bài →" re-entering this function; closing
+     * `isShareComposerOpen` in that same synchronous update just removes the composer from view,
+     * it isn't itself a second guard. */
+    fun submitShareComposer() {
         val state = _uiState.value
         if (state.phase != WorkoutPhase.SessionFinished) return
         if (state.sessionShared) return
-        _uiState.update { it.copy(sessionShared = true) }
+        _uiState.update { it.copy(sessionShared = true, isShareComposerOpen = false) }
         viewModelScope.launch {
-            // Redesign Gate 6b — userText/category omitted: this call site still posts directly and
-            // immediately, exactly as before this gate. Gate 6c rewires this to open the share
-            // composer instead, which is what will actually supply both.
             communityRepository.shareWorkout(
                 dayLabel = state.dayLabel,
                 durationSeconds = state.sessionElapsedSeconds,
                 totalVolumeKg = state.sessionTotalVolumeKg,
                 streakDays = state.sessionStreakDays,
+                userText = state.shareComposerText,
+                category = state.shareComposerCategory,
             )
         }
     }

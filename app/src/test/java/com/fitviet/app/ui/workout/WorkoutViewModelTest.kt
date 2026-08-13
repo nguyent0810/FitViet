@@ -38,6 +38,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -135,7 +136,7 @@ class WorkoutViewModelTest {
         override suspend fun insert(post: CommunityPostEntity): Long {
             // A real suspension point (unlike a body with no `yield`/real I/O, which a
             // TestDispatcher just runs to completion atomically) — needed so the "sharing twice"
-            // test below can actually exercise two shareToCommunity() coroutines interleaving,
+            // test below can actually exercise two submitShareComposer() coroutines interleaving,
             // the exact scenario independent review found WorkoutViewModel wasn't guarding against.
             yield()
             inserted += post
@@ -586,7 +587,8 @@ class WorkoutViewModelTest {
         advanceThroughEntireSession(h)
         val state = h.viewModel.uiState.value
 
-        h.viewModel.shareToCommunity()
+        h.viewModel.openShareComposer()
+        h.viewModel.submitShareComposer()
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(1, h.communityPostDao.inserted.size)
@@ -596,12 +598,67 @@ class WorkoutViewModelTest {
         assertEquals(state.sessionElapsedSeconds, post.durationSeconds)
         assertEquals(state.sessionTotalVolumeKg, post.totalVolumeKg)
         assertEquals(3, post.streakDays)
-        // Gate 6b — this call site omits userText/category (Gate 6c's composer is what will
-        // supply them), so shareWorkout()'s own fallback copy is what lands in bodyText, and
-        // category stays null (no dedicated tab until the composer tags one).
+        // Gate 6c — an untouched composer submits with its own defaults: empty draft text (so
+        // shareWorkout()'s fallback copy lands in bodyText) and category pre-selected to PROGRESS
+        // ("Tiến bộ", the mock's own pre-selected pill).
         assertEquals("Vừa hoàn thành buổi tập!", post.bodyText)
-        assertEquals(null, post.category)
+        assertEquals(CommunityPostType.PROGRESS, post.category)
         assertTrue(h.viewModel.uiState.value.sessionShared)
+        assertFalse(h.viewModel.uiState.value.isShareComposerOpen)
+        h.finish()
+    }
+
+    @Test
+    fun `opening the composer again after a real post already went through does not reopen it`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        h.viewModel.openShareComposer()
+        h.viewModel.submitShareComposer()
+        testDispatcher.scheduler.runCurrent()
+        assertTrue(h.viewModel.uiState.value.sessionShared)
+        assertFalse(h.viewModel.uiState.value.isShareComposerOpen)
+
+        h.viewModel.openShareComposer()
+
+        assertFalse(h.viewModel.uiState.value.isShareComposerOpen)
+        assertEquals(1, h.communityPostDao.inserted.size)
+        h.finish()
+    }
+
+    @Test
+    fun `the composer's own draft text and category are what actually get posted`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        h.viewModel.openShareComposer()
+        h.viewModel.updateShareComposerText("  Buổi tập tốt nhất tuần này!  ")
+        h.viewModel.selectShareComposerCategory(CommunityPostType.QA)
+        h.viewModel.submitShareComposer()
+        testDispatcher.scheduler.runCurrent()
+
+        val post = h.communityPostDao.inserted.single()
+        assertEquals("Buổi tập tốt nhất tuần này!", post.bodyText)
+        assertEquals(CommunityPostType.QA, post.category)
+        assertEquals(CommunityPostType.WORKOUT_SHARE, post.postType)
+        h.finish()
+    }
+
+    @Test
+    fun `closing the composer discards the draft and does not post`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        h.viewModel.openShareComposer()
+        h.viewModel.updateShareComposerText("draft that should never be posted")
+        h.viewModel.closeShareComposer()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(0, h.communityPostDao.inserted.size)
+        assertFalse(h.viewModel.uiState.value.isShareComposerOpen)
+        assertFalse(h.viewModel.uiState.value.sessionShared)
+        assertEquals("", h.viewModel.uiState.value.shareComposerText)
+        assertEquals(CommunityPostType.PROGRESS, h.viewModel.uiState.value.shareComposerCategory)
         h.finish()
     }
 
@@ -609,15 +666,17 @@ class WorkoutViewModelTest {
     fun `sharing twice back-to-back before either coroutine resumes only creates one post`() = runTest(testDispatcher) {
         val h = Harness()
         advanceThroughEntireSession(h)
+        h.viewModel.openShareComposer()
 
-        // Deliberately no scheduler.runCurrent() between these two calls — both shareToCommunity()
+        // Deliberately no scheduler.runCurrent() between these two calls — both submitShareComposer()
         // invocations happen on this (single) calling thread before either launched coroutine has
         // had a chance to run at all. FakeCommunityPostDao.insert's yield() then lets the two
         // resulting coroutines genuinely interleave once the scheduler does run, reproducing the
         // exact race independent review found: without a synchronous check-and-set in
-        // shareToCommunity() (fixed after that review), this would insert two posts.
-        h.viewModel.shareToCommunity()
-        h.viewModel.shareToCommunity()
+        // submitShareComposer() (fixed after that review, for the original shareToCommunity() this
+        // replaced), this would insert two posts.
+        h.viewModel.submitShareComposer()
+        h.viewModel.submitShareComposer()
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(1, h.communityPostDao.inserted.size)
