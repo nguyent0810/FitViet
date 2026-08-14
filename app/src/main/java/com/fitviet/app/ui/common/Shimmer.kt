@@ -21,8 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.SurfaceCard
+import com.fitviet.app.ui.theme.HrColors
 
 /**
  * Premium-pass skeleton shimmer (Gate D2) — a moving diagonal highlight sweep over a neutral
@@ -33,7 +32,7 @@ import com.fitviet.app.ui.theme.SurfaceCard
 @Composable
 fun Modifier.shimmer(): Modifier {
     val reducedMotion = rememberReducedMotion()
-    if (reducedMotion) return this.drawWithCache { onDrawBehind { drawRect(SurfaceCard) } }
+    if (reducedMotion) return this.drawWithCache { onDrawBehind { drawRect(HrColors.Surface) } }
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateFraction by transition.animateFloat(
@@ -46,7 +45,7 @@ fun Modifier.shimmer(): Modifier {
         val sweepWidth = size.width * 0.6f
         val startX = size.width * translateFraction - sweepWidth
         val brush = Brush.linearGradient(
-            colors = listOf(SurfaceCard, CardBorder, SurfaceCard),
+            colors = listOf(HrColors.Surface, HrColors.Border, HrColors.Surface),
             start = Offset(startX, 0f),
             end = Offset(startX + sweepWidth, size.height),
         )
