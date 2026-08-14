@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,17 +36,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.fitviet.app.R
 import com.fitviet.app.ui.common.rememberReducedMotion
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.HeroGradientEnd
-import com.fitviet.app.ui.theme.HeroGradientStart
-import com.fitviet.app.ui.theme.MacroBarCarb
-import com.fitviet.app.ui.theme.MacroBarFat
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.Motion
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.TextBody
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -95,7 +90,7 @@ fun StreakMilestoneOverlay(streakDays: Int, milestone: Int, onDismiss: () -> Uni
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd))),
+                .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd))),
         ) {
             if (!reducedMotion) {
                 BurstOverlay(modifier = Modifier.fillMaxSize())
@@ -103,34 +98,40 @@ fun StreakMilestoneOverlay(streakDays: Int, milestone: Int, onDismiss: () -> Uni
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = Dimens.ScreenPaddingHorizontal),
+                    .padding(horizontal = HrDimens.ScreenPaddingHorizontal),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
                     modifier = Modifier
                         .scale(badgeScale.value)
-                        .clip(MaterialTheme.shapes.large)
-                        .background(Accent)
+                        .clip(HrShapes.CardRegular)
+                        .background(HrColors.Accent)
                         .padding(horizontal = 20.dp, vertical = 10.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.streak_milestone_badge, milestone),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = OnAccent,
+                        fontFamily = HrBody,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = HrColors.OnAccent,
                     )
                 }
                 Text(
                     text = stringResource(R.string.streak_milestone_headline, streakDays),
-                    style = MaterialTheme.typography.headlineLarge.copy(fontFamily = Anton, fontSize = 48.sp, lineHeight = 54.sp),
-                    color = Accent,
+                    fontFamily = HrDisplay,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 48.sp,
+                    lineHeight = 54.sp,
+                    color = HrColors.Accent,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 20.dp),
                 )
                 Text(
                     text = stringResource(R.string.streak_milestone_subtitle, streakDays),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextBody,
+                    fontFamily = HrBody,
+                    fontSize = 14.sp,
+                    color = HrColors.TextMid,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = 12.dp),
                 )
@@ -138,13 +139,19 @@ fun StreakMilestoneOverlay(streakDays: Int, milestone: Int, onDismiss: () -> Uni
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 28.dp)
-                        .clip(MaterialTheme.shapes.large)
-                        .background(Accent)
+                        .clip(HrShapes.ButtonCta)
+                        .background(HrColors.Accent)
                         .clickable(onClick = onDismiss)
                         .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = stringResource(R.string.streak_milestone_cta), style = MaterialTheme.typography.titleMedium, color = OnAccent)
+                    Text(
+                        text = stringResource(R.string.streak_milestone_cta),
+                        fontFamily = HrBody,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = HrColors.OnAccent,
+                    )
                 }
             }
         }
@@ -157,7 +164,7 @@ fun StreakMilestoneOverlay(streakDays: Int, milestone: Int, onDismiss: () -> Uni
  * instead of falling, matching this screen's distinct "burst" signature. */
 @Composable
 private fun BurstOverlay(modifier: Modifier = Modifier) {
-    val colors = listOf(Accent, MacroBarCarb, MacroBarFat, AccentBorder, OnAccent)
+    val colors = listOf(HrColors.Accent, HrColors.MacroCarb, HrColors.MacroFat, HrColors.BorderAccentDim, HrColors.OnAccent)
     val particles = remember {
         val random = Random(seed = 7)
         List(BURST_PARTICLE_COUNT) {
