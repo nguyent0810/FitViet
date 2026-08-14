@@ -11,7 +11,9 @@ import com.fitviet.app.data.repository.MonthlyPlanRepository
 import com.fitviet.app.data.repository.WorkoutRepository
 import com.fitviet.app.domain.MonthlyPlanProgress
 import com.fitviet.app.domain.MonthlyPlanProgressSummary
+import com.fitviet.app.domain.SessionPersonalRecord
 import com.fitviet.app.domain.TodayMonthlyPlanCard
+import com.fitviet.app.util.formatVi
 import java.time.LocalDate
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -64,6 +66,12 @@ data class WorkoutUiState(
     /** Computed once at session-finish time (see `finishSession()`), not observed live — matches
      * Dashboard's own streak definition via [com.fitviet.app.domain.DashboardStatsCalculator]. */
     val sessionStreakDays: Int = 0,
+    /** Redesign Gate 6d — this session's own "PR MỚI · {exercise} {kg} KG" badge text, pre-
+     * formatted (not raw exercise/weight) since it's used verbatim both here (the composer's result
+     * card) and as-is for [com.fitviet.app.data.local.entity.CommunityPostEntity.badgeText] once
+     * shared. Computed once at session-finish time (see `finishSession()`), same one-shot pattern
+     * [sessionStreakDays] already uses. Null on most sessions — most sessions don't set a new best. */
+    val sessionPrBadgeText: String? = null,
     /** Redesign Gate 4b — the finished screen's "Buổi N/M" line, via
      * [com.fitviet.app.domain.MonthlyPlanProgress.summarize] (same source the Kế hoạch tab's own
      * progress card uses, so the two never disagree). Both null together when there's no active
@@ -550,7 +558,10 @@ class WorkoutViewModel(
      * landing on [WorkoutPhase.SessionFinished] could read yesterday's streak instead of today's.
      * For a monthly-plan-day session, the PR-bump hook runs right after — it must come after
      * [WorkoutRepository.completeSession], not before, since [MonthlyPlanRepository.onMonthlyPlanSessionCompleted]
-     * only considers a personal best from a session whose `completedAt` is already set. */
+     * only considers a personal best from a session whose `completedAt` is already set. [WorkoutRepository.findSessionPersonalRecord]
+     * has no such ordering requirement of its own (it excludes this session's own row from the
+     * comparison query rather than relying on its `completedAt`), but runs alongside the streak/plan-
+     * progress reads below for the same reason they do: one read, right after the write lands. */
     private fun finishSession() {
         if (sessionFinishJob?.isActive == true) return
         elapsedJob?.cancel()
@@ -569,16 +580,26 @@ class WorkoutViewModel(
             monthlyPlanDayId?.let { monthlyPlanRepository.onMonthlyPlanSessionCompleted(it) }
             val streakDays = workoutRepository.getCurrentStreakDays(LocalDate.now())
             val planProgress = readSessionPlanProgress()
+            val personalRecord = workoutRepository.findSessionPersonalRecord(targetSessionId)
             _uiState.update {
                 it.copy(
                     phase = WorkoutPhase.SessionFinished,
                     sessionStreakDays = streakDays,
+                    sessionPrBadgeText = personalRecord?.let(::formatPrBadgeText),
                     sessionNumberInPlan = planProgress?.completedSessions,
                     sessionTotalInPlan = planProgress?.totalSessions,
                 )
             }
         }
     }
+
+    /** Redesign Gate 6d — the mock's own literal badge copy is "PR MỚI · KÉO XÔ 25 KG": uppercase
+     * exercise name, `formatVi` for the weight (matching every other weight display in this app),
+     * space-separated "KG" rather than a lowercase unit suffix. A plain Kotlin string, not a string
+     * resource — this app has no other locale to switch, and [CommunityRepository.shareWorkout]'s
+     * own static fallback body copy is the same kind of non-Composable-layer generated text. */
+    private fun formatPrBadgeText(record: SessionPersonalRecord): String =
+        "PR MỚI · ${record.exerciseName.uppercase()} ${formatVi(record.weightKg)} KG"
 
     /** Redesign Gate 4b — one-shot read (not observed live, matching [sessionStreakDays]'s own
      * pattern), run after [MonthlyPlanRepository.onMonthlyPlanSessionCompleted] so this session's
@@ -631,9 +652,10 @@ class WorkoutViewModel(
         _uiState.update { it.copy(shareComposerCategory = category) }
     }
 
-    /** Feature #4 (Gate 40), rewired Gate 6c — creates a real workout-share Community post (via
-     * [CommunityRepository.shareWorkout]) from this session's already-computed summary plus the
-     * composer's own draft text/category.
+    /** Feature #4 (Gate 40), rewired Gate 6c, extended Gate 6d — creates a real workout-share
+     * Community post (via [CommunityRepository.shareWorkout]) from this session's already-computed
+     * summary (now including [WorkoutUiState.sessionPrBadgeText], computed at session-finish time,
+     * not something the user picks in the composer) plus the composer's own draft text/category.
      *
      * The check-and-set for [WorkoutUiState.sessionShared] happens synchronously here, in the
      * caller's own call frame, *before* [viewModelScope.launch] ever runs — not inside the
@@ -660,6 +682,7 @@ class WorkoutViewModel(
                 streakDays = state.sessionStreakDays,
                 userText = state.shareComposerText,
                 category = state.shareComposerCategory,
+                prBadgeText = state.sessionPrBadgeText,
             )
         }
     }

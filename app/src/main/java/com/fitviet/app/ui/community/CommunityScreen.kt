@@ -222,6 +222,21 @@ private fun WorkoutSharePostCard(post: CommunityPostEntity, onLikeClick: () -> U
                     modifier = Modifier.weight(1f),
                 )
             }
+            // Redesign Gate 6d — same badge [PostCard] already renders for its own generic seeded
+            // posts, now also populated by a real code path (`WorkoutRepository.findSessionPersonalRecord`)
+            // for a workout-share post. Placed after the stat grid, inside the same inset panel,
+            // matching `ShareComposerOverlay`'s own result card — the two cards show the same badge
+            // in the same relative position, just embedded in each card's own stat layout.
+            post.badgeText?.let { badge ->
+                Box(
+                    modifier = Modifier
+                        .clip(PillShape)
+                        .border(1.dp, HrColors.BorderAccentDim, PillShape)
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                ) {
+                    Text(text = badge, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = HrColors.Accent)
+                }
+            }
         }
         PostLikeCommentRow(post = post, onLikeClick = onLikeClick)
     }

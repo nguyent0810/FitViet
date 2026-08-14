@@ -1,5 +1,6 @@
 package com.fitviet.app.data.repository
 
+import com.fitviet.app.data.local.dao.ExerciseDao
 import com.fitviet.app.data.local.dao.SetLogDao
 import com.fitviet.app.data.local.dao.WorkoutSessionDao
 import com.fitviet.app.data.local.entity.SetLogEntity
@@ -8,6 +9,8 @@ import com.fitviet.app.domain.DashboardStatsCalculator
 import com.fitviet.app.domain.ExerciseHistoryCalculator
 import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.LoggedSetPoint
+import com.fitviet.app.domain.PersonalRecordCalculator
+import com.fitviet.app.domain.SessionPersonalRecord
 import com.fitviet.app.ui.workout.LoggedSet
 import java.time.Instant
 import java.time.LocalDate
@@ -41,11 +44,21 @@ interface WorkoutRepository {
     /** Feature #10 (Gate 46) — per-exercise progress history, newest first, one entry per date
      * logged (that date's heaviest set). Backs Exercise Detail's "Tiến bộ" tab. */
     fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>>
+
+    /** Redesign Gate 6d — did this just-finished session set a genuine new all-time best for any
+     * exercise it trained (per [PersonalRecordCalculator.isNewRecord])? One-shot, called right
+     * after [completeSession] lands, same "read once at session-finish time" pattern
+     * [getCurrentStreakDays] already established. When more than one exercise PR'd in the same
+     * session, the heaviest one wins — the mock's own result card has room for exactly one badge,
+     * and the heaviest lift is the one worth leading with. Null when nothing in this session beat
+     * its own prior best. */
+    suspend fun findSessionPersonalRecord(sessionId: Long): SessionPersonalRecord?
 }
 
 class RoomWorkoutRepository(
     private val workoutSessionDao: WorkoutSessionDao,
     private val setLogDao: SetLogDao,
+    private val exerciseDao: ExerciseDao,
 ) : WorkoutRepository {
     override suspend fun startSession(dayLabel: String, startedAtMillis: Long, monthlyPlanDayId: Long?): Long =
         workoutSessionDao.insert(WorkoutSessionEntity(dayLabel = dayLabel, startedAt = startedAtMillis, monthlyPlanDayId = monthlyPlanDayId))
@@ -93,5 +106,21 @@ class RoomWorkoutRepository(
             }
             ExerciseHistoryCalculator.bestSetPerDate(points)
         }
+    }
+
+    override suspend fun findSessionPersonalRecord(sessionId: Long): SessionPersonalRecord? {
+        val sessionMaxByExercise = setLogDao.getSetsForSessionOnce(sessionId)
+            .groupBy { it.exerciseId }
+            .mapValues { (_, sets) -> sets.maxOf { it.weightKg } }
+        var best: SessionPersonalRecord? = null
+        for ((exerciseId, weightKg) in sessionMaxByExercise) {
+            val priorBest = setLogDao.getPersonalBestExcludingSession(exerciseId, sessionId)?.weightKg
+            if (!PersonalRecordCalculator.isNewRecord(weightKg, priorBest)) continue
+            if (best == null || weightKg > best.weightKg) {
+                val exerciseName = exerciseDao.getById(exerciseId)?.nameVi ?: continue
+                best = SessionPersonalRecord(exerciseId, exerciseName, weightKg)
+            }
+        }
+        return best
     }
 }

@@ -2,6 +2,8 @@ package com.fitviet.app.domain
 
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -111,5 +113,32 @@ class PersonalRecordCalculatorTest {
     @Test
     fun `no sets in the window returns zero`() {
         assertEquals(0, PersonalRecordCalculator.countInWindow(emptyList(), windowStart, today))
+    }
+
+    // ---- isNewRecord (Gate 6d) ----
+
+    @Test
+    fun `a session max exceeding the prior best is a new record`() {
+        assertTrue(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 60.0, priorBestWeightKg = 50.0))
+    }
+
+    @Test
+    fun `a session max tying the prior best is not a new record`() {
+        assertFalse(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 50.0, priorBestWeightKg = 50.0))
+    }
+
+    @Test
+    fun `a session max below the prior best is not a new record`() {
+        assertFalse(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 40.0, priorBestWeightKg = 50.0))
+    }
+
+    @Test
+    fun `no prior history at all still counts as a new record for a weighted set`() {
+        assertTrue(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 20.0, priorBestWeightKg = null))
+    }
+
+    @Test
+    fun `a zero-weight session max is never a new record, even with no prior history`() {
+        assertFalse(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 0.0, priorBestWeightKg = null))
     }
 }

@@ -10,9 +10,10 @@ object CommunityPostType {
     const val PROGRESS = 2
     /** Feature #4 (Gate 40) — a real post created from a finished [com.fitviet.app.ui.workout.WorkoutViewModel]
      * session, distinct from [SHARE]'s generic seeded freeform posts. Populates the 4 stat columns
-     * below (`dayLabel`/`durationSeconds`/`totalVolumeKg`/`streakDays`) directly; `category` is a
-     * 5th [WORKOUT_SHARE]-only column but is populated by the share composer (Gate 6c), not by the
-     * session-completion path itself. */
+     * below (`dayLabel`/`durationSeconds`/`totalVolumeKg`/`streakDays`) directly; `category` is
+     * populated by the share composer (Gate 6c), while [badgeText] (Gate 6d) is populated by the
+     * session-completion path itself — `WorkoutRepository.findSessionPersonalRecord`, not anything
+     * the user chooses in the composer. */
     const val WORKOUT_SHARE = 3
 }
 

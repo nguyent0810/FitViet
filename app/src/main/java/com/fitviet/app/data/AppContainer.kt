@@ -41,7 +41,7 @@ class AppContainer(context: Context) {
         settingsDao = database.settingsDao(),
     )
     val exerciseRepository = RoomExerciseRepository(database.exerciseDao())
-    val workoutRepository = RoomWorkoutRepository(database.workoutSessionDao(), database.setLogDao())
+    val workoutRepository = RoomWorkoutRepository(database.workoutSessionDao(), database.setLogDao(), database.exerciseDao())
     // Declared before dashboardRepository, which now takes it as a constructor dependency
     // (Gate 1c — DashboardRepository's Today-card resolution moved to MonthlyPlanRepository
     // .observeTodaySession, shared with WorkoutViewModel's single session entry point, so it no

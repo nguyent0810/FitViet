@@ -79,11 +79,9 @@ import java.time.LocalDate
  * (where "how long, how much volume, what streak" reads better). Both are real data from the same
  * [WorkoutUiState], just different facets of it — not a bug, not meant to match.
  *
- * No PR badge yet — the mock's own card has one ("PR MỚI · KÉO XÔ 25 KG"), but no real PR-detection
- * data reaches this ViewModel yet (see [WorkoutUiState.sessionStreakDays]'s neighbors — there's no
- * equivalent `sessionPr` field). Gate 6d is what surfaces `domain/PersonalRecordCalculator.kt`'s own
- * existing PR computation up to here; fabricating a badge with no real data behind it isn't this
- * gate's call to make.
+ * Redesign Gate 6d — the "PR MỚI · KÉO XÔ 25 KG" badge, when [WorkoutUiState.sessionPrBadgeText]
+ * is non-null (most sessions don't set a new best, so this is the common case, not the exception).
+ * Pre-formatted text, not raw exercise/weight — see that field's own doc for why.
  *
  * The "Chia sẻ" category pill (`CommunityPostType.SHARE` = 0) is a deliberate no-op tag: tab 0
  * ("Mới nhất") always short-circuits to "all posts" in `CommunityFilter.byTab` before the category
@@ -178,6 +176,17 @@ private fun ResultCard(uiState: WorkoutUiState) {
             ResultStatTile(value = formatVi(uiState.sessionTotalSets), label = stringResource(R.string.workout_stat_sets), accent = true, modifier = Modifier.weight(1f))
             ResultStatTile(value = formatVi(uiState.sessionTotalVolumeKg), label = stringResource(R.string.share_composer_stat_kg), modifier = Modifier.weight(1f))
             ResultStatTile(value = formatMinutesSeconds(uiState.sessionElapsedSeconds), label = stringResource(R.string.share_composer_stat_minutes), modifier = Modifier.weight(1f))
+        }
+        uiState.sessionPrBadgeText?.let { badge ->
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .clip(PillShape)
+                    .border(1.dp, HrColors.BorderAccentDim, PillShape)
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+            ) {
+                Text(text = badge, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = HrColors.Accent)
+            }
         }
     }
 }

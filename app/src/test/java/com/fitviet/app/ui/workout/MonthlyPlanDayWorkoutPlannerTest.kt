@@ -14,6 +14,7 @@ import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
+import com.fitviet.app.domain.SessionPersonalRecord
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -46,6 +47,7 @@ class MonthlyPlanDayWorkoutPlannerTest {
         override suspend fun getRecommendedWeight(exerciseId: Long): Double? = recommendedWeightKg
         override suspend fun getCurrentStreakDays(today: LocalDate): Int = 0
         override fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>> = flowOf(emptyList())
+        override suspend fun findSessionPersonalRecord(sessionId: Long): SessionPersonalRecord? = null
     }
 
     /** [days]/[exercisesByDay] fake a single monthly plan's persisted state, keyed by day id. */

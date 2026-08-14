@@ -23,6 +23,7 @@ import com.fitviet.app.domain.ExerciseHistoryEntry
 import com.fitviet.app.domain.MonthlyPlanDayStatus
 import com.fitviet.app.domain.MovementType
 import com.fitviet.app.domain.MuscleGroup
+import com.fitviet.app.domain.SessionPersonalRecord
 import com.fitviet.app.domain.TodayMonthlyPlanCard
 import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
@@ -115,6 +116,11 @@ class WorkoutViewModelTest {
         // Nothing in this test file exercises Exercise Detail's "Tiến bộ" tab — a fixed empty flow
         // keeps this fake minimal rather than tracking per-exercise history nobody here reads.
         override fun observeHistoryForExercise(exerciseId: Long): Flow<List<ExerciseHistoryEntry>> = flowOf(emptyList())
+
+        // A fixed null keeps every other finishSession()-reaching test deterministic (no PR badge
+        // unless a test opts in), same "fixed default, opt-in per test" shape as streakDaysToReturn.
+        var personalRecordToReturn: SessionPersonalRecord? = null
+        override suspend fun findSessionPersonalRecord(sessionId: Long): SessionPersonalRecord? = personalRecordToReturn
     }
 
     /** Fakes the two Dao dependencies a real [CommunityRepository] is constructed with below — its
@@ -577,6 +583,42 @@ class WorkoutViewModelTest {
         advanceThroughEntireSession(h)
 
         assertEquals(5, h.viewModel.uiState.value.sessionStreakDays)
+        h.finish()
+    }
+
+    // ---- Gate 6d: PR badge ----
+
+    @Test
+    fun `finishing a session with a personal record formats the pre-set PR badge text`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.workoutRepository.personalRecordToReturn = SessionPersonalRecord(exerciseId = 1L, exerciseName = "Kéo xô", weightKg = 25.0)
+        advanceThroughEntireSession(h)
+
+        assertEquals("PR MỚI · KÉO XÔ 25 KG", h.viewModel.uiState.value.sessionPrBadgeText)
+        h.finish()
+    }
+
+    @Test
+    fun `finishing a session with no personal record leaves the badge null`() = runTest(testDispatcher) {
+        val h = Harness()
+        advanceThroughEntireSession(h)
+
+        assertEquals(null, h.viewModel.uiState.value.sessionPrBadgeText)
+        h.finish()
+    }
+
+    @Test
+    fun `the session's PR badge text is what actually gets posted`() = runTest(testDispatcher) {
+        val h = Harness()
+        h.workoutRepository.personalRecordToReturn = SessionPersonalRecord(exerciseId = 1L, exerciseName = "Deadlift", weightKg = 110.0)
+        advanceThroughEntireSession(h)
+
+        h.viewModel.openShareComposer()
+        h.viewModel.submitShareComposer()
+        testDispatcher.scheduler.runCurrent()
+
+        val post = h.communityPostDao.inserted.single()
+        assertEquals("PR MỚI · DEADLIFT 110 KG", post.badgeText)
         h.finish()
     }
 

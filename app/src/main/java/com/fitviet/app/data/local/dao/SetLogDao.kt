@@ -45,6 +45,25 @@ interface SetLogDao {
     )
     suspend fun getPersonalBest(exerciseId: Long): SetLogEntity?
 
+    /** Redesign Gate 6d — same shape as [getPersonalBest], excluding one session's own sets, so a
+     * just-finished session's max weight can be compared against the best set *before* it, rather
+     * than a query that (now the session's own `completedAt` is already set) would just echo the
+     * session's own new max back at itself when it's the highest. */
+    @Query(
+        """
+        SELECT s.* FROM set_logs s
+        INNER JOIN workout_sessions w ON w.id = s.sessionId
+        WHERE s.exerciseId = :exerciseId AND s.isDone = 1 AND w.completedAt IS NOT NULL AND s.sessionId != :excludeSessionId
+        ORDER BY s.weightKg DESC LIMIT 1
+        """,
+    )
+    suspend fun getPersonalBestExcludingSession(exerciseId: Long, excludeSessionId: Long): SetLogEntity?
+
+    /** Redesign Gate 6d — one-shot equivalent of [observeForSession] for `WorkoutRepository`'s
+     * post-completion PR check, which reads once rather than observing. */
+    @Query("SELECT * FROM set_logs WHERE sessionId = :sessionId AND isDone = 1")
+    suspend fun getSetsForSessionOnce(sessionId: Long): List<SetLogEntity>
+
     /** Exercises actually performed on a session linked to this monthly-plan day. */
     @Query(
         """

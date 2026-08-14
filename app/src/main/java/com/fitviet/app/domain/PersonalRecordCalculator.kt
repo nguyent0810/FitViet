@@ -25,6 +25,11 @@ data class ExerciseSetRecord(val exerciseId: Long, val date: LocalDate, val weig
  * very first-ever logged day is never a "PR" by this definition — there's nothing yet for it to have
  * beaten.
  */
+/** Redesign Gate 6d — one just-finished session's standout lift, for the share composer's/feed
+ * card's "PR MỚI" badge (`domain/PersonalRecordCalculator.isNewRecord`, [exerciseName] resolved by
+ * the repository since this domain layer stays free of DB access). */
+data class SessionPersonalRecord(val exerciseId: Long, val exerciseName: String, val weightKg: Double)
+
 object PersonalRecordCalculator {
     fun countInWindow(sets: List<ExerciseSetRecord>, windowStart: LocalDate, windowEnd: LocalDate): Int {
         val byExercise = sets.groupBy { it.exerciseId }
@@ -43,4 +48,14 @@ object PersonalRecordCalculator {
         }
         return count
     }
+
+    /** Redesign Gate 6d — same "current max beats every prior max" definition [countInWindow]
+     * applies per calendar day, collapsed to a single session: does [sessionMaxWeightKg] beat
+     * [priorBestWeightKg] (null when the exercise has no completed history before this session)?
+     * A tie doesn't count, matching [countInWindow]'s own strict `dayMax > runningMax`. A 0kg
+     * (bodyweight-only) session max is never a record — same reasoning [countInWindow]'s own doc
+     * gives for why an exercise's first-ever logged day can't be a PR either: there's nothing yet
+     * for a 0kg set to have beaten, and treating it as one would badge every first bodyweight set. */
+    fun isNewRecord(sessionMaxWeightKg: Double, priorBestWeightKg: Double?): Boolean =
+        sessionMaxWeightKg > 0.0 && sessionMaxWeightKg > (priorBestWeightKg ?: 0.0)
 }

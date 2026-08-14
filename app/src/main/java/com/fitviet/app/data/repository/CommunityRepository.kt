@@ -28,7 +28,12 @@ class CommunityRepository(
      * fact stated twice. [category] omitted means a post visible only under "Mới nhất" per
      * [CommunityPostEntity.category]'s own doc, though the composer always sends a non-null value
      * (defaulting to `PROGRESS`) — the `= null` defaults on both parameters exist for callers other
-     * than the composer, none of which currently exist. */
+     * than the composer, none of which currently exist.
+     *
+     * Redesign Gate 6d — [prBadgeText] is `WorkoutRepository.findSessionPersonalRecord`'s already-
+     * formatted "PR MỚI · ..." text (or null, the common case: most sessions don't set a new best),
+     * stored directly into [CommunityPostEntity.badgeText] — the same column [CommunityPostDao]'s
+     * seeded demo posts already use, now populated by a real code path instead of only seed data. */
     suspend fun shareWorkout(
         dayLabel: String,
         durationSeconds: Int,
@@ -36,6 +41,7 @@ class CommunityRepository(
         streakDays: Int,
         userText: String? = null,
         category: Int? = null,
+        prBadgeText: String? = null,
     ): Long {
         val settings = settingsDao.get() ?: SettingsEntity()
         val post = CommunityPostEntity(
@@ -44,6 +50,7 @@ class CommunityRepository(
             timeLabel = "Vừa xong",
             postType = CommunityPostType.WORKOUT_SHARE,
             bodyText = userText?.trim()?.takeIf { it.isNotEmpty() } ?: "Vừa hoàn thành buổi tập!",
+            badgeText = prBadgeText,
             baseLikeCount = 0,
             commentCount = 0,
             dayLabel = dayLabel,
