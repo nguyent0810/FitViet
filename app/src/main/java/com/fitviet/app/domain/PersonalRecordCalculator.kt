@@ -51,11 +51,20 @@ object PersonalRecordCalculator {
 
     /** Redesign Gate 6d — same "current max beats every prior max" definition [countInWindow]
      * applies per calendar day, collapsed to a single session: does [sessionMaxWeightKg] beat
-     * [priorBestWeightKg] (null when the exercise has no completed history before this session)?
-     * A tie doesn't count, matching [countInWindow]'s own strict `dayMax > runningMax`. A 0kg
-     * (bodyweight-only) session max is never a record — same reasoning [countInWindow]'s own doc
-     * gives for why an exercise's first-ever logged day can't be a PR either: there's nothing yet
-     * for a 0kg set to have beaten, and treating it as one would badge every first bodyweight set. */
+     * [priorBestWeightKg]? A tie doesn't count, matching [countInWindow]'s own strict
+     * `dayMax > runningMax`.
+     *
+     * [priorBestWeightKg] null (no completed history for the exercise before this session) means
+     * this session IS that exercise's first-ever logged day — never a record, same `hasBaseline`-
+     * gated reasoning [countInWindow]'s own doc explains at length: there's nothing yet for a
+     * first day to have beaten, weighted or not. An earlier version of this function treated null
+     * as "beat a floor of 0", which meant literally every exercise in a user's very first-ever
+     * session badged as a PR — caught on a real device, not by any of this function's own unit
+     * tests (they'd all constructed the "no prior history" case with a *weighted* session max,
+     * which is exactly the case the bug silently got "right" for the wrong reason). A real prior
+     * baseline of exactly 0kg (bodyweight-only history) is different from no baseline at all — see
+     * [countInWindow]'s own "a zero-weight first day still establishes a baseline" test — so this
+     * function's null-check, not a `sessionMaxWeightKg > 0.0` check, is what has to gate it. */
     fun isNewRecord(sessionMaxWeightKg: Double, priorBestWeightKg: Double?): Boolean =
-        sessionMaxWeightKg > 0.0 && sessionMaxWeightKg > (priorBestWeightKg ?: 0.0)
+        priorBestWeightKg != null && sessionMaxWeightKg > priorBestWeightKg
 }

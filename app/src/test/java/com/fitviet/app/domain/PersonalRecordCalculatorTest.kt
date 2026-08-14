@@ -133,12 +133,25 @@ class PersonalRecordCalculatorTest {
     }
 
     @Test
-    fun `no prior history at all still counts as a new record for a weighted set`() {
-        assertTrue(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 20.0, priorBestWeightKg = null))
+    fun `no prior history at all is never a new record, even for a weighted set`() {
+        // Regression: an earlier version treated null priorBest as "beat a floor of 0", which
+        // badged every exercise in a user's very first-ever session as a PR — found on a real
+        // device, not by this suite (every prior "no history" test here used a weighted session
+        // max, which the bug happened to get "right" for the wrong reason). Matches
+        // countInWindow's own hasBaseline-gated rule: a first-ever logged day is never a PR.
+        assertFalse(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 20.0, priorBestWeightKg = null))
     }
 
     @Test
     fun `a zero-weight session max is never a new record, even with no prior history`() {
         assertFalse(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 0.0, priorBestWeightKg = null))
+    }
+
+    @Test
+    fun `a real zero-weight prior baseline is still a baseline a later weighted set can beat`() {
+        // Distinct from "no prior history at all": here priorBestWeightKg is a real 0.0 (e.g. prior
+        // bodyweight-only sets), not null — same distinction countInWindow's own "a zero-weight
+        // first day still establishes a baseline" test makes at the day-walk level.
+        assertTrue(PersonalRecordCalculator.isNewRecord(sessionMaxWeightKg = 10.0, priorBestWeightKg = 0.0))
     }
 }
