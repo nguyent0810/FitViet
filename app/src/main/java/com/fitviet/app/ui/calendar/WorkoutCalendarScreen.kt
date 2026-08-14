@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,22 +26,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.WorkoutSessionEntity
 import com.fitviet.app.domain.CalendarDayCell
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
+import com.fitviet.app.ui.common.HrBackChip
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextBody
-import com.fitviet.app.ui.theme.TextFaintAlt
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.util.formatVi
 import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.shortLabelRes
@@ -64,14 +62,14 @@ fun WorkoutCalendarScreen(viewModel: WorkoutCalendarViewModel, onBack: () -> Uni
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPage)
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SquareIconButton(symbol = "‹", onClick = onBack)
-            Text(text = stringResource(R.string.calendar_title), style = MaterialTheme.typography.headlineMedium)
+            HrBackChip(onClick = onBack)
+            Text(text = stringResource(R.string.calendar_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = HrColors.TextHi)
         }
         MonthNavigator(month = uiState.month, onPrevious = viewModel::previousMonth, onNext = viewModel::nextMonth)
         WeekdayHeader()
@@ -88,13 +86,13 @@ private fun SquareIconButton(symbol: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(Dimens.MinTouchTarget)
-            .clip(MaterialTheme.shapes.small)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = symbol, style = MaterialTheme.typography.titleMedium, color = TextMuted)
+        Text(text = symbol, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = HrColors.TextLow)
     }
 }
 
@@ -108,7 +106,10 @@ private fun MonthNavigator(month: YearMonth, onPrevious: () -> Unit, onNext: () 
         SquareIconButton(symbol = "‹", onClick = onPrevious)
         Text(
             text = stringResource(R.string.calendar_month_year, stringResource(month.month.labelRes()), month.year),
-            style = MaterialTheme.typography.titleMedium,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = HrColors.TextHi,
         )
         SquareIconButton(symbol = "›", onClick = onNext)
     }
@@ -120,8 +121,10 @@ private fun WeekdayHeader() {
         MONDAY_FIRST_WEEK.forEach { day ->
             Text(
                 text = stringResource(day.shortLabelRes()),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextFaintAlt,
+                fontFamily = HrBody,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 11.sp,
+                color = HrColors.TextFaint,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f),
             )
@@ -160,21 +163,22 @@ private fun RowScope.DayCell(cell: CalendarDayCell, onSelect: (LocalDate) -> Uni
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(if (cell.hasCompletedSession) AccentSurfaceSelected else Color.Transparent)
+                .background(if (cell.hasCompletedSession) HrColors.SurfaceAccent else Color.Transparent)
                 .border(
                     width = if (isToday) Dimens.SelectedBorderWidth else 0.dp,
-                    color = if (isToday) Accent else Color.Transparent,
+                    color = if (isToday) HrColors.Accent else Color.Transparent,
                     shape = CircleShape,
                 ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = cell.date.dayOfMonth.toString(),
-                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = HrBody,
+                fontSize = 14.sp,
                 color = when {
-                    !cell.isCurrentMonth -> TextFaintAlt
-                    cell.hasCompletedSession -> Accent
-                    else -> TextBody
+                    !cell.isCurrentMonth -> HrColors.TextFaint
+                    cell.hasCompletedSession -> HrColors.Accent
+                    else -> HrColors.TextMid
                 },
             )
         }
@@ -184,17 +188,20 @@ private fun RowScope.DayCell(cell: CalendarDayCell, onSelect: (LocalDate) -> Uni
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DaySessionsSheet(date: LocalDate, sessions: List<WorkoutSessionEntity>, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = HrColors.Surface) {
         Column(
-            modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
                 text = "${stringResource(date.dayOfWeek.shortLabelRes())} · ${date.dayOfMonth}/${date.monthValue}/${date.year}",
-                style = MaterialTheme.typography.titleMedium,
+                fontFamily = HrBody,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = HrColors.TextHi,
             )
             if (sessions.isEmpty()) {
-                Text(text = stringResource(R.string.calendar_no_sessions), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                Text(text = stringResource(R.string.calendar_no_sessions), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
             } else {
                 // A day's session count is unbounded (full history) — bound with a max height +
                 // its own scroll so a rare heavy day can't push entries past the sheet's bottom.
@@ -206,21 +213,22 @@ private fun DaySessionsSheet(date: LocalDate, sessions: List<WorkoutSessionEntit
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.small)
-                                .background(SurfaceCard)
-                                .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                                .clip(HrShapes.CardSmall)
+                                .background(HrColors.SurfaceInput)
+                                .border(1.dp, HrColors.Border, HrShapes.CardSmall)
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(text = session.dayLabel, style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
+                            Text(text = session.dayLabel, fontFamily = HrBody, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = HrColors.TextHi)
                             Text(
                                 text = stringResource(
                                     R.string.diary_recent_meta,
                                     (session.durationSeconds / 60).toString(),
                                     formatVi(session.totalVolumeKg),
                                 ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextMuted,
+                                fontFamily = HrBody,
+                                fontSize = 13.sp,
+                                color = HrColors.TextLow,
                             )
                         }
                     }

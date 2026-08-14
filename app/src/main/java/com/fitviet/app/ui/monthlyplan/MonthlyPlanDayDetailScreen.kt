@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,21 +21,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.ChartBarIdle
-import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.common.HrBackChip
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.util.shortLabelRes
 
 @Composable
@@ -46,24 +41,28 @@ fun MonthlyPlanDayDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
+    Column(modifier = Modifier.fillMaxSize().background(HrColors.Bg)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
+                .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            BackChip(onClick = onBack)
+            HrBackChip(onClick = onBack)
             Column {
                 Text(
                     text = uiState.sessionType ?: stringResource(R.string.monthly_plan_rest_day),
-                    style = MaterialTheme.typography.headlineMedium,
+                    fontFamily = HrDisplay,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 24.sp,
+                    color = HrColors.TextHi,
                 )
                 Text(
                     text = stringResource(uiState.dayOfWeek.shortLabelRes()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
+                    fontFamily = HrBody,
+                    fontSize = 13.sp,
+                    color = HrColors.TextLow,
                 )
             }
         }
@@ -73,7 +72,7 @@ fun MonthlyPlanDayDetailScreen(
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.ScreenPaddingHorizontal),
+            modifier = Modifier.fillMaxSize().padding(horizontal = HrDimens.ScreenPaddingHorizontal),
             contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -111,30 +110,35 @@ private fun ExerciseRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(text = item.exercise.nameVi, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+        Text(text = item.exercise.nameVi, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
         Text(
             text = stringResource(R.string.monthly_plan_exercise_meta, item.targetSets, item.targetRepsMin, item.targetRepsMax),
-            style = MaterialTheme.typography.labelMedium,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 12.sp,
+            color = HrColors.TextLow,
         )
         if (!locked) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                val actionColor = if (isSwapping) TextFaint else Accent
+                val actionColor = if (isSwapping) HrColors.TextFaint else HrColors.Accent
                 Text(
                     text = stringResource(if (isSwapping) R.string.monthly_plan_regenerating else R.string.monthly_plan_exercise_swap),
-                    style = MaterialTheme.typography.labelMedium,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
                     color = actionColor,
                     modifier = Modifier.clickable(enabled = !isSwapping, onClick = onSwap),
                 )
                 Text(
                     text = stringResource(R.string.monthly_plan_exercise_swap_equipment),
-                    style = MaterialTheme.typography.labelMedium,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
                     color = actionColor,
                     modifier = Modifier.clickable(enabled = !isSwapping, onClick = onSwapForEquipment),
                 )
@@ -148,16 +152,18 @@ private fun RegenerateDayButton(isRegenerating: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(if (isRegenerating) ChartBarIdle else Accent)
+            .clip(HrShapes.ButtonCta)
+            .background(if (isRegenerating) HrColors.BarDim else HrColors.Accent)
             .clickable(enabled = !isRegenerating, onClick = onClick)
             .padding(vertical = 13.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(if (isRegenerating) R.string.monthly_plan_regenerating else R.string.monthly_plan_day_regenerate),
-            style = MaterialTheme.typography.titleSmall,
-            color = if (isRegenerating) TextMuted else OnAccent,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = if (isRegenerating) HrColors.TextLow else HrColors.OnAccent,
         )
     }
 }
@@ -167,12 +173,12 @@ private fun LockedBanner() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.medium)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(horizontal = 14.dp, vertical = 13.dp),
     ) {
-        Text(text = stringResource(R.string.monthly_plan_day_locked_banner), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Text(text = stringResource(R.string.monthly_plan_day_locked_banner), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
     }
 }
 
@@ -181,33 +187,19 @@ private fun LockedMessageCard(onDismiss: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 4.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(AccentSurfaceSelected)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.small)
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 4.dp)
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.SurfaceAccent)
+            .border(1.dp, HrColors.BorderAccentDim, HrShapes.CardSmall)
             .clickable(onClick = onDismiss)
             .padding(horizontal = 14.dp, vertical = 11.dp),
     ) {
         Text(
             text = stringResource(R.string.monthly_plan_locked_message),
-            style = MaterialTheme.typography.bodySmall,
-            color = TextPrimary,
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            color = HrColors.TextHi,
             modifier = Modifier.weight(1f),
         )
-    }
-}
-
-@Composable
-private fun BackChip(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(34.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
     }
 }
