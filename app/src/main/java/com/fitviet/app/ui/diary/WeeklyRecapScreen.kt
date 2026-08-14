@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -33,27 +32,20 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.dao.PersonalBestRow
 import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.ui.common.entranceFade
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface2
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.HeroGradientEnd
-import com.fitviet.app.ui.theme.HeroGradientStart
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextBody
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.premiumShadow
 import com.fitviet.app.util.formatVi
 import com.fitviet.app.util.labelRes
@@ -64,6 +56,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Redesign Gate 7d — token re-skin against the mock's `WEEKLY RECAP` section (~L795-818), deferred
+ * from Gate 6a (that gate's own plan-check: this screen's OS-share-intent mechanism is a separate
+ * concern from Community's in-app composer). The mock's own recap is a 4-stat grid (sessions/kg/PR
+ * count/hours) plus a "So với tuần trước" week-over-week comparison card and a "Vào tuần mới →"
+ * CTA; this screen keeps its existing 2-stat + muscle-balance + PR-list structure instead — adding
+ * the comparison card and PR/hours stats is real new functionality (a week-over-week diff, an hours
+ * formatter, wiring `PersonalRecordCalculator` into this screen's own uiState), not a token re-skin,
+ * so it's deliberately left for a future gate rather than folded in silently here.
+ */
 @Composable
 fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -74,7 +76,7 @@ fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
     val shareChooserTitle = stringResource(R.string.weekly_recap_share_chooser_title)
     val shareFailedMessage = stringResource(R.string.weekly_recap_share_failed)
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
+    Column(modifier = Modifier.fillMaxSize().background(HrColors.BgDeep)) {
         Row(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -83,22 +85,23 @@ fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(34.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .clip(HrShapes.ButtonSmall)
+                    .background(HrColors.Surface)
+                    .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextMid)
             }
-            Text(text = stringResource(R.string.weekly_recap_title), style = MaterialTheme.typography.headlineMedium)
+            Text(text = stringResource(R.string.weekly_recap_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = HrColors.TextHi)
         }
 
         if (!uiState.hasData) {
             Text(
                 text = stringResource(R.string.weekly_recap_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 14.sp,
+                color = HrColors.TextLow,
                 modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 24.dp),
             )
             return@Column
@@ -135,8 +138,8 @@ fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
-                    .background(Accent)
+                    .clip(HrShapes.ButtonCta)
+                    .background(HrColors.Accent)
                     .clickable(enabled = !isSharing) {
                         isSharing = true
                         coroutineScope.launch {
@@ -156,7 +159,7 @@ fun WeeklyRecapScreen(viewModel: WeeklyRecapViewModel, onBack: () -> Unit) {
                     .padding(vertical = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.weekly_recap_share), style = MaterialTheme.typography.titleMedium, color = OnAccent)
+                Text(text = stringResource(R.string.weekly_recap_share), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.OnAccent)
             }
         }
     }
@@ -175,18 +178,19 @@ private fun RecapCard(
         modifier = Modifier
             .fillMaxWidth()
             .premiumShadow(radius = 18.dp, accentBloom = true)
-            .clip(MaterialTheme.shapes.large)
-            .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd)))
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd)))
+            .border(1.dp, HrColors.BorderGradient, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingLarge),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapSmall),
     ) {
-        Text(text = stringResource(R.string.weekly_recap_title), style = MaterialTheme.typography.titleMedium)
+        Text(text = stringResource(R.string.weekly_recap_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = HrColors.TextHi)
         if (weekStart != null && weekEnd != null) {
             Text(
                 text = stringResource(R.string.weekly_recap_date_range, shortDateLabel(weekStart), shortDateLabel(weekEnd)),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 12.sp,
+                color = HrColors.TextLow,
             )
         }
 
@@ -201,30 +205,31 @@ private fun RecapCard(
 
         if (muscleGroupWorkload.any { it.volumeKg > 0.0 }) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = stringResource(R.string.weekly_recap_muscle_balance), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+                Text(text = stringResource(R.string.weekly_recap_muscle_balance), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextLow)
                 val maxVolume = muscleGroupWorkload.maxOf { it.volumeKg }.takeIf { it > 0 } ?: 1.0
                 muscleGroupWorkload.forEach { entry ->
                     val fraction = (entry.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = stringResource(entry.muscleGroup.labelRes()),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextBody,
+                            fontFamily = HrBody,
+                            fontSize = 11.sp,
+                            color = HrColors.TextMid,
                             modifier = Modifier.weight(0.6f),
                         )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(6.dp)
-                                .clip(MaterialTheme.shapes.extraSmall)
-                                .background(DeepSurface2),
+                                .clip(HrShapes.ButtonCta)
+                                .background(HrColors.Border),
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth(fraction)
                                     .height(6.dp)
-                                    .clip(MaterialTheme.shapes.extraSmall)
-                                    .background(Accent),
+                                    .clip(HrShapes.ButtonCta)
+                                    .background(HrColors.Accent),
                             )
                         }
                     }
@@ -234,14 +239,16 @@ private fun RecapCard(
 
         if (topPersonalBests.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(text = stringResource(R.string.weekly_recap_personal_bests), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+                Text(text = stringResource(R.string.weekly_recap_personal_bests), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextLow)
                 topPersonalBests.forEach { pr ->
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = pr.nameVi, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                        Text(text = pr.nameVi, fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextHi)
                         Text(
                             text = "${formatVi(pr.maxWeightKg)} kg",
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = Anton),
-                            color = Accent,
+                            fontFamily = HrDisplay,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 13.sp,
+                            color = HrColors.Accent,
                         )
                     }
                 }
@@ -254,12 +261,12 @@ private fun RecapCard(
 private fun RecapStatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(AccentSurfaceSelected)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        Text(text = value, style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton), color = Accent)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+        Text(text = value, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, color = HrColors.Accent)
+        Text(text = label, fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow, modifier = Modifier.padding(top = 2.dp))
     }
 }
 
