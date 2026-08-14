@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,21 +23,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.SettingsEntity
 import com.fitviet.app.ui.common.SettingsRow
 import com.fitviet.app.ui.common.WidgetToggleRow
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Danger
 import com.fitviet.app.ui.theme.DangerBorder
 import com.fitviet.app.ui.theme.DangerSurfaceSelected
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextMuted
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 
 @Composable
 fun SettingsScreen(
@@ -60,7 +60,7 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPage)
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
@@ -68,16 +68,16 @@ fun SettingsScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .size(40.dp)
+                    .clip(HrShapes.ButtonSmall)
+                    .background(HrColors.Surface)
+                    .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextMid)
             }
-            Text(text = stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
+            Text(text = stringResource(R.string.settings_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = HrColors.TextHi)
         }
 
         SectionLabel(text = stringResource(R.string.settings_section_account))
@@ -115,8 +115,11 @@ fun SettingsScreen(
 private fun SectionLabel(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = TextMuted,
+        fontFamily = HrBody,
+        fontWeight = FontWeight.Bold,
+        fontSize = 11.sp,
+        letterSpacing = 1.sp,
+        color = HrColors.TextFaint,
         modifier = Modifier.padding(bottom = 2.dp),
     )
 }
@@ -126,9 +129,9 @@ private fun AccountSection(settings: SettingsEntity, onOpenProfileEdit: () -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular),
     ) {
         SettingsRow(
             label = stringResource(R.string.settings_profile_row),
@@ -150,14 +153,14 @@ private fun NotificationsSection(reminderCount: Int, onOpenReminders: () -> Unit
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular),
     ) {
         SettingsRow(
             label = stringResource(R.string.settings_reminders_row),
             value = stringResource(R.string.settings_reminders_value, reminderCount),
-            valueColor = Accent,
+            valueColor = HrColors.Accent,
             valueBold = true,
             onClick = onOpenReminders,
             showDivider = false,
@@ -170,9 +173,9 @@ private fun DisplaySection(settings: SettingsEntity, viewModel: SettingsViewMode
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular),
     ) {
         SettingsRow(
             label = stringResource(R.string.profile_settings_language),
@@ -187,14 +190,15 @@ private fun DisplaySection(settings: SettingsEntity, viewModel: SettingsViewMode
         SettingsRow(
             label = stringResource(R.string.profile_settings_offline),
             value = stringResource(if (settings.offlineMode) R.string.profile_offline_on else R.string.profile_offline_off),
-            valueColor = if (settings.offlineMode) Accent else TextMuted,
+            valueColor = if (settings.offlineMode) HrColors.Accent else HrColors.TextLow,
             valueBold = true,
             onClick = viewModel::toggleOffline,
         )
         Text(
             text = stringResource(R.string.profile_widgets_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = TextMuted,
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            color = HrColors.TextLow,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
         WidgetToggleRow(
@@ -221,13 +225,13 @@ private fun ResetAppRow(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
+            .clip(HrShapes.CardSmall)
             .background(DangerSurfaceSelected)
-            .border(1.dp, DangerBorder, MaterialTheme.shapes.large)
+            .border(1.5.dp, DangerBorder, HrShapes.CardSmall)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = stringResource(R.string.settings_reset_button), style = MaterialTheme.typography.bodyMedium, color = Danger)
+        Text(text = stringResource(R.string.settings_reset_button), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Danger)
     }
 }

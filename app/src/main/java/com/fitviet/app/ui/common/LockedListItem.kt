@@ -138,9 +138,10 @@ private fun WaitingRing(modifier: Modifier = Modifier) {
 }
 
 /** Compose has no built-in dashed [Modifier.border] — draws one directly via a dashed
- * [PathEffect]. Scoped to this file since [LockedListItem]'s [LockReason.NOT_YET_UNLOCKED] state
- * is the only place in this app that needs a dashed stroke; everywhere else uses the app's normal
- * solid borders. */
+ * [PathEffect]. Scoped to this file (private, not shared) since [LockedListItem] is itself
+ * unused-by-design (Gate 36's own doc) — `ui/reminders/RemindersScreen.kt`'s own "+ Thêm giờ nhắc"
+ * add-row (Gate 7b) needed the same dashed-stroke idiom for a screen that's actually live, and
+ * copied this rather than extracting a shared utility out of a component nothing wires up yet. */
 private fun Modifier.dashedBorder(width: Dp, color: Color, shape: Shape): Modifier = drawWithContent {
     drawContent()
     val outline = shape.createOutline(size, layoutDirection, this)
