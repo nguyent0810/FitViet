@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.dao.PersonalBestRow
@@ -38,19 +39,11 @@ import com.fitviet.app.domain.DayVolume
 import com.fitviet.app.domain.MovementTypeDistribution
 import com.fitviet.app.domain.MuscleGroupWorkload
 import com.fitviet.app.domain.WeekVolume
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.ChartBarIdle
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextBody
-import com.fitviet.app.ui.theme.TextFaintAlt
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.util.formatVi
 import com.fitviet.app.util.isoWeekNumber
 import com.fitviet.app.util.labelRes
@@ -59,6 +52,15 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
+/**
+ * Redesign Gate 7c — token re-skin against the mock's `FULL DIARY` section (~L623-660). The mock's
+ * own section is a month calendar grid; this screen is a 7-day strip + weekly/muscle-group summary
+ * cards instead — a real, pre-existing app extension, not a mock deviation to fix: the month-grid
+ * view the mock actually shows already exists as its own separate screen
+ * (`ui/calendar/WorkoutCalendarScreen.kt`), reachable from here via [onOpenCalendar] (the mock's
+ * own header note: "sau avatar / link cuối màn Hôm nay" — reached via a link, not this screen
+ * itself). Kept as-is, token-only re-skin.
+ */
 @Composable
 fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: () -> Unit, onOpenWeeklyRecap: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,6 +68,7 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
@@ -79,27 +82,27 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
                 Box(
                     modifier = Modifier
                         .size(Dimens.MinTouchTarget)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(SurfaceCard)
-                        .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                        .clip(HrShapes.ButtonSmall)
+                        .background(HrColors.Surface)
+                        .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
                         .clickable(onClick = onBack),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                    Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextMid)
                 }
-                Text(text = stringResource(R.string.diary_title), style = MaterialTheme.typography.headlineMedium)
+                Text(text = stringResource(R.string.diary_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = HrColors.TextHi)
             }
             Box(
                 modifier = Modifier
                     .heightIn(min = Dimens.MinTouchTarget)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .clip(HrShapes.ButtonSmall)
+                    .background(HrColors.Surface)
+                    .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
                     .clickable(onClick = onOpenCalendar)
                     .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.calendar_open_button), style = MaterialTheme.typography.labelLarge, color = TextBody)
+                Text(text = stringResource(R.string.calendar_open_button), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextMid)
             }
         }
         DayStrip(last7Days = uiState.last7Days, selectedIndex = uiState.selectedDayIndex, onSelect = viewModel::selectDay)
@@ -107,8 +110,10 @@ fun DiaryScreen(viewModel: DiaryViewModel, onBack: () -> Unit, onOpenCalendar: (
         WeeklyVolumeCard(last4Weeks = uiState.last4Weeks, selectedIndex = uiState.selectedWeekIndex, onSelect = viewModel::selectWeek)
         Text(
             text = stringResource(R.string.diary_open_weekly_recap),
-            style = MaterialTheme.typography.labelLarge,
-            color = Accent,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = HrColors.Accent,
             modifier = Modifier.clickable(onClick = onOpenWeeklyRecap),
         )
         MuscleGroupWorkloadCard(workload = uiState.muscleGroupWorkload)
@@ -129,22 +134,22 @@ private fun DayStrip(last7Days: List<DayVolume>, selectedIndex: Int, onSelect: (
             val done = day.volumeKg > 0.0
             val isRest = !done && day.date.isBefore(today)
             val bg = when {
-                selected -> Accent
-                done -> AccentSurfaceSelected
-                else -> SurfaceCard
+                selected -> HrColors.Accent
+                done -> HrColors.SurfaceAccent
+                else -> HrColors.Surface
             }
             val border = when {
-                selected -> Accent
-                done -> AccentBorder
-                else -> CardBorder
+                selected -> HrColors.Accent
+                done -> HrColors.BorderAccentDim
+                else -> HrColors.Border
             }
             val markColor = when {
-                selected -> OnAccent
-                done -> Accent
-                isRest -> TextFaintAlt
-                else -> TextMuted
+                selected -> HrColors.OnAccent
+                done -> HrColors.Accent
+                isRest -> HrColors.TextFaint
+                else -> HrColors.TextLow
             }
-            val labelColor = if (selected) Accent else TextFaintAlt
+            val labelColor = if (selected) HrColors.Accent else HrColors.TextFaint
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -154,7 +159,8 @@ private fun DayStrip(last7Days: List<DayVolume>, selectedIndex: Int, onSelect: (
             ) {
                 Text(
                     text = stringResource(day.date.dayOfWeek.shortLabelRes()),
-                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = HrBody,
+                    fontSize = 10.sp,
                     color = labelColor,
                 )
                 Box(
@@ -167,7 +173,9 @@ private fun DayStrip(last7Days: List<DayVolume>, selectedIndex: Int, onSelect: (
                 ) {
                     Text(
                         text = if (done) "✓" else if (isRest) "·" else "",
-                        style = MaterialTheme.typography.labelLarge,
+                        fontFamily = HrBody,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
                         color = markColor,
                     )
                 }
@@ -203,12 +211,12 @@ private fun DayHintCard(day: DayVolume?, sessions: List<WorkoutSessionEntity>) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .background(AccentSurfaceSelected)
-            .border(1.dp, AccentBorder, MaterialTheme.shapes.small)
-            .padding(horizontal = 14.dp, vertical = 11.dp),
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.SurfaceAccent)
+            .border(1.5.dp, HrColors.Accent, HrShapes.CardSmall)
+            .padding(horizontal = 15.dp, vertical = 13.dp),
     ) {
-        Text(text = text, style = MaterialTheme.typography.bodySmall, color = TextBody)
+        Text(text = text, fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextMid)
     }
 }
 
@@ -220,16 +228,19 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 text = stringResource(R.string.diary_weekly_volume_title),
-                style = MaterialTheme.typography.titleSmall,
+                fontFamily = HrBody,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = HrColors.TextHi,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
@@ -237,8 +248,10 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
             if (selected != null) {
                 Text(
                     text = "${formatVi(selected.volumeKg)} kg",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = Accent,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp,
+                    color = HrColors.Accent,
                     maxLines = 1,
                     softWrap = false,
                 )
@@ -267,14 +280,16 @@ private fun WeeklyVolumeCard(last4Weeks: List<WeekVolume>, selectedIndex: Int, o
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .fillMaxHeight(fraction)
-                                .clip(MaterialTheme.shapes.extraSmall)
-                                .background(if (index == selectedIndex) Accent else ChartBarIdle),
+                                .clip(HrShapes.ButtonSmall)
+                                .background(if (index == selectedIndex) HrColors.Accent else HrColors.BarDim),
                         )
                     }
                     Text(
                         text = stringResource(R.string.diary_week_label, week.weekStart.isoWeekNumber()),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (index == selectedIndex) Accent else TextMuted,
+                        fontFamily = HrBody,
+                        fontWeight = if (index == selectedIndex) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 10.sp,
+                        color = if (index == selectedIndex) HrColors.Accent else HrColors.TextFaint,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                         softWrap = false,
@@ -293,36 +308,38 @@ private fun MuscleGroupWorkloadCard(workload: List<MuscleGroupWorkload>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = stringResource(R.string.diary_muscle_workload_title), style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.diary_muscle_workload_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextHi)
         if (maxVolume <= 0.0) {
-            Text(text = stringResource(R.string.diary_muscle_workload_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.diary_muscle_workload_empty), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 workload.forEach { entry ->
                     val fraction = (entry.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(text = stringResource(entry.muscleGroup.labelRes()), style = MaterialTheme.typography.labelLarge, color = TextBody)
+                            Text(text = stringResource(entry.muscleGroup.labelRes()), fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextMid)
                             Text(
                                 text = stringResource(R.string.diary_muscle_workload_kg, formatVi(entry.volumeKg)),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = TextMuted,
+                                fontFamily = HrBody,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = HrColors.TextHi,
                             )
                         }
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(MaterialTheme.shapes.extraSmall)
-                                .background(AccentBorder),
+                                .height(5.dp)
+                                .clip(HrShapes.ButtonCta)
+                                .background(HrColors.Border),
                         ) {
-                            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction).background(Accent))
+                            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction).background(HrColors.Accent))
                         }
                     }
                 }
@@ -337,15 +354,15 @@ private fun MovementTypeCard(distribution: MovementTypeDistribution) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = stringResource(R.string.diary_movement_type_title), style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.diary_movement_type_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextHi)
         if (!hasSets) {
-            Text(text = stringResource(R.string.diary_muscle_workload_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.diary_muscle_workload_empty), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         } else {
             MovementTypeRow(
                 labelRes = R.string.diary_movement_type_compound,
@@ -365,17 +382,17 @@ private fun MovementTypeCard(distribution: MovementTypeDistribution) {
 private fun MovementTypeRow(@StringRes labelRes: Int, sets: Int, fraction: Float) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = stringResource(labelRes), style = MaterialTheme.typography.labelLarge, color = TextBody)
-            Text(text = stringResource(R.string.diary_movement_type_sets, sets), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+            Text(text = stringResource(labelRes), fontFamily = HrBody, fontSize = 12.sp, color = HrColors.TextMid)
+            Text(text = stringResource(R.string.diary_movement_type_sets, sets), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = HrColors.TextLow)
         }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(AccentBorder),
+                .height(5.dp)
+                .clip(HrShapes.ButtonCta)
+                .background(HrColors.Border),
         ) {
-            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(Accent))
+            Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fraction.coerceIn(0f, 1f)).background(HrColors.Accent))
         }
     }
 }
@@ -385,23 +402,25 @@ private fun PersonalBestsCard(personalBests: List<PersonalBestRow>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = stringResource(R.string.diary_pr_title), style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.diary_pr_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextHi)
         if (personalBests.isEmpty()) {
-            Text(text = stringResource(R.string.diary_pr_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.diary_pr_empty), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         } else {
             personalBests.forEach { pr ->
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = pr.nameVi, style = MaterialTheme.typography.bodyLarge, color = TextPrimary)
+                    Text(text = pr.nameVi, fontFamily = HrBody, fontSize = 15.sp, color = HrColors.TextHi)
                     Text(
                         text = "${formatVi(pr.maxWeightKg)} kg",
-                        style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
-                        color = Accent,
+                        fontFamily = HrDisplay,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
+                        color = HrColors.Accent,
                     )
                 }
             }
@@ -419,38 +438,42 @@ private fun RecentSessionsCard(sessions: List<WorkoutSessionEntity>, onOpenCalen
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingSmall),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = stringResource(R.string.diary_recent_title), style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.diary_recent_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = HrColors.TextHi)
             if (sessions.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.diary_recent_see_all),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Accent,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = HrColors.Accent,
                     modifier = Modifier.clickable(onClick = onOpenCalendar),
                 )
             }
         }
         if (sessions.isEmpty()) {
-            Text(text = stringResource(R.string.diary_recent_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.diary_recent_empty), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         } else {
             sessions.forEach { session ->
                 val date = session.completedAt?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
                         text = "${date?.let { stringResource(it.dayOfWeek.shortLabelRes()) } ?: ""} · ${session.dayLabel}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextBody,
+                        fontFamily = HrBody,
+                        fontSize = 13.sp,
+                        color = HrColors.TextMid,
                     )
                     Text(
                         text = stringResource(R.string.diary_recent_meta, (session.durationSeconds / 60).toString(), formatVi(session.totalVolumeKg)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
+                        fontFamily = HrBody,
+                        fontSize = 13.sp,
+                        color = HrColors.TextLow,
                     )
                 }
             }
