@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,15 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.TextMuted
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
 
 private data class NavItem(val destination: FitVietDestination, val labelRes: Int)
 
@@ -53,13 +52,13 @@ fun BottomNavBar(
     onNavigate: (FitVietDestination) -> Unit,
     onFabClick: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth().background(DeepSurface1)) {
+    Column(modifier = Modifier.fillMaxWidth().background(HrColors.BgDeep)) {
         // Prototype shows a 1px top divider only, not a full border.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(CardBorder),
+                .background(HrColors.Border),
         )
         // Redesign Phase 3b restored the 2 left / 2 right split (Handbook's removal, see
         // NAV_ITEMS_RIGHT's own doc) that Gate 25's 5th item had broken — weighting each side by
@@ -105,12 +104,14 @@ private fun RowScope.NavItemView(item: NavItem, selected: Boolean, onClick: () -
         Box(
             modifier = Modifier
                 .size(5.dp)
-                .background(color = if (selected) Accent else Color.Transparent, shape = CircleShape)
+                .background(color = if (selected) HrColors.Accent else Color.Transparent, shape = CircleShape)
         )
         Text(
             text = stringResource(item.labelRes),
-            style = MaterialTheme.typography.labelSmall,
-            color = if (selected) Accent else TextMuted,
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            color = if (selected) HrColors.Accent else HrColors.TextLow,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -124,14 +125,16 @@ private fun WorkoutFab(onClick: () -> Unit) {
             .offset(y = (-16).dp)
             .size(Dimens.FabSize)
             .clip(CircleShape)
-            .background(color = Accent, shape = CircleShape)
+            .background(color = HrColors.Accent, shape = CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(R.string.nav_workout_fab),
-            style = MaterialTheme.typography.labelSmall,
-            color = OnAccent,
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 13.sp,
+            color = HrColors.OnAccent,
         )
     }
 }
