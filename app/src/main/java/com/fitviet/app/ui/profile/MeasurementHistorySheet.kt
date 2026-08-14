@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,16 +28,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.MeasurementEntity
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.util.formatLengthUnit
 import com.fitviet.app.util.formatWeightUnit
 import java.time.LocalDate
@@ -54,14 +54,14 @@ fun MeasurementHistorySheet(
 ) {
     var pendingDelete by remember { mutableStateOf<MeasurementEntity?>(null) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = HrColors.Surface) {
         Column(
             modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = stringResource(R.string.profile_history_title), style = MaterialTheme.typography.titleMedium)
+            Text(text = stringResource(R.string.profile_history_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = HrColors.TextHi)
             if (history.isEmpty()) {
-                Text(text = stringResource(R.string.profile_history_empty), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                Text(text = stringResource(R.string.profile_history_empty), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
             } else {
                 Column(
                     modifier = Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState()),
@@ -118,9 +118,9 @@ private fun MeasurementHistoryRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -130,20 +130,22 @@ private fun MeasurementHistoryRow(
         ) {
             Text(
                 text = "${date.dayOfMonth}/${date.monthValue}/${date.year}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary,
+                fontFamily = HrBody,
+                fontSize = 14.sp,
+                color = HrColors.TextHi,
             )
             Text(
                 text = summary,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 11.sp,
+                color = HrColors.TextLow,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            HistoryActionButton(label = stringResource(R.string.profile_history_edit_button), color = Accent, onClick = onEdit)
-            HistoryActionButton(label = stringResource(R.string.profile_history_delete_button), color = TextMuted, onClick = onDeleteRequest)
+            HistoryActionButton(label = stringResource(R.string.profile_history_edit_button), color = HrColors.Accent, onClick = onEdit)
+            HistoryActionButton(label = stringResource(R.string.profile_history_delete_button), color = HrColors.TextLow, onClick = onDeleteRequest)
         }
     }
 }
@@ -157,6 +159,6 @@ private fun HistoryActionButton(label: String, color: Color, onClick: () -> Unit
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = color)
+        Text(text = label, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = color)
     }
 }

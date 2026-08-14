@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,24 +16,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
 
 /**
  * One label/value settings row, tap-to-act if [onClick] is non-null (a static informational row,
  * like "Sao lưu dữ liệu," passes `null`). Extracted from `ProfileScreen.kt` in Gate 37 so both
  * `ProfileScreen`/`ProfileEditScreen` and the new `ui/settings/SettingsScreen.kt` share one
  * implementation instead of two copies drifting apart.
+ *
+ * Redesign Gate 7a — sizes (15sp label / 14sp value) match the mock's own literal row markup,
+ * checked against both its grouped-card form (`SETTINGS`, ~L691) and its standalone-card form
+ * (`PROFILE OVERLAY`, ~L338-340) — [showDivider] is what tells the two apart, not a separate style.
  */
 @Composable
 fun SettingsRow(
     label: String,
     value: String,
     onClick: (() -> Unit)?,
-    valueColor: Color = TextMuted,
+    valueColor: Color = HrColors.TextLow,
     valueBold: Boolean = false,
     showDivider: Boolean = true,
 ) {
@@ -46,16 +48,17 @@ fun SettingsRow(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
+            Text(text = label, fontFamily = HrBody, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = HrColors.TextHi)
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = HrBody,
+                fontSize = 14.sp,
                 color = valueColor,
                 fontWeight = if (valueBold) FontWeight.Bold else FontWeight.Normal,
             )
         }
         if (showDivider) {
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(CardBorder))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(HrColors.Border))
         }
     }
 }
@@ -67,7 +70,7 @@ fun WidgetToggleRow(label: String, enabled: Boolean, onClick: () -> Unit, showDi
     SettingsRow(
         label = label,
         value = stringResource(if (enabled) R.string.profile_offline_on else R.string.profile_offline_off),
-        valueColor = if (enabled) Accent else TextMuted,
+        valueColor = if (enabled) HrColors.Accent else HrColors.TextLow,
         valueBold = true,
         onClick = onClick,
         showDivider = showDivider,

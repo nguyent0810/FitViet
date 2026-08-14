@@ -8,21 +8,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.CardBorder
+import androidx.compose.ui.unit.sp
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
 import com.fitviet.app.ui.theme.PillShape
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextMuted
 
 /**
  * Shared pill-row selector (Gate 43) — this exact selected/idle pill visual had already been
@@ -48,16 +46,18 @@ fun <T> RangePills(
                 modifier = Modifier
                     .heightIn(min = Dimens.MinTouchTarget)
                     .clip(PillShape)
-                    .background(if (isSelected) Accent else SurfaceCard)
-                    .border(1.dp, if (isSelected) Accent else CardBorder, PillShape)
+                    .background(if (isSelected) HrColors.Accent else HrColors.Surface)
+                    .border(1.dp, if (isSelected) HrColors.Accent else HrColors.Border, PillShape)
                     .clickable { onSelect(value) }
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(labelRes),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) OnAccent else TextMuted,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = if (isSelected) HrColors.OnAccent else HrColors.TextMid,
                 )
             }
         }

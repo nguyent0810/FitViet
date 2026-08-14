@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,8 +41,10 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.SettingsEntity
@@ -59,19 +60,13 @@ import com.fitviet.app.domain.ExerciseDifficulty
 import com.fitviet.app.domain.NutritionGoal
 import com.fitviet.app.util.labelRes
 import com.fitviet.app.util.titleRes
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorderAlt
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.HeroGradientEnd
-import com.fitviet.app.ui.theme.HeroGradientStart
-import com.fitviet.app.ui.theme.SurfaceCard
 import com.fitviet.app.ui.theme.premiumShadow
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatLengthUnit
 import com.fitviet.app.util.formatOneDecimal
 import com.fitviet.app.util.formatWeightUnit
@@ -79,6 +74,18 @@ import com.fitviet.app.util.kgToLb
 import java.time.LocalDate
 import kotlin.math.abs
 
+/**
+ * Redesign Gate 7a — token re-skin against the mock's `PROFILE OVERLAY` section (~L318-346). The
+ * mock's overlay is a slimmer summary (header, avatar/name/goal, one measurements card, 3 nav
+ * rows, donate banner); this screen keeps its own extra, pre-existing functionality beyond that —
+ * the weight-history line chart (feature #7) and the measurement-update/history sheets — as real
+ * app extensions, same "keep functionality the mock doesn't show, re-skin what it does" precedent
+ * every prior token-only gate in this redesign has followed (e.g. `WorkoutSharePostCard`'s stat
+ * grid, Gate 6b). The mock also shows 3 nav rows (Nhật ký, Nhắc nhở, Cài đặt) where this screen
+ * currently has 2 (Chỉnh sửa hồ sơ, Cài đặt) — restructuring Profile's navigation to add a direct
+ * Diary/Reminders entry point is a scope decision beyond a token re-skin, deliberately left for a
+ * later gate rather than folded in silently here.
+ */
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
@@ -91,9 +98,9 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPage)
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
+            .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -106,15 +113,15 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .size(34.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(SurfaceCard)
-                        .border(1.dp, CardBorder, MaterialTheme.shapes.small),
+                        .clip(HrShapes.ButtonSmall)
+                        .background(HrColors.Surface)
+                        .border(1.dp, HrColors.Border, HrShapes.ButtonSmall),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                    Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextMid)
                 }
             }
-            Text(text = stringResource(R.string.profile_back), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.profile_back), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         }
         ProfileHeader(settings = uiState.settings, onAvatarClick = onEditProfile)
         MeasurementsCard(
@@ -168,16 +175,18 @@ private fun ProfileHeader(settings: SettingsEntity, onAvatarClick: () -> Unit) {
             initial = avatarInitial(settings.displayName),
             avatarId = settings.avatarId,
             size = 60.dp,
-            style = MaterialTheme.typography.headlineSmall,
+            style = TextStyle(fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 23.sp),
             borderWidth = 2.dp,
             modifier = Modifier.clickable(onClick = onAvatarClick),
         )
         Column {
-            Text(text = settings.displayName, style = MaterialTheme.typography.headlineSmall)
+            Text(text = settings.displayName, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 23.sp, color = HrColors.TextHi)
             Text(
                 text = stringResource(R.string.profile_meta, levelTitle, goalTitle),
-                style = MaterialTheme.typography.labelMedium,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 12.sp,
+                color = HrColors.TextLow,
+                modifier = Modifier.padding(top = 2.dp),
             )
         }
     }
@@ -197,14 +206,14 @@ private fun MeasurementsCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingLarge),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = stringResource(R.string.profile_measurements_title), style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.profile_measurements_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -215,8 +224,9 @@ private fun MeasurementsCard(
                 ) {
                     Text(
                         text = stringResource(R.string.profile_history_button),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = TextMuted,
+                        fontFamily = HrBody,
+                        fontSize = 13.sp,
+                        color = HrColors.TextLow,
                     )
                 }
                 Box(
@@ -228,8 +238,9 @@ private fun MeasurementsCard(
                 ) {
                     Text(
                         text = stringResource(R.string.profile_update_cta),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Accent,
+                        fontFamily = HrBody,
+                        fontSize = 13.sp,
+                        color = HrColors.Accent,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -285,23 +296,26 @@ private fun MeasurementTile(
 
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(DeepSurface1)
-            .padding(vertical = 12.dp, horizontal = 6.dp),
+            .clip(HrShapes.ButtonSmall)
+            .background(HrColors.SurfaceInput)
+            .padding(vertical = 11.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = value?.let(::format) ?: "–",
-            style = MaterialTheme.typography.titleMedium.copy(fontFamily = Anton),
-            color = TextPrimary,
+            fontFamily = HrDisplay,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 16.sp,
+            color = HrColors.TextHi,
         )
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted, modifier = Modifier.padding(top = 2.dp))
+        Text(text = label, fontFamily = HrBody, fontSize = 10.sp, color = HrColors.TextLow, modifier = Modifier.padding(top = 2.dp))
         if (delta != null && delta != 0.0) {
             val positive = delta > 0
             Text(
                 text = "${if (positive) "+" else "−"}${format(abs(delta))}",
-                style = MaterialTheme.typography.labelSmall,
-                color = if (positive) Accent else TextMuted,
+                fontFamily = HrBody,
+                fontSize = 10.sp,
+                color = if (positive) HrColors.Accent else HrColors.TextLow,
                 fontWeight = if (positive) FontWeight.Bold else FontWeight.Normal,
             )
         }
@@ -324,19 +338,20 @@ private fun WeightHistoryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingLarge),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = stringResource(R.string.profile_weight_history_title), style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.profile_weight_history_title), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
         RangePills(options = WEIGHT_HISTORY_RANGES, selected = range, onSelect = onRangeSelect)
         if (points.size < 2) {
             Text(
                 text = stringResource(R.string.profile_weight_history_empty),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                fontFamily = HrBody,
+                fontSize = 13.sp,
+                color = HrColors.TextLow,
             )
         } else {
             WeightLineChart(points = points, useImperial = useImperial)
@@ -372,8 +387,8 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
                 modifier = Modifier.fillMaxHeight().padding(end = 8.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(text = formatOneDecimal(maxValue), style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                Text(text = formatOneDecimal(minValue), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Text(text = formatOneDecimal(maxValue), fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow)
+                Text(text = formatOneDecimal(minValue), fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow)
             }
             Canvas(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 val pointGapPx = 5.dp.toPx()
@@ -416,12 +431,12 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
                         strokeWidth = strokeWidthPx * 3f
                         strokeCap = FrameworkPaint.Cap.ROUND
                         strokeJoin = FrameworkPaint.Join.ROUND
-                        color = Accent.copy(alpha = 0.3f).toArgb()
+                        color = HrColors.Accent.copy(alpha = 0.3f).toArgb()
                         maskFilter = BlurMaskFilter(strokeWidthPx * 2.5f, BlurMaskFilter.Blur.NORMAL)
                     }
                     canvas.nativeCanvas.drawPath(visiblePath.asAndroidPath(), glowPaint)
                 }
-                drawPath(path = visiblePath, color = Accent, style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                drawPath(path = visiblePath, color = HrColors.Accent, style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round, join = StrokeJoin.Round))
 
                 // A dot is visible once the revealed line has geometrically drawn PAST its
                 // position — comparing real cumulative distance, not an index/count
@@ -429,15 +444,15 @@ private fun WeightLineChart(points: List<WeightPoint>, useImperial: Boolean) {
                 val revealedDistance = (cumulativeDistances.lastOrNull() ?: 0f) * revealProgress
                 pointPositions.forEachIndexed { index, position ->
                     if (revealProgress >= 1f || cumulativeDistances[index] <= revealedDistance) {
-                        drawCircle(color = Accent, radius = 4.dp.toPx(), center = position)
+                        drawCircle(color = HrColors.Accent, radius = 4.dp.toPx(), center = position)
                     }
                 }
             }
         }
         Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = shortDateLabel(points.first().date), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+            Text(text = shortDateLabel(points.first().date), fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow)
             if (points.size > 1) {
-                Text(text = shortDateLabel(points.last().date), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Text(text = shortDateLabel(points.last().date), fontFamily = HrBody, fontSize = 11.sp, color = HrColors.TextLow)
             }
         }
     }
@@ -447,15 +462,17 @@ private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date
 
 /** A single-row card wrapping the shared [SettingsRow] — used for the two Profile-level navigation
  * entries ("Chỉnh sửa hồ sơ ›", "Cài đặt ›") now that the old multi-row `SettingsCard`/
- * `DashboardWidgetsCard` have moved into `ui/settings/SettingsScreen.kt` (Gate 37). */
+ * `DashboardWidgetsCard` have moved into `ui/settings/SettingsScreen.kt` (Gate 37). Per the mock's
+ * own `PROFILE OVERLAY` markup (~L338-340) each nav row is its own standalone card — matches this
+ * wrapper's existing shape exactly, nothing to restructure here. */
 @Composable
 private fun SingleRowCard(label: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall),
     ) {
         SettingsRow(label = label, value = "›", onClick = onClick, showDivider = false)
     }
@@ -467,45 +484,45 @@ private fun DonateCard(donated: Boolean, onDonateClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .entranceFade()
-            // "Donate surfaces" is one of premiumShadow's own doc-listed use cases (Gate A1) —
-            // this is that primitive's first actual call site in the app (Gate D1 rollout).
-            // radius matches FitVietShapes.large's own 18.dp corner (Theme/Shape.kt) — premiumShadow
-            // takes a literal Dp, not a Shape, same as every other .clip(MaterialTheme.shapes.large)
-            // call site in this codebase already hardcodes its border/shape values independently.
+            // "Donate surfaces" is one of premiumShadow's own doc-listed use cases (Gate A1).
+            // Redesign Gate 7a — bg/border match the mock's own donate-banner literal exactly
+            // (`linear-gradient(150deg,#1B2408,#10140A)` / `#2E3813`) = HrColors.GradientCardStart/
+            // GradientCardEnd / BorderGradient, same tokens `ShareComposerOverlay`'s own gradient
+            // result card already uses.
             .premiumShadow(radius = 18.dp, accentBloom = true)
-            .clip(MaterialTheme.shapes.large)
-            .background(Brush.linearGradient(listOf(HeroGradientStart, HeroGradientEnd)))
-            .border(1.dp, AccentBorderAlt, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(Brush.linearGradient(listOf(HrColors.GradientCardStart, HrColors.GradientCardEnd)))
+            .border(1.dp, HrColors.BorderGradient, HrShapes.CardRegular)
             .padding(Dimens.CardPaddingLarge),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (donated) {
-            Text(text = stringResource(R.string.profile_donated_title), style = MaterialTheme.typography.titleSmall, color = Accent)
-            Text(text = stringResource(R.string.profile_donated_body), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.profile_donated_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = HrColors.Accent)
+            Text(text = stringResource(R.string.profile_donated_body), fontFamily = HrBody, fontSize = 12.sp, lineHeight = 18.sp, color = HrColors.TextMid)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .pressScale(onClick = onDonateClick)
-                    .clip(MaterialTheme.shapes.small)
-                    .border(1.dp, AccentBorderAlt, MaterialTheme.shapes.small)
+                    .clip(HrShapes.ButtonSmall)
+                    .border(1.dp, HrColors.BorderGradient, HrShapes.ButtonSmall)
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.profile_donated_undo), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+                Text(text = stringResource(R.string.profile_donated_undo), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
             }
         } else {
-            Text(text = stringResource(R.string.profile_donate_title), style = MaterialTheme.typography.titleSmall)
-            Text(text = stringResource(R.string.profile_donate_body), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.profile_donate_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = HrColors.TextHi)
+            Text(text = stringResource(R.string.profile_donate_body), fontFamily = HrBody, fontSize = 12.sp, lineHeight = 18.sp, color = HrColors.TextMid)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .pressScale(onClick = onDonateClick)
-                    .clip(MaterialTheme.shapes.small)
-                    .border(Dimens.SelectedBorderWidth, Accent, MaterialTheme.shapes.small)
+                    .clip(HrShapes.ButtonSmall)
+                    .border(Dimens.SelectedBorderWidth, HrColors.Accent, HrShapes.ButtonSmall)
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = stringResource(R.string.profile_donate_cta), style = MaterialTheme.typography.titleMedium, color = Accent)
+                Text(text = stringResource(R.string.profile_donate_cta), fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = HrColors.Accent)
             }
         }
     }

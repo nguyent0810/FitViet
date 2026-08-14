@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,16 +26,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
-import com.fitviet.app.ui.theme.OnAccent
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 
 @Composable
 fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
@@ -52,6 +49,7 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(HrColors.Bg)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionGapLarge),
@@ -60,18 +58,18 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(34.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(SurfaceCard)
-                    .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+                    .clip(HrShapes.ButtonSmall)
+                    .background(HrColors.Surface)
+                    .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+                Text(text = "‹", fontFamily = HrBody, fontSize = 18.sp, color = HrColors.TextMid)
             }
-            Text(text = stringResource(R.string.profile_back), style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            Text(text = stringResource(R.string.profile_back), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
         }
 
-        Text(text = stringResource(R.string.profile_edit_title), style = MaterialTheme.typography.headlineMedium)
+        Text(text = stringResource(R.string.profile_edit_title), fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, color = HrColors.TextHi)
 
         if (uiState.isLoaded) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -79,13 +77,13 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
                     initial = avatarInitial(uiState.displayName),
                     avatarId = uiState.avatarId,
                     size = 88.dp,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = TextStyle(fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 32.sp),
                     borderWidth = 2.dp,
                 )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(text = stringResource(R.string.profile_edit_avatar_label), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+                Text(text = stringResource(R.string.profile_edit_avatar_label), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
                 AvatarPicker(
                     selectedAvatarId = uiState.avatarId,
                     initial = avatarInitial(uiState.displayName),
@@ -94,7 +92,7 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(text = stringResource(R.string.profile_edit_name_label), style = MaterialTheme.typography.labelLarge, color = TextMuted)
+                Text(text = stringResource(R.string.profile_edit_name_label), fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextLow)
                 NameField(value = uiState.displayName, onValueChange = viewModel::updateDisplayName)
             }
 
@@ -102,16 +100,18 @@ fun ProfileEditScreen(viewModel: ProfileEditViewModel, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
-                    .background(if (canSave) Accent else SurfaceCard)
+                    .clip(HrShapes.ButtonCta)
+                    .background(if (canSave) HrColors.Accent else HrColors.Surface)
                     .let { if (canSave) it.clickable(onClick = viewModel::save) else it }
                     .padding(vertical = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(R.string.profile_edit_save),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (canSave) OnAccent else TextFaint,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = if (canSave) HrColors.OnAccent else HrColors.TextFaint,
                 )
             }
         }
@@ -131,7 +131,7 @@ private fun AvatarPicker(selectedAvatarId: Int, initial: String, onSelect: (Int)
                     initial = initial,
                     avatarId = index,
                     size = 44.dp,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = TextStyle(fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp),
                     borderWidth = if (selected) 2.dp else 0.dp,
                 )
             }
@@ -144,16 +144,17 @@ private fun NameField(value: String, onValueChange: (String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clip(HrShapes.CardSmall)
+            .background(HrColors.SurfaceInput)
+            .border(1.dp, HrColors.Border, HrShapes.CardSmall)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         if (value.isEmpty()) {
             Text(
                 text = stringResource(R.string.profile_edit_name_placeholder),
-                style = MaterialTheme.typography.bodyLarge,
-                color = TextFaint,
+                fontFamily = HrBody,
+                fontSize = 15.sp,
+                color = HrColors.TextFaint,
             )
         }
         BasicTextField(
@@ -161,11 +162,12 @@ private fun NameField(value: String, onValueChange: (String) -> Unit) {
             onValueChange = onValueChange,
             singleLine = true,
             textStyle = TextStyle(
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                fontFamily = HrBody,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextPrimary,
+                color = HrColors.TextHi,
             ),
-            cursorBrush = SolidColor(Accent),
+            cursorBrush = SolidColor(HrColors.Accent),
             modifier = Modifier.fillMaxWidth(),
         )
     }
