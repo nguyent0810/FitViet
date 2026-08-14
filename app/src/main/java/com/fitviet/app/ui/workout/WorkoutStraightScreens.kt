@@ -32,7 +32,6 @@ import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.ui.common.pressScale
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
-import com.fitviet.app.ui.theme.CardBorder
 import com.fitviet.app.ui.theme.Dimens
 import com.fitviet.app.ui.theme.HrBody
 import com.fitviet.app.ui.theme.HrColors
@@ -115,11 +114,9 @@ fun StraightLogContent(uiState: WorkoutUiState, viewModel: WorkoutViewModel) {
 /** 150dp exercise photo with the Vietnamese/English name overlaid bottom-left on a semi-opaque
  * scrim, per the mock (rgba(10,12,6,0.8), byte-exact as [HrColors.BgDeep] at 0.8 alpha). Wraps
  * [ExerciseMediaBox] rather than modifying it — that composable is shared with
- * [WorkoutPreviewScreen] and the superset log surface (both still legacy-token), so its own
- * 18dp-radius/[CardBorder] stay as they are for now; per the
- * Gate 3d review, that gap is visually imperceptible next to the Hr cards around it. No outer
- * `.clip()` here — [ExerciseMediaBox] already clips itself, and a looser radius on top of it would
- * be a no-op. */
+ * [WorkoutPreviewScreen] and the superset log surface (both migrated to Hr tokens as of Gates 4c/8b,
+ * same as [ExerciseMediaBox] itself as of Gate 8e). No outer `.clip()` here — [ExerciseMediaBox]
+ * already clips itself, and a looser radius on top of it would be a no-op. */
 @Composable
 private fun ExerciseMediaWithLabel(exercise: ExerciseEntity) {
     Box(modifier = Modifier.fillMaxWidth().height(150.dp)) {

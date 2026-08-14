@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +35,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -269,7 +269,7 @@ private fun GreetingHeader(today: LocalDate, displayName: String, avatarId: Int,
             initial = avatarInitial(displayName),
             avatarId = avatarId,
             size = 48.dp,
-            style = MaterialTheme.typography.titleMedium,
+            style = TextStyle(fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
             modifier = Modifier.clickable(onClick = onAvatarClick),
         )
     }
@@ -507,7 +507,9 @@ private fun MissedDayDialog(missedDay: MonthlyPlanDayEntity, onPushToday: () -> 
                 )
                 Text(
                     text = stringResource(R.string.dashboard_missed_day_view_plan),
-                    style = MaterialTheme.typography.labelLarge,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
                     color = HrColors.Accent,
                     modifier = Modifier.clickable(onClick = onViewPlan),
                 )

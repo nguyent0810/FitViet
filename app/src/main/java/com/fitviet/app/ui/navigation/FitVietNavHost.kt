@@ -75,7 +75,7 @@ import com.fitviet.app.ui.reminders.RemindersScreen
 import com.fitviet.app.ui.reminders.RemindersViewModel
 import com.fitviet.app.ui.settings.SettingsScreen
 import com.fitviet.app.ui.settings.SettingsViewModel
-import com.fitviet.app.ui.theme.BackgroundPage
+import com.fitviet.app.ui.theme.HrColors
 import com.fitviet.app.ui.workout.WorkoutPreviewScreen
 import com.fitviet.app.ui.workout.WorkoutPreviewViewModel
 import com.fitviet.app.ui.workout.WorkoutScreen
@@ -100,7 +100,7 @@ fun FitVietNavHost(container: AppContainer) {
         .collectAsStateWithLifecycle(initialValue = null)
 
     when (val completed = onboardingCompleted) {
-        null -> Box(modifier = Modifier.fillMaxSize().background(BackgroundPage))
+        null -> Box(modifier = Modifier.fillMaxSize().background(HrColors.Bg))
         else -> FitVietNavGraph(startAtOnboarding = !completed, container = container)
     }
 }

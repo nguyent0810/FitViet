@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,12 +23,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fitviet.app.R
 import com.fitviet.app.data.local.entity.ExerciseEntity
 import com.fitviet.app.data.local.seed.SeedExerciseNames
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
-import com.fitviet.app.ui.theme.TextFaint
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrShapes
 import kotlinx.coroutines.delay
 
 /** How long each start/end-position frame is fully visible before crossfading to the next — a slow,
@@ -235,12 +235,12 @@ fun ExerciseMediaBox(exercise: ExerciseEntity, modifier: Modifier = Modifier, he
             modifier = modifier
                 .fillMaxWidth()
                 .height(height)
-                .clip(MaterialTheme.shapes.large)
-                .background(DeepSurface1)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+                .clip(HrShapes.CardRegular)
+                .background(HrColors.SurfaceAccent)
+                .border(1.dp, HrColors.Border, HrShapes.CardRegular),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "gif: ${exercise.gifAsset}", style = MaterialTheme.typography.labelMedium, color = TextFaint)
+            Text(text = "gif: ${exercise.gifAsset}", fontFamily = HrBody, fontSize = 13.sp, color = HrColors.TextFaint)
         }
     } else {
         var frameIndex by remember(exercise.nameVi) { mutableIntStateOf(0) }
@@ -255,8 +255,8 @@ fun ExerciseMediaBox(exercise: ExerciseEntity, modifier: Modifier = Modifier, he
             modifier = modifier
                 .fillMaxWidth()
                 .height(height)
-                .clip(MaterialTheme.shapes.large)
-                .border(1.dp, CardBorder, MaterialTheme.shapes.large),
+                .clip(HrShapes.CardRegular)
+                .border(1.dp, HrColors.Border, HrShapes.CardRegular),
         ) {
             Crossfade(targetState = frameIndex, animationSpec = tween(EXERCISE_MEDIA_TRANSITION_MILLIS), label = "exerciseMediaFrame") { index ->
                 Image(
