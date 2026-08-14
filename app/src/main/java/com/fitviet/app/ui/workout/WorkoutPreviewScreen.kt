@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,20 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fitviet.app.R
 import com.fitviet.app.ui.common.LoadingSkeleton
 import com.fitviet.app.ui.exercise.ExerciseMediaBox
-import com.fitviet.app.ui.theme.Accent
-import com.fitviet.app.ui.theme.AccentBorder
-import com.fitviet.app.ui.theme.AccentSurfaceSelected
-import com.fitviet.app.ui.theme.Anton
-import com.fitviet.app.ui.theme.BackgroundPage
-import com.fitviet.app.ui.theme.CardBorder
-import com.fitviet.app.ui.theme.DeepSurface1
-import com.fitviet.app.ui.theme.Dimens
+import com.fitviet.app.ui.theme.HrBody
+import com.fitviet.app.ui.theme.HrColors
+import com.fitviet.app.ui.theme.HrDimens
+import com.fitviet.app.ui.theme.HrDisplay
+import com.fitviet.app.ui.theme.HrShapes
 import com.fitviet.app.ui.theme.PillShape
-import com.fitviet.app.ui.theme.SurfaceCard
-import com.fitviet.app.ui.theme.TextBody
-import com.fitviet.app.ui.theme.TextFaint
-import com.fitviet.app.ui.theme.TextMuted
-import com.fitviet.app.ui.theme.TextPrimary
 import com.fitviet.app.util.formatWeight
 
 /** The "Xem trước" (preview) screen for a sample program (Gate 24; redesign Gate 2b made it purely
@@ -62,9 +53,9 @@ fun WorkoutPreviewScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundPage)) {
+    Column(modifier = Modifier.fillMaxSize().background(HrColors.Bg)) {
         if (uiState.isLoading) {
-            LoadingSkeleton(modifier = Modifier.padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp))
+            LoadingSkeleton(modifier = Modifier.padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp))
             return@Column
         }
 
@@ -72,14 +63,17 @@ fun WorkoutPreviewScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = Dimens.ScreenPaddingHorizontal, vertical = 16.dp),
+                .padding(horizontal = HrDimens.ScreenPaddingHorizontal, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             BackRow(onBack = onBack)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = uiState.dayTitleVi.ifBlank { stringResource(R.string.workout_preview_title) },
-                    style = MaterialTheme.typography.headlineMedium,
+                    fontFamily = HrDisplay,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 28.sp,
+                    color = HrColors.TextHi,
                 )
                 // Uses ProgramDayWorkoutPlanner.estimateDurationMinutes' own per-rep/rest
                 // assumptions, so this program gives a real sense of session length before the
@@ -88,8 +82,9 @@ fun WorkoutPreviewScreen(
                 if (uiState.estimatedDurationMinutes > 0) {
                     Text(
                         text = stringResource(R.string.workout_preview_estimated_duration, uiState.estimatedDurationMinutes),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextFaint,
+                        fontFamily = HrBody,
+                        fontSize = 14.sp,
+                        color = HrColors.TextFaint,
                     )
                 }
             }
@@ -97,7 +92,7 @@ fun WorkoutPreviewScreen(
                 SupersetHintCard(onDismiss = viewModel::dismissSupersetHint)
             }
             if (uiState.groupings.isEmpty()) {
-                Text(text = stringResource(R.string.workout_preview_empty), style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Text(text = stringResource(R.string.workout_preview_empty), fontFamily = HrBody, fontSize = 14.sp, color = HrColors.TextLow)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     uiState.groupings.forEach { grouping ->
@@ -117,13 +112,13 @@ private fun BackRow(onBack: () -> Unit) {
     Box(
         modifier = Modifier
             .size(34.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.small)
+            .clip(HrShapes.ButtonSmall)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.ButtonSmall)
             .clickable(onClick = onBack),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = "‹", style = MaterialTheme.typography.titleMedium, color = TextMuted)
+        Text(text = "‹", fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = HrColors.TextMid)
     }
 }
 
@@ -132,9 +127,9 @@ private fun PreviewExerciseCard(item: ProgramDayWorkoutItem, onClick: () -> Unit
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .clickable(onClick = onClick),
     ) {
         PreviewExerciseContent(item = item, badge = null)
@@ -166,33 +161,37 @@ private fun PreviewSupersetCard(first: ProgramDayWorkoutItem, second: ProgramDay
                 modifier = Modifier
                     .size(26.dp)
                     .clip(CircleShape)
-                    .background(AccentSurfaceSelected)
-                    .border(1.5.dp, Accent, CircleShape),
+                    .background(HrColors.SurfaceAccent)
+                    .border(1.5.dp, HrColors.Accent, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = groupLetter, style = MaterialTheme.typography.labelSmall.copy(fontFamily = Anton), color = Accent)
+                Text(text = groupLetter, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 11.sp, color = HrColors.Accent)
             }
-            Box(modifier = Modifier.weight(1f).width(2.dp).background(Accent))
+            Box(modifier = Modifier.weight(1f).width(2.dp).background(HrColors.Accent))
         }
         Column(
             modifier = Modifier
                 .weight(1f)
-                .clip(MaterialTheme.shapes.large)
-                .background(DeepSurface1)
-                .border(1.5.dp, AccentBorder, MaterialTheme.shapes.large)
+                .clip(HrShapes.CardRegular)
+                .background(HrColors.SurfaceAccent)
+                .border(1.5.dp, HrColors.BorderAccentDim, HrShapes.CardRegular)
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = stringResource(R.string.superset_group_header, groupLetter, rounds),
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 0.08.em),
-                    color = Accent,
+                    fontFamily = HrBody,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.08.em,
+                    color = HrColors.Accent,
                 )
                 Text(
                     text = stringResource(R.string.superset_group_rest, DEFAULT_REST_SECONDS),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextFaint,
+                    fontFamily = HrBody,
+                    fontSize = 12.sp,
+                    color = HrColors.TextFaint,
                 )
             }
             SupersetExerciseCard(item = first, badge = stringResource(R.string.superset_badge_a1), onClick = { onExerciseClick(first.exercise.id) })
@@ -210,9 +209,9 @@ private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String, onC
             // Must match ExerciseMediaBox's own hardcoded `shapes.large` (inside
             // PreviewExerciseContent) — a mismatched radius here would leave the media box's own
             // corner border visible poking out past this card's border.
-            .clip(MaterialTheme.shapes.large)
-            .background(SurfaceCard)
-            .border(1.dp, CardBorder, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.Surface)
+            .border(1.dp, HrColors.Border, HrShapes.CardRegular)
             .clickable(onClick = onClick),
     ) {
         PreviewExerciseContent(item = item, badge = badge)
@@ -220,18 +219,24 @@ private fun SupersetExerciseCard(item: ProgramDayWorkoutItem, badge: String, onC
 }
 
 /** The "không nghỉ" divider between a superset pair's two exercise cards — flanking 1dp
- * [AccentBorder] lines, not the vertical bars used before this gate's mockup pass. */
+ * [HrColors.BorderAccentDim] lines, not the vertical bars used before this gate's mockup pass. */
 @Composable
 private fun SupersetConnector() {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(modifier = Modifier.weight(1f).height(1.dp).background(AccentBorder))
-        Text(text = stringResource(R.string.superset_no_rest_note), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = Accent)
-        Box(modifier = Modifier.weight(1f).height(1.dp).background(AccentBorder))
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(HrColors.BorderAccentDim))
+        Text(
+            text = stringResource(R.string.superset_no_rest_note),
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp,
+            color = HrColors.Accent,
+        )
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(HrColors.BorderAccentDim))
     }
 }
 
 /** Media + name + sets/reps/weight summary shared by both a plain [PreviewExerciseCard] and a
- * [PreviewSupersetCard]'s two halves — [badge] is the Anton-styled "A1"/"A2" label at the row's
+ * [PreviewSupersetCard]'s two halves — [badge] is the HrDisplay-styled "A1"/"A2" label at the row's
  * trailing edge when this exercise is part of a superset pair, `null` for a standalone exercise. */
 @Composable
 private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) {
@@ -242,7 +247,7 @@ private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = item.exercise.nameVi, style = MaterialTheme.typography.titleSmall)
+            Text(text = item.exercise.nameVi, fontFamily = HrBody, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = HrColors.TextHi)
             Text(
                 text = stringResource(
                     R.string.workout_preview_summary,
@@ -251,12 +256,13 @@ private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) 
                     item.targetRepsMax,
                     formatWeight(item.recommendedWeightKg),
                 ),
-                style = MaterialTheme.typography.labelMedium,
-                color = TextFaint,
+                fontFamily = HrBody,
+                fontSize = 12.sp,
+                color = HrColors.TextLow,
             )
         }
         if (badge != null) {
-            Text(text = badge, style = MaterialTheme.typography.titleSmall.copy(fontFamily = Anton), color = Accent)
+            Text(text = badge, fontFamily = HrDisplay, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = HrColors.Accent)
         }
     }
 }
@@ -264,32 +270,45 @@ private fun PreviewExerciseContent(item: ProgramDayWorkoutItem, badge: String?) 
 /** First-run superset explainer (Gate 48) — an inline card in the scroll content, not a floating
  * tooltip, per the plan. Dismissing persists [SettingsEntity.hasSeenSupersetHint][
  * com.fitviet.app.data.local.entity.SettingsEntity.hasSeenSupersetHint] so it doesn't show again.
- * Bordered in bright [Accent], not [AccentBorder] — the group card below uses the muted border, so
- * this explainer needs to read as visually distinct from the thing it explains. */
+ * Bordered in bright [HrColors.Accent], not [HrColors.BorderAccentDim] — the group card below uses
+ * the muted border, so this explainer needs to read as visually distinct from the thing it explains. */
 @Composable
 private fun SupersetHintCard(onDismiss: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(AccentSurfaceSelected)
-            .border(1.5.dp, Accent, MaterialTheme.shapes.large)
+            .clip(HrShapes.CardRegular)
+            .background(HrColors.SurfaceAccent)
+            .border(1.5.dp, HrColors.Accent, HrShapes.CardRegular)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(text = stringResource(R.string.workout_preview_superset_hint_title), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-        Text(text = stringResource(R.string.workout_preview_superset_hint_body), style = MaterialTheme.typography.bodySmall, color = TextBody)
+        Text(
+            text = stringResource(R.string.workout_preview_superset_hint_title),
+            fontFamily = HrBody,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            color = HrColors.TextHi,
+        )
+        Text(
+            text = stringResource(R.string.workout_preview_superset_hint_body),
+            fontFamily = HrBody,
+            fontSize = 13.sp,
+            color = HrColors.TextMid,
+        )
         Box(
             modifier = Modifier
                 .clip(PillShape)
-                .border(1.dp, AccentBorder, PillShape)
+                .border(1.dp, HrColors.BorderAccentDim, PillShape)
                 .clickable(onClick = onDismiss)
                 .padding(horizontal = 14.dp, vertical = 7.dp),
         ) {
             Text(
                 text = stringResource(R.string.workout_preview_superset_hint_dismiss),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = Accent,
+                fontFamily = HrBody,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = HrColors.Accent,
             )
         }
     }
